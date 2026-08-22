@@ -11,12 +11,13 @@ Hệ thống được tổ chức thành các phân hệ chính sau:
   - `Ecc.Application/`: Chứa logic ứng dụng, CQRS (MediatR), Interfaces và DTOs.
   - `Ecc.Infrastructure/`: Chứa cấu hình Persistence (EF Core DbContext), External Services, Identity.
   - `Ecc.WebApi/`: Điểm khởi chạy API (Controllers, Middlewares, Configuration).
-- 🌐 [**`frontend-web/`**](file:///D:/Năm 4/IOT_HopThuocThongMinh/frontend-web) - Phân hệ giao diện Web:
-  - `admin-ncc/`: React.js + TypeScript + Vite (dành cho Admin và Nhà cung cấp/Hợp tác xã).
-  - `customer-store/`: Next.js + Tailwind CSS + TypeScript (Trang bán hàng cho khách hàng, tối ưu hóa SEO).
+- 🌐 [**`frontend-web/`**](file:///D:/Năm 4/IOT_HopThuocThongMinh/frontend-web) - Phân hệ giao diện Web (3 ứng dụng Web riêng biệt):
+  - `admin/`: Web Admin dành cho Quản trị viên (React.js + Vite + TypeScript + Ant Design).
+  - `supplier/`: Website dành cho Nhà cung cấp và Hợp tác xã (React.js + Vite + TypeScript + Ant Design).
+  - `store/`: Website bán hàng nông sản dành cho Khách hàng (Next.js + Tailwind CSS + TypeScript - tối ưu hóa SEO).
 - 📱 [**`mobile-app/`**](file:///D:/Năm 4/IOT_HopThuocThongMinh/mobile-app) - Ứng dụng di động Flutter dành cho khách hàng và quét mã QR Code.
 - 🤖 [**`ai-service/`**](file:///D:/Năm 4/IOT_HopThuocThongMinh/ai-service) - Dịch vụ gợi ý AI viết bằng Python & FastAPI (Sử dụng Pandas, Scikit-learn, Implicit ALS để gợi ý Top-K sản phẩm theo mùa vụ, vị trí và hành vi).
-- 🗄️ [**`database/`**](file:///D:/Năm 4/IOT_HopThuocThongMinh/database) - Chứa các script khởi tạo cơ sở dữ liệu PostgreSQL.
+- 🗄️ [**`database/`**](file:///D:/Năm 4/IOT_HopThuocThongMinh/database) - Chứa các script khởi tạo cơ sở dữ liệu Microsoft SQL Server.
 
 ---
 
@@ -31,15 +32,21 @@ dotnet run
 API mặc định sẽ chạy tại `http://localhost:5000` hoặc `https://localhost:5001`.
 
 ### 2. Frontend Web
-#### Admin & NCC Portal (React + Vite)
+#### Web Admin (React + Vite)
 ```bash
-cd frontend-web/admin-ncc
+cd frontend-web/admin
 npm install
 npm run dev
 ```
-#### Customer Storefront (Next.js)
+#### Web Nhà Cung Cấp / Hợp Tác Xã (React + Vite)
 ```bash
-cd frontend-web/customer-store
+cd frontend-web/supplier
+npm install
+npm run dev
+```
+#### Website Bán Hàng - Khách Hàng (Next.js)
+```bash
+cd frontend-web/store
 npm install
 npm run dev
 ```
@@ -63,5 +70,5 @@ uvicorn app.main:app --reload --port 8000
 ```
 Swagger UI sẽ hoạt động tại: `http://localhost:8000/docs`.
 
-### 5. Cơ sở dữ liệu (PostgreSQL)
+### 5. Cơ sở dữ liệu (Microsoft SQL Server)
 Xem hướng dẫn chi tiết tại [database/README.md](file:///D:/Năm 4/IOT_HopThuocThongMinh/database/README.md).
