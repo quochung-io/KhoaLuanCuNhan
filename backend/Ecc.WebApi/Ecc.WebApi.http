@@ -1,0 +1,6 @@
+@Ecc.WebApi_HostAddress = http://localhost:5023
+
+GET {{Ecc.WebApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
