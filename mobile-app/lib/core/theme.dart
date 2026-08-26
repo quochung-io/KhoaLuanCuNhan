@@ -1,18 +1,22 @@
 import 'package:flutter/material.dart';
 
 class LanhTheme {
+  static const Color primaryColor = Color(0xFF2E7D32);
+  static const Color secondaryColor = Color(0xFFFF9800);
+  static const Color backgroundColor = Color(0xFFF9FBF8);
+
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
       fontFamily: 'sans-serif',
       colorScheme: ColorScheme.fromSeed(
-        seedColor: const Color(0xFF2E7D32),
-        primary: const Color(0xFF2E7D32),
-        secondary: const Color(0xFFFF9800),
-        background: const Color(0xFFF9FBF8),
+        seedColor: primaryColor,
+        primary: primaryColor,
+        secondary: secondaryColor,
+        background: backgroundColor,
         surface: Colors.white,
       ),
-      scaffoldBackgroundColor: const Color(0xFFF9FBF8),
+      scaffoldBackgroundColor: backgroundColor,
       appBarTheme: const AppBarTheme(
         backgroundColor: Color(0xFFF9FBF8),
         elevation: 0,
