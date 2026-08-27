@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
-import { Layout, Menu, theme } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
+import { Layout, Menu, theme, Dropdown, Space, Tag } from 'antd';
 import {
   DashboardOutlined,
   UserOutlined,
@@ -8,6 +8,8 @@ import {
   InboxOutlined,
   SolutionOutlined,
   PercentageOutlined,
+  LogoutOutlined,
+  DownOutlined,
 } from '@ant-design/icons';
 
 // Import Pages
@@ -17,15 +19,50 @@ import { Products } from './pages/Products';
 import { Orders } from './pages/Orders';
 import { Batches } from './pages/Batches';
 import { PromotionsReviews } from './pages/PromotionsReviews';
+import { Login } from './pages/Login';
+import { Register } from './pages/Register';
 
 const { Header, Content, Footer, Sider } = Layout;
 
 const AppContent: React.FC = () => {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
   const {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
+
+  const [user, setUser] = useState<any>(null);
+
+  // Check login state
+  useEffect(() => {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    } else {
+      // Nếu chưa đăng nhập và không ở trang login/register, đá về login
+      if (location.pathname !== '/login' && location.pathname !== '/register') {
+        navigate('/login');
+      }
+    }
+  }, [location.pathname, navigate]);
+
+  const handleLogout = () => {
+    localStorage.removeItem('user');
+    setUser(null);
+    navigate('/login');
+  };
+
+  const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
+
+  if (isAuthPage) {
+    return (
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+      </Routes>
+    );
+  }
 
   const menuItems = [
     {
@@ -60,6 +97,15 @@ const AppContent: React.FC = () => {
     },
   ];
 
+  const userMenuItems = [
+    {
+      key: 'logout',
+      label: 'Đăng xuất',
+      icon: <LogoutOutlined />,
+      onClick: handleLogout,
+    }
+  ];
+
   return (
     <Layout style={{ minHeight: '100vh' }}>
       <Sider collapsible collapsed={collapsed} onCollapse={(value) => setCollapsed(value)}>
@@ -87,7 +133,25 @@ const AppContent: React.FC = () => {
         />
       </Sider>
       <Layout>
-        <Header style={{ padding: 0, background: colorBgContainer }} />
+        <Header style={{ 
+          padding: '0 24px', 
+          background: colorBgContainer,
+          display: 'flex',
+          justifyContent: 'flex-end',
+          alignItems: 'center'
+        }}>
+          {user && (
+            <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
+              <a onClick={(e) => e.preventDefault()} style={{ cursor: 'pointer', color: 'inherit' }}>
+                <Space>
+                  <strong>{user.fullName || 'Admin'}</strong>
+                  <Tag color="blue">{user.roleId === 1 ? 'ADMIN' : (user.roleId === 2 ? 'SUPPLIER' : 'CUSTOMER')}</Tag>
+                  <DownOutlined />
+                </Space>
+              </a>
+            </Dropdown>
+          )}
+        </Header>
         <Content style={{ margin: '16px' }}>
           <div
             style={{
