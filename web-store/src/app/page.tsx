@@ -1,7 +1,9 @@
 'use client';
 import React, { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
-const ICONS: Record<string, JSX.Element> = {
+const ICONS: Record<string, React.ReactNode> = {
   leaf: <svg viewBox="0 0 24 24" fill="none" stroke="#2E7D32" strokeWidth="1.8"><path d="M12 21c-5-1-8-5-8-10A7 7 0 0112 3a7 7 0 018 8c0 5-3 9-8 10z"/><path d="M12 21V9"/></svg>,
   carrot: <svg viewBox="0 0 24 24" fill="none" stroke="#FF9800" strokeWidth="1.8"><path d="M14 3l3 3M17 2l2 2M19 5l2-1M4 20l9-9 3 3-9 9-4 1 1-4z"/></svg>,
   citrus: <svg viewBox="0 0 24 24" fill="none" stroke="#FF9800" strokeWidth="1.8"><circle cx="12" cy="13" r="7"/><path d="M12 6c1-2 3-3 4-3"/><path d="M12 13l4-4M12 13l-4 4M12 13l4 4M12 13l-4-4"/></svg>,
@@ -27,6 +29,7 @@ type Product = {
   reviews: number;
   icon: string;
   lot: string;
+  imageUrl?: string;
 };
 
 const productsData: Product[] = [
@@ -79,11 +82,156 @@ type CartItem = {
   qty: number;
 };
 
+type SuggestionItem = {
+  productId: number;
+  productName: string;
+  price: number;
+  unit: string;
+  imageUrl?: string;
+};
+
 export default function LanhLandingPage() {
+  const router = useRouter();
+  const [products, setProducts] = useState<Product[]>(productsData);
   const [theme, setTheme] = useState("light");
   const [lang, setLang] = useState("vi");
+
+  const handleGoToCheckout = () => {
+    if (!currentUser) {
+      alert("Vui lòng đăng nhập trước khi thực hiện thanh toán!");
+      router.push("/login");
+      return;
+    }
+    if (cart.length === 0) {
+      alert("Giỏ hàng của bạn đang trống!");
+      return;
+    }
+    setIsDrawerOpen(false);
+    router.push("/checkout");
+  };
+
+
+
+  // States tài khoản người dùng
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
+
+  useEffect(() => {
+    const stored = localStorage.getItem('customer_user');
+    if (stored) {
+      setCurrentUser(JSON.parse(stored));
+    }
+  }, []);
+
+  const handleCustomerLogout = () => {
+    localStorage.removeItem('customer_user');
+    setCurrentUser(null);
+    setShowUserDropdown(false);
+    window.location.reload();
+  };
+
+  // States tìm kiếm và lọc giá
+  const [searchQuery, setSearchQuery] = useState("");
+  const [suggestions, setSuggestions] = useState<SuggestionItem[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [minPrice, setMinPrice] = useState<number | "">("");
+  const [maxPrice, setMaxPrice] = useState<number | "">("");
+
+  const fetchProducts = (searchVal = searchQuery, minP = minPrice, maxP = maxPrice) => {
+    let url = 'http://localhost:5023/api/products';
+    const params: string[] = [];
+    if (searchVal) params.push(`search=${encodeURIComponent(searchVal)}`);
+    if (minP !== "") params.push(`minPrice=${minP}`);
+    if (maxP !== "") params.push(`maxPrice=${maxP}`);
+    if (params.length > 0) url += '?' + params.join('&');
+
+    fetch(url)
+      .then(res => res.json())
+      .then((data: any[]) => {
+        if (data) {
+          const mapped = data.map((item: any) => {
+            let icon = 'leaf';
+            const nameLower = item.productName.toLowerCase();
+            if (nameLower.includes('cà rốt') || nameLower.includes('củ')) icon = 'carrot';
+            else if (nameLower.includes('cam') || nameLower.includes('chanh') || nameLower.includes('quýt') || nameLower.includes('bưởi') || nameLower.includes('sầu riêng') || nameLower.includes('bơ')) icon = 'citrus';
+            else if (nameLower.includes('trứng') || nameLower.includes('gà') || nameLower.includes('thịt')) icon = 'egg';
+            else if (nameLower.includes('mật ong') || nameLower.includes('mứt') || nameLower.includes('hũ') || nameLower.includes('lọ')) icon = 'jar';
+            else if (nameLower.includes('dâu') || nameLower.includes('berry') || nameLower.includes('nho')) icon = 'berry';
+
+            let imageUrl = '';
+            if (item.productImages && item.productImages.length > 0) {
+              const primary = item.productImages.find((img: any) => img.isPrimary);
+              imageUrl = primary ? primary.imageUrl : item.productImages[0].imageUrl;
+            }
+
+            return {
+              id: Number(item.productId),
+              name: item.productName,
+              price: item.price.toLocaleString('vi-VN') + '₫',
+              unit: ' / ' + item.unit,
+              cert: item.status || 'VietGAP',
+              region: 'Đà Lạt',
+              rating: Number((4.5 + (Number(item.productId) % 5) * 0.1).toFixed(1)),
+              reviews: 80 + (Number(item.productId) % 5) * 40,
+              icon: icon,
+              lot: 'LOT#VN-DL-' + (1000 + Number(item.productId)),
+              imageUrl: imageUrl || undefined
+            };
+          });
+          setProducts(mapped);
+        }
+      })
+      .catch(err => console.error('Lỗi khi gọi API sản phẩm:', err));
+  };
+
+  const handleSearchChange = (val: string) => {
+    setSearchQuery(val);
+    if (val.trim().length > 0) {
+      fetch(`http://localhost:5023/api/products/autocomplete?prefix=${encodeURIComponent(val)}`)
+        .then(res => res.json())
+        .then((data: SuggestionItem[]) => {
+          setSuggestions(data || []);
+          setShowSuggestions(true);
+        })
+        .catch(() => setSuggestions([]));
+    } else {
+      setSuggestions([]);
+      setShowSuggestions(false);
+    }
+  };
+
+  const handleSelectSuggestion = (val: string) => {
+    setSearchQuery(val);
+    setShowSuggestions(false);
+    fetchProducts(val);
+  };
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
   
   const [cart, setCart] = useState<CartItem[]>([]);
+
+  // Đồng bộ giỏ hàng với localStorage
+  useEffect(() => {
+    const storedCart = localStorage.getItem('cart');
+    if (storedCart) {
+      try {
+        setCart(JSON.parse(storedCart));
+      } catch (e) {
+        console.error("Lỗi đọc giỏ hàng", e);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (cart.length > 0) {
+      localStorage.setItem('cart', JSON.stringify(cart));
+    } else {
+      localStorage.removeItem('cart');
+    }
+  }, [cart]);
+
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [cartBounce, setCartBounce] = useState(false);
   const [addedItem, setAddedItem] = useState<number | null>(null);
@@ -180,18 +328,65 @@ export default function LanhLandingPage() {
             <a href="#subToggle">Combo</a>
           </nav>
 
-          <div className="search-shell">
-            <select className="cat-select" aria-label="Chọn danh mục">
-              <option>Tất cả</option>
-              <option>Rau lá</option>
-              <option>Trái cây</option>
-              <option>Thịt sạch</option>
-              <option>Chế biến</option>
-            </select>
-            <input type="text" placeholder="Tìm rau cải, bơ, cam Cao Phong…" />
-            <button className="go" aria-label="Tìm kiếm">
+          <div className="search-shell" style={{ position: 'relative' }}>
+            <input 
+              type="text" 
+              value={searchQuery}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              onFocus={() => setShowSuggestions(true)}
+              onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+              placeholder="Tìm rau cải, bơ, cam Cao Phong…" 
+            />
+            <button className="go" onClick={() => fetchProducts()} aria-label="Tìm kiếm">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
             </button>
+            
+            {showSuggestions && suggestions.length > 0 && (
+              <ul className="suggestions-list" style={{
+                position: 'absolute',
+                top: '100%',
+                left: 0,
+                right: 0,
+                backgroundColor: 'white',
+                border: '1px solid #ddd',
+                borderRadius: '4px',
+                listStyle: 'none',
+                padding: 0,
+                margin: 0,
+                zIndex: 999,
+                boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                textAlign: 'left'
+              }}>
+                {suggestions.map((s, idx) => (
+                  <li 
+                    key={idx} 
+                    onClick={() => handleSelectSuggestion(s.productName)}
+                    style={{
+                      padding: '8px 12px',
+                      cursor: 'pointer',
+                      borderBottom: '1px solid #f0f0f0',
+                      color: '#333',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px'
+                    }}
+                    onMouseDown={(e) => e.preventDefault()}
+                  >
+                    <img 
+                      src={s.imageUrl || 'https://via.placeholder.com/35'} 
+                      alt={s.productName} 
+                      style={{ width: '35px', height: '35px', objectFit: 'cover', borderRadius: '4px', backgroundColor: 'var(--green-100)' }} 
+                    />
+                    <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+                      <strong style={{ fontSize: '13px', color: '#111' }}>{s.productName}</strong>
+                      <span style={{ fontSize: '11px', color: '#e53e3e', fontWeight: 'bold' }}>
+                        {s.price.toLocaleString('vi-VN')}đ<span style={{ color: '#718096', fontWeight: 'normal' }}> / {s.unit}</span>
+                      </span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
 
           <div className="nav-icons">
@@ -209,9 +404,121 @@ export default function LanhLandingPage() {
               <button className={lang === "vi" ? "active" : ""} onClick={() => setLang("vi")}>VI</button>
               <button className={lang === "en" ? "active" : ""} onClick={() => setLang("en")}>EN</button>
             </div>
-            <button className="icon-btn" aria-label="Tài khoản">
-              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 5-6 8-6s6.5 2 8 6"/></svg>
-            </button>
+            <div style={{ position: 'relative' }}>
+              <button 
+                className="icon-btn" 
+                onClick={() => setShowUserDropdown(!showUserDropdown)} 
+                aria-label="Tài khoản"
+                title={currentUser ? `Xin chào, ${currentUser.fullName}` : "Tài khoản"}
+                style={{ display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer', border: 'none', background: 'none' }}
+              >
+                {currentUser && currentUser.avatarUrl ? (
+                  <img 
+                    src={currentUser.avatarUrl} 
+                    alt="Avatar" 
+                    style={{ width: '22px', height: '22px', borderRadius: '50%', objectFit: 'cover', border: '1.5px solid var(--green-700)' }} 
+                  />
+                ) : (
+                  <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 5-6 8-6s6.5 2 8 6"/></svg>
+                )}
+                {currentUser && <span style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--green-700)', maxWidth: '80px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{currentUser.fullName}</span>}
+              </button>
+              
+              {showUserDropdown && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  right: 0,
+                  backgroundColor: 'white',
+                  border: '1px solid #ddd',
+                  borderRadius: '6px',
+                  boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
+                  zIndex: 1000,
+                  width: '160px',
+                  padding: '5px 0',
+                  textAlign: 'left',
+                  display: 'flex',
+                  flexDirection: 'column'
+                }}>
+                  {currentUser ? (
+                    <>
+                      <div style={{ padding: '8px 12px', borderBottom: '1px solid #eee', fontSize: '12px', color: '#666' }}>
+                        Vai trò: {currentUser.roleId === 1 ? 'Admin' : (currentUser.roleId === 2 ? 'Supplier' : 'Khách hàng')}
+                      </div>
+                      <Link 
+                        href="/profile"
+                        style={{
+                          display: 'block',
+                          padding: '8px 12px',
+                          textDecoration: 'none',
+                          color: '#333',
+                          fontSize: '13px',
+                          borderBottom: '1px solid #eee'
+                        }}
+                      >
+                        Trang cá nhân
+                      </Link>
+                      <Link 
+                        href="/orders"
+                        style={{
+                          display: 'block',
+                          padding: '8px 12px',
+                          textDecoration: 'none',
+                          color: '#333',
+                          fontSize: '13px',
+                          borderBottom: '1px solid #eee'
+                        }}
+                      >
+                        Lịch sử đơn hàng
+                      </Link>
+                      <button 
+                        onClick={handleCustomerLogout}
+                        style={{
+                          width: '100%',
+                          padding: '8px 12px',
+                          border: 'none',
+                          background: 'none',
+                          textAlign: 'left',
+                          cursor: 'pointer',
+                          color: '#c62828',
+                          fontSize: '13px',
+                          fontWeight: 'bold'
+                        }}
+                      >
+                        Đăng xuất
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <Link 
+                        href="/login"
+                        style={{
+                          display: 'block',
+                          padding: '8px 12px',
+                          textDecoration: 'none',
+                          color: '#333',
+                          fontSize: '13px'
+                        }}
+                      >
+                        Đăng nhập
+                      </Link>
+                      <Link 
+                        href="/register"
+                        style={{
+                          display: 'block',
+                          padding: '8px 12px',
+                          textDecoration: 'none',
+                          color: '#333',
+                          fontSize: '13px'
+                        }}
+                      >
+                        Đăng ký
+                      </Link>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
             <button className={`icon-btn ${cartBounce ? "bounce" : ""}`} onClick={() => setIsDrawerOpen(true)} aria-label="Giỏ hàng">
               <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 4h2l2.4 12.2a2 2 0 002 1.8h7.7a2 2 0 002-1.6L21 8H6"/><circle cx="9.5" cy="21" r="1.3" fill="currentColor" stroke="none"/><circle cx="17.5" cy="21" r="1.3" fill="currentColor" stroke="none"/></svg>
               <span className="badge">{cart.reduce((s, i) => s + i.qty, 0)}</span>
@@ -313,7 +620,7 @@ export default function LanhLandingPage() {
             <span className="eyebrow">Sản phẩm nổi bật</span>
             <h2 className="section-title" style={{marginTop:'12px'}}>Thu hoạch hôm nay, giao tận cửa nhà bạn</h2>
 
-            <div className="filter-bar">
+            <div className="filter-bar" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
               <span className="filter-label">Chứng nhận</span>
               {['all', 'VietGAP', 'GlobalGAP', 'USDA'].map(c => (
                 <button key={c} className={`chip ${filterCert === c ? 'active' : ''}`} onClick={() => setFilterCert(c)}>
@@ -327,13 +634,50 @@ export default function LanhLandingPage() {
                   {r === 'all' ? 'Tất cả' : r}
                 </button>
               ))}
+              <div className="chip-sep"></div>
+              <span className="filter-label">Khoảng giá (đ)</span>
+              <input 
+                type="number" 
+                placeholder="Giá tối thiểu" 
+                value={minPrice}
+                onChange={(e) => setMinPrice(e.target.value === "" ? "" : Number(e.target.value))}
+                style={{ padding: '6px 10px', borderRadius: '20px', border: '1px solid #ddd', width: '110px', outline: 'none' }}
+              />
+              <span>-</span>
+              <input 
+                type="number" 
+                placeholder="Giá tối đa" 
+                value={maxPrice}
+                onChange={(e) => setMaxPrice(e.target.value === "" ? "" : Number(e.target.value))}
+                style={{ padding: '6px 10px', borderRadius: '20px', border: '1px solid #ddd', width: '110px', outline: 'none' }}
+              />
+              <button 
+                className="chip active" 
+                onClick={() => fetchProducts()}
+                style={{ cursor: 'pointer', border: 'none', background: 'var(--green-700)', color: 'white' }}
+              >
+                Lọc giá
+              </button>
+              {(minPrice !== "" || maxPrice !== "") && (
+                <button 
+                  className="chip" 
+                  onClick={() => { setMinPrice(""); setMaxPrice(""); fetchProducts(searchQuery, "", ""); }}
+                  style={{ cursor: 'pointer', border: 'none' }}
+                >
+                  Xóa lọc
+                </button>
+              )}
             </div>
 
             <div className="prod-grid">
-              {productsData.filter(p => (filterCert === 'all' || p.cert === filterCert) && (filterRegion === 'all' || p.region === filterRegion)).map(p => (
+              {products.filter(p => (filterCert === 'all' || p.cert === filterCert) && (filterRegion === 'all' || p.region === filterRegion)).map(p => (
                 <div key={p.id} className="prod-card">
                   <div className="prod-media" style={{background:'var(--green-100)'}}>
-                    {ICONS[p.icon]}
+                    {p.imageUrl ? (
+                      <img src={p.imageUrl} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      ICONS[p.icon]
+                    )}
                     <div className="tag-row">
                       <span className="tag-cert">{p.cert}</span>
                       <button className="qr-btn" onClick={() => setOpenQrFor(p.id)} aria-label="Xem truy xuất nguồn gốc">
@@ -521,7 +865,13 @@ export default function LanhLandingPage() {
           ) : (
             cart.map(item => (
               <div key={item.product.id} className="drawer-item">
-                <div className="thumb">{ICONS[item.product.icon]}</div>
+                <div className="thumb">
+                  {item.product.imageUrl ? (
+                    <img src={item.product.imageUrl} alt={item.product.name} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '4px' }} />
+                  ) : (
+                    ICONS[item.product.icon]
+                  )}
+                </div>
                 <div className="info">
                   <b>{item.product.name}</b>
                   <span>{item.product.price} {item.product.unit}</span>
@@ -540,7 +890,12 @@ export default function LanhLandingPage() {
         </div>
         <div className="drawer-foot">
           <div className="row"><span>Tạm tính</span><span>{toVND(totalCart)}</span></div>
-          <button className="btn btn-accent">Thanh toán nhanh</button>
+          <button 
+            className="btn btn-accent" 
+            onClick={handleGoToCheckout} 
+          >
+            Thanh toán ngay
+          </button>
         </div>
       </aside>
     </>

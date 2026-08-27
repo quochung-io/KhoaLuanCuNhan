@@ -10,9 +10,11 @@ public class AppDbContext : DbContext
     public DbSet<User> Users => Set<User>();
     public DbSet<Category> Categories => Set<Category>();
     public DbSet<Product> Products => Set<Product>();
+    public DbSet<ProductImage> ProductImages => Set<ProductImage>();
     public DbSet<ProductBatch> ProductBatches => Set<ProductBatch>();
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
+    public DbSet<Address> Addresses => Set<Address>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -30,8 +32,27 @@ public class AppDbContext : DbContext
             e.Property(u => u.PasswordHash).HasColumnName("PasswordHash").HasMaxLength(255).IsRequired();
             e.Property(u => u.RoleId).HasColumnName("RoleId").IsRequired();
             e.Property(u => u.Status).HasColumnName("Status").HasMaxLength(50);
+            e.Property(u => u.AvatarUrl).HasColumnName("AvatarUrl").HasMaxLength(255);
             e.Property(u => u.CreatedAt).HasColumnName("CreatedAt");
             e.Property(u => u.UpdatedAt).HasColumnName("UpdatedAt");
+        });
+
+        // ── Address ──────────────────────────────────
+        modelBuilder.Entity<Address>(e =>
+        {
+            e.ToTable("Addresses");
+            e.HasKey(a => a.AddressId);
+            e.Property(a => a.AddressId).HasColumnName("AddressId");
+            e.Property(a => a.UserId).HasColumnName("UserId").IsRequired();
+            e.Property(a => a.ReceiverName).HasColumnName("ReceiverName").HasMaxLength(100).IsRequired();
+            e.Property(a => a.Phone).HasColumnName("Phone").HasMaxLength(20).IsRequired();
+            e.Property(a => a.Province).HasColumnName("Province").HasMaxLength(100).IsRequired();
+            e.Property(a => a.District).HasColumnName("District").HasMaxLength(100).IsRequired();
+            e.Property(a => a.Ward).HasColumnName("Ward").HasMaxLength(100).IsRequired();
+            e.Property(a => a.AddressDetail).HasColumnName("AddressDetail").HasMaxLength(255).IsRequired();
+            e.Property(a => a.Latitude).HasColumnName("Latitude").HasColumnType("decimal(18,8)");
+            e.Property(a => a.Longitude).HasColumnName("Longitude").HasColumnType("decimal(18,8)");
+            e.Property(a => a.IsDefault).HasColumnName("IsDefault").IsRequired();
         });
 
         // ── Category ──────────────────────────────────
@@ -67,6 +88,23 @@ public class AppDbContext : DbContext
             e.HasOne(p => p.Category)
              .WithMany(c => c.Products)
              .HasForeignKey(p => p.CategoryId)
+             .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // ── ProductImage ──────────────────────────────
+        modelBuilder.Entity<ProductImage>(e =>
+        {
+            e.ToTable("ProductImages");
+            e.HasKey(i => i.ProductImageId);
+            e.Property(i => i.ProductImageId).HasColumnName("ProductImageId");
+            e.Property(i => i.ProductId).HasColumnName("ProductId").IsRequired();
+            e.Property(i => i.ImageUrl).HasColumnName("ImageUrl").HasMaxLength(255).IsRequired();
+            e.Property(i => i.IsPrimary).HasColumnName("IsPrimary").IsRequired();
+            e.Property(i => i.SortOrder).HasColumnName("SortOrder").IsRequired();
+
+            e.HasOne(i => i.Product)
+             .WithMany(p => p.ProductImages)
+             .HasForeignKey(i => i.ProductId)
              .OnDelete(DeleteBehavior.Cascade);
         });
 

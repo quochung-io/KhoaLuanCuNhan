@@ -50,4 +50,14 @@ export const orderService = {
   create: (data: any) => api.post('/orders', data),
   update: (id: number, data: any) => api.put(`/orders/${id}`, data),
   delete: (id: number) => api.delete(`/orders/${id}`),
+  getSummary: () => api.get('/orders/stats/summary'),
+  getRevenueWeekly: () => api.get('/orders/stats/revenue-weekly'),
+  getTopProducts: () => api.get('/orders/stats/top-products'),
+  getNearExpiry: () => api.get('/orders/stats/near-expiry'),
+};
+
+export const productImageService = {
+  getByProduct: (productId: number) => api.get(`/productimages/product/${productId}`),
+  create: (data: any) => api.post('/productimages', data),
+  delete: (id: number) => api.delete(`/productimages/${id}`),
 };

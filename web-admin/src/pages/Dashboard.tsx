@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Col, Row, Statistic, Table, Tag, Alert, Progress } from 'antd';
+import { Card, Col, Row, Statistic, Table, Tag, Alert, Progress, message } from 'antd';
 import { 
   ArrowUpOutlined, 
   ShoppingCartOutlined, 
@@ -20,66 +20,96 @@ import {
   BarChart, 
   Bar 
 } from 'recharts';
-import { productService, orderService } from '../services/api';
+import { orderService } from '../services/api';
 
-// Mock data cho Dashboard khi database trống
-const mockRevenueData = [
-  { name: 'T2', Revenue: 4000, Orders: 24 },
-  { name: 'T3', Revenue: 3000, Orders: 18 },
-  { name: 'T4', Revenue: 5000, Orders: 29 },
-  { name: 'T5', Revenue: 8000, Orders: 40 },
-  { name: 'T6', Revenue: 6000, Orders: 32 },
-  { name: 'T7', Revenue: 10000, Orders: 55 },
-  { name: 'CN', Revenue: 12000, Orders: 62 },
-];
+interface RevenuePoint {
+  name: string;
+  Revenue: number;
+  Orders: number;
+}
 
-const mockTopProducts = [
-  { name: 'Gạo ST25', sales: 120 },
-  { name: 'Sầu riêng Ri6', sales: 98 },
-  { name: 'Bơ sáp Đắk Lắk', sales: 86 },
-  { name: 'Măng cụt Lái Thiêu', sales: 74 },
-  { name: 'Bưởi da xanh', sales: 50 },
-];
+interface TopProduct {
+  name: string;
+  sales: number;
+}
 
-const mockNearExpiry = [
-  { id: 1, batchCode: 'L-2408-01', productName: 'Bơ sáp Đắk Lắk', qty: '150 kg', expiry: 'Còn 3 ngày', status: 'Cảnh báo đỏ' },
-  { id: 2, batchCode: 'L-2408-05', productName: 'Măng cụt Lái Thiêu', qty: '80 kg', expiry: 'Còn 5 ngày', status: 'Cảnh báo vàng' },
-  { id: 3, batchCode: 'L-2408-09', productName: 'Rau cải ngọt Organic', qty: '40 kg', expiry: 'Còn 1 ngày', status: 'Cảnh báo đỏ' },
-];
+interface NearExpiryBatch {
+  id: number;
+  batchCode: string;
+  productName: string;
+  qty: string;
+  expiry: string;
+  status: string;
+}
 
 export const Dashboard: React.FC = () => {
   const [stats, setStats] = useState({
-    totalRevenue: 48000000, // VND
-    totalOrders: 260,
-    totalProducts: 12,
-    totalUsers: 45,
+    totalRevenue: 0,
+    totalOrders: 0,
+    totalProducts: 0,
+    totalUsers: 0,
   });
 
-  useEffect(() => {
-    // Gọi API thật để đếm dữ liệu nếu có
-    const fetchStats = async () => {
-      try {
-        const prodRes = await productService.getAll();
-        const orderRes = await orderService.getAll();
-        
-        let revenue = 0;
-        let ordersCount = orderRes.data.length || 260;
-        
-        if (orderRes.data.length > 0) {
-          revenue = orderRes.data.reduce((sum: number, o: any) => sum + (o.totalAmount || 0), 0);
-        }
+  const [revenueData, setRevenueData] = useState<RevenuePoint[]>([]);
+  const [topProducts, setTopProducts] = useState<TopProduct[]>([]);
+  const [nearExpiry, setNearExpiry] = useState<NearExpiryBatch[]>([]);
+  const [loading, setLoading] = useState(false);
 
-        setStats({
-          totalRevenue: revenue > 0 ? revenue : 48000000,
-          totalOrders: ordersCount,
-          totalProducts: prodRes.data.length || 12,
-          totalUsers: 45, // Giả định
-        });
-      } catch (error) {
-        console.log('Using mock data for stats', error);
-      }
-    };
-    fetchStats();
+  const loadDashboardData = async () => {
+    setLoading(true);
+    try {
+      // 1. Tải số liệu tổng quan
+      const summaryRes = await orderService.getSummary();
+      setStats(summaryRes.data);
+
+      // 2. Tải doanh thu hàng tuần
+      const revenueRes = await orderService.getRevenueWeekly();
+      setRevenueData(revenueRes.data);
+
+      // 3. Tải top sản phẩm bán chạy
+      const topProdRes = await orderService.getTopProducts();
+      setTopProducts(topProdRes.data);
+
+      // 4. Tải lô hàng sắp hết hạn
+      const expiryRes = await orderService.getNearExpiry();
+      setNearExpiry(expiryRes.data);
+    } catch (error) {
+      message.error('Không thể kết nối API thống kê. Đang hiển thị dữ liệu giả lập.');
+      
+      // Fallbacks
+      setStats({
+        totalRevenue: 48500000,
+        totalOrders: 154,
+        totalProducts: 8,
+        totalUsers: 25
+      });
+      setRevenueData([
+        { name: 'T2', Revenue: 4000, Orders: 24 },
+        { name: 'T3', Revenue: 3000, Orders: 18 },
+        { name: 'T4', Revenue: 5000, Orders: 29 },
+        { name: 'T5', Revenue: 8000, Orders: 40 },
+        { name: 'T6', Revenue: 6000, Orders: 32 },
+        { name: 'T7', Revenue: 10000, Orders: 55 },
+        { name: 'CN', Revenue: 12000, Orders: 62 },
+      ]);
+      setTopProducts([
+        { name: 'Cải bó xôi', sales: 120 },
+        { name: 'Cà rốt baby', sales: 98 },
+        { name: 'Cam Cao Phong', sales: 86 },
+        { name: 'Dâu tây Mộc Châu', sales: 74 },
+        { name: 'Mật ong rừng', sales: 50 },
+      ]);
+      setNearExpiry([
+        { id: 1, batchCode: 'LOT-VN-DL-08', productName: 'Cải bó xôi hữu cơ', qty: '150 kg', expiry: 'Còn 3 ngày', status: 'Cảnh báo đỏ' },
+        { id: 2, batchCode: 'LOT-VN-MC-02', productName: 'Mật ong rừng nguyên chất', qty: '80 kg', expiry: 'Còn 5 ngày', status: 'Cảnh báo vàng' }
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadDashboardData();
   }, []);
 
   const nearExpiryColumns = [
@@ -96,32 +126,34 @@ export const Dashboard: React.FC = () => {
     <div style={{ padding: 24 }}>
       <h2 style={{ marginBottom: 24 }}>Dashboard Quản Trị Hệ Thống ECC</h2>
 
-      {/* Thông báo cảnh báo sớm */}
-      <Alert
-        message="Cảnh báo lô hàng sắp hết hạn"
-        description="Phát hiện 3 lô hàng nông sản đang lưu kho sắp quá hạn sử dụng. Vui lòng kiểm tra và lên chương trình xả kho (FEFO)."
-        type="warning"
-        showIcon
-        icon={<WarningOutlined />}
-        style={{ marginBottom: 24 }}
-      />
+      {/* Thông báo cảnh báo sớm nếu có lô hàng sắp hết hạn */}
+      {nearExpiry.length > 0 && (
+        <Alert
+          message="Cảnh báo lô hàng sắp hết hạn (FEFO)"
+          description={`Phát hiện ${nearExpiry.length} lô hàng nông sản sắp đến hạn sử dụng trong 15 ngày tới. Vui lòng kiểm tra và lên chương trình xả kho.`}
+          type="warning"
+          showIcon
+          icon={<WarningOutlined />}
+          style={{ marginBottom: 24 }}
+        />
+      )}
 
       {/* Thẻ thống kê */}
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
         <Col xs={24} sm={12} lg={6}>
-          <Card>
+          <Card loading={loading}>
             <Statistic
-              title="Tổng Doanh Thu (Tuần này)"
+              title="Tổng Doanh Thu Hệ Thống"
               value={stats.totalRevenue}
               precision={0}
               valueStyle={{ color: '#3f8600' }}
               prefix={<ArrowUpOutlined />}
-              suffix=" VNĐ"
+              suffix=" đ"
             />
           </Card>
         </Col>
         <Col xs={24} sm={12} lg={6}>
-          <Card>
+          <Card loading={loading}>
             <Statistic
               title="Tổng Đơn Hàng"
               value={stats.totalOrders}
@@ -130,7 +162,7 @@ export const Dashboard: React.FC = () => {
           </Card>
         </Col>
         <Col xs={24} sm={12} lg={6}>
-          <Card>
+          <Card loading={loading}>
             <Statistic
               title="Sản Phẩm Đang Bán"
               value={stats.totalProducts}
@@ -139,7 +171,7 @@ export const Dashboard: React.FC = () => {
           </Card>
         </Col>
         <Col xs={24} sm={12} lg={6}>
-          <Card>
+          <Card loading={loading}>
             <Statistic
               title="Thành Viên Hệ Thống"
               value={stats.totalUsers}
@@ -152,17 +184,17 @@ export const Dashboard: React.FC = () => {
       {/* Biểu đồ */}
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
         <Col xs={24} lg={16}>
-          <Card title="Xu Hướng Doanh Thu & Đơn Hàng (Tuần qua)">
+          <Card title="Xu Hướng Doanh Thu & Đơn Hàng (7 ngày qua)" loading={loading}>
             <div style={{ width: '100%', height: 300 }}>
               <ResponsiveContainer>
-                <LineChart data={mockRevenueData}>
+                <LineChart data={revenueData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" />
                   <YAxis yAxisId="left" />
                   <YAxis yAxisId="right" orientation="right" />
-                  <Tooltip />
+                  <Tooltip formatter={(value) => typeof value === 'number' ? value.toLocaleString('vi-VN') : value} />
                   <Legend />
-                  <Line yAxisId="left" type="monotone" dataKey="Revenue" stroke="#8884d8" name="Doanh Thu (VNĐ)" activeDot={{ r: 8 }} />
+                  <Line yAxisId="left" type="monotone" dataKey="Revenue" stroke="#8884d8" name="Doanh Thu (đ)" activeDot={{ r: 8 }} />
                   <Line yAxisId="right" type="monotone" dataKey="Orders" stroke="#82ca9d" name="Số Đơn Hàng" />
                 </LineChart>
               </ResponsiveContainer>
@@ -170,14 +202,14 @@ export const Dashboard: React.FC = () => {
           </Card>
         </Col>
         <Col xs={24} lg={8}>
-          <Card title="Sản Phẩm Bán Chạy (Sản lượng kg)">
+          <Card title="Top 5 Sản Phẩm Bán Chạy" loading={loading}>
             <div style={{ width: '100%', height: 300 }}>
               <ResponsiveContainer>
-                <BarChart data={mockTopProducts}>
+                <BarChart data={topProducts}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" />
                   <YAxis />
-                  <Tooltip />
+                  <Tooltip formatter={(value) => `${value} kg`} />
                   <Bar dataKey="sales" fill="#52c41a" name="Sản lượng bán (kg)" />
                 </BarChart>
               </ResponsiveContainer>
@@ -189,13 +221,14 @@ export const Dashboard: React.FC = () => {
       {/* Cảnh báo lô hàng hết hạn & hiệu quả AI */}
       <Row gutter={[16, 16]}>
         <Col xs={24} lg={14}>
-          <Card title="Lô Hàng Cần Xử Lý Gấp (Cảnh báo FEFO)">
+          <Card title="Lô Hàng Cần Xử Lý Gấp (Cảnh báo FEFO)" loading={loading}>
             <Table
-              dataSource={mockNearExpiry}
+              dataSource={nearExpiry}
               columns={nearExpiryColumns}
               pagination={false}
               rowKey="id"
               size="middle"
+              locale={{ emptyText: 'Không có lô hàng nào sắp hết hạn trong 15 ngày tới' }}
             />
           </Card>
         </Col>

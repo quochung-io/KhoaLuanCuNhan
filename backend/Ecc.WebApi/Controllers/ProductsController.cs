@@ -17,11 +17,59 @@ public class ProductsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Product>>> GetProducts()
+    public async Task<ActionResult<IEnumerable<Product>>> GetProducts(
+        [FromQuery] string? search,
+        [FromQuery] decimal? minPrice,
+        [FromQuery] decimal? maxPrice)
     {
-        return await _context.Products
+        var query = _context.Products
             .Include(p => p.Category)
+            .Include(p => p.ProductImages)
+            .AsQueryable();
+
+        // 1. Tìm kiếm theo tên
+        if (!string.IsNullOrEmpty(search))
+        {
+            query = query.Where(p => p.ProductName.Contains(search));
+        }
+
+        // 2. Lọc theo khoảng giá
+        if (minPrice.HasValue)
+        {
+            query = query.Where(p => p.Price >= minPrice.Value);
+        }
+
+        if (maxPrice.HasValue)
+        {
+            query = query.Where(p => p.Price <= maxPrice.Value);
+        }
+
+        return await query.ToListAsync();
+    }
+
+    [HttpGet("autocomplete")]
+    public async Task<ActionResult<IEnumerable<object>>> GetAutocompleteSuggestions([FromQuery] string prefix)
+    {
+        if (string.IsNullOrEmpty(prefix))
+        {
+            return BadRequest("Prefix query parameter is required.");
+        }
+
+        // Tìm các sản phẩm có tên chứa prefix và lấy thông tin cơ bản kèm ảnh
+        var suggestions = await _context.Products
+            .Include(p => p.ProductImages)
+            .Where(p => p.ProductName.Contains(prefix))
+            .Select(p => new {
+                ProductId = p.ProductId,
+                ProductName = p.ProductName,
+                Price = p.Price,
+                Unit = p.Unit,
+                ImageUrl = p.ProductImages.OrderBy(img => img.SortOrder).Select(img => img.ImageUrl).FirstOrDefault()
+            })
+            .Take(5)
             .ToListAsync();
+
+        return Ok(suggestions);
     }
 
     [HttpGet("{id}")]
@@ -29,6 +77,7 @@ public class ProductsController : ControllerBase
     {
         var product = await _context.Products
             .Include(p => p.Category)
+            .Include(p => p.ProductImages)
             .FirstOrDefaultAsync(p => p.ProductId == id);
 
         if (product == null) return NotFound();

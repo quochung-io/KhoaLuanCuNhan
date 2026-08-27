@@ -11,6 +11,7 @@ public class User
     public string PasswordHash { get; set; } = null!;
     public int RoleId { get; set; }
     public string? Status { get; set; }
+    public string? AvatarUrl { get; set; }
     public DateTime? CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
 

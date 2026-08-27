@@ -1,13 +1,21 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Button, Space, Modal, Form, Input, Select, message, Card, Tabs, InputNumber } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
-import { productService, categoryService } from '../services/api';
+import { Table, Button, Space, Modal, Form, Input, Select, message, Card, Tabs, InputNumber, Checkbox, Image, Tag } from 'antd';
+import { PlusOutlined, EditOutlined, DeleteOutlined, PictureOutlined } from '@ant-design/icons';
+import { productService, categoryService, productImageService } from '../services/api';
 
 interface Category {
   categoryId: number;
   categoryName: string;
   description?: string;
   status?: string;
+}
+
+interface ProductImage {
+  productImageId: number;
+  productId: number;
+  imageUrl: string;
+  isPrimary: boolean;
+  sortOrder: number;
 }
 
 interface Product {
@@ -30,11 +38,19 @@ export const Products: React.FC = () => {
   // Modals
   const [isProdModalOpen, setIsProdModalOpen] = useState(false);
   const [isCatModalOpen, setIsCatModalOpen] = useState(false);
+  const [isImgModalOpen, setIsImgModalOpen] = useState(false);
+
   const [editingProd, setEditingProd] = useState<Product | null>(null);
   const [editingCat, setEditingCat] = useState<Category | null>(null);
+  
+  // States cho Quản lý Ảnh
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [productImages, setProductImages] = useState<ProductImage[]>([]);
+  const [imgLoading, setImgLoading] = useState(false);
 
   const [prodForm] = Form.useForm();
   const [catForm] = Form.useForm();
+  const [imgForm] = Form.useForm();
 
   const loadData = async () => {
     setLoading(true);
@@ -54,6 +70,75 @@ export const Products: React.FC = () => {
   useEffect(() => {
     loadData();
   }, []);
+
+  // --- Image Management ---
+  const handleOpenImages = async (prod: Product) => {
+    setSelectedProduct(prod);
+    setIsImgModalOpen(true);
+    setImgLoading(true);
+    imgForm.resetFields();
+    try {
+      const res = await productImageService.getByProduct(prod.productId);
+      setProductImages(res.data);
+    } catch (error) {
+      message.error('Không thể tải danh sách hình ảnh.');
+    } finally {
+      setImgLoading(false);
+    }
+  };
+
+  const handleAddImage = async () => {
+    if (!selectedProduct) return;
+    try {
+      const values = await imgForm.validateFields();
+      setImgLoading(true);
+      
+      const payload = {
+        productId: selectedProduct.productId,
+        imageUrl: values.imageUrl,
+        isPrimary: !!values.isPrimary,
+        sortOrder: productImages.length + 1
+      };
+
+      await productImageService.create(payload);
+      message.success('Thêm URL ảnh thành công và đã lưu vào Database!');
+      imgForm.resetFields();
+      
+      // Load lại ảnh
+      const res = await productImageService.getByProduct(selectedProduct.productId);
+      setProductImages(res.data);
+    } catch (error) {
+      message.error('Không thể thêm hình ảnh.');
+    } finally {
+      setImgLoading(false);
+    }
+  };
+
+  const handleDeleteImage = async (imageId: number) => {
+    if (!selectedProduct) return;
+    Modal.confirm({
+      title: 'Xác nhận xóa ảnh',
+      content: 'Bạn có chắc chắn muốn xóa liên kết hình ảnh này?',
+      okText: 'Xóa',
+      cancelText: 'Hủy',
+      okType: 'danger',
+      onOk: async () => {
+        try {
+          setImgLoading(true);
+          await productImageService.delete(imageId);
+          message.success('Đã xóa hình ảnh khỏi Database.');
+          
+          // Load lại ảnh
+          const res = await productImageService.getByProduct(selectedProduct.productId);
+          setProductImages(res.data);
+        } catch (error) {
+          message.error('Xóa ảnh thất bại.');
+        } finally {
+          setImgLoading(false);
+        }
+      }
+    });
+  };
 
   // --- Category CRUD ---
   const handleOpenAddCat = () => {
@@ -159,7 +244,7 @@ export const Products: React.FC = () => {
       const values = await prodForm.validateFields();
       const payload = {
         ...values,
-        supplierId: values.supplierId || 2 // Mặc định SupplierId = 2 nếu không chọn
+        supplierId: values.supplierId || 2
       };
 
       if (editingProd) {
@@ -205,6 +290,7 @@ export const Products: React.FC = () => {
       key: 'actions',
       render: (_: any, record: Product) => (
         <Space size="middle">
+          <Button icon={<PictureOutlined />} style={{ color: '#1890ff', borderColor: '#1890ff' }} onClick={() => handleOpenImages(record)}>Ảnh</Button>
           <Button icon={<EditOutlined />} onClick={() => handleOpenEditProd(record)}>Sửa</Button>
           <Button icon={<DeleteOutlined />} danger onClick={() => handleDeleteProd(record.productId)}>Xóa</Button>
         </Space>
@@ -311,6 +397,80 @@ export const Products: React.FC = () => {
             </Select>
           </Form.Item>
         </Form>
+      </Modal>
+
+      {/* Image Gallery Management Modal */}
+      <Modal
+        title={`Quản Lý Hình Ảnh: ${selectedProduct?.productName}`}
+        open={isImgModalOpen}
+        footer={[
+          <Button key="close" onClick={() => setIsImgModalOpen(false)}>Đóng</Button>
+        ]}
+        onCancel={() => setIsImgModalOpen(false)}
+        width={700}
+      >
+        <div style={{ marginTop: 15 }}>
+          {/* Form thêm ảnh bằng URL */}
+          <Card title="Thêm Hình Ảnh Mới Bằng URL" size="small" style={{ marginBottom: 20 }}>
+            <Form form={imgForm} layout="inline" onFinish={handleAddImage}>
+              <Form.Item 
+                name="imageUrl" 
+                style={{ flex: 1 }}
+                rules={[{ required: true, message: 'Nhập URL hình ảnh!' }]}
+              >
+                <Input placeholder="Nhập URL hình ảnh (ví dụ: http://example.com/img.jpg)" />
+              </Form.Item>
+              <Form.Item name="isPrimary" valuePropName="checked">
+                <Checkbox>Ảnh chính</Checkbox>
+              </Form.Item>
+              <Form.Item>
+                <Button type="primary" htmlType="submit" loading={imgLoading} icon={<PlusOutlined />}>
+                  Lưu
+                </Button>
+              </Form.Item>
+            </Form>
+          </Card>
+
+          {/* Danh sách ảnh hiện có */}
+          <h4 style={{ marginBottom: 12 }}>Danh sách ảnh trong Database:</h4>
+          <Table
+            dataSource={productImages}
+            loading={imgLoading}
+            rowKey="productImageId"
+            size="small"
+            pagination={false}
+            columns={[
+              {
+                title: 'Xem trước',
+                dataIndex: 'imageUrl',
+                key: 'imageUrl',
+                width: 120,
+                render: (url: string) => <Image src={url} width={80} height={80} style={{ objectFit: 'cover', borderRadius: 4 }} fallback="https://via.placeholder.com/80" />
+              },
+              {
+                title: 'Đường dẫn URL',
+                dataIndex: 'imageUrl',
+                key: 'urlText',
+                render: (url: string) => <div style={{ wordBreak: 'break-all', fontSize: '13px' }}>{url}</div>
+              },
+              {
+                title: 'Ảnh chính',
+                dataIndex: 'isPrimary',
+                key: 'isPrimary',
+                width: 100,
+                render: (isPrimary: boolean) => <Tag color={isPrimary ? 'green' : 'gray'}>{isPrimary ? 'PRIMARY' : 'NORMAL'}</Tag>
+              },
+              {
+                title: 'Tác vụ',
+                key: 'action',
+                width: 80,
+                render: (_: any, record: ProductImage) => (
+                  <Button danger icon={<DeleteOutlined />} onClick={() => handleDeleteImage(record.productImageId)}>Xóa</Button>
+                )
+              }
+            ]}
+          />
+        </div>
       </Modal>
     </div>
   );

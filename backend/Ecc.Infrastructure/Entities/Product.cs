@@ -20,6 +20,8 @@ public class Product
 
     public Category? Category { get; set; }
     
+    public ICollection<ProductImage> ProductImages { get; set; } = new List<ProductImage>();
+    
     [JsonIgnore]
     public ICollection<ProductBatch> ProductBatches { get; set; } = new List<ProductBatch>();
     
