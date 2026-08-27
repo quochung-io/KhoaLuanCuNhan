@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../../data/models/product_model.dart';
 import '../product_detail/product_detail_screen.dart';
 
@@ -13,15 +13,27 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   String _selectedRegion = 'Tất cả';
   String _selectedCert = 'Tất cả';
+  String _selectedCategory = 'Tất cả';
+  String _selectedSort = 'Mặc định';
 
   @override
   Widget build(BuildContext context) {
-    // Lọc sản phẩm
-    final filteredProducts = productsData.where((p) {
+    // 1. Lọc sản phẩm theo Vùng, Chuẩn và Loại sản phẩm
+    var filteredProducts = productsData.where((p) {
       final matchesRegion = _selectedRegion == 'Tất cả' || p.region == _selectedRegion;
       final matchesCert = _selectedCert == 'Tất cả' || p.cert.contains(_selectedCert);
-      return matchesRegion && matchesCert;
+      final matchesCategory = _selectedCategory == 'Tất cả' || p.category == _selectedCategory;
+      return matchesRegion && matchesCert && matchesCategory;
     }).toList();
+
+    // 2. Sắp xếp sản phẩm theo Giá / Đánh giá
+    if (_selectedSort == 'Giá tăng dần') {
+      filteredProducts.sort((a, b) => a.price.compareTo(b.price));
+    } else if (_selectedSort == 'Giá giảm dần') {
+      filteredProducts.sort((a, b) => b.price.compareTo(a.price));
+    } else if (_selectedSort == 'Đánh giá cao') {
+      filteredProducts.sort((a, b) => b.rating.compareTo(a.rating));
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -140,7 +152,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         ElevatedButton(
                           onPressed: () {
-                            // Tạo product combo giả lập
                             final combo = Product(
                               id: 99,
                               name: 'Combo Nông Sản Gia Đình',
@@ -175,32 +186,38 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SizedBox(height: 24),
 
-              // Bộ lọc danh mục (Chips)
+              // Bộ lọc & Sắp xếp
               const Text(
-                'Lọc theo nguồn gốc & chứng nhận',
+                'Lọc & Sắp xếp Nông sản',
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF1B3A20),
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 10),
+
+              // Horizontal Filters & Sort Chips
               SizedBox(
-                height: 36,
+                height: 38,
                 child: ListView(
                   scrollDirection: Axis.horizontal,
                   children: [
+                    _buildFilterChip('Sắp xếp:', ['Mặc định', 'Giá tăng dần', 'Giá giảm dần', 'Đánh giá cao'], _selectedSort, (val) {
+                      setState(() => _selectedSort = val);
+                    }, icon: Icons.sort),
+                    const SizedBox(width: 8),
+                    _buildFilterChip('Loại:', ['Tất cả', 'Rau củ', 'Trái cây', 'Thực phẩm'], _selectedCategory, (val) {
+                      setState(() => _selectedCategory = val);
+                    }, icon: Icons.category_outlined),
+                    const SizedBox(width: 8),
                     _buildFilterChip('Vùng:', ['Tất cả', 'Đà Lạt', 'Mộc Châu', 'Đồng Tháp'], _selectedRegion, (val) {
-                      setState(() {
-                        _selectedRegion = val;
-                      });
-                    }),
+                      setState(() => _selectedRegion = val);
+                    }, icon: Icons.location_on_outlined),
                     const SizedBox(width: 8),
                     _buildFilterChip('Chuẩn:', ['Tất cả', 'VietGAP', 'GlobalGAP', 'USDA'], _selectedCert, (val) {
-                      setState(() {
-                        _selectedCert = val;
-                      });
-                    }),
+                      setState(() => _selectedCert = val);
+                    }, icon: Icons.verified_outlined),
                   ],
                 ),
               ),
@@ -238,8 +255,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Widget tạo Dropdown/Filter Chip
-  Widget _buildFilterChip(String prefix, List<String> options, String selectedValue, Function(String) onSelected) {
+  Widget _buildFilterChip(String prefix, List<String> options, String selectedValue, Function(String) onSelected, {IconData? icon}) {
     return PopupMenuButton<String>(
       onSelected: onSelected,
       itemBuilder: (context) {
@@ -251,15 +267,19 @@ class _HomeScreenState extends State<HomeScreen> {
         }).toList();
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: selectedValue != 'Tất cả' && selectedValue != 'Mặc định' ? const Color(0xFFE3F1E3) : Colors.white,
           borderRadius: BorderRadius.circular(999),
           border: Border.all(color: const Color(0xFFE1EAE0)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
+            if (icon != null) ...[
+              Icon(icon, size: 14, color: const Color(0xFF2E7D32)),
+              const SizedBox(width: 4),
+            ],
             Text(
               '$prefix ',
               style: const TextStyle(color: Color(0xFF8D9E90), fontSize: 12),
@@ -275,7 +295,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Thẻ sản phẩm UI tương đồng web LÀNH
   Widget _buildProductCard(BuildContext context, Product product) {
     return GestureDetector(
       onTap: () {
@@ -316,9 +335,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Hero(
                   tag: 'product-icon-${product.id}',
                   child: Icon(
-                     product.icon,
-                     size: 54,
-                     color: product.color,
+                    product.icon,
+                    size: 54,
+                    color: product.color,
                   ),
                 ),
               ),
@@ -329,7 +348,7 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Cert & Origin tags
+                  // Cert & Category tags
                   Row(
                     children: [
                       Container(
@@ -349,7 +368,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        product.region,
+                        product.category,
                         style: const TextStyle(
                           color: Color(0xFF8D9E90),
                           fontSize: 9,

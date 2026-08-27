@@ -1,8 +1,11 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'register_screen.dart';
 import 'forgot_password_screen.dart';
 import '../main_container.dart';
+import '../admin/admin_dashboard_screen.dart';
+import '../supplier/supplier_dashboard_screen.dart';
 import '../../../core/theme.dart';
+import '../../../data/api_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -16,6 +19,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -24,20 +28,63 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _handleLogin() {
-    if (_formKey.currentState!.validate()) {
-      // Mockup login thành công
+  Future<void> _handleLogin() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final email = _emailController.text.trim();
+      final password = _passwordController.text;
+
+      // Gọi API thực tế tới Backend SQL Server
+      final result = await ApiService.login(email, password);
+      final user = result['user'] as Map<String, dynamic>;
+      final role = (user['role'] ?? 'CUSTOMER').toString().toUpperCase();
+
+      if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Đăng nhập thành công với tài khoản LÀNH!'),
+        SnackBar(
+          content: Text('Xin chào ${user['fullName'] ?? email} ($role)'),
           backgroundColor: LanhTheme.primaryColor,
         ),
       );
-      // Chuyển hướng vào màn hình chính
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const MainContainer()),
+
+      // Phân luồng điều hướng màn hình theo đúng Role
+      if (role == 'ADMIN') {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => AdminDashboardScreen(user: user)),
+        );
+      } else if (role == 'SUPPLIER') {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => SupplierDashboardScreen(user: user)),
+        );
+      } else {
+        // CUSTOMER -> Màn hình Mua hàng Storefront
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const MainContainer()),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceAll('Exception: ', '')),
+          backgroundColor: Colors.red,
+        ),
       );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -53,7 +100,7 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const SizedBox(height: 40),
+                const SizedBox(height: 30),
                 // Logo & Title
                 Center(
                   child: Container(
@@ -64,47 +111,49 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     child: const Icon(
                       Icons.spa_rounded,
-                      size: 64,
+                      size: 60,
                       color: LanhTheme.primaryColor,
                     ),
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
                 const Center(
                   child: Text(
                     'Nông Sản LÀNH',
                     style: TextStyle(
-                      fontSize: 28,
+                      fontSize: 24,
                       fontWeight: FontWeight.bold,
                       color: LanhTheme.primaryColor,
-                      letterSpacing: 1.2,
+                      fontFamily: 'Fraunces',
                     ),
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 const Center(
                   child: Text(
-                    'Ăn Lành - Sống Khỏe - Trọn Vị Tự Nhiên',
+                    'Đăng nhập hệ thống đa phân hệ',
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: 13,
                       color: Colors.grey,
-                      fontStyle: FontStyle.italic,
                     ),
                   ),
                 ),
-                const SizedBox(height: 48),
+                const SizedBox(height: 28),
 
                 // Email Input
                 const Text(
-                  'Email đăng nhập',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                  'Email',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   decoration: InputDecoration(
-                    hintText: 'Nhập email của bạn (VD: customer@nongsan.local)',
+                    hintText: 'Nhập email (VD: admin@gmail.com)',
                     prefixIcon: const Icon(Icons.email_outlined, color: LanhTheme.primaryColor),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -118,13 +167,13 @@ class _LoginScreenState extends State<LoginScreen> {
                     if (value == null || value.trim().isEmpty) {
                       return 'Vui lòng nhập email!';
                     }
-                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)*[\w-]{2,}$').hasMatch(value.trim())) {
                       return 'Email không đúng định dạng!';
                     }
                     return null;
                   },
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 18),
 
                 // Password Input
                 Row(
@@ -132,21 +181,26 @@ class _LoginScreenState extends State<LoginScreen> {
                   children: [
                     const Text(
                       'Mật khẩu',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
                     ),
                     GestureDetector(
                       onTap: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => const ForgotPasswordScreen()),
+                          MaterialPageRoute(
+                            builder: (context) => const ForgotPasswordScreen(),
+                          ),
                         );
                       },
                       child: const Text(
                         'Quên mật khẩu?',
                         style: TextStyle(
                           color: LanhTheme.primaryColor,
+                          fontSize: 13,
                           fontWeight: FontWeight.bold,
-                          fontSize: 14,
                         ),
                       ),
                     ),
@@ -157,11 +211,11 @@ class _LoginScreenState extends State<LoginScreen> {
                   controller: _passwordController,
                   obscureText: _obscurePassword,
                   decoration: InputDecoration(
-                    hintText: 'Nhập mật khẩu của bạn',
+                    hintText: 'Nhập mật khẩu (VD: Demo@123)',
                     prefixIcon: const Icon(Icons.lock_outline, color: LanhTheme.primaryColor),
                     suffixIcon: IconButton(
                       icon: Icon(
-                        _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                        _obscurePassword ? Icons.visibility_off : Icons.visibility,
                         color: Colors.grey,
                       ),
                       onPressed: () {
@@ -188,11 +242,11 @@ class _LoginScreenState extends State<LoginScreen> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 28),
 
                 // Login Button
                 ElevatedButton(
-                  onPressed: _handleLogin,
+                  onPressed: _isLoading ? null : _handleLogin,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: LanhTheme.primaryColor,
                     foregroundColor: Colors.white,
@@ -202,12 +256,39 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     elevation: 2,
                   ),
-                  child: const Text(
-                    'Đăng Nhập',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  child: _isLoading
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                        )
+                      : const Text(
+                          'Đăng Nhập',
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                ),
+                const SizedBox(height: 20),
+
+                // Quick Role Guide Box
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade50,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.grey.shade200),
+                  ),
+                  child: const Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('💡 Tài khoản demo hệ thống (MK: Demo@123):', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                      SizedBox(height: 4),
+                      Text('• Quản trị viên: admin@gmail.com (Role: ADMIN)', style: TextStyle(fontSize: 11, color: Colors.indigo)),
+                      Text('• Nhà cung ứng: dalat@gmail.com (Role: SUPPLIER)', style: TextStyle(fontSize: 11, color: Colors.green)),
+                      Text('• Khách hàng: minhanh@gmail.com (Role: CUSTOMER)', style: TextStyle(fontSize: 11, color: Colors.teal)),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 20),
 
                 // Register Redirect
                 Row(

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../data/models/product_model.dart';
 import '../../data/models/cart_item_model.dart';
 import 'home/home_screen.dart';
@@ -7,7 +7,8 @@ import 'cart/cart_screen.dart';
 import 'profile/profile_screen.dart';
 
 class MainContainer extends StatefulWidget {
-  const MainContainer({super.key});
+  final Map<String, dynamic>? user;
+  const MainContainer({super.key, this.user});
 
   @override
   State<MainContainer> createState() => MainContainerState();
@@ -54,12 +55,11 @@ class MainContainerState extends State<MainContainer> {
     });
   }
 
-  // Chuyển Tab và tự động điền mã QR nếu quét thành công
   String? _scannedLotCode;
   void navigateToTrace(String lotCode) {
     setState(() {
       _scannedLotCode = lotCode;
-      _currentIndex = 1; // Mở Tab Truy xuất
+      _currentIndex = 1;
     });
   }
 
@@ -76,7 +76,7 @@ class MainContainerState extends State<MainContainer> {
         onUpdateQty: _updateQty,
         onCheckoutSuccess: _clearCart,
       ),
-      const ProfileScreen(),
+      ProfileScreen(user: widget.user),
     ];
 
     return Scaffold(

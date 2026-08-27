@@ -117,7 +117,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           if (value == null || value.trim().isEmpty) {
                             return 'Vui lòng nhập email!';
                           }
-                          if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                          if (!RegExp(r'^[\w-\.]+@([\w-]+\.)*[\w-]{2,}$').hasMatch(value.trim())) {
                             return 'Email không hợp lệ!';
                           }
                           return null;
