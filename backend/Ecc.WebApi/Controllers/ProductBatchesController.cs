@@ -17,11 +17,14 @@ public class ProductBatchesController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<ProductBatch>>> GetProductBatches()
+    public async Task<ActionResult<IEnumerable<ProductBatch>>> GetProductBatches([FromQuery] long? productId = null)
     {
-        return await _context.ProductBatches
-            .Include(b => b.Product)
-            .ToListAsync();
+        var query = _context.ProductBatches.Include(b => b.Product).AsQueryable();
+        if (productId.HasValue)
+        {
+            query = query.Where(b => b.ProductId == productId.Value);
+        }
+        return await query.ToListAsync();
     }
 
     [HttpGet("{id}")]

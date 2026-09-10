@@ -13,4 +13,5 @@ public class Address
     public decimal? Latitude { get; set; }
     public decimal? Longitude { get; set; }
     public bool IsDefault { get; set; }
+    public string? AddressType { get; set; } = "Nhà ở";
 }

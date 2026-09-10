@@ -1,7 +1,53 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Button, Space, Modal, Form, Input, Select, message, Card, Tabs, InputNumber, Checkbox, Image, Tag } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, PictureOutlined } from '@ant-design/icons';
+import { Table, Button, Space, Modal, Form, Input, Select, message, Card, Tabs, InputNumber, Checkbox, Image, Tag, Tooltip, Row, Col, Divider } from 'antd';
+import { PlusOutlined, EditOutlined, DeleteOutlined, PictureOutlined, StarOutlined, StarFilled, ThunderboltOutlined, SaveOutlined } from '@ant-design/icons';
 import { productService, categoryService, productImageService } from '../services/api';
+
+const SAMPLE_SUB_IMAGES: Record<string, string[]> = {
+  'Trái cây': [
+    'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=800&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=800&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1550258987-190a2d41a8ba?w=800&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1519996529931-28324d5a630e?w=800&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1490818387583-1baba5e638af?w=800&auto=format&fit=crop&q=80'
+  ],
+  'Gạo': [
+    'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=800&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1530595467537-0b5996c41f2d?w=800&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1536304929831-ee1ca9d44906?w=800&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=800&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1516684732162-798a0062be99?w=800&auto=format&fit=crop&q=80'
+  ],
+  'Hạt': [
+    'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=800&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1536591375315-1b838421c0f0?w=800&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=800&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1528751014936-863e6e7a319c?w=800&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1517673132405-a56a62b18caf?w=800&auto=format&fit=crop&q=80'
+  ],
+  'Rau thơm': [
+    'https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?w=800&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1509358271058-acd22cc93898?w=800&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=800&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1532336414038-cf19250c5757?w=800&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1547592180-85f173990554?w=800&auto=format&fit=crop&q=80'
+  ],
+  'Rau củ': [
+    'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=800&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1592417817098-8f3d6910985c?w=800&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1595855759920-86582396756a?w=800&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1566385101042-1a0aa0c1268c?w=800&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800&auto=format&fit=crop&q=80'
+  ]
+};
+
+const SUB_IMAGE_LABELS = [
+  'Góc 1: Cận cảnh độ tươi ngon',
+  'Góc 2: Vườn trồng / Trang trại',
+  'Góc 3: Thu hoạch tại vườn',
+  'Góc 4: Đóng gói sạch FreshLock',
+  'Góc 5: Chế biến món ăn ngon'
+];
 
 interface Category {
   categoryId: number;
@@ -43,14 +89,14 @@ export const Products: React.FC = () => {
   const [editingProd, setEditingProd] = useState<Product | null>(null);
   const [editingCat, setEditingCat] = useState<Category | null>(null);
   
-  // States cho Quản lý Ảnh
+  // States cho Quản lý 1 Ảnh chính & 5 Ảnh phụ
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [productImages, setProductImages] = useState<ProductImage[]>([]);
+  const [primaryUrl, setPrimaryUrl] = useState<string>('');
+  const [subUrls, setSubUrls] = useState<string[]>(['', '', '', '', '']);
   const [imgLoading, setImgLoading] = useState(false);
 
   const [prodForm] = Form.useForm();
   const [catForm] = Form.useForm();
-  const [imgForm] = Form.useForm();
 
   const loadData = async () => {
     setLoading(true);
@@ -71,15 +117,25 @@ export const Products: React.FC = () => {
     loadData();
   }, []);
 
-  // --- Image Management ---
+  // --- Image Management (1 Ảnh chính + 5 Ảnh phụ) ---
   const handleOpenImages = async (prod: Product) => {
     setSelectedProduct(prod);
     setIsImgModalOpen(true);
     setImgLoading(true);
-    imgForm.resetFields();
     try {
       const res = await productImageService.getByProduct(prod.productId);
-      setProductImages(res.data);
+      const list: ProductImage[] = res.data || [];
+      
+      const primary = list.find(img => img.isPrimary) || list[0];
+      setPrimaryUrl(primary ? primary.imageUrl : '');
+
+      const subs = list
+        .filter(img => !primary || img.productImageId !== primary.productImageId)
+        .map(img => img.imageUrl);
+
+      const fiveSubs = [...subs];
+      while (fiveSubs.length < 5) fiveSubs.push('');
+      setSubUrls(fiveSubs.slice(0, 5));
     } catch (error) {
       message.error('Không thể tải danh sách hình ảnh.');
     } finally {
@@ -87,57 +143,67 @@ export const Products: React.FC = () => {
     }
   };
 
-  const handleAddImage = async () => {
+  const handleSetSubAsPrimary = (index: number) => {
+    const selectedSub = subUrls[index];
+    if (!selectedSub || !selectedSub.trim()) {
+      message.warning('Ảnh phụ này đang để trống, không thể chuyển thành ảnh chính.');
+      return;
+    }
+    const oldPrimary = primaryUrl;
+    setPrimaryUrl(selectedSub);
+    const newSubs = [...subUrls];
+    newSubs[index] = oldPrimary;
+    setSubUrls(newSubs);
+    message.success(`Đã đổi ảnh phụ #${index + 1} thành ảnh chính!`);
+  };
+
+  const handleSubUrlChange = (index: number, val: string) => {
+    const newSubs = [...subUrls];
+    newSubs[index] = val;
+    setSubUrls(newSubs);
+  };
+
+  const handleFillSampleImages = () => {
+    if (!selectedProduct) return;
+    const catName = selectedProduct.category?.categoryName || 'Rau củ';
+    const samples = SAMPLE_SUB_IMAGES[catName] || SAMPLE_SUB_IMAGES['Rau củ'];
+    setSubUrls([...samples]);
+    message.info(`Đã tự động gợi ý 5 ảnh phụ cho danh mục "${catName}". Vui lòng nhấn "Lưu tất cả ảnh" để ghi nhận.`);
+  };
+
+  const handleSaveAllImages = async () => {
     if (!selectedProduct) return;
     try {
-      const values = await imgForm.validateFields();
       setImgLoading(true);
-      
-      const payload = {
-        productId: selectedProduct.productId,
-        imageUrl: values.imageUrl,
-        isPrimary: !!values.isPrimary,
-        sortOrder: productImages.length + 1
-      };
+      const payload: { imageUrl: string; isPrimary: boolean; sortOrder: number }[] = [];
 
-      await productImageService.create(payload);
-      message.success('Thêm URL ảnh thành công và đã lưu vào Database!');
-      imgForm.resetFields();
-      
-      // Load lại ảnh
-      const res = await productImageService.getByProduct(selectedProduct.productId);
-      setProductImages(res.data);
+      if (primaryUrl.trim()) {
+        payload.push({
+          imageUrl: primaryUrl.trim(),
+          isPrimary: true,
+          sortOrder: 1
+        });
+      }
+
+      subUrls.forEach((url, idx) => {
+        if (url.trim()) {
+          payload.push({
+            imageUrl: url.trim(),
+            isPrimary: false,
+            sortOrder: idx + 2
+          });
+        }
+      });
+
+      await productImageService.syncProductImages(selectedProduct.productId, payload);
+      message.success(`Đã lưu thành công cấu hình ảnh (1 ảnh chính + ${payload.filter(p => !p.isPrimary).length} ảnh phụ) cho "${selectedProduct.productName}" vào Database!`);
+      setIsImgModalOpen(false);
+      loadData();
     } catch (error) {
-      message.error('Không thể thêm hình ảnh.');
+      message.error('Lưu cấu hình ảnh thất bại.');
     } finally {
       setImgLoading(false);
     }
-  };
-
-  const handleDeleteImage = async (imageId: number) => {
-    if (!selectedProduct) return;
-    Modal.confirm({
-      title: 'Xác nhận xóa ảnh',
-      content: 'Bạn có chắc chắn muốn xóa liên kết hình ảnh này?',
-      okText: 'Xóa',
-      cancelText: 'Hủy',
-      okType: 'danger',
-      onOk: async () => {
-        try {
-          setImgLoading(true);
-          await productImageService.delete(imageId);
-          message.success('Đã xóa hình ảnh khỏi Database.');
-          
-          // Load lại ảnh
-          const res = await productImageService.getByProduct(selectedProduct.productId);
-          setProductImages(res.data);
-        } catch (error) {
-          message.error('Xóa ảnh thất bại.');
-        } finally {
-          setImgLoading(false);
-        }
-      }
-    });
   };
 
   // --- Category CRUD ---
@@ -195,7 +261,7 @@ export const Products: React.FC = () => {
       setIsCatModalOpen(false);
       loadData();
     } catch (error) {
-      message.error('Lưu danh mục thất bại.');
+      message.error('Lưu danh mục thất bại.'); 
     }
   };
 
@@ -399,77 +465,151 @@ export const Products: React.FC = () => {
         </Form>
       </Modal>
 
-      {/* Image Gallery Management Modal */}
+      {/* Image Gallery Management Modal (1 Ảnh Chính + 5 Ảnh Phụ) */}
       <Modal
-        title={`Quản Lý Hình Ảnh: ${selectedProduct?.productName}`}
+        title={
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <PictureOutlined style={{ color: '#2E7D32', fontSize: '20px' }} />
+            <span>Quản Lý Hình Ảnh (1 Ảnh Chính + 5 Ảnh Phụ): <strong>{selectedProduct?.productName}</strong></span>
+          </div>
+        }
         open={isImgModalOpen}
-        footer={[
-          <Button key="close" onClick={() => setIsImgModalOpen(false)}>Đóng</Button>
-        ]}
+        width={860}
         onCancel={() => setIsImgModalOpen(false)}
-        width={700}
+        footer={[
+          <Button key="fill" icon={<ThunderboltOutlined />} onClick={handleFillSampleImages} style={{ float: 'left', color: '#FF9800', borderColor: '#FF9800' }}>
+            Gợi ý 5 ảnh phụ mẫu
+          </Button>,
+          <Button key="close" onClick={() => setIsImgModalOpen(false)}>
+            Hủy
+          </Button>,
+          <Button key="save" type="primary" icon={<SaveOutlined />} loading={imgLoading} onClick={handleSaveAllImages} style={{ background: '#2E7D32', borderColor: '#2E7D32' }}>
+            Lưu Tất Cả Hình Ảnh Vào Database
+          </Button>
+        ]}
       >
-        <div style={{ marginTop: 15 }}>
-          {/* Form thêm ảnh bằng URL */}
-          <Card title="Thêm Hình Ảnh Mới Bằng URL" size="small" style={{ marginBottom: 20 }}>
-            <Form form={imgForm} layout="inline" onFinish={handleAddImage}>
-              <Form.Item 
-                name="imageUrl" 
-                style={{ flex: 1 }}
-                rules={[{ required: true, message: 'Nhập URL hình ảnh!' }]}
-              >
-                <Input placeholder="Nhập URL hình ảnh (ví dụ: http://example.com/img.jpg)" />
-              </Form.Item>
-              <Form.Item name="isPrimary" valuePropName="checked">
-                <Checkbox>Ảnh chính</Checkbox>
-              </Form.Item>
-              <Form.Item>
-                <Button type="primary" htmlType="submit" loading={imgLoading} icon={<PlusOutlined />}>
-                  Lưu
-                </Button>
-              </Form.Item>
-            </Form>
+        <div style={{ maxHeight: '72vh', overflowY: 'auto', paddingRight: 6 }}>
+          {/* PHẦN 1: 1 ẢNH CHÍNH LỚN */}
+          <Card 
+            size="small" 
+            title={
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ color: '#2E7D32', fontWeight: 700 }}>
+                  🌟 1. Ảnh Chính Đại Diện (Primary Image)
+                </span>
+                <Tag color="green">Hiển thị lớn ở trang chi tiết &amp; Trang chủ</Tag>
+              </div>
+            }
+            style={{ marginBottom: 18, border: '1.5px solid #A5D6A7', background: '#F1F8E9' }}
+          >
+            <Row gutter={16} align="middle">
+              <Col span={6} style={{ textAlign: 'center' }}>
+                <Image
+                  src={primaryUrl || 'https://via.placeholder.com/140?text=Chua+co+anh'}
+                  alt="Ảnh chính"
+                  width={140}
+                  height={110}
+                  style={{ objectFit: 'cover', borderRadius: 8, border: '2px solid #2E7D32' }}
+                  fallback="https://via.placeholder.com/140?text=Loi+Anh"
+                />
+              </Col>
+              <Col span={18}>
+                <div style={{ marginBottom: 6, fontSize: '13px', fontWeight: 600, color: '#333' }}>
+                  Đường dẫn URL ảnh chính:
+                </div>
+                <Input 
+                  placeholder="Nhập hoặc dán URL ảnh chính (ví dụ: https://images.unsplash.com/...)" 
+                  value={primaryUrl}
+                  onChange={(e) => setPrimaryUrl(e.target.value)}
+                  allowClear
+                  style={{ marginBottom: 8 }}
+                />
+                <div style={{ fontSize: '12px', color: '#666' }}>
+                  💡 Khách hàng khi lướt xem sản phẩm hoặc vào trang chi tiết sẽ thấy ảnh này đầu tiên.
+                </div>
+              </Col>
+            </Row>
           </Card>
 
-          {/* Danh sách ảnh hiện có */}
-          <h4 style={{ marginBottom: 12 }}>Danh sách ảnh trong Database:</h4>
-          <Table
-            dataSource={productImages}
-            loading={imgLoading}
-            rowKey="productImageId"
-            size="small"
-            pagination={false}
-            columns={[
-              {
-                title: 'Xem trước',
-                dataIndex: 'imageUrl',
-                key: 'imageUrl',
-                width: 120,
-                render: (url: string) => <Image src={url} width={80} height={80} style={{ objectFit: 'cover', borderRadius: 4 }} fallback="https://via.placeholder.com/80" />
-              },
-              {
-                title: 'Đường dẫn URL',
-                dataIndex: 'imageUrl',
-                key: 'urlText',
-                render: (url: string) => <div style={{ wordBreak: 'break-all', fontSize: '13px' }}>{url}</div>
-              },
-              {
-                title: 'Ảnh chính',
-                dataIndex: 'isPrimary',
-                key: 'isPrimary',
-                width: 100,
-                render: (isPrimary: boolean) => <Tag color={isPrimary ? 'green' : 'gray'}>{isPrimary ? 'PRIMARY' : 'NORMAL'}</Tag>
-              },
-              {
-                title: 'Tác vụ',
-                key: 'action',
-                width: 80,
-                render: (_: any, record: ProductImage) => (
-                  <Button danger icon={<DeleteOutlined />} onClick={() => handleDeleteImage(record.productImageId)}>Xóa</Button>
-                )
-              }
-            ]}
-          />
+          {/* PHẦN 2: 5 ẢNH PHỤ NHỎ */}
+          <Card 
+            size="small" 
+            title={
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ color: '#1B5E20', fontWeight: 700 }}>
+                  🖼️ 2. Danh Sách 5 Ảnh Phụ Nhỏ Phía Dưới Ảnh Chính (Secondary Thumbnails)
+                </span>
+                <span style={{ fontSize: '12px', color: '#666' }}>
+                  Có thể bấm ⭐ để đưa ảnh phụ lên làm ảnh chính
+                </span>
+              </div>
+            }
+            style={{ border: '1px solid #C8E6C9' }}
+          >
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {subUrls.map((url, idx) => (
+                <div 
+                  key={idx} 
+                  style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: 12, 
+                    padding: '8px 12px', 
+                    background: '#FAFAFA', 
+                    borderRadius: 8, 
+                    border: '1px solid #E0E0E0' 
+                  }}
+                >
+                  {/* Thumbnail xem trước */}
+                  <Image
+                    src={url || 'https://via.placeholder.com/64?text=Anh+' + (idx + 1)}
+                    alt={`Ảnh phụ ${idx + 1}`}
+                    width={64}
+                    height={64}
+                    style={{ objectFit: 'cover', borderRadius: 6, border: '1px solid #ccc' }}
+                    fallback="https://via.placeholder.com/64?text=Loi+Anh"
+                  />
+
+                  {/* Input URL */}
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: '12.5px', fontWeight: 600, color: '#2E7D32', marginBottom: 4 }}>
+                      Ảnh phụ #{idx + 1}: <span style={{ color: '#555', fontWeight: 'normal' }}>{SUB_IMAGE_LABELS[idx]}</span>
+                    </div>
+                    <Input
+                      placeholder={`Nhập URL cho ảnh phụ #${idx + 1}`}
+                      value={url}
+                      onChange={(e) => handleSubUrlChange(idx, e.target.value)}
+                      allowClear
+                      size="middle"
+                    />
+                  </div>
+
+                  {/* Actions */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    <Tooltip title="Chuyển ảnh phụ này thành ảnh chính đại diện">
+                      <Button 
+                        size="small" 
+                        icon={<StarOutlined />} 
+                        onClick={() => handleSetSubAsPrimary(idx)}
+                        disabled={!url.trim()}
+                        style={{ color: '#FF9800', borderColor: '#FF9800' }}
+                      >
+                        Làm ảnh chính
+                      </Button>
+                    </Tooltip>
+                    <Button 
+                      size="small" 
+                      danger 
+                      onClick={() => handleSubUrlChange(idx, '')}
+                      disabled={!url.trim()}
+                    >
+                      Xóa URL
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
         </div>
       </Modal>
     </div>

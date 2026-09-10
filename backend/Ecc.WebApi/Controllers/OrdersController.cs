@@ -21,8 +21,10 @@ public class OrdersController : ControllerBase
     {
         return await _context.Orders
             .Include(o => o.Customer)
+            .Include(o => o.Address)
             .Include(o => o.OrderItems)
                 .ThenInclude(i => i.Product)
+            .OrderByDescending(o => o.CreatedAt)
             .ToListAsync();
     }
 
@@ -30,6 +32,7 @@ public class OrdersController : ControllerBase
     public async Task<ActionResult<IEnumerable<Order>>> GetOrdersByCustomer(long customerId)
     {
         return await _context.Orders
+            .Include(o => o.Address)
             .Include(o => o.OrderItems)
                 .ThenInclude(i => i.Product)
                     .ThenInclude(p => p.ProductImages)
@@ -138,6 +141,7 @@ public class OrdersController : ControllerBase
     {
         var order = await _context.Orders
             .Include(o => o.Customer)
+            .Include(o => o.Address)
             .Include(o => o.OrderItems)
                 .ThenInclude(i => i.Product)
                     .ThenInclude(p => p.ProductImages)
@@ -151,26 +155,55 @@ public class OrdersController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<Order>> CreateOrder(OrderCreateDto dto)
     {
-        // 1. Tự động chèn thông tin địa chỉ người nhận thật vào bảng Addresses
-        var newAddress = new Address
+        long finalAddressId;
+
+        // Nếu client đã chọn sẵn một địa chỉ từ danh sách địa chỉ đã lưu
+        if (dto.AddressId.HasValue && dto.AddressId.Value > 0)
         {
-            UserId = dto.CustomerId,
-            ReceiverName = dto.ReceiverName,
-            Phone = dto.Phone,
-            Province = dto.Province,
-            District = dto.District,
-            Ward = dto.Ward,
-            AddressDetail = dto.AddressDetail,
-            IsDefault = true
-        };
-        _context.Addresses.Add(newAddress);
-        await _context.SaveChangesAsync(); // Lưu để lấy AddressId tự tăng từ SQL Server
+            var existingAddr = await _context.Addresses.FindAsync(dto.AddressId.Value);
+            if (existingAddr != null)
+            {
+                finalAddressId = existingAddr.AddressId;
+            }
+            else
+            {
+                return BadRequest("Địa chỉ được chọn không tồn tại trên hệ thống.");
+            }
+        }
+        else
+        {
+            // Tự động chèn thông tin địa chỉ người nhận mới vào bảng Addresses
+            var isFirstAddr = !await _context.Addresses.AnyAsync(a => a.UserId == dto.CustomerId);
+            var setDef = (dto.SetAsDefault ?? false) || isFirstAddr;
+
+            if (setDef)
+            {
+                var oldAddrs = await _context.Addresses.Where(a => a.UserId == dto.CustomerId).ToListAsync();
+                foreach (var a in oldAddrs) a.IsDefault = false;
+            }
+
+            var newAddress = new Address
+            {
+                UserId = dto.CustomerId,
+                ReceiverName = dto.ReceiverName ?? "Khách hàng",
+                Phone = dto.Phone ?? "",
+                Province = dto.Province ?? "",
+                District = dto.District ?? "",
+                Ward = dto.Ward ?? "",
+                AddressDetail = dto.AddressDetail ?? "",
+                AddressType = string.IsNullOrWhiteSpace(dto.AddressType) ? "Nhà ở" : dto.AddressType,
+                IsDefault = setDef
+            };
+            _context.Addresses.Add(newAddress);
+            await _context.SaveChangesAsync();
+            finalAddressId = newAddress.AddressId;
+        }
 
         // 2. Chuẩn bị đối tượng Order để lưu vào DB
         var order = new Order
         {
             CustomerId = dto.CustomerId,
-            AddressId = newAddress.AddressId, // Liên kết với địa chỉ thật vừa lưu
+            AddressId = finalAddressId,
             OrderCode = "DH-" + DateTime.Now.ToString("yyyyMMdd") + "-" + new Random().Next(1000, 9999),
             Subtotal = dto.Subtotal,
             DiscountAmount = dto.DiscountAmount ?? 0,
@@ -283,13 +316,18 @@ public class OrderCreateDto
     public string PaymentMethod { get; set; } = null!;
     public List<OrderItemDto> OrderItems { get; set; } = new();
 
-    // Thông tin người nhận
-    public string ReceiverName { get; set; } = null!;
-    public string Phone { get; set; } = null!;
-    public string Province { get; set; } = null!;
-    public string District { get; set; } = null!;
-    public string Ward { get; set; } = null!;
-    public string AddressDetail { get; set; } = null!;
+    // Mã địa chỉ đã chọn từ sổ địa chỉ (nếu có)
+    public long? AddressId { get; set; }
+
+    // Thông tin người nhận (dùng khi thêm địa chỉ mới hoặc dự phòng)
+    public string? ReceiverName { get; set; }
+    public string? Phone { get; set; }
+    public string? Province { get; set; }
+    public string? District { get; set; }
+    public string? Ward { get; set; }
+    public string? AddressDetail { get; set; }
+    public string? AddressType { get; set; } = "Nhà ở";
+    public bool? SetAsDefault { get; set; }
 }
 
 public class OrderItemDto

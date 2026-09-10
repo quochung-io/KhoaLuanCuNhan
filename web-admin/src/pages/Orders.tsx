@@ -21,6 +21,15 @@ interface Order {
     fullName: string;
     email: string;
   };
+  address?: {
+    receiverName: string;
+    phone: string;
+    province: string;
+    district: string;
+    ward: string;
+    addressDetail: string;
+    addressType?: string;
+  };
   createdAt: string;
   orderStatus: string;
   paymentStatus: string;
@@ -97,6 +106,22 @@ export const Orders: React.FC = () => {
       dataIndex: ['customer', 'fullName'], 
       key: 'customerName', 
       render: (text: string, record: Order) => text || `User ID: ${record.customerId}` 
+    },
+    { 
+      title: 'Giao đến', 
+      key: 'shippingAddress',
+      render: (_: any, record: Order) => (
+        record.address ? (
+          <div>
+            <Tag color={record.address.addressType === 'Công ty' ? 'blue' : 'green'} style={{ marginBottom: 2, fontSize: 11 }}>
+              {record.address.addressType === 'Công ty' ? '🏢 Công ty' : '🏠 Nhà ở'}
+            </Tag>
+            <div style={{ fontSize: '12px', color: '#555' }}>
+              {record.address.receiverName} - {record.address.district}
+            </div>
+          </div>
+        ) : <span style={{ color: '#999' }}>-</span>
+      )
     },
     { 
       title: 'Ngày đặt', 
@@ -186,6 +211,22 @@ export const Orders: React.FC = () => {
             <p><strong>Email:</strong> {selectedOrder.customer?.email || 'N/A'}</p>
             <p><strong>Ngày đặt hàng:</strong> {selectedOrder.createdAt ? new Date(selectedOrder.createdAt).toLocaleString('vi-VN') : 'N/A'}</p>
             <p><strong>Trạng thái đơn:</strong> <Tag color={getStatusTagColor(selectedOrder.orderStatus)}>{(selectedOrder.orderStatus || 'PENDING').toUpperCase()}</Tag></p>
+
+            {/* Thông tin địa chỉ nhận hàng */}
+            {selectedOrder.address && (
+              <div style={{ backgroundColor: '#F9FAFB', padding: '12px 16px', borderRadius: '8px', border: '1px solid #E5E7EB', margin: '15px 0' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                  <strong>📍 Địa chỉ nhận hàng:</strong>
+                  <Tag color={selectedOrder.address.addressType === 'Công ty' ? 'blue' : 'green'}>
+                    {selectedOrder.address.addressType === 'Công ty' ? '🏢 Công ty' : '🏠 Nhà ở'}
+                  </Tag>
+                </div>
+                <div style={{ fontSize: '13px', color: '#374151', lineHeight: '1.6' }}>
+                  <div><strong>Người nhận:</strong> {selectedOrder.address.receiverName} - <strong>SĐT:</strong> {selectedOrder.address.phone}</div>
+                  <div><strong>Địa chỉ:</strong> {selectedOrder.address.addressDetail}, {selectedOrder.address.ward}, {selectedOrder.address.district}, {selectedOrder.address.province}</div>
+                </div>
+              </div>
+            )}
             
             <h4 style={{ marginTop: 20, marginBottom: 10 }}>Danh sách sản phẩm mua</h4>
             <Table

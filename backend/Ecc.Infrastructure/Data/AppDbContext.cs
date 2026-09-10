@@ -53,6 +53,7 @@ public class AppDbContext : DbContext
             e.Property(a => a.Latitude).HasColumnName("Latitude").HasColumnType("decimal(18,8)");
             e.Property(a => a.Longitude).HasColumnName("Longitude").HasColumnType("decimal(18,8)");
             e.Property(a => a.IsDefault).HasColumnName("IsDefault").IsRequired();
+            e.Property(a => a.AddressType).HasColumnName("AddressType").HasMaxLength(50);
         });
 
         // ── Category ──────────────────────────────────
@@ -154,6 +155,12 @@ public class AppDbContext : DbContext
             e.HasOne(o => o.Customer)
              .WithMany(u => u.Orders)
              .HasForeignKey(o => o.CustomerId)
+             .OnDelete(DeleteBehavior.NoAction);
+
+            // Mối quan hệ với Address
+            e.HasOne(o => o.Address)
+             .WithMany()
+             .HasForeignKey(o => o.AddressId)
              .OnDelete(DeleteBehavior.NoAction);
         });
 

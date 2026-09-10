@@ -10,7 +10,7 @@ import {
 } from '@ant-design/icons';
 import { 
   ResponsiveContainer, 
-  LineChart, 
+  LineChart,
   Line, 
   CartesianGrid, 
   XAxis, 

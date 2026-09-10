@@ -26,6 +26,15 @@ interface Order {
   paymentStatus: string;
   orderStatus: string;
   createdAt: string;
+  address?: {
+    receiverName: string;
+    phone: string;
+    province: string;
+    district: string;
+    ward: string;
+    addressDetail: string;
+    addressType?: string;
+  };
   orderItems: OrderItem[];
 }
 
@@ -420,6 +429,41 @@ export default function CustomerOrdersPage() {
                       </span>
                     </div>
                   </div>
+
+                  {/* Thông tin địa chỉ nhận hàng */}
+                  {order.address && (
+                    <div style={{
+                      backgroundColor: '#F8FCF8',
+                      border: '1px solid #E2E8F0',
+                      borderRadius: '8px',
+                      padding: '10px 14px',
+                      marginBottom: '20px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      flexWrap: 'wrap',
+                      gap: '8px',
+                      fontSize: '13px'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                        <span style={{ fontWeight: '700', color: '#2E7D32' }}>📍 Giao đến:</span>
+                        <span style={{ fontWeight: '600', color: '#1A202C' }}>{order.address.receiverName}</span>
+                        <span style={{ color: '#718096' }}>({order.address.phone})</span>
+                        <span style={{ color: '#4A5568' }}>• {order.address.addressDetail}, {order.address.ward}, {order.address.district}, {order.address.province}</span>
+                      </div>
+                      <span style={{
+                        padding: '2px 8px',
+                        borderRadius: '12px',
+                        fontSize: '11px',
+                        fontWeight: '600',
+                        backgroundColor: order.address.addressType === 'Công ty' ? '#EBF8FF' : '#F0FFF4',
+                        color: order.address.addressType === 'Công ty' ? '#2B6CB0' : '#276749',
+                        border: `1px solid ${order.address.addressType === 'Công ty' ? '#BEE3F8' : '#C6F6D5'}`
+                      }}>
+                        {order.address.addressType === 'Công ty' ? '🏢 Công ty' : '🏠 Nhà ở'}
+                      </span>
+                    </div>
+                  )}
 
                   {/* Hàng 2: Danh sách chi tiết nông sản */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '25px' }}>

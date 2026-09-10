@@ -19,5 +19,6 @@ public class Order
     public DateTime? UpdatedAt { get; set; }
 
     public User? Customer { get; set; }
+    public Address? Address { get; set; }
     public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
 }

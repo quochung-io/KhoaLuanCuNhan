@@ -59,5 +59,6 @@ export const orderService = {
 export const productImageService = {
   getByProduct: (productId: number) => api.get(`/productimages/product/${productId}`),
   create: (data: any) => api.post('/productimages', data),
+  syncProductImages: (productId: number, images: any[]) => api.put(`/productimages/product/${productId}/sync`, images),
   delete: (id: number) => api.delete(`/productimages/${id}`),
 };

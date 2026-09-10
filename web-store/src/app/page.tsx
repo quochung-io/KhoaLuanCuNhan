@@ -23,6 +23,7 @@ type Product = {
   name: string;
   price: string;
   unit: string;
+  category: string;
   cert: string;
   region: string;
   rating: number;
@@ -33,14 +34,14 @@ type Product = {
 };
 
 const productsData: Product[] = [
-  {id:1, name:'Cải bó xôi hữu cơ', price:'28.000₫', unit:'/ 300g', cert:'VietGAP', region:'Đà Lạt', rating:4.8, reviews:212, icon:'leaf', lot:'LOT#VN-DL-0842'},
-  {id:2, name:'Cà rốt baby Đà Lạt', price:'32.000₫', unit:'/ 500g', cert:'GlobalGAP', region:'Đà Lạt', rating:4.9, reviews:184, icon:'carrot', lot:'LOT#VN-DL-0917'},
-  {id:3, name:'Cam Cao Phong', price:'45.000₫', unit:'/ kg', cert:'VietGAP', region:'Mộc Châu', rating:4.7, reviews:301, icon:'citrus', lot:'LOT#VN-MC-1140'},
-  {id:4, name:'Trứng gà ta thả vườn', price:'52.000₫', unit:'/ hộp 10', cert:'USDA', region:'Đồng Tháp', rating:5.0, reviews:96, icon:'egg', lot:'LOT#VN-DT-0663'},
-  {id:5, name:'Mật ong rừng nguyên chất', price:'135.000₫', unit:'/ 500ml', cert:'USDA', region:'Mộc Châu', rating:4.9, reviews:158, icon:'jar', lot:'LOT#VN-MC-0255'},
-  {id:6, name:'Dâu tây Mộc Châu', price:'68.000₫', unit:'/ hộp 250g', cert:'GlobalGAP', region:'Mộc Châu', rating:4.8, reviews:243, icon:'berry', lot:'LOT#VN-MC-0389'},
-  {id:7, name:'Xà lách xoăn thủy canh', price:'22.000₫', unit:'/ 250g', cert:'VietGAP', region:'Đà Lạt', rating:4.6, reviews:120, icon:'leaf', lot:'LOT#VN-DL-0721'},
-  {id:8, name:'Bơ 034 Đắk Lắk', price:'58.000₫', unit:'/ kg', cert:'VietGAP', region:'Đồng Tháp', rating:4.8, reviews:167, icon:'citrus', lot:'LOT#VN-DT-0410'},
+  {id:1, name:'Cải bó xôi hữu cơ', category:'Rau củ', price:'28.000₫', unit:'/ 300g', cert:'VietGAP', region:'Đà Lạt', rating:4.8, reviews:212, icon:'leaf', lot:'LOT#VN-DL-0842'},
+  {id:2, name:'Cà rốt baby Đà Lạt', category:'Rau củ', price:'32.000₫', unit:'/ 500g', cert:'GlobalGAP', region:'Đà Lạt', rating:4.9, reviews:184, icon:'carrot', lot:'LOT#VN-DL-0917'},
+  {id:3, name:'Cam Cao Phong', category:'Trái cây', price:'45.000₫', unit:'/ kg', cert:'VietGAP', region:'Mộc Châu', rating:4.7, reviews:301, icon:'citrus', lot:'LOT#VN-MC-1140'},
+  {id:4, name:'Trứng gà ta thả vườn', category:'Rau củ', price:'52.000₫', unit:'/ hộp 10', cert:'USDA', region:'Đồng Tháp', rating:5.0, reviews:96, icon:'egg', lot:'LOT#VN-DT-0663'},
+  {id:5, name:'Mật ong rừng nguyên chất', category:'Hạt', price:'135.000₫', unit:'/ 500ml', cert:'USDA', region:'Mộc Châu', rating:4.9, reviews:158, icon:'jar', lot:'LOT#VN-MC-0255'},
+  {id:6, name:'Dâu tây Mộc Châu', category:'Trái cây', price:'68.000₫', unit:'/ hộp 250g', cert:'GlobalGAP', region:'Mộc Châu', rating:4.8, reviews:243, icon:'berry', lot:'LOT#VN-MC-0389'},
+  {id:7, name:'Xà lách xoăn thủy canh', category:'Rau củ', price:'22.000₫', unit:'/ 250g', cert:'VietGAP', region:'Đà Lạt', rating:4.6, reviews:120, icon:'leaf', lot:'LOT#VN-DL-0721'},
+  {id:8, name:'Bơ 034 Đắk Lắk', category:'Trái cây', price:'58.000₫', unit:'/ kg', cert:'VietGAP', region:'Đồng Tháp', rating:4.8, reviews:167, icon:'citrus', lot:'LOT#VN-DT-0410'},
 ];
 
 const subPlans: Record<string, {name: string; desc: string; price: string}[]> = {
@@ -164,17 +165,30 @@ export default function LanhLandingPage() {
               imageUrl = primary ? primary.imageUrl : item.productImages[0].imageUrl;
             }
 
+            let region = 'Đà Lạt';
+            if (nameLower.includes('mộc châu') || nameLower.includes('bắc hà') || nameLower.includes('tây bắc') || nameLower.includes('sapa') || nameLower.includes('hàm yên') || nameLower.includes('chi lăng')) {
+              region = 'Mộc Châu';
+            } else if (nameLower.includes('đồng tháp') || nameLower.includes('miền tây') || nameLower.includes('bến tre') || nameLower.includes('tiền giang') || nameLower.includes('long an') || nameLower.includes('vũng tàu') || nameLower.includes('hưng yên') || nameLower.includes('ninh thuận')) {
+              region = 'Đồng Tháp';
+            }
+
+            const regCode = region === 'Mộc Châu' ? 'MC' : region === 'Đồng Tháp' ? 'DT' : 'DL';
+            const cert = (item.status === 'Active' || !item.status) ? 'VietGAP' : item.status;
+
+            const catName = item.category?.categoryName || 'Rau củ';
+
             return {
               id: Number(item.productId),
               name: item.productName,
               price: item.price.toLocaleString('vi-VN') + '₫',
               unit: ' / ' + item.unit,
-              cert: item.status || 'VietGAP',
-              region: 'Đà Lạt',
-              rating: Number((4.5 + (Number(item.productId) % 5) * 0.1).toFixed(1)),
-              reviews: 80 + (Number(item.productId) % 5) * 40,
+              category: catName,
+              cert: cert,
+              region: region,
+              rating: Number((4.6 + (Number(item.productId) % 5) * 0.1).toFixed(1)),
+              reviews: 80 + (Number(item.productId) % 7) * 25,
               icon: icon,
-              lot: 'LOT#VN-DL-' + (1000 + Number(item.productId)),
+              lot: 'LOT#VN-' + regCode + '-' + (1000 + Number(item.productId)),
               imageUrl: imageUrl || undefined
             };
           });
@@ -236,6 +250,7 @@ export default function LanhLandingPage() {
   const [cartBounce, setCartBounce] = useState(false);
   const [addedItem, setAddedItem] = useState<number | null>(null);
 
+  const [filterCategory, setFilterCategory] = useState("all");
   const [filterCert, setFilterCert] = useState("all");
   const [filterRegion, setFilterRegion] = useState("all");
   
@@ -360,7 +375,10 @@ export default function LanhLandingPage() {
                 {suggestions.map((s, idx) => (
                   <li 
                     key={idx} 
-                    onClick={() => handleSelectSuggestion(s.productName)}
+                    onClick={() => {
+                      setShowSuggestions(false);
+                      router.push(`/products/${s.productId}`);
+                    }}
                     style={{
                       padding: '8px 12px',
                       cursor: 'pointer',
@@ -587,29 +605,55 @@ export default function LanhLandingPage() {
             <span className="eyebrow">Danh mục</span>
             <h2 className="section-title" style={{marginTop:'12px'}}>Chọn theo nhu cầu bữa ăn của bạn</h2>
             <div className="cat-grid">
-              <div className="cat-card reveal">
+              <div 
+                className="cat-card reveal" 
+                style={{ cursor: 'pointer', border: filterCategory === 'Rau củ' ? '2px solid var(--green-700)' : 'none' }}
+                onClick={() => { setFilterCategory('Rau củ'); document.getElementById('products')?.scrollIntoView({behavior: 'smooth'}); }}
+              >
                 <div className="ic-wrap" style={{background:'#E3F1E3'}}><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" strokeWidth="2"><path d="M12 21c-4-1-7-4-7-9a7 7 0 0114 0c0 5-3 8-7 9z"/><path d="M12 21V9"/></svg></div>
-                <h3>Rau lá &amp; củ quả</h3>
-                <p>Cải bó xôi, xà lách, cà rốt, khoai tây hữu cơ</p>
-                <span className="count">248 sản phẩm</span>
+                <h3>Rau củ</h3>
+                <p>Cải thìa, bắp cải, súp lơ, củ dền, cà chua, cà rốt, nấm tươi</p>
+                <span className="count">53 sản phẩm</span>
               </div>
-              <div className="cat-card reveal">
+              <div 
+                className="cat-card reveal" 
+                style={{ cursor: 'pointer', border: filterCategory === 'Trái cây' ? '2px solid var(--green-700)' : 'none' }}
+                onClick={() => { setFilterCategory('Trái cây'); document.getElementById('products')?.scrollIntoView({behavior: 'smooth'}); }}
+              >
                 <div className="ic-wrap" style={{background:'#FFF1DC'}}><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#FF9800" strokeWidth="2"><circle cx="12" cy="13" r="7"/><path d="M12 6c1-2 3-3 4-3"/></svg></div>
-                <h3>Trái cây tươi</h3>
-                <p>Cam Cao Phong, bơ 034, xoài cát Hòa Lộc</p>
-                <span className="count">176 sản phẩm</span>
+                <h3>Trái cây</h3>
+                <p>Sầu riêng, bưởi da xanh, xoài cát, dưa hấu, măng cụt, bơ</p>
+                <span className="count">44 sản phẩm</span>
               </div>
-              <div className="cat-card reveal">
-                <div className="ic-wrap" style={{background:'#FBE4E4'}}><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#C0392B" strokeWidth="2"><rect x="4" y="7" width="16" height="12" rx="3"/><path d="M8 7V5a4 4 0 018 0v2"/></svg></div>
-                <h3>Thịt sạch &amp; trứng</h3>
-                <p>Gà thả vườn, heo hữu cơ, trứng gà ta</p>
-                <span className="count">92 sản phẩm</span>
+              <div 
+                className="cat-card reveal" 
+                style={{ cursor: 'pointer', border: filterCategory === 'Rau thơm' ? '2px solid var(--green-700)' : 'none' }}
+                onClick={() => { setFilterCategory('Rau thơm'); document.getElementById('products')?.scrollIntoView({behavior: 'smooth'}); }}
+              >
+                <div className="ic-wrap" style={{background:'#E8F5E9'}}><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" strokeWidth="2"><path d="M12 2a10 10 0 0110 10c0 5.523-4.477 10-10 10S2 17.523 2 12A10 10 0 0112 2z"/><path d="M12 6v6l4 2"/></svg></div>
+                <h3>Rau thơm</h3>
+                <p>Hành lá, ngò gai, tía tô, kinh giới, diếp cá, thì là, ớt, tỏi</p>
+                <span className="count">16 sản phẩm</span>
               </div>
-              <div className="cat-card reveal">
-                <div className="ic-wrap" style={{background:'#E3ECF7'}}><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#2E5C8A" strokeWidth="2"><path d="M8 3h8l1 5H7l1-5z"/><path d="M6 8h12l-1 13H7L6 8z"/></svg></div>
-                <h3>Nông sản chế biến</h3>
-                <p>Mứt, nước ép lạnh, gạo lứt, mật ong rừng</p>
-                <span className="count">64 sản phẩm</span>
+              <div 
+                className="cat-card reveal" 
+                style={{ cursor: 'pointer', border: filterCategory === 'Hạt' ? '2px solid var(--green-700)' : 'none' }}
+                onClick={() => { setFilterCategory('Hạt'); document.getElementById('products')?.scrollIntoView({behavior: 'smooth'}); }}
+              >
+                <div className="ic-wrap" style={{background:'#FFF8E1'}}><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#F57F17" strokeWidth="2"><circle cx="12" cy="12" r="3"/><circle cx="19" cy="12" r="2"/><circle cx="5" cy="12" r="2"/></svg></div>
+                <h3>Hạt</h3>
+                <p>Hạt điều, hạt sen, macca, yến mạch, ngô nếp, các loại đậu</p>
+                <span className="count">19 sản phẩm</span>
+              </div>
+              <div 
+                className="cat-card reveal" 
+                style={{ cursor: 'pointer', border: filterCategory === 'Gạo' ? '2px solid var(--green-700)' : 'none' }}
+                onClick={() => { setFilterCategory('Gạo'); document.getElementById('products')?.scrollIntoView({behavior: 'smooth'}); }}
+              >
+                <div className="ic-wrap" style={{background:'#EDE7F6'}}><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#673AB7" strokeWidth="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
+                <h3>Gạo</h3>
+                <p>ST25, gạo lứt tím, Séng Cù, Nàng Thơm Chợ Đào, nếp nương</p>
+                <span className="count">8 sản phẩm</span>
               </div>
             </div>
           </div>
@@ -621,6 +665,18 @@ export default function LanhLandingPage() {
             <h2 className="section-title" style={{marginTop:'12px'}}>Thu hoạch hôm nay, giao tận cửa nhà bạn</h2>
 
             <div className="filter-bar" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+              <span className="filter-label">Danh mục</span>
+              {['all', 'Trái cây', 'Rau củ', 'Rau thơm', 'Hạt', 'Gạo'].map(cat => (
+                <button 
+                  key={cat} 
+                  className={`chip ${filterCategory === cat ? 'active' : ''}`} 
+                  onClick={() => setFilterCategory(cat)}
+                >
+                  {cat === 'all' ? 'Tất cả' : cat}
+                </button>
+              ))}
+              <div className="chip-sep"></div>
+
               <span className="filter-label">Chứng nhận</span>
               {['all', 'VietGAP', 'GlobalGAP', 'USDA'].map(c => (
                 <button key={c} className={`chip ${filterCert === c ? 'active' : ''}`} onClick={() => setFilterCert(c)}>
@@ -658,10 +714,10 @@ export default function LanhLandingPage() {
               >
                 Lọc giá
               </button>
-              {(minPrice !== "" || maxPrice !== "") && (
+              {(minPrice !== "" || maxPrice !== "" || filterCategory !== "all" || filterCert !== "all" || filterRegion !== "all") && (
                 <button 
                   className="chip" 
-                  onClick={() => { setMinPrice(""); setMaxPrice(""); fetchProducts(searchQuery, "", ""); }}
+                  onClick={() => { setFilterCategory("all"); setFilterCert("all"); setFilterRegion("all"); setMinPrice(""); setMaxPrice(""); fetchProducts(searchQuery, "", ""); }}
                   style={{ cursor: 'pointer', border: 'none' }}
                 >
                   Xóa lọc
@@ -670,22 +726,29 @@ export default function LanhLandingPage() {
             </div>
 
             <div className="prod-grid">
-              {products.filter(p => (filterCert === 'all' || p.cert === filterCert) && (filterRegion === 'all' || p.region === filterRegion)).map(p => (
+              {products.filter(p => 
+                (filterCategory === 'all' || p.category === filterCategory) &&
+                (filterCert === 'all' || p.cert === filterCert) && 
+                (filterRegion === 'all' || p.region === filterRegion)
+              ).map(p => (
                 <div key={p.id} className="prod-card">
-                  <div className="prod-media" style={{background:'var(--green-100)'}}>
-                    {p.imageUrl ? (
-                      <img src={p.imageUrl} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    ) : (
-                      ICONS[p.icon]
-                    )}
-                    <div className="tag-row">
+                  <div className="prod-media" style={{background:'var(--green-100)', position: 'relative'}}>
+                    <Link href={`/products/${p.id}`} style={{ display: 'block', width: '100%', height: '100%', cursor: 'pointer' }}>
+                      {p.imageUrl ? (
+                        <img src={p.imageUrl} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : (
+                        ICONS[p.icon]
+                      )}
+                    </Link>
+                    <div className="tag-row" style={{ pointerEvents: 'auto' }}>
+                      <span className="tag-cert" style={{ background: '#2E7D32', color: '#fff', fontWeight: 600 }}>{p.category}</span>
                       <span className="tag-cert">{p.cert}</span>
-                      <button className="qr-btn" onClick={() => setOpenQrFor(p.id)} aria-label="Xem truy xuất nguồn gốc">
+                      <button className="qr-btn" onClick={(e) => { e.stopPropagation(); setOpenQrFor(p.id); }} aria-label="Xem truy xuất nguồn gốc">
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" strokeWidth="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM20 14v3M14 20h3M20 20v.01"/></svg>
                       </button>
                     </div>
                     <div className={`qr-panel ${openQrFor === p.id ? 'show' : ''}`}>
-                      <button className="qr-close" onClick={() => setOpenQrFor(null)} aria-label="Đóng">
+                      <button className="qr-close" onClick={(e) => { e.stopPropagation(); setOpenQrFor(null); }} aria-label="Đóng">
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg>
                       </button>
                       <svg width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" strokeWidth="1.6"><rect x="2" y="2" width="7" height="7"/><rect x="15" y="2" width="7" height="7"/><rect x="2" y="15" width="7" height="7"/><path d="M15 15h3v3h-3zM21 15v3M15 21h3M21 21v.01M5 5h1M18 5h1M5 18h1"/></svg>
@@ -698,7 +761,11 @@ export default function LanhLandingPage() {
                       <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"/></svg>
                       Xuất xứ: {p.region}
                     </span>
-                    <span className="prod-name">{p.name}</span>
+                    <Link href={`/products/${p.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                      <span className="prod-name" style={{ cursor: 'pointer', transition: 'color 0.2s' }} onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--green-700)')} onMouseLeave={(e) => (e.currentTarget.style.color = 'inherit')}>
+                        {p.name}
+                      </span>
+                    </Link>
                     <div className="stars">
                       <span className="fill">★★★★★</span> {p.rating} · {p.reviews} đánh giá
                     </div>
