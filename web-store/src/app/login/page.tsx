@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -14,32 +14,39 @@ export default function LoginPage() {
     e.preventDefault();
     setError('');
     
-    if (!email || !password) {
-      setError('Vui lòng điền đầy đủ email và mật khẩu.');
+    if (!email.trim() || !password) {
+      setError('Vui lòng điền đầy đủ email/họ tên và mật khẩu.');
       return;
     }
 
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:5023/api/users/login', {
+      const res = await fetch('http://localhost:5023/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: email, password })
+        body: JSON.stringify({ email: email.trim(), password })
       });
 
+      const data = await res.json();
+
       if (!res.ok) {
-        const errText = await res.text();
-        throw new Error(errText || 'Tài khoản hoặc mật khẩu không chính xác.');
+        throw new Error(data.message || 'Tài khoản hoặc mật khẩu không chính xác.');
       }
 
-      const userData = await res.json();
-      
-      // Lưu vào localStorage
-      localStorage.setItem('customer_user', JSON.stringify(userData));
-      
-      // Chuyển về trang chủ
-      router.push('/');
-      router.refresh();
+      // Lưu thông tin người dùng và token
+      localStorage.setItem('customer_user', JSON.stringify(data.user));
+      localStorage.setItem('auth_token', data.token);
+
+      // Phân luồng điều hướng theo Role đồng bộ 100% với Mobile App
+      const role = (data.user.role || '').toUpperCase();
+      if (role === 'ADMIN') {
+        window.location.href = 'http://localhost:5173/dashboard'; // Web-Admin dashboard
+      } else if (role === 'SUPPLIER') {
+        window.location.href = 'http://localhost:5174/dashboard'; // Web-Supplier dashboard
+      } else {
+        router.push('/'); // Customer Storefront
+        router.refresh();
+      }
     } catch (err: any) {
       setError(err.message || 'Có lỗi xảy ra khi kết nối máy chủ.');
     } finally {
@@ -84,12 +91,14 @@ export default function LoginPage() {
 
         <form onSubmit={handleLogin}>
           <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '600', color: '#333' }}>Tên đăng nhập (Họ tên)</label>
+            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '600', color: '#333' }}>
+              Email hoặc Tên đăng nhập
+            </label>
             <input
               type="text"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Ví dụ: Nguyễn Văn A"
+              placeholder="admin@gmail.com hoặc Họ tên"
               style={{
                 width: '100%',
                 padding: '12px',
@@ -103,7 +112,9 @@ export default function LoginPage() {
           </div>
 
           <div style={{ marginBottom: '25px' }}>
-            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '600', color: '#333' }}>Mật khẩu</label>
+            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: '600', color: '#333' }}>
+              Mật khẩu
+            </label>
             <input
               type="password"
               value={password}

@@ -1,33 +1,67 @@
-import React, { useState } from 'react';
-import { Form, Input, Button, Card, Select, message } from 'antd';
-import { UserOutlined, LockOutlined, MailOutlined, PhoneOutlined } from '@ant-design/icons';
+﻿import React, { useState } from 'react';
+import { Form, Input, Button, Card, Select, Modal, Radio, message } from 'antd';
+import { UserOutlined, LockOutlined, MailOutlined, PhoneOutlined, SafetyCertificateOutlined } from '@ant-design/icons';
 import { useNavigate, Link } from 'react-router-dom';
-import { userService } from '../services/api';
+import { authService } from '../services/api';
 
 export const Register: React.FC = () => {
+  const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
+  const [isSendingOtp, setIsSendingOtp] = useState(false);
+  
+  // State modal OTP
+  const [showOtpModal, setShowOtpModal] = useState(false);
+  const [otpMethod, setOtpMethod] = useState<'EMAIL' | 'SMS'>('EMAIL');
+  const [otpCode, setOtpCode] = useState('');
+  const [serverOtp, setServerOtp] = useState<string | null>(null);
+  const [formValues, setFormValues] = useState<any>(null);
+
   const navigate = useNavigate();
 
-  const onFinish = async (values: any) => {
+  const onOpenOtpModal = (values: any) => {
+    setFormValues(values);
+    setShowOtpModal(true);
+    setOtpCode('');
+    setServerOtp(null);
+  };
+
+  const handleRequestOtp = async () => {
+    if (!formValues) return;
+    setIsSendingOtp(true);
+    try {
+      const recipient = otpMethod === 'EMAIL' ? formValues.email : formValues.phone;
+      const res = await authService.sendRegisterOtp({ recipient, type: otpMethod });
+      setServerOtp(res.data.otp);
+      message.success(`Đã gửi mã OTP tới ${recipient} qua ${otpMethod}!`);
+    } catch (err: any) {
+      message.error(err.response?.data?.message || 'Không thể gửi mã OTP.');
+    } finally {
+      setIsSendingOtp(false);
+    }
+  };
+
+  const handleConfirmRegister = async () => {
+    if (otpCode.trim().length !== 6) {
+      message.error('Vui lòng nhập đủ 6 chữ số mã OTP!');
+      return;
+    }
+
     setLoading(true);
     try {
-      await userService.register({
-        username: values.username,
-        password: values.password,
-        email: values.email,
-        role: values.role,
-        phone: values.phone,
+      await authService.register({
+        fullName: formValues.username,
+        email: formValues.email,
+        phone: formValues.phone,
+        password: formValues.password,
+        otp: otpCode.trim(),
+        verifyMethod: otpMethod,
       });
 
-      message.success('Đăng ký tài khoản thành công!');
+      message.success('Đăng ký tài khoản thành công! Vui lòng đăng nhập.');
+      setShowOtpModal(false);
       navigate('/login');
     } catch (error: any) {
-      if (error.response?.data) {
-        message.error(error.response.data);
-      } else {
-        message.error('Đăng ký thất bại. Tên đăng nhập hoặc Email có thể đã tồn tại.');
-      }
-      console.error(error);
+      message.error(error.response?.data?.message || 'Đăng ký thất bại.');
     } finally {
       setLoading(false);
     }
@@ -45,20 +79,25 @@ export const Register: React.FC = () => {
       <Card style={{ width: 450, boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
         <div style={{ textAlign: 'center', marginBottom: 24 }}>
           <h2 style={{ color: '#1890ff', margin: 0 }}>HỆ THỐNG ECC</h2>
-          <p style={{ color: '#8c8c8c', margin: '5px 0 0 0' }}>Đăng ký tài khoản mới</p>
+          <p style={{ color: '#8c8c8c', margin: '5px 0 0 0' }}>Đăng ký tài khoản quản trị</p>
         </div>
 
         <Form
+          form={form}
           name="register_form"
-          onFinish={onFinish}
+          onFinish={onOpenOtpModal}
           layout="vertical"
         >
           <Form.Item
             name="username"
-            label="Tên đăng nhập / Họ tên"
-            rules={[{ required: true, message: 'Vui lòng nhập tên đăng nhập!' }]}
+            label="Họ và tên (chỉ nhập chữ)"
+            rules={[
+              { required: true, message: 'Vui lòng nhập họ và tên!' },
+              { pattern: /^[a-zA-ZÀ-ỹ\s]+$/, message: 'Họ và tên không được chứa số hoặc ký tự đặc biệt!' },
+              { min: 2, message: 'Họ tên quá ngắn!' }
+            ]}
           >
-            <Input prefix={<UserOutlined />} placeholder="Username" size="large" />
+            <Input prefix={<UserOutlined />} placeholder="Nguyễn Văn A" size="large" />
           </Form.Item>
 
           <Form.Item
@@ -66,7 +105,7 @@ export const Register: React.FC = () => {
             label="Email"
             rules={[
               { required: true, message: 'Vui lòng nhập Email!' },
-              { type: 'email', message: 'Email không đúng định dạng!' }
+              { pattern: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/, message: 'Email không đúng định dạng!' }
             ]}
           >
             <Input prefix={<MailOutlined />} placeholder="example@gmail.com" size="large" />
@@ -75,28 +114,24 @@ export const Register: React.FC = () => {
           <Form.Item
             name="phone"
             label="Số điện thoại"
+            rules={[
+              { required: true, message: 'Vui lòng nhập số điện thoại!' },
+              { pattern: /^(03|05|07|08|09)\d{8}$/, message: 'Số điện thoại VN phải đủ 10 số (đầu 03, 05, 07, 08, 09)!' }
+            ]}
           >
-            <Input prefix={<PhoneOutlined />} placeholder="Số điện thoại" size="large" />
-          </Form.Item>
-
-          <Form.Item
-            name="role"
-            label="Vai trò tài khoản"
-            rules={[{ required: true, message: 'Vui lòng chọn vai trò!' }]}
-          >
-            <Select placeholder="Chọn vai trò" size="large">
-              <Select.Option value="Admin">Admin (Quản trị viên)</Select.Option>
-              <Select.Option value="Supplier">Supplier (Nhà cung cấp / HTX)</Select.Option>
-              <Select.Option value="Customer">Customer (Khách hàng)</Select.Option>
-            </Select>
+            <Input prefix={<PhoneOutlined />} placeholder="09xxxxxxxx" size="large" maxLength={10} />
           </Form.Item>
 
           <Form.Item
             name="password"
             label="Mật khẩu"
-            rules={[{ required: true, message: 'Vui lòng nhập mật khẩu!' }]}
+            rules={[
+              { required: true, message: 'Vui lòng nhập mật khẩu!' },
+              { min: 6, message: 'Mật khẩu tối thiểu 6 ký tự!' },
+              { pattern: /^(?=.*[a-zA-Z])(?=.*[0-9])/, message: 'Mật khẩu phải chứa cả chữ cái và chữ số!' }
+            ]}
           >
-            <Input.Password prefix={<LockOutlined />} placeholder="Password" size="large" />
+            <Input.Password prefix={<LockOutlined />} placeholder="Tối thiểu 6 ký tự gồm chữ và số" size="large" />
           </Form.Item>
 
           <Form.Item
@@ -115,12 +150,12 @@ export const Register: React.FC = () => {
               }),
             ]}
           >
-            <Input.Password prefix={<LockOutlined />} placeholder="Confirm Password" size="large" />
+            <Input.Password prefix={<LockOutlined />} placeholder="Xác nhận mật khẩu" size="large" />
           </Form.Item>
 
           <Form.Item style={{ marginTop: 24 }}>
-            <Button type="primary" htmlType="submit" loading={loading} block size="large">
-              Đăng Ký Tài Khoản
+            <Button type="primary" htmlType="submit" block size="large">
+              Tiếp Tục Xác Thực OTP
             </Button>
           </Form.Item>
         </Form>
@@ -129,6 +164,56 @@ export const Register: React.FC = () => {
           Đã có tài khoản? <Link to="/login">Đăng nhập</Link>
         </div>
       </Card>
+
+      {/* Modal xác thực OTP */}
+      <Modal
+        title={<span><SafetyCertificateOutlined style={{ color: '#1890ff', marginRight: 8 }} />Xác thực mã OTP</span>}
+        open={showOtpModal}
+        onCancel={() => setShowOtpModal(false)}
+        footer={[
+          <Button key="back" onClick={() => setShowOtpModal(false)}>
+            Hủy
+          </Button>,
+          <Button key="submit" type="primary" loading={loading} onClick={handleConfirmRegister}>
+            Xác nhận & Hoàn tất
+          </Button>,
+        ]}
+      >
+        <div style={{ marginBottom: 16 }}>
+          <p style={{ color: '#666' }}>Chọn phương thức nhận mã xác thực:</p>
+          <Radio.Group value={otpMethod} onChange={(e) => setOtpMethod(e.target.value)} buttonStyle="solid">
+            <Radio.Button value="EMAIL">✉️ Gmail</Radio.Button>
+            <Radio.Button value="SMS">📱 Tin nhắn SMS</Radio.Button>
+          </Radio.Group>
+        </div>
+
+        <div style={{ backgroundColor: '#f5f5f5', padding: 12, borderRadius: 8, marginBottom: 16 }}>
+          <div>Mã sẽ được gửi tới: <strong>{otpMethod === 'EMAIL' ? formValues?.email : formValues?.phone}</strong></div>
+          {serverOtp && (
+            <div style={{ color: '#1890ff', fontWeight: 'bold', marginTop: 4 }}>
+              Mã OTP hệ thống: {serverOtp}
+            </div>
+          )}
+        </div>
+
+        <Button
+          onClick={handleRequestOtp}
+          loading={isSendingOtp}
+          style={{ width: '100%', marginBottom: 16 }}
+        >
+          {serverOtp ? 'Gửi lại mã OTP mới' : 'Bấm để Gửi mã OTP'}
+        </Button>
+
+        <Form.Item label="Nhập mã OTP (6 chữ số)">
+          <Input
+            value={otpCode}
+            onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
+            maxLength={6}
+            placeholder="000000"
+            style={{ textAlign: 'center', fontSize: 20, letterSpacing: 6, fontWeight: 'bold' }}
+          />
+        </Form.Item>
+      </Modal>
     </div>
   );
 };

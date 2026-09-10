@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Form, Input, Button, Card, message } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import { useNavigate, Link } from 'react-router-dom';
-import { userService } from '../services/api';
+import { authService } from '../services/api';
 
 export const Login: React.FC = () => {
   const [loading, setLoading] = useState(false);
@@ -11,20 +11,28 @@ export const Login: React.FC = () => {
   const onFinish = async (values: any) => {
     setLoading(true);
     try {
-      const res = await userService.login({
-        username: values.username,
+      const res = await authService.login({
+        email: values.username,
         password: values.password,
       });
-      
-      message.success('Đăng nhập thành công!');
-      // Lưu thông tin user vào localStorage
-      localStorage.setItem('user', JSON.stringify(res.data));
-      
-      // Chuyển hướng về trang chủ Admin
+
+      const user = res.data.user;
+      const role = (user.role || '').toUpperCase();
+
+      // Kiểm tra chỉ cho phép ADMIN vào trang quản trị web-admin
+      if (role !== 'ADMIN') {
+        message.warning(`Tài khoản (${role}) không có quyền truy cập trang Quản trị viên.`);
+        return;
+      }
+
+      message.success(`Chào mừng Quản trị viên ${user.fullName || user.email}!`);
+      localStorage.setItem('user', JSON.stringify(user));
+      localStorage.setItem('auth_token', res.data.token);
+
       navigate('/');
     } catch (error: any) {
-      if (error.response?.status === 401) {
-        message.error('Tài khoản hoặc mật khẩu không chính xác.');
+      if (error.response?.data?.message) {
+        message.error(error.response.data.message);
       } else {
         message.error('Đăng nhập thất bại. Vui lòng kiểm tra lại kết nối API.');
       }
@@ -45,7 +53,7 @@ export const Login: React.FC = () => {
       <Card style={{ width: 400, boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
         <div style={{ textAlign: 'center', marginBottom: 30 }}>
           <h2 style={{ color: '#1890ff', margin: 0 }}>HỆ THỐNG ECC</h2>
-          <p style={{ color: '#8c8c8c', margin: '5px 0 0 0' }}>Đăng nhập trang quản trị</p>
+          <p style={{ color: '#8c8c8c', margin: '5px 0 0 0' }}>Đăng nhập trang quản trị (Admin)</p>
         </div>
         
         <Form
@@ -56,10 +64,10 @@ export const Login: React.FC = () => {
         >
           <Form.Item
             name="username"
-            label="Tên đăng nhập / Họ tên"
-            rules={[{ required: true, message: 'Vui lòng nhập tên đăng nhập!' }]}
+            label="Email / Tên đăng nhập"
+            rules={[{ required: true, message: 'Vui lòng nhập Email hoặc Tên đăng nhập!' }]}
           >
-            <Input prefix={<UserOutlined />} placeholder="Username" size="large" />
+            <Input prefix={<UserOutlined />} placeholder="admin@gmail.com" size="large" />
           </Form.Item>
 
           <Form.Item
@@ -72,13 +80,13 @@ export const Login: React.FC = () => {
 
           <Form.Item style={{ marginTop: 24 }}>
             <Button type="primary" htmlType="submit" loading={loading} block size="large">
-              Đăng Nhập
+              Đăng Nhập Quản Trị
             </Button>
           </Form.Item>
         </Form>
         
         <div style={{ textAlign: 'center', marginTop: 16 }}>
-          Chưa có tài khoản? <Link to="/register">Đăng ký ngay</Link>
+          Chưa có tài khoản? <Link to="/register">Đăng ký</Link>
         </div>
       </Card>
     </div>
