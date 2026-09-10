@@ -8,7 +8,7 @@ import '../../../core/theme.dart';
 import '../../../data/api_service.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({Key? key}) : super(key: key);
+  const LoginScreen({super.key});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -68,7 +68,7 @@ class _LoginScreenState extends State<LoginScreen> {
         // CUSTOMER -> Màn hình Mua hàng Storefront
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const MainContainer()),
+          MaterialPageRoute(builder: (context) => MainContainer(user: user)),
         );
       }
     } catch (e) {
@@ -106,7 +106,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: LanhTheme.primaryColor.withOpacity(0.1),
+                      color: LanhTheme.primaryColor.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
@@ -131,7 +131,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 6),
                 const Center(
                   child: Text(
-                    'Đăng nhập hệ thống đa phân hệ',
+                    'Nông sản hữu cơ · Truy xuất minh bạch',
                     style: TextStyle(
                       fontSize: 13,
                       color: Colors.grey,
@@ -153,7 +153,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   decoration: InputDecoration(
-                    hintText: 'Nhập email (VD: admin@gmail.com)',
+                    hintText: 'Nhập email của bạn',
                     prefixIcon: const Icon(Icons.email_outlined, color: LanhTheme.primaryColor),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -211,7 +211,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   controller: _passwordController,
                   obscureText: _obscurePassword,
                   decoration: InputDecoration(
-                    hintText: 'Nhập mật khẩu (VD: Demo@123)',
+                    hintText: 'Nhập mật khẩu',
                     prefixIcon: const Icon(Icons.lock_outline, color: LanhTheme.primaryColor),
                     suffixIcon: IconButton(
                       icon: Icon(
@@ -267,28 +267,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                         ),
                 ),
-                const SizedBox(height: 20),
-
-                // Quick Role Guide Box
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade50,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: Colors.grey.shade200),
-                  ),
-                  child: const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('💡 Tài khoản demo hệ thống (MK: Demo@123):', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                      SizedBox(height: 4),
-                      Text('• Quản trị viên: admin@gmail.com (Role: ADMIN)', style: TextStyle(fontSize: 11, color: Colors.indigo)),
-                      Text('• Nhà cung ứng: dalat@gmail.com (Role: SUPPLIER)', style: TextStyle(fontSize: 11, color: Colors.green)),
-                      Text('• Khách hàng: minhanh@gmail.com (Role: CUSTOMER)', style: TextStyle(fontSize: 11, color: Colors.teal)),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 24),
 
                 // Register Redirect
                 Row(
