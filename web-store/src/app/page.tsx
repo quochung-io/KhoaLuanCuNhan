@@ -1,7 +1,9 @@
 'use client';
 import React, { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
-const ICONS: Record<string, JSX.Element> = {
+const ICONS: Record<string, React.ReactNode> = {
   leaf: <svg viewBox="0 0 24 24" fill="none" stroke="#2E7D32" strokeWidth="1.8"><path d="M12 21c-5-1-8-5-8-10A7 7 0 0112 3a7 7 0 018 8c0 5-3 9-8 10z"/><path d="M12 21V9"/></svg>,
   carrot: <svg viewBox="0 0 24 24" fill="none" stroke="#FF9800" strokeWidth="1.8"><path d="M14 3l3 3M17 2l2 2M19 5l2-1M4 20l9-9 3 3-9 9-4 1 1-4z"/></svg>,
   citrus: <svg viewBox="0 0 24 24" fill="none" stroke="#FF9800" strokeWidth="1.8"><circle cx="12" cy="13" r="7"/><path d="M12 6c1-2 3-3 4-3"/><path d="M12 13l4-4M12 13l-4 4M12 13l4 4M12 13l-4-4"/></svg>,
@@ -21,23 +23,25 @@ type Product = {
   name: string;
   price: string;
   unit: string;
+  category: string;
   cert: string;
   region: string;
   rating: number;
   reviews: number;
   icon: string;
   lot: string;
+  imageUrl?: string;
 };
 
 const productsData: Product[] = [
-  {id:1, name:'Cải bó xôi hữu cơ', price:'28.000₫', unit:'/ 300g', cert:'VietGAP', region:'Đà Lạt', rating:4.8, reviews:212, icon:'leaf', lot:'LOT#VN-DL-0842'},
-  {id:2, name:'Cà rốt baby Đà Lạt', price:'32.000₫', unit:'/ 500g', cert:'GlobalGAP', region:'Đà Lạt', rating:4.9, reviews:184, icon:'carrot', lot:'LOT#VN-DL-0917'},
-  {id:3, name:'Cam Cao Phong', price:'45.000₫', unit:'/ kg', cert:'VietGAP', region:'Mộc Châu', rating:4.7, reviews:301, icon:'citrus', lot:'LOT#VN-MC-1140'},
-  {id:4, name:'Trứng gà ta thả vườn', price:'52.000₫', unit:'/ hộp 10', cert:'USDA', region:'Đồng Tháp', rating:5.0, reviews:96, icon:'egg', lot:'LOT#VN-DT-0663'},
-  {id:5, name:'Mật ong rừng nguyên chất', price:'135.000₫', unit:'/ 500ml', cert:'USDA', region:'Mộc Châu', rating:4.9, reviews:158, icon:'jar', lot:'LOT#VN-MC-0255'},
-  {id:6, name:'Dâu tây Mộc Châu', price:'68.000₫', unit:'/ hộp 250g', cert:'GlobalGAP', region:'Mộc Châu', rating:4.8, reviews:243, icon:'berry', lot:'LOT#VN-MC-0389'},
-  {id:7, name:'Xà lách xoăn thủy canh', price:'22.000₫', unit:'/ 250g', cert:'VietGAP', region:'Đà Lạt', rating:4.6, reviews:120, icon:'leaf', lot:'LOT#VN-DL-0721'},
-  {id:8, name:'Bơ 034 Đắk Lắk', price:'58.000₫', unit:'/ kg', cert:'VietGAP', region:'Đồng Tháp', rating:4.8, reviews:167, icon:'citrus', lot:'LOT#VN-DT-0410'},
+  {id:1, name:'Cải bó xôi hữu cơ', category:'Rau củ', price:'28.000₫', unit:'/ 300g', cert:'VietGAP', region:'Đà Lạt', rating:4.8, reviews:212, icon:'leaf', lot:'LOT#VN-DL-0842'},
+  {id:2, name:'Cà rốt baby Đà Lạt', category:'Rau củ', price:'32.000₫', unit:'/ 500g', cert:'GlobalGAP', region:'Đà Lạt', rating:4.9, reviews:184, icon:'carrot', lot:'LOT#VN-DL-0917'},
+  {id:3, name:'Cam Cao Phong', category:'Trái cây', price:'45.000₫', unit:'/ kg', cert:'VietGAP', region:'Mộc Châu', rating:4.7, reviews:301, icon:'citrus', lot:'LOT#VN-MC-1140'},
+  {id:4, name:'Trứng gà ta thả vườn', category:'Rau củ', price:'52.000₫', unit:'/ hộp 10', cert:'USDA', region:'Đồng Tháp', rating:5.0, reviews:96, icon:'egg', lot:'LOT#VN-DT-0663'},
+  {id:5, name:'Mật ong rừng nguyên chất', category:'Hạt', price:'135.000₫', unit:'/ 500ml', cert:'USDA', region:'Mộc Châu', rating:4.9, reviews:158, icon:'jar', lot:'LOT#VN-MC-0255'},
+  {id:6, name:'Dâu tây Mộc Châu', category:'Trái cây', price:'68.000₫', unit:'/ hộp 250g', cert:'GlobalGAP', region:'Mộc Châu', rating:4.8, reviews:243, icon:'berry', lot:'LOT#VN-MC-0389'},
+  {id:7, name:'Xà lách xoăn thủy canh', category:'Rau củ', price:'22.000₫', unit:'/ 250g', cert:'VietGAP', region:'Đà Lạt', rating:4.6, reviews:120, icon:'leaf', lot:'LOT#VN-DL-0721'},
+  {id:8, name:'Bơ 034 Đắk Lắk', category:'Trái cây', price:'58.000₫', unit:'/ kg', cert:'VietGAP', region:'Đồng Tháp', rating:4.8, reviews:167, icon:'citrus', lot:'LOT#VN-DT-0410'},
 ];
 
 const subPlans: Record<string, {name: string; desc: string; price: string}[]> = {
@@ -79,15 +83,174 @@ type CartItem = {
   qty: number;
 };
 
+type SuggestionItem = {
+  productId: number;
+  productName: string;
+  price: number;
+  unit: string;
+  imageUrl?: string;
+};
+
 export default function LanhLandingPage() {
+  const router = useRouter();
+  const [products, setProducts] = useState<Product[]>(productsData);
   const [theme, setTheme] = useState("light");
   const [lang, setLang] = useState("vi");
+
+  const handleGoToCheckout = () => {
+    if (!currentUser) {
+      alert("Vui lòng đăng nhập trước khi thực hiện thanh toán!");
+      router.push("/login");
+      return;
+    }
+    if (cart.length === 0) {
+      alert("Giỏ hàng của bạn đang trống!");
+      return;
+    }
+    setIsDrawerOpen(false);
+    router.push("/checkout");
+  };
+
+
+
+  // States tài khoản người dùng
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
+
+  useEffect(() => {
+    const stored = localStorage.getItem('customer_user');
+    if (stored) {
+      setCurrentUser(JSON.parse(stored));
+    }
+  }, []);
+
+  const handleCustomerLogout = () => {
+    localStorage.removeItem('customer_user');
+    setCurrentUser(null);
+    setShowUserDropdown(false);
+    window.location.reload();
+  };
+
+  // States tìm kiếm và lọc giá
+  const [searchQuery, setSearchQuery] = useState("");
+  const [suggestions, setSuggestions] = useState<SuggestionItem[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [minPrice, setMinPrice] = useState<number | "">("");
+  const [maxPrice, setMaxPrice] = useState<number | "">("");
+
+  const fetchProducts = (searchVal = searchQuery, minP = minPrice, maxP = maxPrice) => {
+    let url = 'http://localhost:5023/api/products';
+    const params: string[] = [];
+    if (searchVal) params.push(`search=${encodeURIComponent(searchVal)}`);
+    if (minP !== "") params.push(`minPrice=${minP}`);
+    if (maxP !== "") params.push(`maxPrice=${maxP}`);
+    if (params.length > 0) url += '?' + params.join('&');
+
+    fetch(url)
+      .then(res => res.json())
+      .then((data: any[]) => {
+        if (data) {
+          const mapped = data.map((item: any) => {
+            let icon = 'leaf';
+            const nameLower = item.productName.toLowerCase();
+            if (nameLower.includes('cà rốt') || nameLower.includes('củ')) icon = 'carrot';
+            else if (nameLower.includes('cam') || nameLower.includes('chanh') || nameLower.includes('quýt') || nameLower.includes('bưởi') || nameLower.includes('sầu riêng') || nameLower.includes('bơ')) icon = 'citrus';
+            else if (nameLower.includes('trứng') || nameLower.includes('gà') || nameLower.includes('thịt')) icon = 'egg';
+            else if (nameLower.includes('mật ong') || nameLower.includes('mứt') || nameLower.includes('hũ') || nameLower.includes('lọ')) icon = 'jar';
+            else if (nameLower.includes('dâu') || nameLower.includes('berry') || nameLower.includes('nho')) icon = 'berry';
+
+            let imageUrl = '';
+            if (item.productImages && item.productImages.length > 0) {
+              const primary = item.productImages.find((img: any) => img.isPrimary);
+              imageUrl = primary ? primary.imageUrl : item.productImages[0].imageUrl;
+            }
+
+            let region = 'Đà Lạt';
+            if (nameLower.includes('mộc châu') || nameLower.includes('bắc hà') || nameLower.includes('tây bắc') || nameLower.includes('sapa') || nameLower.includes('hàm yên') || nameLower.includes('chi lăng')) {
+              region = 'Mộc Châu';
+            } else if (nameLower.includes('đồng tháp') || nameLower.includes('miền tây') || nameLower.includes('bến tre') || nameLower.includes('tiền giang') || nameLower.includes('long an') || nameLower.includes('vũng tàu') || nameLower.includes('hưng yên') || nameLower.includes('ninh thuận')) {
+              region = 'Đồng Tháp';
+            }
+
+            const regCode = region === 'Mộc Châu' ? 'MC' : region === 'Đồng Tháp' ? 'DT' : 'DL';
+            const cert = (item.status === 'Active' || !item.status) ? 'VietGAP' : item.status;
+
+            const catName = item.category?.categoryName || 'Rau củ';
+
+            return {
+              id: Number(item.productId),
+              name: item.productName,
+              price: item.price.toLocaleString('vi-VN') + '₫',
+              unit: ' / ' + item.unit,
+              category: catName,
+              cert: cert,
+              region: region,
+              rating: Number((4.6 + (Number(item.productId) % 5) * 0.1).toFixed(1)),
+              reviews: 80 + (Number(item.productId) % 7) * 25,
+              icon: icon,
+              lot: 'LOT#VN-' + regCode + '-' + (1000 + Number(item.productId)),
+              imageUrl: imageUrl || undefined
+            };
+          });
+          setProducts(mapped);
+        }
+      })
+      .catch(err => console.error('Lỗi khi gọi API sản phẩm:', err));
+  };
+
+  const handleSearchChange = (val: string) => {
+    setSearchQuery(val);
+    if (val.trim().length > 0) {
+      fetch(`http://localhost:5023/api/products/autocomplete?prefix=${encodeURIComponent(val)}`)
+        .then(res => res.json())
+        .then((data: SuggestionItem[]) => {
+          setSuggestions(data || []);
+          setShowSuggestions(true);
+        })
+        .catch(() => setSuggestions([]));
+    } else {
+      setSuggestions([]);
+      setShowSuggestions(false);
+    }
+  };
+
+  const handleSelectSuggestion = (val: string) => {
+    setSearchQuery(val);
+    setShowSuggestions(false);
+    fetchProducts(val);
+  };
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
   
   const [cart, setCart] = useState<CartItem[]>([]);
+
+  // Đồng bộ giỏ hàng với localStorage
+  useEffect(() => {
+    const storedCart = localStorage.getItem('cart');
+    if (storedCart) {
+      try {
+        setCart(JSON.parse(storedCart));
+      } catch (e) {
+        console.error("Lỗi đọc giỏ hàng", e);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (cart.length > 0) {
+      localStorage.setItem('cart', JSON.stringify(cart));
+    } else {
+      localStorage.removeItem('cart');
+    }
+  }, [cart]);
+
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [cartBounce, setCartBounce] = useState(false);
   const [addedItem, setAddedItem] = useState<number | null>(null);
 
+  const [filterCategory, setFilterCategory] = useState("all");
   const [filterCert, setFilterCert] = useState("all");
   const [filterRegion, setFilterRegion] = useState("all");
   
@@ -180,18 +343,68 @@ export default function LanhLandingPage() {
             <a href="#subToggle">Combo</a>
           </nav>
 
-          <div className="search-shell">
-            <select className="cat-select" aria-label="Chọn danh mục">
-              <option>Tất cả</option>
-              <option>Rau lá</option>
-              <option>Trái cây</option>
-              <option>Thịt sạch</option>
-              <option>Chế biến</option>
-            </select>
-            <input type="text" placeholder="Tìm rau cải, bơ, cam Cao Phong…" />
-            <button className="go" aria-label="Tìm kiếm">
+          <div className="search-shell" style={{ position: 'relative' }}>
+            <input 
+              type="text" 
+              value={searchQuery}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              onFocus={() => setShowSuggestions(true)}
+              onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+              placeholder="Tìm rau cải, bơ, cam Cao Phong…" 
+            />
+            <button className="go" onClick={() => fetchProducts()} aria-label="Tìm kiếm">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
             </button>
+            
+            {showSuggestions && suggestions.length > 0 && (
+              <ul className="suggestions-list" style={{
+                position: 'absolute',
+                top: '100%',
+                left: 0,
+                right: 0,
+                backgroundColor: 'white',
+                border: '1px solid #ddd',
+                borderRadius: '4px',
+                listStyle: 'none',
+                padding: 0,
+                margin: 0,
+                zIndex: 999,
+                boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                textAlign: 'left'
+              }}>
+                {suggestions.map((s, idx) => (
+                  <li 
+                    key={idx} 
+                    onClick={() => {
+                      setShowSuggestions(false);
+                      router.push(`/products/${s.productId}`);
+                    }}
+                    style={{
+                      padding: '8px 12px',
+                      cursor: 'pointer',
+                      borderBottom: '1px solid #f0f0f0',
+                      color: '#333',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px'
+                    }}
+                    onMouseDown={(e) => e.preventDefault()}
+                  >
+                    <img 
+                      src={s.imageUrl || 'https://via.placeholder.com/35'} 
+                      alt={s.productName} 
+                      style={{ width: '35px', height: '35px', objectFit: 'cover', borderRadius: '4px', backgroundColor: 'var(--green-100)' }} 
+                    />
+                    <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+                      <strong style={{ fontSize: '13px', color: '#111' }}>{s.productName}</strong>
+                      <span style={{ fontSize: '11px', color: '#e53e3e', fontWeight: 'bold' }}>
+                        {s.price.toLocaleString('vi-VN')}đ<span style={{ color: '#718096', fontWeight: 'normal' }}> / {s.unit}</span>
+                      </span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
 
           <div className="nav-icons">
@@ -209,9 +422,121 @@ export default function LanhLandingPage() {
               <button className={lang === "vi" ? "active" : ""} onClick={() => setLang("vi")}>VI</button>
               <button className={lang === "en" ? "active" : ""} onClick={() => setLang("en")}>EN</button>
             </div>
-            <button className="icon-btn" aria-label="Tài khoản">
-              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 5-6 8-6s6.5 2 8 6"/></svg>
-            </button>
+            <div style={{ position: 'relative' }}>
+              <button 
+                className="icon-btn" 
+                onClick={() => setShowUserDropdown(!showUserDropdown)} 
+                aria-label="Tài khoản"
+                title={currentUser ? `Xin chào, ${currentUser.fullName}` : "Tài khoản"}
+                style={{ display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer', border: 'none', background: 'none' }}
+              >
+                {currentUser && currentUser.avatarUrl ? (
+                  <img 
+                    src={currentUser.avatarUrl} 
+                    alt="Avatar" 
+                    style={{ width: '22px', height: '22px', borderRadius: '50%', objectFit: 'cover', border: '1.5px solid var(--green-700)' }} 
+                  />
+                ) : (
+                  <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 5-6 8-6s6.5 2 8 6"/></svg>
+                )}
+                {currentUser && <span style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--green-700)', maxWidth: '80px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{currentUser.fullName}</span>}
+              </button>
+              
+              {showUserDropdown && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  right: 0,
+                  backgroundColor: 'white',
+                  border: '1px solid #ddd',
+                  borderRadius: '6px',
+                  boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
+                  zIndex: 1000,
+                  width: '160px',
+                  padding: '5px 0',
+                  textAlign: 'left',
+                  display: 'flex',
+                  flexDirection: 'column'
+                }}>
+                  {currentUser ? (
+                    <>
+                      <div style={{ padding: '8px 12px', borderBottom: '1px solid #eee', fontSize: '12px', color: '#666' }}>
+                        Vai trò: {currentUser.roleId === 1 ? 'Admin' : (currentUser.roleId === 2 ? 'Supplier' : 'Khách hàng')}
+                      </div>
+                      <Link 
+                        href="/profile"
+                        style={{
+                          display: 'block',
+                          padding: '8px 12px',
+                          textDecoration: 'none',
+                          color: '#333',
+                          fontSize: '13px',
+                          borderBottom: '1px solid #eee'
+                        }}
+                      >
+                        Trang cá nhân
+                      </Link>
+                      <Link 
+                        href="/orders"
+                        style={{
+                          display: 'block',
+                          padding: '8px 12px',
+                          textDecoration: 'none',
+                          color: '#333',
+                          fontSize: '13px',
+                          borderBottom: '1px solid #eee'
+                        }}
+                      >
+                        Lịch sử đơn hàng
+                      </Link>
+                      <button 
+                        onClick={handleCustomerLogout}
+                        style={{
+                          width: '100%',
+                          padding: '8px 12px',
+                          border: 'none',
+                          background: 'none',
+                          textAlign: 'left',
+                          cursor: 'pointer',
+                          color: '#c62828',
+                          fontSize: '13px',
+                          fontWeight: 'bold'
+                        }}
+                      >
+                        Đăng xuất
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <Link 
+                        href="/login"
+                        style={{
+                          display: 'block',
+                          padding: '8px 12px',
+                          textDecoration: 'none',
+                          color: '#333',
+                          fontSize: '13px'
+                        }}
+                      >
+                        Đăng nhập
+                      </Link>
+                      <Link 
+                        href="/register"
+                        style={{
+                          display: 'block',
+                          padding: '8px 12px',
+                          textDecoration: 'none',
+                          color: '#333',
+                          fontSize: '13px'
+                        }}
+                      >
+                        Đăng ký
+                      </Link>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
             <button className={`icon-btn ${cartBounce ? "bounce" : ""}`} onClick={() => setIsDrawerOpen(true)} aria-label="Giỏ hàng">
               <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 4h2l2.4 12.2a2 2 0 002 1.8h7.7a2 2 0 002-1.6L21 8H6"/><circle cx="9.5" cy="21" r="1.3" fill="currentColor" stroke="none"/><circle cx="17.5" cy="21" r="1.3" fill="currentColor" stroke="none"/></svg>
               <span className="badge">{cart.reduce((s, i) => s + i.qty, 0)}</span>
@@ -280,29 +605,55 @@ export default function LanhLandingPage() {
             <span className="eyebrow">Danh mục</span>
             <h2 className="section-title" style={{marginTop:'12px'}}>Chọn theo nhu cầu bữa ăn của bạn</h2>
             <div className="cat-grid">
-              <div className="cat-card reveal">
+              <div 
+                className="cat-card reveal" 
+                style={{ cursor: 'pointer', border: filterCategory === 'Rau củ' ? '2px solid var(--green-700)' : 'none' }}
+                onClick={() => { setFilterCategory('Rau củ'); document.getElementById('products')?.scrollIntoView({behavior: 'smooth'}); }}
+              >
                 <div className="ic-wrap" style={{background:'#E3F1E3'}}><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" strokeWidth="2"><path d="M12 21c-4-1-7-4-7-9a7 7 0 0114 0c0 5-3 8-7 9z"/><path d="M12 21V9"/></svg></div>
-                <h3>Rau lá &amp; củ quả</h3>
-                <p>Cải bó xôi, xà lách, cà rốt, khoai tây hữu cơ</p>
-                <span className="count">248 sản phẩm</span>
+                <h3>Rau củ</h3>
+                <p>Cải thìa, bắp cải, súp lơ, củ dền, cà chua, cà rốt, nấm tươi</p>
+                <span className="count">53 sản phẩm</span>
               </div>
-              <div className="cat-card reveal">
+              <div 
+                className="cat-card reveal" 
+                style={{ cursor: 'pointer', border: filterCategory === 'Trái cây' ? '2px solid var(--green-700)' : 'none' }}
+                onClick={() => { setFilterCategory('Trái cây'); document.getElementById('products')?.scrollIntoView({behavior: 'smooth'}); }}
+              >
                 <div className="ic-wrap" style={{background:'#FFF1DC'}}><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#FF9800" strokeWidth="2"><circle cx="12" cy="13" r="7"/><path d="M12 6c1-2 3-3 4-3"/></svg></div>
-                <h3>Trái cây tươi</h3>
-                <p>Cam Cao Phong, bơ 034, xoài cát Hòa Lộc</p>
-                <span className="count">176 sản phẩm</span>
+                <h3>Trái cây</h3>
+                <p>Sầu riêng, bưởi da xanh, xoài cát, dưa hấu, măng cụt, bơ</p>
+                <span className="count">44 sản phẩm</span>
               </div>
-              <div className="cat-card reveal">
-                <div className="ic-wrap" style={{background:'#FBE4E4'}}><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#C0392B" strokeWidth="2"><rect x="4" y="7" width="16" height="12" rx="3"/><path d="M8 7V5a4 4 0 018 0v2"/></svg></div>
-                <h3>Thịt sạch &amp; trứng</h3>
-                <p>Gà thả vườn, heo hữu cơ, trứng gà ta</p>
-                <span className="count">92 sản phẩm</span>
+              <div 
+                className="cat-card reveal" 
+                style={{ cursor: 'pointer', border: filterCategory === 'Rau thơm' ? '2px solid var(--green-700)' : 'none' }}
+                onClick={() => { setFilterCategory('Rau thơm'); document.getElementById('products')?.scrollIntoView({behavior: 'smooth'}); }}
+              >
+                <div className="ic-wrap" style={{background:'#E8F5E9'}}><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" strokeWidth="2"><path d="M12 2a10 10 0 0110 10c0 5.523-4.477 10-10 10S2 17.523 2 12A10 10 0 0112 2z"/><path d="M12 6v6l4 2"/></svg></div>
+                <h3>Rau thơm</h3>
+                <p>Hành lá, ngò gai, tía tô, kinh giới, diếp cá, thì là, ớt, tỏi</p>
+                <span className="count">16 sản phẩm</span>
               </div>
-              <div className="cat-card reveal">
-                <div className="ic-wrap" style={{background:'#E3ECF7'}}><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#2E5C8A" strokeWidth="2"><path d="M8 3h8l1 5H7l1-5z"/><path d="M6 8h12l-1 13H7L6 8z"/></svg></div>
-                <h3>Nông sản chế biến</h3>
-                <p>Mứt, nước ép lạnh, gạo lứt, mật ong rừng</p>
-                <span className="count">64 sản phẩm</span>
+              <div 
+                className="cat-card reveal" 
+                style={{ cursor: 'pointer', border: filterCategory === 'Hạt' ? '2px solid var(--green-700)' : 'none' }}
+                onClick={() => { setFilterCategory('Hạt'); document.getElementById('products')?.scrollIntoView({behavior: 'smooth'}); }}
+              >
+                <div className="ic-wrap" style={{background:'#FFF8E1'}}><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#F57F17" strokeWidth="2"><circle cx="12" cy="12" r="3"/><circle cx="19" cy="12" r="2"/><circle cx="5" cy="12" r="2"/></svg></div>
+                <h3>Hạt</h3>
+                <p>Hạt điều, hạt sen, macca, yến mạch, ngô nếp, các loại đậu</p>
+                <span className="count">19 sản phẩm</span>
+              </div>
+              <div 
+                className="cat-card reveal" 
+                style={{ cursor: 'pointer', border: filterCategory === 'Gạo' ? '2px solid var(--green-700)' : 'none' }}
+                onClick={() => { setFilterCategory('Gạo'); document.getElementById('products')?.scrollIntoView({behavior: 'smooth'}); }}
+              >
+                <div className="ic-wrap" style={{background:'#EDE7F6'}}><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#673AB7" strokeWidth="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
+                <h3>Gạo</h3>
+                <p>ST25, gạo lứt tím, Séng Cù, Nàng Thơm Chợ Đào, nếp nương</p>
+                <span className="count">8 sản phẩm</span>
               </div>
             </div>
           </div>
@@ -313,7 +664,19 @@ export default function LanhLandingPage() {
             <span className="eyebrow">Sản phẩm nổi bật</span>
             <h2 className="section-title" style={{marginTop:'12px'}}>Thu hoạch hôm nay, giao tận cửa nhà bạn</h2>
 
-            <div className="filter-bar">
+            <div className="filter-bar" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+              <span className="filter-label">Danh mục</span>
+              {['all', 'Trái cây', 'Rau củ', 'Rau thơm', 'Hạt', 'Gạo'].map(cat => (
+                <button 
+                  key={cat} 
+                  className={`chip ${filterCategory === cat ? 'active' : ''}`} 
+                  onClick={() => setFilterCategory(cat)}
+                >
+                  {cat === 'all' ? 'Tất cả' : cat}
+                </button>
+              ))}
+              <div className="chip-sep"></div>
+
               <span className="filter-label">Chứng nhận</span>
               {['all', 'VietGAP', 'GlobalGAP', 'USDA'].map(c => (
                 <button key={c} className={`chip ${filterCert === c ? 'active' : ''}`} onClick={() => setFilterCert(c)}>
@@ -327,21 +690,65 @@ export default function LanhLandingPage() {
                   {r === 'all' ? 'Tất cả' : r}
                 </button>
               ))}
+              <div className="chip-sep"></div>
+              <span className="filter-label">Khoảng giá (đ)</span>
+              <input 
+                type="number" 
+                placeholder="Giá tối thiểu" 
+                value={minPrice}
+                onChange={(e) => setMinPrice(e.target.value === "" ? "" : Number(e.target.value))}
+                style={{ padding: '6px 10px', borderRadius: '20px', border: '1px solid #ddd', width: '110px', outline: 'none' }}
+              />
+              <span>-</span>
+              <input 
+                type="number" 
+                placeholder="Giá tối đa" 
+                value={maxPrice}
+                onChange={(e) => setMaxPrice(e.target.value === "" ? "" : Number(e.target.value))}
+                style={{ padding: '6px 10px', borderRadius: '20px', border: '1px solid #ddd', width: '110px', outline: 'none' }}
+              />
+              <button 
+                className="chip active" 
+                onClick={() => fetchProducts()}
+                style={{ cursor: 'pointer', border: 'none', background: 'var(--green-700)', color: 'white' }}
+              >
+                Lọc giá
+              </button>
+              {(minPrice !== "" || maxPrice !== "" || filterCategory !== "all" || filterCert !== "all" || filterRegion !== "all") && (
+                <button 
+                  className="chip" 
+                  onClick={() => { setFilterCategory("all"); setFilterCert("all"); setFilterRegion("all"); setMinPrice(""); setMaxPrice(""); fetchProducts(searchQuery, "", ""); }}
+                  style={{ cursor: 'pointer', border: 'none' }}
+                >
+                  Xóa lọc
+                </button>
+              )}
             </div>
 
             <div className="prod-grid">
-              {productsData.filter(p => (filterCert === 'all' || p.cert === filterCert) && (filterRegion === 'all' || p.region === filterRegion)).map(p => (
+              {products.filter(p => 
+                (filterCategory === 'all' || p.category === filterCategory) &&
+                (filterCert === 'all' || p.cert === filterCert) && 
+                (filterRegion === 'all' || p.region === filterRegion)
+              ).map(p => (
                 <div key={p.id} className="prod-card">
-                  <div className="prod-media" style={{background:'var(--green-100)'}}>
-                    {ICONS[p.icon]}
-                    <div className="tag-row">
+                  <div className="prod-media" style={{background:'var(--green-100)', position: 'relative'}}>
+                    <Link href={`/products/${p.id}`} style={{ display: 'block', width: '100%', height: '100%', cursor: 'pointer' }}>
+                      {p.imageUrl ? (
+                        <img src={p.imageUrl} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : (
+                        ICONS[p.icon]
+                      )}
+                    </Link>
+                    <div className="tag-row" style={{ pointerEvents: 'auto' }}>
+                      <span className="tag-cert" style={{ background: '#2E7D32', color: '#fff', fontWeight: 600 }}>{p.category}</span>
                       <span className="tag-cert">{p.cert}</span>
-                      <button className="qr-btn" onClick={() => setOpenQrFor(p.id)} aria-label="Xem truy xuất nguồn gốc">
+                      <button className="qr-btn" onClick={(e) => { e.stopPropagation(); setOpenQrFor(p.id); }} aria-label="Xem truy xuất nguồn gốc">
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" strokeWidth="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM20 14v3M14 20h3M20 20v.01"/></svg>
                       </button>
                     </div>
                     <div className={`qr-panel ${openQrFor === p.id ? 'show' : ''}`}>
-                      <button className="qr-close" onClick={() => setOpenQrFor(null)} aria-label="Đóng">
+                      <button className="qr-close" onClick={(e) => { e.stopPropagation(); setOpenQrFor(null); }} aria-label="Đóng">
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg>
                       </button>
                       <svg width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" strokeWidth="1.6"><rect x="2" y="2" width="7" height="7"/><rect x="15" y="2" width="7" height="7"/><rect x="2" y="15" width="7" height="7"/><path d="M15 15h3v3h-3zM21 15v3M15 21h3M21 21v.01M5 5h1M18 5h1M5 18h1"/></svg>
@@ -354,7 +761,11 @@ export default function LanhLandingPage() {
                       <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"/></svg>
                       Xuất xứ: {p.region}
                     </span>
-                    <span className="prod-name">{p.name}</span>
+                    <Link href={`/products/${p.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                      <span className="prod-name" style={{ cursor: 'pointer', transition: 'color 0.2s' }} onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--green-700)')} onMouseLeave={(e) => (e.currentTarget.style.color = 'inherit')}>
+                        {p.name}
+                      </span>
+                    </Link>
                     <div className="stars">
                       <span className="fill">★★★★★</span> {p.rating} · {p.reviews} đánh giá
                     </div>
@@ -521,7 +932,13 @@ export default function LanhLandingPage() {
           ) : (
             cart.map(item => (
               <div key={item.product.id} className="drawer-item">
-                <div className="thumb">{ICONS[item.product.icon]}</div>
+                <div className="thumb">
+                  {item.product.imageUrl ? (
+                    <img src={item.product.imageUrl} alt={item.product.name} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '4px' }} />
+                  ) : (
+                    ICONS[item.product.icon]
+                  )}
+                </div>
                 <div className="info">
                   <b>{item.product.name}</b>
                   <span>{item.product.price} {item.product.unit}</span>
@@ -540,7 +957,12 @@ export default function LanhLandingPage() {
         </div>
         <div className="drawer-foot">
           <div className="row"><span>Tạm tính</span><span>{toVND(totalCart)}</span></div>
-          <button className="btn btn-accent">Thanh toán nhanh</button>
+          <button 
+            className="btn btn-accent" 
+            onClick={handleGoToCheckout} 
+          >
+            Thanh toán ngay
+          </button>
         </div>
       </aside>
     </>
