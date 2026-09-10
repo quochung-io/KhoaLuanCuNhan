@@ -16,7 +16,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // ── Đăng ký dịch vụ gửi mã OTP qua Gmail thực tế ───────
 builder.Services.AddSingleton<IOtpService, OtpService>();
 
-// ── Cấu hình CORS cho phép tất cả các nguồn (để các phân hệ frontend kết nối) ──
+// ── Cấu hình CORS cho phép tất cả các nguồn (Web + Mobile App) ──
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>

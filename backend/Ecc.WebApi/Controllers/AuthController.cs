@@ -44,7 +44,7 @@ public class AuthController : ControllerBase
             return BadRequest(new { message = "Tài khoản của bạn đã bị khóa hoặc chưa được kích hoạt!" });
         }
 
-        // Kiểm tra mật khẩu (hỗ trợ cả mật khẩu băm BCrypt hoặc mật khẩu demo nếu có)
+        // Kiểm tra mật khẩu (BCrypt hoặc so khớp thẳng nếu dữ liệu demo cũ)
         bool isPasswordValid = false;
         try
         {
@@ -60,7 +60,6 @@ public class AuthController : ControllerBase
             return Unauthorized(new { message = "Email/Tên đăng nhập hoặc mật khẩu không chính xác!" });
         }
 
-        // Map role name theo RoleId: 1 = ADMIN, 2 = SUPPLIER, 3 = CUSTOMER
         string roleName = user.RoleId switch
         {
             1 => "ADMIN",
@@ -118,7 +117,6 @@ public class AuthController : ControllerBase
             return BadRequest(new { message = "Vui lòng nhập đầy đủ các thông tin bắt buộc!" });
         }
 
-        // Xác thực mã OTP nếu có truyền mã OTP
         if (!string.IsNullOrWhiteSpace(request.Otp))
         {
             string verifyKey = request.VerifyMethod?.ToUpper() == "SMS" ? (request.Phone ?? "") : request.Email;
@@ -141,7 +139,7 @@ public class AuthController : ControllerBase
             Email = request.Email.Trim().ToLower(),
             Phone = request.Phone?.Trim(),
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
-            RoleId = 3, // Mặc định là CUSTOMER
+            RoleId = 3, // CUSTOMER
             Status = "Active",
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow

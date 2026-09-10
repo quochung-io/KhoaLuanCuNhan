@@ -10,7 +10,7 @@ namespace Ecc.Infrastructure.Services;
 
 public interface IOtpService
 {
-    Task<string> GenerateAndSendOtpAsync(string recipient, string type);
+    Task<string> GenerateAndSendOtpAsync(string recipient, string type); // type: "EMAIL" hoặc "SMS"
     bool VerifyOtp(string recipient, string otp);
 }
 
@@ -28,13 +28,16 @@ public class OtpService : IOtpService
 
     public async Task<string> GenerateAndSendOtpAsync(string recipient, string type)
     {
+        // 1. Tạo ngẫu nhiên mã OTP 6 chữ số (100000 -> 999999)
         var random = new Random();
         string otp = random.Next(100000, 999999).ToString();
 
+        // 2. Lưu vào bộ nhớ với thời hạn 5 phút (300 giây)
         _otpStorage[recipient.ToLower()] = (otp, DateTime.UtcNow.AddMinutes(5));
 
         _logger.LogInformation($"[OTP SERVICE] Mã OTP cho {recipient} ({type}) là: {otp}");
 
+        // 3. Gửi thực tế qua kênh tương ứng
         if (type.ToUpper() == "EMAIL")
         {
             await SendEmailAsync(recipient, otp);
@@ -54,7 +57,7 @@ public class OtpService : IOtpService
         {
             if (DateTime.UtcNow <= record.Expiry && record.Code == otp.Trim())
             {
-                _otpStorage.TryRemove(key, out _);
+                _otpStorage.TryRemove(key, out _); // Xóa sau khi dùng thành công
                 return true;
             }
         }
@@ -70,6 +73,7 @@ public class OtpService : IOtpService
             var senderEmail = _config["Smtp:SenderEmail"];
             var senderPassword = _config["Smtp:SenderPassword"];
 
+            // Nếu chưa cấu hình SMTP thực tế, ghi log console thông báo
             if (string.IsNullOrEmpty(host) || string.IsNullOrEmpty(senderEmail))
             {
                 _logger.LogWarning($"[SMTP CHƯA CẤU HÌNH] OTP {otp} đã gửi tới Email: {toEmail} (Mô phỏng thành công)");
@@ -110,6 +114,7 @@ public class OtpService : IOtpService
 
     private Task SendSmsAsync(string phone, string otp)
     {
+        // Mô phỏng / Tích hợp SMS Gateway API (Twilio / eSMS / SpeedSMS)
         _logger.LogInformation($"[SMS GATEWAY] Đã bắn tin nhắn OTP '{otp}' tới số điện thoại {phone}");
         return Task.CompletedTask;
     }
