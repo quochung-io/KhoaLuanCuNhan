@@ -1,8 +1,1 @@
-/* Custom styles for Web Admin */
-.logo-section span {
-  transition: all 0.3s;
-}
-
-.ant-layout-sider-collapsed .logo-section span {
-  display: none;
-}
+/* Reset App.css */

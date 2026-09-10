@@ -162,7 +162,7 @@ header{
 @media (max-width:640px){.float-card{display:none;}}
 
 /* ================= CATEGORIES ================= */
-.cat-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:18px; margin-top:44px;}
+.cat-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:18px; margin-top:44px;}
 @media (max-width:860px){.cat-grid{grid-template-columns:repeat(2,1fr);}}
 .cat-card{
   background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-lg);
