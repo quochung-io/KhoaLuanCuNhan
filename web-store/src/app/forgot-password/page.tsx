@@ -24,15 +24,23 @@ type CartItem = {
   qty: number;
 };
 
-export default function LoginPage() {
+export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [otpCode, setOtpCode] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  
+  // Các bước: 1: Nhập email gửi OTP -> 2: Nhập OTP & Mật khẩu mới
+  const [step, setStep] = useState<1 | 2>(1);
+  const [timer, setTimer] = useState(0);
+  
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  // Đồng bộ Header, Theme, Lang, User, Cart, Search với hệ thống LÀNH Farm
+  // Header, theme, cart, search đồng bộ 100%
   const [theme, setTheme] = useState('light');
   const [lang, setLang] = useState<'vi' | 'en'>('vi');
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -69,7 +77,15 @@ export default function LoginPage() {
     }
   }, []);
 
-  // Đóng dropdown khi click ra ngoài
+  useEffect(() => {
+    let interval: any = null;
+    if (timer > 0) {
+      interval = setInterval(() => setTimer(prev => prev - 1), 1000);
+    }
+    return () => clearInterval(interval);
+  }, [timer]);
+
+  // Đóng dropdown tài khoản khi click ra ngoài
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
@@ -137,43 +153,104 @@ export default function LoginPage() {
   const totalItemsCount = cart.reduce((s, i) => s + i.qty, 0);
   const toVND = (n: number) => n.toLocaleString('vi-VN') + '₫';
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+  // BƯỚC 1: Gửi OTP
+  const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    
-    if (!email.trim() || !password) {
-      setError('Vui lòng điền đầy đủ email/họ tên và mật khẩu.');
+    setSuccess('');
+
+    if (!email.trim()) {
+      setError('Vui lòng nhập địa chỉ email của bạn.');
+      return;
+    }
+
+    if (!emailRegex.test(email.trim())) {
+      setError('Định dạng email không hợp lệ (Ví dụ: name@gmail.com).');
       return;
     }
 
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:5023/api/auth/login', {
+      const res = await fetch('http://localhost:5023/api/auth/forgot-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim(), password })
+        body: JSON.stringify({ email: email.trim() })
       });
 
-      const data = await res.json();
+      let data: any = {};
+      try {
+        data = await res.json();
+      } catch {
+        const text = await res.text().catch(() => '');
+        throw new Error(text || `Lỗi máy chủ (${res.status})`);
+      }
+
+      setOtpCode('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setSuccess('Đã gửi mã xác thực OTP về email của bạn.');
+      setStep(2);
+      setTimer(60);
+    } catch (err: any) {
+      setError(err.message || 'Có lỗi khi gửi mã OTP.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // BƯỚC 2: Xác nhận OTP và đặt lại mật khẩu
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+
+    if (!otpCode.trim() || otpCode.trim().length !== 6) {
+      setError('Vui lòng nhập đủ 6 chữ số mã OTP xác thực.');
+      return;
+    }
+
+    if (!newPassword || newPassword.length < 6 || !/[a-zA-Z]/.test(newPassword) || !/[0-9]/.test(newPassword)) {
+      setError('Mật khẩu mới phải từ 6 ký tự trở lên và chứa cả chữ cái lẫn chữ số.');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setError('Mật khẩu xác nhận không khớp với mật khẩu mới.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await fetch('http://localhost:5023/api/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: email.trim(),
+          otp: otpCode.trim(),
+          newPassword: newPassword
+        })
+      });
+
+      let data: any = {};
+      try {
+        data = await res.json();
+      } catch {
+        const text = await res.text().catch(() => '');
+        throw new Error(text || `Lỗi máy chủ (${res.status})`);
+      }
 
       if (!res.ok) {
-        throw new Error(data.message || 'Tài khoản hoặc mật khẩu không chính xác.');
+        throw new Error(data.message || 'Đặt lại mật khẩu thất bại.');
       }
 
-      localStorage.setItem('customer_user', JSON.stringify(data.user));
-      localStorage.setItem('auth_token', data.token);
-
-      const role = (data.user.role || '').toUpperCase();
-      if (role === 'ADMIN') {
-        window.location.href = 'http://localhost:5173/dashboard';
-      } else if (role === 'SUPPLIER') {
-        window.location.href = 'http://localhost:5174/dashboard';
-      } else {
-        router.push('/');
-        router.refresh();
-      }
+      setSuccess('Đặt lại mật khẩu thành công! Đang chuyển hướng về trang đăng nhập...');
+      setTimeout(() => {
+        router.push('/login');
+      }, 1800);
     } catch (err: any) {
-      setError(err.message || 'Có lỗi xảy ra khi kết nối máy chủ.');
+      setError(err.message || 'Có lỗi khi đặt lại mật khẩu.');
     } finally {
       setLoading(false);
     }
@@ -448,7 +525,7 @@ export default function LoginPage() {
         </div>
       </header>
 
-      {/* ── NỘI DUNG FORM ĐĂNG NHẬP (GIAO DIỆN TỐI GIẢN, TINH TẾ) ── */}
+      {/* ── NỘI DUNG FORM QUÊN MẬT KHẨU (TỐI GIẢN, RÕ RÀNG) ── */}
       <main id="main" style={{ minHeight: 'calc(100vh - 400px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '48px 16px', backgroundColor: '#f8fafc' }}>
         <div style={{
           backgroundColor: '#ffffff',
@@ -456,15 +533,17 @@ export default function LoginPage() {
           borderRadius: '12px',
           boxShadow: '0 4px 20px rgba(0, 0, 0, 0.03)',
           width: '100%',
-          maxWidth: '420px',
+          maxWidth: '430px',
           padding: '32px 28px'
         }}>
           <div style={{ textAlign: 'center', marginBottom: '24px' }}>
             <h1 style={{ fontSize: '22px', fontWeight: '700', color: '#0f172a', margin: '0 0 6px 0' }}>
-              Đăng nhập tài khoản
+              {step === 1 ? 'Quên mật khẩu' : 'Đặt lại mật khẩu mới'}
             </h1>
             <p style={{ fontSize: '13.5px', color: '#64748b', margin: 0 }}>
-              Tiếp tục chọn mua nông sản sạch và theo dõi đơn hàng
+              {step === 1 
+                ? 'Nhập địa chỉ email đăng ký để nhận mã OTP khôi phục' 
+                : `Nhập mã OTP vừa gửi tới email ${email}`}
             </p>
           </div>
 
@@ -482,98 +561,185 @@ export default function LoginPage() {
             </div>
           )}
 
-          <form onSubmit={handleLogin}>
-            <div style={{ marginBottom: '16px' }}>
-              <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: '600', color: '#334155' }}>
-                Email hoặc Tên đăng nhập
-              </label>
-              <input
-                type="text"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Nhập email hoặc tên đăng nhập"
-                style={{
-                  width: '100%',
-                  padding: '10px 12px',
-                  borderRadius: '6px',
-                  border: '1px solid #cbd5e1',
-                  backgroundColor: '#ffffff',
-                  color: '#0f172a',
-                  fontSize: '13.5px',
-                  outline: 'none',
-                  boxSizing: 'border-box'
-                }}
-              />
+          {success && (
+            <div style={{
+              backgroundColor: '#f0fdf4',
+              border: '1px solid #bbf7d0',
+              color: '#166534',
+              padding: '10px 14px',
+              borderRadius: '6px',
+              marginBottom: '18px',
+              fontSize: '13px'
+            }}>
+              {success}
             </div>
+          )}
 
-            <div style={{ marginBottom: '20px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                <label style={{ fontSize: '13px', fontWeight: '600', color: '#334155' }}>
-                  Mật khẩu
+          {step === 1 ? (
+            /* ── FORM BƯỚC 1: NHẬP EMAIL ── */
+            <form onSubmit={handleSendOtp}>
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: '600', color: '#334155' }}>
+                  Địa chỉ Email tài khoản
                 </label>
-                <Link href="/forgot-password" style={{ fontSize: '12.5px', color: '#15803d', fontWeight: '600', textDecoration: 'none' }}>
-                  Quên mật khẩu?
-                </Link>
-              </div>
-              <div style={{ position: 'relative' }}>
                 <input
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="name@gmail.com"
                   style={{
                     width: '100%',
                     padding: '10px 12px',
-                    paddingRight: '38px',
                     borderRadius: '6px',
                     border: '1px solid #cbd5e1',
-                    backgroundColor: '#ffffff',
-                    color: '#0f172a',
                     fontSize: '13.5px',
                     outline: 'none',
                     boxSizing: 'border-box'
                   }}
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  style={{ position: 'absolute', right: '10px', top: '10px', color: '#94a3b8', background: 'none', border: 'none', cursor: 'pointer' }}
-                  aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-                >
-                  {showPassword ? (
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-                  ) : (
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                  )}
-                </button>
               </div>
-            </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              style={{
-                width: '100%',
-                padding: '12px',
-                backgroundColor: '#15803d',
-                color: '#ffffff',
-                border: 'none',
-                borderRadius: '6px',
-                fontSize: '14.5px',
-                fontWeight: '600',
-                cursor: loading ? 'not-allowed' : 'pointer',
-                opacity: loading ? 0.7 : 1,
-                transition: 'background-color 0.15s'
-              }}
-            >
-              {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
-            </button>
-          </form>
+              <button
+                type="submit"
+                disabled={loading}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  backgroundColor: '#15803d',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontSize: '14.5px',
+                  fontWeight: '600',
+                  cursor: loading ? 'not-allowed' : 'pointer',
+                  opacity: loading ? 0.7 : 1
+                }}
+              >
+                {loading ? 'Đang gửi mã OTP...' : 'Gửi mã OTP xác thực'}
+              </button>
+            </form>
+          ) : (
+            /* ── FORM BƯỚC 2: NHẬP OTP VÀ ĐẶT LẠI MẬT KHẨU ── */
+            <form onSubmit={handleResetPassword}>
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: '600', color: '#334155' }}>
+                  Mã xác thực OTP (6 chữ số)
+                </label>
+                <input
+                  type="text"
+                  maxLength={6}
+                  value={otpCode}
+                  onChange={(e) => setOtpCode(e.target.value.replace(/[^0-9]/g, ''))}
+                  placeholder="123456"
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    borderRadius: '6px',
+                    border: '1.5px solid #cbd5e1',
+                    fontSize: '17px',
+                    letterSpacing: '3px',
+                    textAlign: 'center',
+                    fontWeight: '700',
+                    outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
+                />
+                <div style={{ textAlign: 'right', marginTop: '6px' }}>
+                  {timer > 0 ? (
+                    <span style={{ fontSize: '12px', color: '#64748b' }}>Gửi lại sau {timer}s</span>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleSendOtp}
+                      style={{ border: 'none', background: 'none', color: '#15803d', fontSize: '12px', fontWeight: '600', cursor: 'pointer', padding: 0 }}
+                    >
+                      Gửi lại mã OTP
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <div style={{ marginBottom: '14px' }}>
+                <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: '600', color: '#334155' }}>
+                  Mật khẩu mới
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="Tối thiểu 6 ký tự gồm chữ và số"
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      paddingRight: '38px',
+                      borderRadius: '6px',
+                      border: '1px solid #cbd5e1',
+                      fontSize: '13.5px',
+                      outline: 'none',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    style={{ position: 'absolute', right: '10px', top: '10px', color: '#94a3b8', background: 'none', border: 'none', cursor: 'pointer' }}
+                    aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                  >
+                    {showPassword ? (
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                    ) : (
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: '600', color: '#334155' }}>
+                  Xác nhận mật khẩu mới
+                </label>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Nhập lại mật khẩu mới"
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    borderRadius: '6px',
+                    border: '1px solid #cbd5e1',
+                    fontSize: '13.5px',
+                    outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  backgroundColor: '#15803d',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontSize: '14.5px',
+                  fontWeight: '600',
+                  cursor: loading ? 'not-allowed' : 'pointer',
+                  opacity: loading ? 0.7 : 1
+                }}
+              >
+                {loading ? 'Đang cập nhật...' : 'Xác nhận đổi mật khẩu'}
+              </button>
+            </form>
+          )}
 
           <div style={{ marginTop: '20px', textAlign: 'center', fontSize: '13px', color: '#64748b' }}>
-            Chưa có tài khoản?{' '}
-            <Link href="/register" style={{ color: '#15803d', fontWeight: '600', textDecoration: 'none' }}>
-              Đăng ký ngay
+            <Link href="/login" style={{ color: '#15803d', fontWeight: '600', textDecoration: 'none' }}>
+              ← Quay lại Đăng nhập
             </Link>
           </div>
         </div>

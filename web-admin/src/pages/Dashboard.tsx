@@ -192,7 +192,7 @@ export const Dashboard: React.FC = () => {
                   <XAxis dataKey="name" />
                   <YAxis yAxisId="left" />
                   <YAxis yAxisId="right" orientation="right" />
-                  <Tooltip formatter={(value) => typeof value === 'number' ? value.toLocaleString('vi-VN') : value} />
+                  <Tooltip formatter={(value: any) => typeof value === 'number' ? value.toLocaleString('vi-VN') : value} />
                   <Legend />
                   <Line yAxisId="left" type="monotone" dataKey="Revenue" stroke="#8884d8" name="Doanh Thu (đ)" activeDot={{ r: 8 }} />
                   <Line yAxisId="right" type="monotone" dataKey="Orders" stroke="#82ca9d" name="Số Đơn Hàng" />
@@ -209,7 +209,7 @@ export const Dashboard: React.FC = () => {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" />
                   <YAxis />
-                  <Tooltip formatter={(value) => `${value} kg`} />
+                  <Tooltip formatter={(value: any) => `${value} kg`} />
                   <Bar dataKey="sales" fill="#52c41a" name="Sản lượng bán (kg)" />
                 </BarChart>
               </ResponsiveContainer>

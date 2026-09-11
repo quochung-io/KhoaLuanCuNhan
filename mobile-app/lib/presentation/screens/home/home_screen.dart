@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../../data/models/product_model.dart';
 import '../product_detail/product_detail_screen.dart';
 
@@ -110,7 +110,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: const Color(0xFF2E7D32).withOpacity(0.2)),
+                        border: Border.all(color: const Color(0xFF2E7D32).withValues(alpha: 0.2)),
                       ),
                       child: const Text(
                         '🔥 COMBO TUẦN TIẾT KIỆM',
@@ -315,7 +315,7 @@ class _HomeScreenState extends State<HomeScreen> {
           border: Border.all(color: const Color(0xFFE1EAE0)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.02),
+              color: Colors.black.withValues(alpha: 0.02),
               blurRadius: 6,
               offset: const Offset(0, 2),
             ),
@@ -329,7 +329,7 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: product.color.withOpacity(0.06),
+                  color: product.color.withValues(alpha: 0.06),
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
                 ),
                 child: Hero(

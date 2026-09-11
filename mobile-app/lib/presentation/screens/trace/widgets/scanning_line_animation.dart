@@ -42,7 +42,7 @@ class _ScanningLineAnimationState extends State<ScanningLineAnimation> with Sing
               color: const Color(0xFF4CAF50),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF4CAF50).withOpacity(0.8),
+                  color: const Color(0xFF4CAF50).withValues(alpha: 0.8),
                   blurRadius: 8,
                   spreadRadius: 2,
                 )

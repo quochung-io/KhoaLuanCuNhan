@@ -1,5 +1,5 @@
-﻿import React, { useState } from 'react';
-import { Form, Input, Button, Card, Select, Modal, Radio, message } from 'antd';
+import React, { useState } from 'react';
+import { Form, Input, Button, Card, Modal, Radio, message } from 'antd';
 import { UserOutlined, LockOutlined, MailOutlined, PhoneOutlined, SafetyCertificateOutlined } from '@ant-design/icons';
 import { useNavigate, Link } from 'react-router-dom';
 import { authService } from '../services/api';
