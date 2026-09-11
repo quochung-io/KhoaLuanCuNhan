@@ -15,6 +15,10 @@ public class AppDbContext : DbContext
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
     public DbSet<Address> Addresses => Set<Address>();
+    public DbSet<MembershipTier> MembershipTiers => Set<MembershipTier>();
+    public DbSet<UserLoyalty> UserLoyalties => Set<UserLoyalty>();
+    public DbSet<PointTransaction> PointTransactions => Set<PointTransaction>();
+    public DbSet<UserVoucher> UserVouchers => Set<UserVoucher>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -32,7 +36,7 @@ public class AppDbContext : DbContext
             e.Property(u => u.PasswordHash).HasColumnName("PasswordHash").HasMaxLength(255).IsRequired();
             e.Property(u => u.RoleId).HasColumnName("RoleId").IsRequired();
             e.Property(u => u.Status).HasColumnName("Status").HasMaxLength(50);
-            e.Property(u => u.AvatarUrl).HasColumnName("AvatarUrl").HasMaxLength(255);
+            e.Ignore(u => u.AvatarUrl);
             e.Property(u => u.CreatedAt).HasColumnName("CreatedAt");
             e.Property(u => u.UpdatedAt).HasColumnName("UpdatedAt");
         });
@@ -192,6 +196,80 @@ public class AppDbContext : DbContext
              .WithMany()
              .HasForeignKey(i => i.BatchId)
              .OnDelete(DeleteBehavior.NoAction);
+        });
+
+        // ── MembershipTier ────────────────────────────
+        modelBuilder.Entity<MembershipTier>(e =>
+        {
+            e.ToTable("MembershipTiers");
+            e.HasKey(t => t.TierId);
+            e.Property(t => t.TierId).HasColumnName("TierId");
+            e.Property(t => t.TierName).HasMaxLength(50).IsRequired();
+            e.Property(t => t.MinSpend).HasColumnType("decimal(18,2)").IsRequired();
+            e.Property(t => t.PointRate).HasColumnType("decimal(18,4)").IsRequired();
+        });
+
+        // ── UserLoyalty ───────────────────────────────
+        modelBuilder.Entity<UserLoyalty>(e =>
+        {
+            e.ToTable("UserLoyalties");
+            e.HasKey(l => l.LoyaltyId);
+            e.Property(l => l.LoyaltyId).HasColumnName("LoyaltyId");
+            e.Property(l => l.UserId).IsRequired();
+            e.Property(l => l.CurrentPoints).IsRequired();
+            e.Property(l => l.TotalSpentYear).HasColumnType("decimal(18,2)").IsRequired();
+            e.Property(l => l.TierId).IsRequired();
+
+            e.HasOne(l => l.User)
+             .WithMany()
+             .HasForeignKey(l => l.UserId)
+             .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasOne(l => l.Tier)
+             .WithMany()
+             .HasForeignKey(l => l.TierId)
+             .OnDelete(DeleteBehavior.NoAction);
+        });
+
+        // ── PointTransaction ──────────────────────────
+        modelBuilder.Entity<PointTransaction>(e =>
+        {
+            e.ToTable("PointTransactions");
+            e.HasKey(t => t.TransactionId);
+            e.Property(t => t.TransactionId).HasColumnName("TransactionId");
+            e.Property(t => t.UserId).IsRequired();
+            e.Property(t => t.PointsDelta).IsRequired();
+            e.Property(t => t.TransactionType).HasMaxLength(50).IsRequired();
+            e.Property(t => t.Description).HasMaxLength(255).IsRequired();
+
+            e.HasOne(t => t.User)
+             .WithMany()
+             .HasForeignKey(t => t.UserId)
+             .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasOne(t => t.Order)
+             .WithMany()
+             .HasForeignKey(t => t.OrderId)
+             .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        // ── UserVoucher ───────────────────────────────
+        modelBuilder.Entity<UserVoucher>(e =>
+        {
+            e.ToTable("UserVouchers");
+            e.HasKey(v => v.VoucherId);
+            e.Property(v => v.VoucherId).HasColumnName("VoucherId");
+            e.Property(v => v.UserId).IsRequired();
+            e.Property(v => v.Code).HasMaxLength(50).IsRequired();
+            e.Property(v => v.Title).HasMaxLength(150).IsRequired();
+            e.Property(v => v.VoucherType).HasMaxLength(50).IsRequired();
+            e.Property(v => v.DiscountValue).HasColumnType("decimal(18,2)").IsRequired();
+            e.Property(v => v.MinOrderAmount).HasColumnType("decimal(18,2)").IsRequired();
+
+            e.HasOne(v => v.User)
+             .WithMany()
+             .HasForeignKey(v => v.UserId)
+             .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

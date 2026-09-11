@@ -143,7 +143,7 @@ class _TraceScreenState extends State<TraceScreen> {
                             decoration: BoxDecoration(
                               color: const Color(0xFFE3F1E3),
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: const Color(0xFF2E7D32).withOpacity(0.2)),
+                              border: Border.all(color: const Color(0xFF2E7D32).withValues(alpha: 0.2)),
                             ),
                             child: const Icon(Icons.qr_code_scanner, color: Color(0xFF2E7D32)),
                           ),
@@ -187,7 +187,7 @@ class _TraceScreenState extends State<TraceScreen> {
                         child: Column(
                           children: [
                             const SizedBox(height: 40),
-                            Icon(Icons.history_edu_outlined, size: 72, color: const Color(0xFF2E7D32).withOpacity(0.15)),
+                            Icon(Icons.history_edu_outlined, size: 72, color: const Color(0xFF2E7D32).withValues(alpha: 0.15)),
                             const SizedBox(height: 12),
                             const Text(
                               'Nhật ký Farm-to-Table',
@@ -216,7 +216,7 @@ class _TraceScreenState extends State<TraceScreen> {
   // UI quét mã QR giả lập
   Widget _buildQrScannerOverlay() {
     return Container(
-      color: Colors.black.withOpacity(0.9),
+      color: Colors.black.withValues(alpha: 0.9),
       width: double.infinity,
       height: double.infinity,
       child: Stack(
@@ -288,7 +288,7 @@ class _TraceScreenState extends State<TraceScreen> {
             width: 60,
             height: 60,
             decoration: BoxDecoration(
-              color: product.color.withOpacity(0.1),
+              color: product.color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(product.icon, color: product.color, size: 32),

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Button, Space, Modal, Form, Input, Select, message, Card, Tabs, InputNumber, Checkbox, Image, Tag, Tooltip, Row, Col, Divider } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, PictureOutlined, StarOutlined, StarFilled, ThunderboltOutlined, SaveOutlined } from '@ant-design/icons';
+import { Table, Button, Space, Modal, Form, Input, Select, message, Card, Tabs, InputNumber, Image, Tag, Tooltip, Row, Col } from 'antd';
+import { PlusOutlined, EditOutlined, DeleteOutlined, PictureOutlined, StarOutlined, ThunderboltOutlined, SaveOutlined } from '@ant-design/icons';
 import { productService, categoryService, productImageService } from '../services/api';
 
 const SAMPLE_SUB_IMAGES: Record<string, string[]> = {

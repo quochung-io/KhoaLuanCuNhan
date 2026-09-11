@@ -16,10 +16,28 @@ public class AddressesController : ControllerBase
         _context = context;
     }
 
+    private async Task EnsureAddressTypeColumnExistsAsync()
+    {
+        try
+        {
+            var sql = @"
+IF EXISTS (SELECT * FROM sys.tables WHERE name = 'Addresses')
+BEGIN
+    IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Addresses') AND name = 'AddressType')
+    BEGIN
+        ALTER TABLE Addresses ADD AddressType NVARCHAR(50) NULL;
+    END
+END";
+            await _context.Database.ExecuteSqlRawAsync(sql);
+        }
+        catch { }
+    }
+
     // ── 1. Lấy danh sách địa chỉ của khách hàng ──────────────────────
     [HttpGet("user/{userId}")]
     public async Task<ActionResult<IEnumerable<Address>>> GetAddressesByUser(long userId)
     {
+        await EnsureAddressTypeColumnExistsAsync();
         return await _context.Addresses
             .Where(a => a.UserId == userId)
             .OrderByDescending(a => a.IsDefault)
@@ -31,6 +49,7 @@ public class AddressesController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<Address>> GetAddress(long id)
     {
+        await EnsureAddressTypeColumnExistsAsync();
         var address = await _context.Addresses.FindAsync(id);
         if (address == null) return NotFound();
         return address;
@@ -40,6 +59,7 @@ public class AddressesController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<Address>> CreateAddress(Address address)
     {
+        await EnsureAddressTypeColumnExistsAsync();
         // Chuẩn hóa loại địa chỉ ("Nhà ở" hoặc "Công ty")
         if (string.IsNullOrWhiteSpace(address.AddressType))
         {

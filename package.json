@@ -9,6 +9,7 @@
     "web-store"
   ],
   "scripts": {
+    "generate:contracts": "node generate_contracts.js",
     "web-admin:dev": "npm run dev --workspace=web-admin",
     "web-supplier:dev": "npm run dev --workspace=web-supplier",
     "web-store:dev": "npm run dev --workspace=web-store"

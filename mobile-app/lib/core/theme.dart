@@ -13,7 +13,6 @@ class LanhTheme {
         seedColor: primaryColor,
         primary: primaryColor,
         secondary: secondaryColor,
-        background: backgroundColor,
         surface: Colors.white,
       ),
       scaffoldBackgroundColor: backgroundColor,

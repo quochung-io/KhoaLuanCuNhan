@@ -26,7 +26,7 @@ class CartScreen extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.shopping_cart_outlined, size: 64, color: const Color(0xFF2E7D32).withOpacity(0.2)),
+                  Icon(Icons.shopping_cart_outlined, size: 64, color: const Color(0xFF2E7D32).withValues(alpha: 0.2)),
                   const SizedBox(height: 12),
                   const Text('Giỏ hàng trống', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1B3A20))),
                   const SizedBox(height: 6),
@@ -66,7 +66,7 @@ class CartScreen extends StatelessWidget {
             width: 50,
             height: 50,
             decoration: BoxDecoration(
-              color: item.product.color.withOpacity(0.08),
+              color: item.product.color.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(item.product.icon, color: item.product.color),
@@ -117,7 +117,7 @@ class CartScreen extends StatelessWidget {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, -3),
           ),
