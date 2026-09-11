@@ -7,34 +7,26 @@ Module chứa các script khởi tạo cơ sở dữ liệu, dữ liệu mẫu t
 ## 📁 Danh sách tệp & Scripts
 
 ### 🌟 Bản sao lưu đầy đủ (Khuyên dùng)
-- **`QL_WebMuaBanNongSan_Full.sql`** (hoặc **`scripts/06_full_database_dump.sql`**):
-  - **Bản sao lưu đầy đủ nhất (Full Schema + Seed Data)** của 31 bảng trong hệ thống.
-  - Bao gồm: Cấu trúc bảng (DDL), chỉ mục (Indexes), khóa ngoại (Foreign Keys), ràng buộc (Constraints) và toàn bộ dữ liệu mẫu thực tế (Users, Products, Batches, Inventories, Orders, Payments, Vouchers, Points, Reviews...).
-  - Tự động tạo Database `QL_WebMuaBanNongSan` nếu chưa có và tự động xử lý `IDENTITY_INSERT` cũng như vô hiệu hóa/bật lại ràng buộc khóa ngoại an toàn.
-
-### 📜 Các script thành phần (Scripts lịch sử)
-- `scripts/01_init_schema.sql`: Script khởi tạo cấu trúc bảng ban đầu.
-- `scripts/02_seed_50_products.sql`: Script seed 50 nông sản mẫu đa dạng danh mục.
-- `scripts/03_categorize_products.sql`: Cập nhật và chuẩn hóa danh mục.
-- `scripts/04_seed_user_compiled_products.sql`: Script dữ liệu nông sản tổng hợp.
-- `scripts/05_add_rice_category.sql`: Bổ sung danh mục gạo và nông sản khô.
-- `scripts/06_full_database_dump.sql`: Bản sao của file Full Dump đồng bộ trong thư mục scripts.
+- **`QL_WebMuaBanNongSan_Full.sql`**:
+  - **Bản sao lưu hoàn chỉnh nhất (Full Schema 31 bảng + 140 Nông sản + Seed Data thực tế)**.
+  - Bao gồm: DDL 31 bảng chuẩn, các cột nghiệp vụ mới (`AddressType`, `ApprovedBy`, `ApprovedAt`, `RejectReason`), tài khoản chuẩn BCrypt (`Demo@123`), 31 đơn hàng, 68 chi tiết đơn, điểm thưởng (`UserLoyalties`, `PointTransactions`, `MembershipTiers`), ví voucher (`UserVouchers`), và trigger nghiệp vụ lô hàng.
+  - Tự động tạo CSDL `QL_WebMuaBanNongSan` nếu chưa có và tự động xử lý `IDENTITY_INSERT` cũng như vô hiệu hóa/bật lại ràng buộc khóa ngoại an toàn.
+  - Mã hóa: UTF-8 with BOM chuẩn hiển thị tiếng Việt.
 
 ---
 
 ## 🚀 Hướng dẫn phục hồi / Import Database
 
 ### Cách 1: Sử dụng SQL Server Management Studio (SSMS) hoặc Azure Data Studio (Đơn giản nhất)
-1. Mở SSMS hoặc Azure Data Studio và kết nối tới SQL Server của bạn (ví dụ: `.` hoặc `localhost`).
+1. Mở SSMS hoặc Azure Data Studio và kết nối tới SQL Server của bạn (ví dụ: `.` hoặc `localhost` hoặc `FATQY\nguye`).
 2. Mở file **`QL_WebMuaBanNongSan_Full.sql`** (File -> Open -> File...).
 3. Nhấn **Execute** (hoặc phím tắt **F5**).
-4. Hệ thống sẽ tự động tạo cơ sở dữ liệu `QL_WebMuaBanNongSan` và nạp toàn bộ cấu trúc cùng dữ liệu.
+4. Hệ thống sẽ tự động tạo cơ sở dữ liệu `QL_WebMuaBanNongSan` và nạp toàn bộ cấu trúc cùng 140 sản phẩm và dữ liệu mẫu.
 
 ### Cách 2: Sử dụng PowerShell
 Mở PowerShell tại thư mục dự án và chạy:
 ```powershell
-$connStr = "Server=.;Database=master;Integrated Security=True;TrustServerCertificate=True"
-Invoke-Sqlcmd -ConnectionString $connStr -InputFile "database/QL_WebMuaBanNongSan_Full.sql"
+sqlcmd -S . -i "database/QL_WebMuaBanNongSan_Full.sql"
 ```
 
 ---

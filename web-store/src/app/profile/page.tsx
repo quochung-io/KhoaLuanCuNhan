@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { VIETNAM_PROVINCES, fetchWithTimeout } from '@/constants/vietnamProvinces';
 
 type CustomerAddress = {
   addressId: number;
@@ -349,18 +350,24 @@ export default function ProfilePage() {
     }
   };
 
-  // Tải danh sách Tỉnh/Thành từ Open API Quốc Gia
+  // Tải danh sách Tỉnh/Thành từ Open API Quốc Gia (Kèm Fallback an toàn)
   useEffect(() => {
     const fetchProvinces = async () => {
       setLoadingProvinces(true);
       try {
-        const res = await fetch('https://provinces.open-api.vn/api/p/');
+        const res = await fetchWithTimeout('https://provinces.open-api.vn/api/p/', 3000);
         if (res.ok) {
           const data = await res.json();
-          setProvincesList(data || []);
+          if (Array.isArray(data) && data.length > 0) {
+            setProvincesList(data);
+            return;
+          }
         }
-      } catch (err) {
-        console.error('Lỗi khi tải danh sách Tỉnh/Thành:', err);
+        // Fallback danh sách 63 tỉnh thành chuẩn Việt Nam nếu API phản hồi không hợp lệ
+        setProvincesList(VIETNAM_PROVINCES);
+      } catch {
+        // Tự động chuyển về danh sách dự phòng nội bộ nếu API bên ngoài bị timeout hoặc nghẽn mạng
+        setProvincesList(VIETNAM_PROVINCES);
       } finally {
         setLoadingProvinces(false);
       }
@@ -380,13 +387,15 @@ export default function ProfilePage() {
     if (foundProvince) {
       setLoadingDistricts(true);
       try {
-        const res = await fetch(`https://provinces.open-api.vn/api/p/${foundProvince.code}?depth=2`);
+        const res = await fetchWithTimeout(`https://provinces.open-api.vn/api/p/${foundProvince.code}?depth=2`, 3000);
         if (res.ok) {
           const data = await res.json();
           setDistrictsList(data.districts || []);
+        } else {
+          setDistrictsList([]);
         }
-      } catch (err) {
-        console.error('Lỗi khi tải danh sách Quận/Huyện:', err);
+      } catch {
+        setDistrictsList([]);
       } finally {
         setLoadingDistricts(false);
       }
@@ -403,13 +412,15 @@ export default function ProfilePage() {
     if (foundDistrict) {
       setLoadingWards(true);
       try {
-        const res = await fetch(`https://provinces.open-api.vn/api/d/${foundDistrict.code}?depth=2`);
+        const res = await fetchWithTimeout(`https://provinces.open-api.vn/api/d/${foundDistrict.code}?depth=2`, 3000);
         if (res.ok) {
           const data = await res.json();
           setWardsList(data.wards || []);
+        } else {
+          setWardsList([]);
         }
-      } catch (err) {
-        console.error('Lỗi khi tải danh sách Phường/Xã:', err);
+      } catch {
+        setWardsList([]);
       } finally {
         setLoadingWards(false);
       }
@@ -451,7 +462,7 @@ export default function ProfilePage() {
     const foundProvince = provincesList.find(p => p.name === addr.province);
     if (foundProvince) {
       try {
-        const resD = await fetch(`https://provinces.open-api.vn/api/p/${foundProvince.code}?depth=2`);
+        const resD = await fetchWithTimeout(`https://provinces.open-api.vn/api/p/${foundProvince.code}?depth=2`, 3000);
         if (resD.ok) {
           const dataD = await resD.json();
           const dists = dataD.districts || [];
@@ -459,15 +470,15 @@ export default function ProfilePage() {
 
           const foundDistrict = dists.find((d: any) => d.name === addr.district);
           if (foundDistrict) {
-            const resW = await fetch(`https://provinces.open-api.vn/api/d/${foundDistrict.code}?depth=2`);
+            const resW = await fetchWithTimeout(`https://provinces.open-api.vn/api/d/${foundDistrict.code}?depth=2`, 3000);
             if (resW.ok) {
               const dataW = await resW.json();
               setWardsList(dataW.wards || []);
             }
           }
         }
-      } catch (e) {
-        console.error('Lỗi nạp dữ liệu địa chỉ hành chính khi sửa:', e);
+      } catch {
+        // Bắt lỗi an toàn
       }
     }
   };
@@ -2083,66 +2094,113 @@ export default function ProfilePage() {
                   <label style={{ display: 'block', marginBottom: '6px', fontSize: '12.5px', fontWeight: '600', color: 'var(--ink)' }}>
                     Quận/Huyện <span style={{ color: '#e53e3e' }}>*</span>
                   </label>
-                  <select
-                    value={formDistrict}
-                    disabled={!formProvince || loadingDistricts}
-                    onChange={(e) => handleDistrictChange(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '10px 8px',
-                      borderRadius: 'var(--radius-sm)',
-                      border: '1px solid var(--line)',
-                      backgroundColor: !formProvince ? 'var(--line-subtle, #eee)' : 'var(--bg)',
-                      color: 'var(--ink)',
-                      fontSize: '13px',
-                      outline: 'none',
-                      boxSizing: 'border-box',
-                      opacity: !formProvince ? 0.6 : 1,
-                      cursor: !formProvince ? 'not-allowed' : 'pointer'
-                    }}
-                  >
-                    <option value="">
-                      {!formProvince ? '-- Chọn Tỉnh trước --' : loadingDistricts ? 'Đang nạp quận...' : '-- Chọn Quận/Huyện --'}
-                    </option>
-                    {districtsList.map((d) => (
-                      <option key={d.code} value={d.name}>
-                        {d.name}
+                  {districtsList.length > 0 ? (
+                    <select
+                      value={formDistrict}
+                      disabled={!formProvince || loadingDistricts}
+                      onChange={(e) => handleDistrictChange(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '10px 8px',
+                        borderRadius: 'var(--radius-sm)',
+                        border: '1px solid var(--line)',
+                        backgroundColor: !formProvince ? 'var(--line-subtle, #eee)' : 'var(--bg)',
+                        color: 'var(--ink)',
+                        fontSize: '13px',
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                        opacity: !formProvince ? 0.6 : 1,
+                        cursor: !formProvince ? 'not-allowed' : 'pointer'
+                      }}
+                    >
+                      <option value="">
+                        {!formProvince ? '-- Chọn Tỉnh trước --' : loadingDistricts ? 'Đang nạp quận...' : '-- Chọn Quận/Huyện --'}
                       </option>
-                    ))}
-                  </select>
+                      {districtsList.map((d) => (
+                        <option key={d.code} value={d.name}>
+                          {d.name}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      type="text"
+                      value={formDistrict}
+                      disabled={!formProvince}
+                      onChange={(e) => {
+                        setFormDistrict(e.target.value);
+                        setFormWard('');
+                      }}
+                      placeholder={!formProvince ? 'Chọn Tỉnh trước' : loadingDistricts ? 'Đang nạp quận...' : 'Nhập Quận/Huyện'}
+                      style={{
+                        width: '100%',
+                        padding: '10px 8px',
+                        borderRadius: 'var(--radius-sm)',
+                        border: '1px solid var(--line)',
+                        backgroundColor: !formProvince ? 'var(--line-subtle, #eee)' : 'var(--bg)',
+                        color: 'var(--ink)',
+                        fontSize: '13px',
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                        opacity: !formProvince ? 0.6 : 1
+                      }}
+                    />
+                  )}
                 </div>
 
                 <div>
                   <label style={{ display: 'block', marginBottom: '6px', fontSize: '12.5px', fontWeight: '600', color: 'var(--ink)' }}>
                     Phường/Xã <span style={{ color: '#e53e3e' }}>*</span>
                   </label>
-                  <select
-                    value={formWard}
-                    disabled={!formDistrict || loadingWards}
-                    onChange={(e) => setFormWard(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '10px 8px',
-                      borderRadius: 'var(--radius-sm)',
-                      border: '1px solid var(--line)',
-                      backgroundColor: !formDistrict ? 'var(--line-subtle, #eee)' : 'var(--bg)',
-                      color: 'var(--ink)',
-                      fontSize: '13px',
-                      outline: 'none',
-                      boxSizing: 'border-box',
-                      opacity: !formDistrict ? 0.6 : 1,
-                      cursor: !formDistrict ? 'not-allowed' : 'pointer'
-                    }}
-                  >
-                    <option value="">
-                      {!formDistrict ? '-- Chọn Huyện trước --' : loadingWards ? 'Đang nạp xã...' : '-- Chọn Phường/Xã --'}
-                    </option>
-                    {wardsList.map((w) => (
-                      <option key={w.code} value={w.name}>
-                        {w.name}
+                  {wardsList.length > 0 ? (
+                    <select
+                      value={formWard}
+                      disabled={!formDistrict || loadingWards}
+                      onChange={(e) => setFormWard(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '10px 8px',
+                        borderRadius: 'var(--radius-sm)',
+                        border: '1px solid var(--line)',
+                        backgroundColor: !formDistrict ? 'var(--line-subtle, #eee)' : 'var(--bg)',
+                        color: 'var(--ink)',
+                        fontSize: '13px',
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                        opacity: !formDistrict ? 0.6 : 1,
+                        cursor: !formDistrict ? 'not-allowed' : 'pointer'
+                      }}
+                    >
+                      <option value="">
+                        {!formDistrict ? '-- Chọn Huyện trước --' : loadingWards ? 'Đang nạp xã...' : '-- Chọn Phường/Xã --'}
                       </option>
-                    ))}
-                  </select>
+                      {wardsList.map((w) => (
+                        <option key={w.code} value={w.name}>
+                          {w.name}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      type="text"
+                      value={formWard}
+                      disabled={!formDistrict}
+                      onChange={(e) => setFormWard(e.target.value)}
+                      placeholder={!formDistrict ? 'Chọn Huyện trước' : loadingWards ? 'Đang nạp xã...' : 'Nhập Phường/Xã'}
+                      style={{
+                        width: '100%',
+                        padding: '10px 8px',
+                        borderRadius: 'var(--radius-sm)',
+                        border: '1px solid var(--line)',
+                        backgroundColor: !formDistrict ? 'var(--line-subtle, #eee)' : 'var(--bg)',
+                        color: 'var(--ink)',
+                        fontSize: '13px',
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                        opacity: !formDistrict ? 0.6 : 1
+                      }}
+                    />
+                  )}
                 </div>
               </div>
 
