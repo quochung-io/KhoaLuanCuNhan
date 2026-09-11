@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { VIETNAM_PROVINCES, fetchWithTimeout, ProvinceItem, DistrictItem, WardItem } from '@/constants/vietnamProvinces';
 
 type Product = {
   id: number;
@@ -107,6 +108,14 @@ export default function CheckoutPage() {
   const [newIsDefault, setNewIsDefault] = useState(false);
   const [isSavingNewAddress, setIsSavingNewAddress] = useState(false);
   const [addressModalError, setAddressModalError] = useState('');
+
+  // Dữ liệu Hành chính Quốc gia (API Provinces Open-API)
+  const [provincesList, setProvincesList] = useState<ProvinceItem[]>([]);
+  const [districtsList, setDistrictsList] = useState<DistrictItem[]>([]);
+  const [wardsList, setWardsList] = useState<WardItem[]>([]);
+  const [loadingProvinces, setLoadingProvinces] = useState(false);
+  const [loadingDistricts, setLoadingDistricts] = useState(false);
+  const [loadingWards, setLoadingWards] = useState(false);
 
   // Voucher kho lưu trữ & Áp dụng
   const [showVoucherModal, setShowVoucherModal] = useState(false);
@@ -327,12 +336,89 @@ export default function CheckoutPage() {
     setVoucherError('');
   };
 
+  // Tải danh sách Tỉnh/Thành từ Open API Quốc Gia (Kèm Fallback an toàn)
+  useEffect(() => {
+    const fetchProvinces = async () => {
+      setLoadingProvinces(true);
+      try {
+        const res = await fetchWithTimeout('https://provinces.open-api.vn/api/p/', 3000);
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            setProvincesList(data);
+            return;
+          }
+        }
+        setProvincesList(VIETNAM_PROVINCES);
+      } catch {
+        setProvincesList(VIETNAM_PROVINCES);
+      } finally {
+        setLoadingProvinces(false);
+      }
+    };
+    fetchProvinces();
+  }, []);
+
+  // Xử lý khi chọn Tỉnh/Thành -> Tải danh sách Quận/Huyện tương ứng
+  const handleProvinceChange = async (provinceName: string) => {
+    setNewProvince(provinceName);
+    setNewDistrict('');
+    setNewWard('');
+    setDistrictsList([]);
+    setWardsList([]);
+
+    const foundProvince = provincesList.find(p => p.name === provinceName);
+    if (foundProvince) {
+      setLoadingDistricts(true);
+      try {
+        const res = await fetchWithTimeout(`https://provinces.open-api.vn/api/p/${foundProvince.code}?depth=2`, 3000);
+        if (res.ok) {
+          const data = await res.json();
+          setDistrictsList(data.districts || []);
+        } else {
+          setDistrictsList([]);
+        }
+      } catch {
+        setDistrictsList([]);
+      } finally {
+        setLoadingDistricts(false);
+      }
+    }
+  };
+
+  // Xử lý khi chọn Quận/Huyện -> Tải danh sách Phường/Xã tương ứng
+  const handleDistrictChange = async (districtName: string) => {
+    setNewDistrict(districtName);
+    setNewWard('');
+    setWardsList([]);
+
+    const foundDistrict = districtsList.find(d => d.name === districtName);
+    if (foundDistrict) {
+      setLoadingWards(true);
+      try {
+        const res = await fetchWithTimeout(`https://provinces.open-api.vn/api/d/${foundDistrict.code}?depth=2`, 3000);
+        if (res.ok) {
+          const data = await res.json();
+          setWardsList(data.wards || []);
+        } else {
+          setWardsList([]);
+        }
+      } catch {
+        setWardsList([]);
+      } finally {
+        setLoadingWards(false);
+      }
+    }
+  };
+
   const handleOpenAddModal = () => {
     setNewReceiverName(currentUser?.fullName || '');
     setNewPhone(currentUser?.phone || '');
-    setNewProvince('TP.HCM');
+    setNewProvince('');
     setNewDistrict('');
     setNewWard('');
+    setDistrictsList([]);
+    setWardsList([]);
     setNewAddressDetail('');
     setNewAddressType('Nhà ở');
     setNewIsDefault(addresses.length === 0);
@@ -1249,44 +1335,145 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
                 <div>
                   <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: '500', color: '#334155' }}>
                     Tỉnh / Thành phố *
                   </label>
-                  <input
-                    type="text"
+                  <select
                     value={newProvince}
-                    onChange={(e) => setNewProvince(e.target.value)}
-                    placeholder="TP.HCM"
-                    style={{ width: '100%', padding: '8px 10px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13.5px', outline: 'none', boxSizing: 'border-box' }}
-                  />
+                    onChange={(e) => handleProvinceChange(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '8px 8px',
+                      borderRadius: '6px',
+                      border: '1px solid #cbd5e1',
+                      fontSize: '13px',
+                      backgroundColor: '#ffffff',
+                      color: '#0f172a',
+                      outline: 'none',
+                      boxSizing: 'border-box'
+                    }}
+                  >
+                    <option value="">{loadingProvinces ? 'Đang tải tỉnh...' : '-- Chọn Tỉnh --'}</option>
+                    {provincesList.map((p) => (
+                      <option key={p.code} value={p.name}>
+                        {p.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
+
                 <div>
                   <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: '500', color: '#334155' }}>
                     Quận / Huyện *
                   </label>
-                  <input
-                    type="text"
-                    value={newDistrict}
-                    onChange={(e) => setNewDistrict(e.target.value)}
-                    placeholder="Quận 1, Bình Thạnh..."
-                    style={{ width: '100%', padding: '8px 10px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13.5px', outline: 'none', boxSizing: 'border-box' }}
-                  />
+                  {districtsList.length > 0 ? (
+                    <select
+                      value={newDistrict}
+                      disabled={!newProvince || loadingDistricts}
+                      onChange={(e) => handleDistrictChange(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '8px 8px',
+                        borderRadius: '6px',
+                        border: '1px solid #cbd5e1',
+                        fontSize: '13px',
+                        backgroundColor: !newProvince ? '#f1f5f9' : '#ffffff',
+                        color: '#0f172a',
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                        opacity: !newProvince ? 0.6 : 1,
+                        cursor: !newProvince ? 'not-allowed' : 'pointer'
+                      }}
+                    >
+                      <option value="">
+                        {!newProvince ? '-- Chọn Tỉnh trước --' : loadingDistricts ? 'Đang tải...' : '-- Chọn Quận/Huyện --'}
+                      </option>
+                      {districtsList.map((d) => (
+                        <option key={d.code} value={d.name}>
+                          {d.name}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      type="text"
+                      value={newDistrict}
+                      disabled={!newProvince}
+                      onChange={(e) => {
+                        setNewDistrict(e.target.value);
+                        setNewWard('');
+                      }}
+                      placeholder={!newProvince ? 'Chọn Tỉnh trước' : loadingDistricts ? 'Đang tải...' : 'Nhập Quận/Huyện'}
+                      style={{
+                        width: '100%',
+                        padding: '8px 10px',
+                        borderRadius: '6px',
+                        border: '1px solid #cbd5e1',
+                        fontSize: '13px',
+                        backgroundColor: !newProvince ? '#f1f5f9' : '#ffffff',
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                        opacity: !newProvince ? 0.6 : 1
+                      }}
+                    />
+                  )}
                 </div>
-              </div>
 
-              <div>
-                <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: '500', color: '#334155' }}>
-                  Phường / Xã *
-                </label>
-                <input
-                  type="text"
-                  value={newWard}
-                  onChange={(e) => setNewWard(e.target.value)}
-                  placeholder="Phường Bến Nghé..."
-                  style={{ width: '100%', padding: '8px 10px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13.5px', outline: 'none', boxSizing: 'border-box' }}
-                />
+                <div>
+                  <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: '500', color: '#334155' }}>
+                    Phường / Xã *
+                  </label>
+                  {wardsList.length > 0 ? (
+                    <select
+                      value={newWard}
+                      disabled={!newDistrict || loadingWards}
+                      onChange={(e) => setNewWard(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '8px 8px',
+                        borderRadius: '6px',
+                        border: '1px solid #cbd5e1',
+                        fontSize: '13px',
+                        backgroundColor: !newDistrict ? '#f1f5f9' : '#ffffff',
+                        color: '#0f172a',
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                        opacity: !newDistrict ? 0.6 : 1,
+                        cursor: !newDistrict ? 'not-allowed' : 'pointer'
+                      }}
+                    >
+                      <option value="">
+                        {!newDistrict ? '-- Chọn Huyện trước --' : loadingWards ? 'Đang tải...' : '-- Chọn Phường/Xã --'}
+                      </option>
+                      {wardsList.map((w) => (
+                        <option key={w.code} value={w.name}>
+                          {w.name}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      type="text"
+                      value={newWard}
+                      disabled={!newDistrict}
+                      onChange={(e) => setNewWard(e.target.value)}
+                      placeholder={!newDistrict ? 'Chọn Huyện trước' : loadingWards ? 'Đang tải...' : 'Nhập Phường/Xã'}
+                      style={{
+                        width: '100%',
+                        padding: '8px 10px',
+                        borderRadius: '6px',
+                        border: '1px solid #cbd5e1',
+                        fontSize: '13px',
+                        backgroundColor: !newDistrict ? '#f1f5f9' : '#ffffff',
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                        opacity: !newDistrict ? 0.6 : 1
+                      }}
+                    />
+                  )}
+                </div>
               </div>
 
               <div>
