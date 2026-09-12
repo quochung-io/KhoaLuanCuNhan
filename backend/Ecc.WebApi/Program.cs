@@ -34,10 +34,18 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Ecc.WebApi v1");
+        c.RoutePrefix = string.Empty; // Mở http://localhost:5023 trực tiếp ra Swagger UI
+    });
 }
 
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection(); // Tắt để không bắt buộc HTTPS trên port 5023
+
+// Route trạng thái và điều hướng
+app.MapGet("/api/health", () => Results.Ok(new { status = "Healthy", service = "Ecc.WebApi", port = 5023 }));
+app.MapGet("/swagger", () => Results.Redirect("/"));
 
 // Sử dụng CORS
 app.UseCors("AllowAll");

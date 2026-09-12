@@ -615,8 +615,7 @@ export default function AllProductsPage() {
                   { id: 'Rau củ', label: 'Rau củ hữu cơ' },
                   { id: 'Trái cây', label: 'Trái cây theo mùa' },
                   { id: 'Rau thơm', label: 'Rau thơm gia vị' },
-                  { id: 'Hạt', label: 'Các loại hạt & Mật' },
-                  { id: 'Gạo', label: 'Gạo đặc sản' }
+                  { id: 'Hạt', label: 'Các loại hạt & Mật' }
                 ].map(cat => (
                   <button
                     key={cat.id}

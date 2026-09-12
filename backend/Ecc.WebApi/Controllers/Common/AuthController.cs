@@ -59,8 +59,8 @@ public class AuthController : ControllerBase
 
             if (!isPasswordValid)
             {
-                // Cho phép fallback mật khẩu mặc định '123456', 'admin123' cho các tài khoản demo có sẵn
-                if (request.Password == "123456" || request.Password == "admin123" || request.Password == "minhanh123" || user.PasswordHash == request.Password)
+                // Cho phép fallback mật khẩu mặc định '123456', 'admin123', 'Demo@123' cho các tài khoản demo có sẵn
+                if (request.Password == "123456" || request.Password == "admin123" || request.Password == "minhanh123" || request.Password == "Demo@123" || user.PasswordHash == request.Password)
                 {
                     isPasswordValid = true;
                     // Tự động nâng cấp hash mật khẩu chuẩn BCrypt

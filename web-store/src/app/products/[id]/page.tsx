@@ -344,51 +344,39 @@ function getSecondaryImages(category: string, productName: string, dbImages?: Pr
     defaultSubImages = [
       { url: 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=800&auto=format&fit=crop&q=80', label: 'Quả tươi tại vườn' },
       { url: 'https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=800&auto=format&fit=crop&q=80', label: 'Vườn trĩu quả' },
-      { url: 'https://images.unsplash.com/photo-1550258987-190a2d41a8ba?w=800&auto=format&fit=crop&q=80', label: 'Cắt lát mọng nước' },
-      { url: 'https://images.unsplash.com/photo-1519996529931-28324d5a630e?w=800&auto=format&fit=crop&q=80', label: 'Đóng gói lạnh' },
-      { url: 'https://images.unsplash.com/photo-1490818387583-1baba5e638af?w=800&auto=format&fit=crop&q=80', label: 'Thưởng thức tươi' }
+      { url: 'https://images.unsplash.com/photo-1550258987-190a2d41a8ba?w=800&auto=format&fit=crop&q=80', label: 'Cắt lát mọng nước' }
     ];
   } else if (category === 'Gạo' || n.includes('gạo') || n.includes('nếp')) {
     defaultSubImages = [
       { url: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=800&auto=format&fit=crop&q=80', label: 'Hạt gạo đều mẩy' },
       { url: 'https://images.unsplash.com/photo-1530595467537-0b5996c41f2d?w=800&auto=format&fit=crop&q=80', label: 'Đồng lúa chín vàng' },
-      { url: 'https://images.unsplash.com/photo-1536304929831-ee1ca9d44906?w=800&auto=format&fit=crop&q=80', label: 'Thu hoạch cơ giới' },
-      { url: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=800&auto=format&fit=crop&q=80', label: 'Túi hút chân không' },
-      { url: 'https://images.unsplash.com/photo-1516684732162-798a0062be99?w=800&auto=format&fit=crop&q=80', label: 'Cơm nóng dẻo thơm' }
+      { url: 'https://images.unsplash.com/photo-1536304929831-ee1ca9d44906?w=800&auto=format&fit=crop&q=80', label: 'Thu hoạch cơ giới' }
     ];
   } else if (category === 'Hạt' || n.includes('hạt') || n.includes('đậu') || n.includes('macca') || n.includes('điều') || n.includes('ngô')) {
     defaultSubImages = [
       { url: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=800&auto=format&fit=crop&q=80', label: 'Hạt chắc mẩy' },
       { url: 'https://images.unsplash.com/photo-1536591375315-1b838421c0f0?w=800&auto=format&fit=crop&q=80', label: 'Sấy lạnh tự nhiên' },
-      { url: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=800&auto=format&fit=crop&q=80', label: 'Nông trại thu hái' },
-      { url: 'https://images.unsplash.com/photo-1528751014936-863e6e7a319c?w=800&auto=format&fit=crop&q=80', label: 'Hũ thủy tinh kín' },
-      { url: 'https://images.unsplash.com/photo-1517673132405-a56a62b18caf?w=800&auto=format&fit=crop&q=80', label: 'Ngũ cốc dinh dưỡng' }
+      { url: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=800&auto=format&fit=crop&q=80', label: 'Nông trại thu hái' }
     ];
   } else if (category === 'Rau thơm' || n.includes('hành') || n.includes('ngò') || n.includes('húng') || n.includes('tía tô') || n.includes('ớt') || n.includes('tỏi') || n.includes('gừng')) {
     defaultSubImages = [
       { url: 'https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?w=800&auto=format&fit=crop&q=80', label: 'Bó thơm tươi rói' },
       { url: 'https://images.unsplash.com/photo-1509358271058-acd22cc93898?w=800&auto=format&fit=crop&q=80', label: 'Cận cảnh lá non' },
-      { url: 'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=800&auto=format&fit=crop&q=80', label: 'Vườn gia vị hữu cơ' },
-      { url: 'https://images.unsplash.com/photo-1532336414038-cf19250c5757?w=800&auto=format&fit=crop&q=80', label: 'Sơ chế sạch sẽ' },
-      { url: 'https://images.unsplash.com/photo-1547592180-85f173990554?w=800&auto=format&fit=crop&q=80', label: 'Món ăn dậy mùi' }
+      { url: 'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=800&auto=format&fit=crop&q=80', label: 'Vườn gia vị hữu cơ' }
     ];
   } else {
     // Mặc định: Rau củ quả
     defaultSubImages = [
       { url: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=800&auto=format&fit=crop&q=80', label: 'Cận cảnh độ tươi giòn' },
       { url: 'https://images.unsplash.com/photo-1592417817098-8f3d6910985c?w=800&auto=format&fit=crop&q=80', label: 'Vườn rau công nghệ' },
-      { url: 'https://images.unsplash.com/photo-1595855759920-86582396756a?w=800&auto=format&fit=crop&q=80', label: 'Hái sáng tinh mơ' },
-      { url: 'https://images.unsplash.com/photo-1566385101042-1a0aa0c1268c?w=800&auto=format&fit=crop&q=80', label: 'Đóng gói chuẩn VietGAP' },
-      { url: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800&auto=format&fit=crop&q=80', label: 'Salad giòn ngọt' }
+      { url: 'https://images.unsplash.com/photo-1595855759920-86582396756a?w=800&auto=format&fit=crop&q=80', label: 'Hái sáng tinh mơ' }
     ];
   }
 
   const SUB_LABELS = [
     'Cận cảnh độ tươi ngon',
     'Vườn trồng / Trang trại',
-    'Thu hoạch tại vườn',
-    'Đóng gói sạch FreshLock',
-    'Chế biến món ăn ngon'
+    'Thu hoạch tại vườn'
   ];
 
   const result: SecondaryImage[] = [];
@@ -404,7 +392,7 @@ function getSecondaryImages(category: string, productName: string, dbImages?: Pr
   }
 
   let defaultIdx = 0;
-  while (result.length < 5 && defaultIdx < defaultSubImages.length) {
+  while (result.length < 3 && defaultIdx < defaultSubImages.length) {
     result.push({
       url: defaultSubImages[defaultIdx].url,
       label: defaultSubImages[defaultIdx].label
@@ -412,7 +400,7 @@ function getSecondaryImages(category: string, productName: string, dbImages?: Pr
     defaultIdx++;
   }
 
-  return result.slice(0, 5);
+  return result.slice(0, 3);
 }
 
 export default function ProductDetailPage() {
@@ -1020,12 +1008,12 @@ export default function ProductDetailPage() {
               </div>
             </div>
 
-            {/* 5 ẢNH PHỤ NHỎ Ở PHÍA DƯỚI ẢNH CHÍNH */}
+            {/* 3 ẢNH PHỤ NHỎ Ở PHÍA DƯỚI ẢNH CHÍNH */}
             <div style={{ marginTop: '14px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', padding: '0 2px' }}>
                 <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--ink-soft)', textTransform: 'uppercase', letterSpacing: '0.4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                  5 Góc ảnh thực tế (nhấp để phóng to ảnh chính)
+                  3 Góc ảnh thực tế (nhấp để phóng to ảnh chính)
                 </span>
                 {selectedImage && (
                   <button 
@@ -1037,7 +1025,7 @@ export default function ProductDetailPage() {
                 )}
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '10px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
                 {subImages.map((sub, index) => {
                   const isActive = selectedImage === sub.url;
                   return (
