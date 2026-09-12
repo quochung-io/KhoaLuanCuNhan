@@ -1,6 +1,6 @@
 /**
  * TU DONG SINH TU BACKEND OPENAPI SCHEMA - KHONG CHINH SUA BANG TAY
- * Generated at: 2026-09-10T21:51:39.635Z
+ * Generated at: 2026-09-12T19:14:04.387Z
  */
 
 export interface Address {
@@ -25,8 +25,23 @@ export interface Category {
   status?: string;
 }
 
+export interface CreateReviewRequest {
+  productId?: number;
+  customerId?: number;
+  customerName?: string;
+  email?: string;
+  orderId?: number;
+  rating?: number;
+  comment?: string;
+  imageUrls?: string[];
+}
+
 export interface ForgotPasswordRequest {
   email?: string;
+}
+
+export interface HelpfulVoteRequest {
+  userId?: number;
 }
 
 export interface LoginDto {
@@ -112,6 +127,8 @@ export interface Product {
   updatedAt?: string;
   category?: Category;
   productImages?: ProductImage[];
+  averageRating?: number;
+  reviewsCount?: number;
 }
 
 export interface ProductBatch {
@@ -182,6 +199,21 @@ export interface SyncProductImagesDto {
   imageUrl?: string;
   isPrimary?: boolean;
   sortOrder?: number;
+}
+
+export interface TrackBehaviorDto {
+  userId?: number;
+  sessionId?: string;
+  productId?: number;
+  actionType?: string;
+  searchKeyword?: string;
+  recommendationType?: string;
+}
+
+export interface UpdateReviewRequest {
+  rating?: number;
+  comment?: string;
+  imageUrls?: string[];
 }
 
 export interface User {

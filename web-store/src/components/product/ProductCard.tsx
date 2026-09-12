@@ -44,7 +44,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         </span>
         <span className="prod-name">{product.name}</span>
         <div className="stars">
-          <span className="fill">★★★★★</span> {product.rating} · {product.reviews} đánh giá
+          {product.reviews > 0 ? (
+            <>
+              <span className="fill">★</span> <strong>{product.rating}</strong> · {product.reviews} đánh giá
+            </>
+          ) : (
+            <span style={{ color: 'var(--ink-soft)', fontSize: '12px' }}>Chưa có đánh giá</span>
+          )}
         </div>
         <div className="price-row">
           <span className="price">{product.price}<span>{product.unit}</span></span>

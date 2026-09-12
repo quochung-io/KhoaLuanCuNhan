@@ -19,6 +19,13 @@ public class AppDbContext : DbContext
     public DbSet<UserLoyalty> UserLoyalties => Set<UserLoyalty>();
     public DbSet<PointTransaction> PointTransactions => Set<PointTransaction>();
     public DbSet<UserVoucher> UserVouchers => Set<UserVoucher>();
+    public DbSet<Review> Reviews => Set<Review>();
+    public DbSet<ReviewImage> ReviewImages => Set<ReviewImage>();
+    public DbSet<ReviewHelpfulVote> ReviewHelpfulVotes => Set<ReviewHelpfulVote>();
+    public DbSet<UserBehavior> UserBehaviors => Set<UserBehavior>();
+    public DbSet<RecommendationLog> RecommendationLogs => Set<RecommendationLog>();
+    public DbSet<ProductSeason> ProductSeasons => Set<ProductSeason>();
+    public DbSet<Farm> Farms => Set<Farm>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -89,6 +96,9 @@ public class AppDbContext : DbContext
             e.Property(p => p.RejectReason).HasColumnName("RejectReason");
             e.Property(p => p.CreatedAt).HasColumnName("CreatedAt");
             e.Property(p => p.UpdatedAt).HasColumnName("UpdatedAt");
+
+            e.Ignore(p => p.AverageRating);
+            e.Ignore(p => p.ReviewsCount);
 
             e.HasOne(p => p.Category)
              .WithMany(c => c.Products)
@@ -270,6 +280,166 @@ public class AppDbContext : DbContext
              .WithMany()
              .HasForeignKey(v => v.UserId)
              .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // ── Review ───────────────────────────────────
+        modelBuilder.Entity<Review>(e =>
+        {
+            e.ToTable("Reviews");
+            e.HasKey(r => r.ReviewId);
+            e.Property(r => r.ReviewId).HasColumnName("ReviewId");
+            e.Property(r => r.CustomerId).HasColumnName("CustomerId").IsRequired();
+            e.Property(r => r.ProductId).HasColumnName("ProductId").IsRequired();
+            e.Property(r => r.OrderId).HasColumnName("OrderId");
+            e.Property(r => r.Rating).HasColumnName("Rating").IsRequired();
+            e.Property(r => r.Comment).HasColumnName("Comment");
+            e.Property(r => r.HelpfulCount).HasColumnName("HelpfulCount").HasDefaultValue(0);
+            e.Property(r => r.ReportCount).HasColumnName("ReportCount").HasDefaultValue(0);
+            e.Property(r => r.IsPurchased).HasColumnName("IsPurchased").HasDefaultValue(false);
+            e.Property(r => r.CreatedAt).HasColumnName("CreatedAt");
+            e.Property(r => r.UpdatedAt).HasColumnName("UpdatedAt");
+            e.Property(r => r.Status).HasColumnName("Status").HasMaxLength(20);
+
+            e.HasOne(r => r.Customer)
+             .WithMany()
+             .HasForeignKey(r => r.CustomerId)
+             .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasOne(r => r.Product)
+             .WithMany(p => p.Reviews)
+             .HasForeignKey(r => r.ProductId)
+             .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasOne(r => r.Order)
+             .WithMany()
+             .HasForeignKey(r => r.OrderId)
+             .IsRequired(false)
+             .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        // ── ReviewImage ───────────────────────────────
+        modelBuilder.Entity<ReviewImage>(e =>
+        {
+            e.ToTable("ReviewImages");
+            e.HasKey(ri => ri.ReviewImageId);
+            e.Property(ri => ri.ReviewImageId).HasColumnName("ReviewImageId");
+            e.Property(ri => ri.ReviewId).HasColumnName("ReviewId").IsRequired();
+            e.Property(ri => ri.ImageUrl).HasColumnName("ImageUrl").HasMaxLength(500).IsRequired();
+
+            e.HasOne(ri => ri.Review)
+             .WithMany(r => r.ReviewImages)
+             .HasForeignKey(ri => ri.ReviewId)
+             .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // ── ReviewHelpfulVote ─────────────────────────
+        modelBuilder.Entity<ReviewHelpfulVote>(e =>
+        {
+            e.ToTable("ReviewHelpfulVotes");
+            e.HasKey(v => v.VoteId);
+            e.Property(v => v.VoteId).HasColumnName("VoteId");
+            e.Property(v => v.ReviewId).HasColumnName("ReviewId").IsRequired();
+            e.Property(v => v.UserId).HasColumnName("UserId").IsRequired();
+            e.Property(v => v.CreatedAt).HasColumnName("CreatedAt");
+
+            e.HasIndex(v => new { v.ReviewId, v.UserId }).IsUnique();
+
+            e.HasOne(v => v.Review)
+             .WithMany(r => r.HelpfulVotes)
+             .HasForeignKey(v => v.ReviewId)
+             .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasOne(v => v.User)
+             .WithMany()
+             .HasForeignKey(v => v.UserId)
+             .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // ── UserBehavior ──────────────────────────────
+        modelBuilder.Entity<UserBehavior>(e =>
+        {
+            e.ToTable("UserBehaviors");
+            e.HasKey(b => b.BehaviorId);
+            e.Property(b => b.BehaviorId).HasColumnName("BehaviorId");
+            e.Property(b => b.UserId).HasColumnName("UserId");
+            e.Property(b => b.ProductId).HasColumnName("ProductId").IsRequired();
+            e.Property(b => b.ActionType).HasColumnName("ActionType").HasMaxLength(50).IsRequired();
+            e.Property(b => b.SearchKeyword).HasColumnName("SearchKeyword").HasMaxLength(255);
+            e.Property(b => b.SessionId).HasColumnName("SessionId").HasMaxLength(100);
+            e.Property(b => b.CreatedAt).HasColumnName("CreatedAt");
+
+            e.HasOne(b => b.User)
+             .WithMany()
+             .HasForeignKey(b => b.UserId)
+             .OnDelete(DeleteBehavior.SetNull);
+
+            e.HasOne(b => b.Product)
+             .WithMany()
+             .HasForeignKey(b => b.ProductId)
+             .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // ── RecommendationLog ─────────────────────────
+        modelBuilder.Entity<RecommendationLog>(e =>
+        {
+            e.ToTable("RecommendationLogs");
+            e.HasKey(l => l.RecommendationLogId);
+            e.Property(l => l.RecommendationLogId).HasColumnName("RecommendationLogId");
+            e.Property(l => l.UserId).HasColumnName("UserId");
+            e.Property(l => l.ProductId).HasColumnName("ProductId").IsRequired();
+            e.Property(l => l.RecommendationType).HasColumnName("RecommendationType").HasMaxLength(50).IsRequired();
+            e.Property(l => l.Score).HasColumnName("Score");
+            e.Property(l => l.Position).HasColumnName("Position");
+            e.Property(l => l.ShownAt).HasColumnName("ShownAt");
+            e.Property(l => l.Clicked).HasColumnName("Clicked");
+            e.Property(l => l.AddedToCart).HasColumnName("AddedToCart");
+            e.Property(l => l.Purchased).HasColumnName("Purchased");
+
+            e.HasOne(l => l.User)
+             .WithMany()
+             .HasForeignKey(l => l.UserId)
+             .OnDelete(DeleteBehavior.SetNull);
+
+            e.HasOne(l => l.Product)
+             .WithMany()
+             .HasForeignKey(l => l.ProductId)
+             .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // ── ProductSeason ─────────────────────────────
+        modelBuilder.Entity<ProductSeason>(e =>
+        {
+            e.ToTable("ProductSeasons");
+            e.HasKey(s => s.ProductSeasonId);
+            e.Property(s => s.ProductSeasonId).HasColumnName("ProductSeasonId");
+            e.Property(s => s.ProductId).HasColumnName("ProductId").IsRequired();
+            e.Property(s => s.Region).HasColumnName("Region").HasMaxLength(100);
+            e.Property(s => s.StartMonth).HasColumnName("StartMonth");
+            e.Property(s => s.EndMonth).HasColumnName("EndMonth");
+
+            e.HasOne(s => s.Product)
+             .WithMany()
+             .HasForeignKey(s => s.ProductId)
+             .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // ── Farm ──────────────────────────────────────
+        modelBuilder.Entity<Farm>(e =>
+        {
+            e.ToTable("Farms");
+            e.HasKey(f => f.FarmId);
+            e.Property(f => f.FarmId).HasColumnName("FarmId");
+            e.Property(f => f.SupplierId).HasColumnName("SupplierId");
+            e.Property(f => f.FarmName).HasColumnName("FarmName").HasMaxLength(150).IsRequired();
+            e.Property(f => f.Address).HasColumnName("Address").HasMaxLength(255);
+            e.Property(f => f.Province).HasColumnName("Province").HasMaxLength(100);
+            e.Property(f => f.District).HasColumnName("District").HasMaxLength(100);
+            e.Property(f => f.Latitude).HasColumnName("Latitude").HasColumnType("decimal(18,8)");
+            e.Property(f => f.Longitude).HasColumnName("Longitude").HasColumnType("decimal(18,8)");
+            e.Property(f => f.Area).HasColumnName("Area").HasColumnType("decimal(18,2)");
+            e.Property(f => f.CropType).HasColumnName("CropType").HasMaxLength(150);
+            e.Property(f => f.ProductionStandard).HasColumnName("ProductionStandard").HasMaxLength(100);
+            e.Property(f => f.Status).HasColumnName("Status").HasMaxLength(50);
         });
     }
 }

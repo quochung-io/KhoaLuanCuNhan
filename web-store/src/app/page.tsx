@@ -28,29 +28,10 @@ type Product = {
   imageUrl?: string;
 };
 
-const initialProducts: Product[] = [
-  {id:1, name:'Cải bó xôi hữu cơ', category:'Rau củ', price:'28.000₫', unit:'/ 300g', cert:'VietGAP', region:'Đà Lạt', rating:4.8, reviews:212, icon:'leaf', lot:'LOT#VN-DL-0842', imageUrl: 'https://images.unsplash.com/photo-1576045057995-568f588f82fb?w=600&auto=format&fit=crop&q=80'},
-  {id:2, name:'Cà rốt baby Đà Lạt', category:'Rau củ', price:'32.000₫', unit:'/ 500g', cert:'GlobalGAP', region:'Đà Lạt', rating:4.9, reviews:184, icon:'carrot', lot:'LOT#VN-DL-0917', imageUrl: 'https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?w=600&auto=format&fit=crop&q=80'},
-  {id:3, name:'Cam Cao Phong', category:'Trái cây', price:'45.000₫', unit:'/ kg', cert:'VietGAP', region:'Mộc Châu', rating:4.7, reviews:301, icon:'citrus', lot:'LOT#VN-MC-1140', imageUrl: 'https://images.unsplash.com/photo-1611080626919-7cf5a9dbab5b?w=600&auto=format&fit=crop&q=80'},
-  {id:4, name:'Trứng gà ta thả vườn', category:'Rau củ', price:'52.000₫', unit:'/ hộp 10', cert:'USDA', region:'Đồng Tháp', rating:5.0, reviews:96, icon:'egg', lot:'LOT#VN-DT-0663', imageUrl: 'https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?w=600&auto=format&fit=crop&q=80'},
-  {id:5, name:'Mật ong rừng nguyên chất', category:'Hạt', price:'135.000₫', unit:'/ 500ml', cert:'USDA', region:'Mộc Châu', rating:4.9, reviews:158, icon:'jar', lot:'LOT#VN-MC-0255', imageUrl: 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=600&auto=format&fit=crop&q=80'},
-  {id:6, name:'Dâu tây Mộc Châu', category:'Trái cây', price:'68.000₫', unit:'/ hộp 250g', cert:'GlobalGAP', region:'Mộc Châu', rating:4.8, reviews:243, icon:'berry', lot:'LOT#VN-MC-0389', imageUrl: 'https://images.unsplash.com/photo-1518635017498-87f514b751ba?w=600&auto=format&fit=crop&q=80'},
-  {id:7, name:'Xà lách xoăn thủy canh', category:'Rau củ', price:'22.000₫', unit:'/ 250g', cert:'VietGAP', region:'Đà Lạt', rating:4.6, reviews:120, icon:'leaf', lot:'LOT#VN-DL-0721', imageUrl: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600&auto=format&fit=crop&q=80'},
-  {id:8, name:'Bơ 034 Đắk Lắk', category:'Trái cây', price:'58.000₫', unit:'/ kg', cert:'VietGAP', region:'Đồng Tháp', rating:4.8, reviews:167, icon:'citrus', lot:'LOT#VN-DT-0410', imageUrl: 'https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?w=600&auto=format&fit=crop&q=80'},
-];
+const initialProducts: Product[] = [];
 
-// Dữ liệu đánh giá khách hàng (có phân trang & xem thêm)
-const reviewsData = [
-  { id: 1, name: 'Thu Hà', role: 'Nội trợ, TP.HCM', text: 'Rau tươi hơn hẳn ngoài chợ, quét mã QR thấy rõ ngày thu hoạch nên rất yên tâm cho cả nhà. Cải bó xôi và cà chua bi ăn rất ngọt nước giòn tan.', rating: 5, date: '10/09/2026', verified: true },
-  { id: 2, name: 'Minh Quân', role: 'Đầu bếp nhà hàng Healthy', text: 'Nguồn nguyên liệu ổn định, củ quả đóng gói chuỗi lạnh giữ độ tươi giòn tự nhiên. Mình đặt combo tuần giao đều đặn cho bếp luôn.', rating: 5, date: '08/09/2026', verified: true },
-  { id: 3, name: 'Lan Anh', role: 'Mẹ 2 con, TP. Thủ Đức', text: 'Thích nhất phần truy xuất nguồn gốc — dạy con về nông nghiệp sạch qua từng đơn hàng. Bơ 034 dẻo béo ngậy, các bé nhà mình mê tít.', rating: 5, date: '06/09/2026', verified: true },
-  { id: 4, name: 'Hoàng Nam', role: 'Kỹ sư công nghệ, Q.7', text: 'Giao diện đặt hàng siêu mượt. Shipper giao trong vòng 2 tiếng, rau còn đọng sương lạnh tươi rói chuẩn kiểm định VietGAP.', rating: 5, date: '04/09/2026', verified: true },
-  { id: 5, name: 'Bác sĩ Thanh Trúc', role: 'Chuyên khoa Dinh Dưỡng', text: 'Tôi thường xuyên khuyên các gia đình chọn nông sản có nguồn gốc minh bạch. LÀNH làm rất kỹ khâu kiểm định dư lượng hóa chất.', rating: 5, date: '02/09/2026', verified: true },
-  { id: 6, name: 'Thanh Tùng', role: 'HLV Thể hình & Fitness', text: 'Rau xanh và các loại hạt hữu cơ ở đây rất giàu dinh dưỡng thực vật, ăn vào cơ thể nhẹ nhàng và tràn đầy năng lượng mỗi ngày.', rating: 4, date: '31/08/2026', verified: true },
-  { id: 7, name: 'Ngọc Mai', role: 'Nhân viên văn phòng, Q.1', text: 'Đóng gói hút chân không và túi bảo quản rất chu đáo. Mua về trữ tủ lạnh cả tuần nấu ăn vẫn tươi nguyên như mới hái tại vườn.', rating: 5, date: '29/08/2026', verified: true },
-  { id: 8, name: 'Chị Diệu Hương', role: 'Ăn chay thực dưỡng 6 năm', text: 'Nấm tươi, rau thơm và gạo ST25 ở LÀNH vị thơm ngọt tự nhiên không cần nêm nếm gia vị hóa chất. Rất ủng hộ mô hình nông sản sạch.', rating: 5, date: '26/08/2026', verified: true },
-  { id: 9, name: 'Anh Tuấn Kiệt', role: 'Chủ quán Cafe Healthy Brunch', text: 'Trái cây theo mùa như dâu tây Mộc Châu và cam Cao Phong chất lượng cực kỳ đồng đều, khách uống nước ép khen ngon nức nở.', rating: 5, date: '23/08/2026', verified: true },
-];
+// Dữ liệu đánh giá khách hàng (nạp tự động từ API /api/reviews/featured)
+const reviewsData: any[] = [];
 
 // Dữ liệu Blog Dinh Dưỡng
 const blogsData = [
@@ -145,18 +126,21 @@ export default function LanhLandingPage() {
   const [showSuggestions, setShowSuggestions] = useState(false);
 
   // Đánh giá khách hàng (hỗ trợ người dùng tự viết đánh giá mới)
-  const [reviewsList, setReviewsList] = useState(reviewsData);
+  const [reviewsList, setReviewsList] = useState<any[]>([]);
+  const [loadingReviews, setLoadingReviews] = useState(true);
   const [reviewPage, setReviewPage] = useState(1);
+  const [reviewFilterStar, setReviewFilterStar] = useState<'all' | '5' | '4' | '3' | '1-2' | 'has-images'>('all');
   const [showAllReviews, setShowAllReviews] = useState(false);
   const [showWriteReviewModal, setShowWriteReviewModal] = useState(false);
+  const [selectedReviewProductId, setSelectedReviewProductId] = useState<number | null>(null);
   const [newReviewRating, setNewReviewRating] = useState(5);
   const [newReviewName, setNewReviewName] = useState('');
   const [newReviewRole, setNewReviewRole] = useState('');
   const [newReviewText, setNewReviewText] = useState('');
+  const [submittingReview, setSubmittingReview] = useState(false);
   const [reviewToast, setReviewToast] = useState<string | null>(null);
 
-  const reviewsPerPage = 3;
-  const totalReviewPages = Math.ceil(reviewsList.length / reviewsPerPage);
+  const reviewsPerPage = 6;
 
   // Tin tức / Blog Nông sản lấy từ API các tờ báo có thật
   const [newsArticles, setNewsArticles] = useState<any[]>([]);
@@ -166,6 +150,9 @@ export default function LanhLandingPage() {
   // Quick View Modal State
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
   const [quickViewQty, setQuickViewQty] = useState(1);
+  const [boughtTogether, setBoughtTogether] = useState<any[]>([]);
+  const [loadingRecommendations, setLoadingRecommendations] = useState(false);
+  const [recToast, setRecToast] = useState('');
 
   // QR Modal
   const [openQrFor, setOpenQrFor] = useState<number | null>(null);
@@ -184,7 +171,51 @@ export default function LanhLandingPage() {
     return () => clearInterval(timer);
   }, []);
 
-  // Load User & Cart từ localStorage
+  // Hàm tải đánh giá thực tế từ Database thông qua Backend (/api/reviews/featured - lấy full toàn bộ đánh giá)
+  const fetchFeaturedReviews = () => {
+    setLoadingReviews(true);
+    const uId = currentUser?.id || currentUser?.userId;
+    const url = uId 
+      ? `http://localhost:5023/api/reviews/featured?currentUserId=${uId}`
+      : 'http://localhost:5023/api/reviews/featured';
+
+    fetch(url)
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setReviewsList(data);
+        }
+      })
+      .catch(err => console.error('Lỗi khi tải đánh giá nổi bật từ database:', err))
+      .finally(() => setLoadingReviews(false));
+  };
+
+  // Nút like Hữu ích cho đánh giá trên trang chủ (Like / Unlike thuộc về 1 tài khoản)
+  const handleHelpfulReview = async (reviewId: number) => {
+    const uId = currentUser?.id || currentUser?.userId;
+    if (!uId) {
+      alert('Vui lòng đăng nhập tài khoản để đánh giá hoặc bỏ thích hữu ích!');
+      router.push('/login');
+      return;
+    }
+    try {
+      const res = await fetch(`http://localhost:5023/api/reviews/${reviewId}/helpful?userId=${uId}`, { method: 'POST' });
+      const data = await res.json();
+      if (res.ok) {
+        setReviewsList(prev => prev.map(r => 
+          r.id === reviewId 
+            ? { ...r, helpfulCount: data.helpfulCount, isHelpfulByMe: data.liked } 
+            : r
+        ));
+      } else {
+        alert(data.message || 'Không thể xử lý hữu ích.');
+      }
+    } catch (err) {
+      console.error('Lỗi khi bấm hữu ích:', err);
+    }
+  };
+
+  // Load User & Cart từ localStorage & Tải đánh giá thực tế
   useEffect(() => {
     const storedUser = localStorage.getItem('customer_user');
     if (storedUser) {
@@ -202,16 +233,7 @@ export default function LanhLandingPage() {
       } catch (e) {}
     }
 
-    // Load đánh giá do người dùng đã gửi từ localStorage
-    const savedReviews = localStorage.getItem('custom_reviews');
-    if (savedReviews) {
-      try {
-        const parsed = JSON.parse(savedReviews);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setReviewsList([...parsed, ...reviewsData]);
-        }
-      } catch (e) {}
-    }
+    fetchFeaturedReviews();
 
     // Fetch tin tức từ API báo chí chính thống (/api/news)
     fetch('/api/news')
@@ -242,6 +264,72 @@ export default function LanhLandingPage() {
       localStorage.removeItem('cart');
     }
   }, [cart]);
+
+  // Khi mở Quick View: Ghi nhận hành vi & tải gợi ý Thường mua cùng (Top-K Recommendation)
+  useEffect(() => {
+    if (quickViewProduct) {
+      setLoadingRecommendations(true);
+      // Ghi nhận hành vi người dùng (QUICK_VIEW)
+      fetch('http://localhost:5023/api/recommendations/track', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId: quickViewProduct.id,
+          actionType: 'QUICK_VIEW',
+          userId: currentUser?.id || currentUser?.userId || null
+        })
+      }).catch(() => {});
+
+      // Lấy danh sách nông sản thường mua cùng
+      fetch(`http://localhost:5023/api/recommendations/frequently-bought-together/${quickViewProduct.id}?limit=3`)
+        .then(res => res.json())
+        .then(data => {
+          if (Array.isArray(data)) {
+            setBoughtTogether(data);
+          } else {
+            setBoughtTogether([]);
+          }
+        })
+        .catch(() => setBoughtTogether([]))
+        .finally(() => setLoadingRecommendations(false));
+    } else {
+      setBoughtTogether([]);
+    }
+  }, [quickViewProduct, currentUser]);
+
+  const handleAddRecommendedToCart = (item: any) => {
+    const p: Product = {
+      id: item.productId,
+      name: item.productName,
+      price: item.formattedPrice,
+      rawPrice: item.price,
+      unit: item.unit ? ` / ${item.unit}` : ' / kg',
+      category: item.categoryName || 'Nông sản',
+      cert: 'VietGAP',
+      region: 'Đà Lạt',
+      rating: item.averageRating,
+      reviews: item.reviewsCount,
+      icon: 'leaf',
+      lot: 'LOT#VN-REC-' + item.productId,
+      imageUrl: item.imageUrl
+    };
+    addToCart(p, 1);
+
+    // Ghi nhận sự kiện click vào gợi ý
+    fetch('http://localhost:5023/api/recommendations/track', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        productId: item.productId,
+        actionType: 'RECOMMENDATION_CLICK',
+        recommendationType: 'FREQUENTLY_BOUGHT_TOGETHER',
+        userId: currentUser?.id || currentUser?.userId || null
+      })
+    }).catch(() => {});
+
+    setRecToast(`Đã thêm "${item.productName}" vào giỏ hàng!`);
+    setTimeout(() => setRecToast(''), 2500);
+  };
 
   // Lấy dữ liệu sản phẩm từ backend
   const fetchProducts = (searchVal = searchQuery) => {
@@ -286,8 +374,8 @@ export default function LanhLandingPage() {
               category: catName,
               cert: cert,
               region: region,
-              rating: Number((4.6 + (Number(item.productId) % 5) * 0.1).toFixed(1)),
-              reviews: 80 + (Number(item.productId) % 7) * 25,
+              rating: Number(item.averageRating != null ? item.averageRating : 0),
+              reviews: Number(item.reviewsCount != null ? item.reviewsCount : 0),
               icon: icon,
               lot: 'LOT#VN-' + regCode + '-' + (1000 + Number(item.productId)),
               imageUrl: imageUrl || undefined
@@ -351,6 +439,18 @@ export default function LanhLandingPage() {
     );
   };
 
+  const setCartItemQty = (id: number, exactQty: number) => {
+    const safe = Math.max(1, Math.min(999, isNaN(exactQty) ? 1 : exactQty));
+    setCart(prev =>
+      prev.map(x => {
+        if (x.product.id === id) {
+          return { ...x, qty: safe };
+        }
+        return x;
+      })
+    );
+  };
+
   const removeFromCart = (id: number) => setCart(prev => prev.filter(x => x.product.id !== id));
 
   const totalCart = cart.reduce((s, i) => s + parseInt(i.product.price.replace(/[^\d]/g, ''), 10) * i.qty, 0);
@@ -378,43 +478,65 @@ export default function LanhLandingPage() {
   const activeSlideData = heroSlides[currentSlide];
 
   // Xử lý gửi đánh giá mới từ người dùng
-  const handleSubmitReview = (e: React.FormEvent) => {
+  const handleSubmitReview = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newReviewName.trim() || !newReviewText.trim()) {
       alert('Vui lòng nhập đầy đủ họ tên và nội dung đánh giá của bạn!');
       return;
     }
 
-    const newRev = {
-      id: Date.now(),
-      name: newReviewName.trim(),
-      role: newReviewRole.trim() || 'Khách hàng LÀNH Farm',
-      text: newReviewText.trim(),
-      rating: newReviewRating,
-      date: new Date().toLocaleDateString('vi-VN'),
-      verified: true
-    };
+    const targetProdId = selectedReviewProductId || (products.length > 0 ? products[0].id : 1);
 
-    const updated = [newRev, ...reviewsList];
-    setReviewsList(updated);
-
-    // Lưu vào localStorage
+    setSubmittingReview(true);
     try {
-      const existingSaved = localStorage.getItem('custom_reviews');
-      const parsedExisting = existingSaved ? JSON.parse(existingSaved) : [];
-      localStorage.setItem('custom_reviews', JSON.stringify([newRev, ...parsedExisting]));
-    } catch (e) {}
+      const res = await fetch('http://localhost:5023/api/reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId: targetProdId,
+          customerId: currentUser?.id || currentUser?.userId || null,
+          customerName: newReviewName.trim(),
+          email: currentUser?.email || null,
+          rating: newReviewRating,
+          comment: newReviewText.trim(),
+          imageUrls: []
+        })
+      });
 
-    setShowWriteReviewModal(false);
-    setNewReviewText('');
-    setReviewToast('Cảm ơn bạn đã gửi đánh giá! Nhận xét của bạn đã được xuất bản.');
-    setTimeout(() => setReviewToast(null), 4000);
+      if (res.ok) {
+        setShowWriteReviewModal(false);
+        setNewReviewText('');
+        setReviewToast('Cảm ơn bạn đã gửi đánh giá! Đánh giá thực tế đã được lưu thành công vào hệ thống.');
+        fetchFeaturedReviews();
+      } else {
+        const errData = await res.json();
+        alert(errData.message || 'Không thể gửi đánh giá');
+      }
+    } catch (err) {
+      console.error('Lỗi khi gửi đánh giá:', err);
+      alert('Có lỗi xảy ra khi kết nối máy chủ!');
+    } finally {
+      setSubmittingReview(false);
+      setTimeout(() => setReviewToast(null), 4000);
+    }
   };
+
+  // Lọc danh sách đánh giá theo mức sao / ảnh
+  const filteredHomeReviews = reviewsList.filter(r => {
+    if (reviewFilterStar === '5') return r.rating === 5;
+    if (reviewFilterStar === '4') return r.rating === 4;
+    if (reviewFilterStar === '3') return r.rating === 3;
+    if (reviewFilterStar === '1-2') return r.rating <= 2;
+    if (reviewFilterStar === 'has-images') return r.images && r.images.length > 0;
+    return true;
+  });
+
+  const totalReviewPages = Math.max(1, Math.ceil(filteredHomeReviews.length / reviewsPerPage));
 
   // Tính toán danh sách đánh giá hiển thị theo phân trang
   const currentReviews = showAllReviews 
-    ? reviewsList 
-    : reviewsList.slice((reviewPage - 1) * reviewsPerPage, reviewPage * reviewsPerPage);
+    ? filteredHomeReviews 
+    : filteredHomeReviews.slice((reviewPage - 1) * reviewsPerPage, reviewPage * reviewsPerPage);
 
   return (
     <>
@@ -931,7 +1053,13 @@ export default function LanhLandingPage() {
                       {p.name}
                     </span>
                     <div className="stars">
-                      <span className="fill">★★★★★</span> {p.rating} · {p.reviews} đánh giá
+                      {p.reviews > 0 ? (
+                        <>
+                          <span className="fill">★</span> <strong>{p.rating.toFixed(1)}</strong> · {p.reviews} đánh giá
+                        </>
+                      ) : (
+                        <span style={{ color: 'var(--ink-soft)', fontSize: '12.5px', fontStyle: 'italic' }}>Chưa có đánh giá</span>
+                      )}
                     </div>
                     <div className="price-row">
                       <span className="price">{p.price}<span>{p.unit}</span></span>
@@ -1240,76 +1368,201 @@ export default function LanhLandingPage() {
               </div>
             </div>
 
-            {/* Grid Đánh giá hiển thị */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-              gap: '24px',
-              marginBottom: '32px'
-            }}>
-              {currentReviews.map(review => (
-                <div
-                  key={review.id}
+            {/* Thanh lọc mức sao đánh giá trực quan */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '24px' }}>
+              <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--ink)' }}>Lọc nhận xét:</span>
+              {[
+                { key: 'all', label: `Tất cả (${reviewsList.length})` },
+                { key: '5', label: `5★ (${reviewsList.filter(r => r.rating === 5).length})` },
+                { key: '4', label: `4★ (${reviewsList.filter(r => r.rating === 4).length})` },
+                { key: '3', label: `3★ (${reviewsList.filter(r => r.rating === 3).length})` },
+                { key: '1-2', label: `1-2★ (${reviewsList.filter(r => r.rating <= 2).length})` },
+                { key: 'has-images', label: `📷 Có hình ảnh (${reviewsList.filter(r => r.images && r.images.length > 0).length})` }
+              ].map(f => (
+                <button
+                  key={f.key}
+                  type="button"
+                  onClick={() => {
+                    setReviewFilterStar(f.key as any);
+                    setReviewPage(1);
+                  }}
                   style={{
-                    backgroundColor: 'var(--surface)',
-                    borderRadius: '16px',
-                    padding: '24px',
-                    border: '1px solid var(--line)',
-                    boxShadow: '0 2px 10px rgba(0,0,0,0.03)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between'
+                    padding: '6px 14px',
+                    borderRadius: '999px',
+                    border: reviewFilterStar === f.key ? '1.5px solid var(--green-700)' : '1px solid var(--line)',
+                    backgroundColor: reviewFilterStar === f.key ? 'rgba(46,125,50,0.1)' : 'var(--surface)',
+                    color: reviewFilterStar === f.key ? 'var(--green-700)' : 'var(--ink)',
+                    fontSize: '12.5px',
+                    fontWeight: reviewFilterStar === f.key ? '700' : '500',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s'
                   }}
                 >
-                  <div>
-                    {/* Hàng sao và ngày */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                      <div className="stars" style={{ fontSize: '15px' }}>
-                        <span className="fill">{'★'.repeat(review.rating)}</span>
-                        {'☆'.repeat(5 - review.rating)}
-                      </div>
-                      <span style={{ fontSize: '12px', color: 'var(--ink-soft)' }}>{review.date}</span>
-                    </div>
-
-                    <p style={{ fontSize: '14px', color: 'var(--ink)', lineHeight: '1.6', margin: '0 0 16px 0', fontStyle: 'italic' }}>
-                      "{review.text}"
-                    </p>
-                  </div>
-
-                  {/* Thông tin người đánh giá */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', paddingTop: '14px', borderTop: '1px solid var(--line)' }}>
-                    <div style={{
-                      width: '40px',
-                      height: '40px',
-                      borderRadius: '50%',
-                      backgroundColor: 'var(--green-700)',
-                      color: '#FFFFFF',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '16px',
-                      fontWeight: 'bold',
-                      flexShrink: 0
-                    }}>
-                      {review.name.charAt(0)}
-                    </div>
-                    <div>
-                      <div style={{ fontSize: '14.5px', fontWeight: '700', color: 'var(--ink)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        {review.name}
-                        {review.verified && (
-                          <span style={{ fontSize: '11px', color: 'var(--green-700)', fontWeight: 'bold' }} title="Đã mua hàng xác thực">
-                            Đã mua
-                          </span>
-                        )}
-                      </div>
-                      <div style={{ fontSize: '12px', color: 'var(--ink-soft)' }}>
-                        {review.role}
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                  {f.label}
+                </button>
               ))}
             </div>
+
+            {/* Grid Đánh giá hiển thị */}
+            {loadingReviews ? (
+              <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--ink-soft)' }}>
+                Đang tải đánh giá chân thực từ khách hàng...
+              </div>
+            ) : reviewsList.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--ink-soft)' }}>
+                Chưa có đánh giá nào từ khách hàng. Hãy là người đầu tiên chia sẻ cảm nhận!
+              </div>
+            ) : (
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+                gap: '24px',
+                marginBottom: '32px'
+              }}>
+                {currentReviews.map(review => (
+                  <div
+                    key={review.id}
+                    style={{
+                      backgroundColor: 'var(--surface)',
+                      borderRadius: '16px',
+                      padding: '24px',
+                      border: '1px solid var(--line)',
+                      boxShadow: '0 2px 10px rgba(0,0,0,0.03)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between'
+                    }}
+                  >
+                    <div>
+                      {/* Tên sản phẩm được đánh giá */}
+                      {review.productName && (
+                        <div style={{ marginBottom: '10px' }}>
+                          <Link
+                            href={review.productId ? `/products/${review.productId}` : '/products'}
+                            style={{
+                              fontSize: '12.5px',
+                              fontWeight: '700',
+                              color: 'var(--green-700)',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '5px',
+                              textDecoration: 'none'
+                            }}
+                          >
+                            <span>🌱</span>
+                            <span style={{ textDecoration: 'underline' }}>{review.productName}</span>
+                          </Link>
+                        </div>
+                      )}
+
+                      {/* Hàng sao và ngày */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                        <div className="stars" style={{ fontSize: '15px' }}>
+                          <span className="fill">{'★'.repeat(Math.min(5, Math.max(1, review.rating || 5)))}</span>
+                          <span style={{ color: '#D1D5DB' }}>{'☆'.repeat(5 - Math.min(5, Math.max(1, review.rating || 5)))}</span>
+                        </div>
+                        <span style={{ fontSize: '12px', color: 'var(--ink-soft)' }}>{review.date}</span>
+                      </div>
+
+                      <p style={{ fontSize: '14px', color: 'var(--ink)', lineHeight: '1.6', margin: '0 0 14px 0', fontStyle: 'italic' }}>
+                        "{review.text}"
+                      </p>
+
+                      {/* Hình ảnh đính kèm (nếu có) */}
+                      {review.images && review.images.length > 0 && (
+                        <div style={{ display: 'flex', gap: '8px', marginBottom: '14px', flexWrap: 'wrap' }}>
+                          {review.images.map((img: string, iIndex: number) => (
+                            <img
+                              key={iIndex}
+                              src={img}
+                              alt="Ảnh đính kèm"
+                              style={{
+                                width: '64px',
+                                height: '64px',
+                                borderRadius: '8px',
+                                objectFit: 'cover',
+                                border: '1px solid var(--line)'
+                              }}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Thông tin người đánh giá & Nút hữu ích */}
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '12px',
+                      paddingTop: '14px',
+                      borderTop: '1px solid var(--line)',
+                      flexWrap: 'wrap'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div style={{
+                          width: '38px',
+                          height: '38px',
+                          borderRadius: '50%',
+                          backgroundColor: 'var(--green-700)',
+                          color: '#FFFFFF',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '15px',
+                          fontWeight: 'bold',
+                          flexShrink: 0
+                        }}>
+                          {(review.name || 'K').charAt(0)}
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '14px', fontWeight: '700', color: 'var(--ink)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            {review.name}
+                            <span style={{
+                              fontSize: '10.5px',
+                              padding: '2px 6px',
+                              borderRadius: '4px',
+                              backgroundColor: review.verified ? 'rgba(46,125,50,0.1)' : 'rgba(100,116,139,0.1)',
+                              color: review.verified ? 'var(--green-700)' : 'var(--ink-soft)',
+                              fontWeight: '600'
+                            }}>
+                              {review.verified ? '✓ Đã mua hàng' : 'Khách quan tâm'}
+                            </span>
+                          </div>
+                          <div style={{ fontSize: '11.5px', color: 'var(--ink-soft)' }}>
+                            {review.role || 'Khách hàng LÀNH Farm'}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Nút bấm thích hữu ích */}
+                      <button
+                        type="button"
+                        onClick={() => handleHelpfulReview(review.id)}
+                        style={{
+                          background: review.isHelpfulByMe ? 'var(--green-100)' : 'none',
+                          border: review.isHelpfulByMe ? '1px solid var(--green-700)' : '1px solid var(--line)',
+                          borderRadius: '999px',
+                          padding: '5px 12px',
+                          fontSize: '12px',
+                          fontWeight: review.isHelpfulByMe ? '700' : '500',
+                          color: review.isHelpfulByMe ? 'var(--green-900)' : 'var(--ink-soft)',
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '5px',
+                          transition: 'all 0.15s ease'
+                        }}
+                        title={review.isHelpfulByMe ? "Bấm để bỏ thích hữu ích" : "Bấm nếu thấy nhận xét này hữu ích"}
+                      >
+                        <span>👍</span>
+                        <span>{review.isHelpfulByMe ? `Đã thích (${review.helpfulCount || 0})` : `Hữu ích (${review.helpfulCount || 0})`}</span>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
 
             {/* Phân trang đánh giá (Hiện khi không ở chế độ Xem tất cả) */}
             {!showAllReviews && (
@@ -1338,30 +1591,50 @@ export default function LanhLandingPage() {
                   ← Trang trước
                 </button>
 
-                {Array.from({ length: totalReviewPages }).map((_, idx) => {
-                  const pageNum = idx + 1;
-                  const isActive = reviewPage === pageNum;
-                  return (
-                    <button
-                      key={pageNum}
-                      onClick={() => setReviewPage(pageNum)}
-                      style={{
-                        width: '36px',
-                        height: '36px',
-                        borderRadius: '8px',
-                        border: isActive ? '1.5px solid var(--green-700)' : '1px solid var(--line)',
-                        backgroundColor: isActive ? 'var(--green-700)' : 'var(--surface)',
-                        color: isActive ? '#FFFFFF' : 'var(--ink)',
-                        fontSize: '13.5px',
-                        fontWeight: '700',
-                        cursor: 'pointer',
-                        transition: 'all 0.15s'
-                      }}
-                    >
-                      {pageNum}
-                    </button>
-                  );
-                })}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  {(() => {
+                    const pages: (number | string)[] = [];
+                    if (totalReviewPages <= 7) {
+                      for (let i = 1; i <= totalReviewPages; i++) pages.push(i);
+                    } else {
+                      pages.push(1);
+                      if (reviewPage > 3) pages.push('...');
+                      const start = Math.max(2, reviewPage - 1);
+                      const end = Math.min(totalReviewPages - 1, reviewPage + 1);
+                      for (let i = start; i <= end; i++) pages.push(i);
+                      if (reviewPage < totalReviewPages - 2) pages.push('...');
+                      pages.push(totalReviewPages);
+                    }
+
+                    return pages.map((p, idx) => {
+                      if (p === '...') {
+                        return <span key={`ellipsis-${idx}`} style={{ padding: '0 4px', color: 'var(--ink-soft)' }}>...</span>;
+                      }
+                      const pageNum = Number(p);
+                      const isActive = reviewPage === pageNum;
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => setReviewPage(pageNum)}
+                          style={{
+                            width: '36px',
+                            height: '36px',
+                            borderRadius: '8px',
+                            border: isActive ? '1.5px solid var(--green-700)' : '1px solid var(--line)',
+                            backgroundColor: isActive ? 'var(--green-700)' : 'var(--surface)',
+                            color: isActive ? '#FFFFFF' : 'var(--ink)',
+                            fontSize: '13.5px',
+                            fontWeight: '700',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s'
+                          }}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    });
+                  })()}
+                </div>
 
                 <button
                   disabled={reviewPage === totalReviewPages}
@@ -1536,6 +1809,32 @@ export default function LanhLandingPage() {
                 </div>
               </div>
 
+              {/* Chọn sản phẩm đánh giá */}
+              <div style={{ marginBottom: '14px' }}>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: 'var(--ink)', marginBottom: '6px' }}>
+                  Chọn sản phẩm muốn nhận xét: *
+                </label>
+                <select
+                  value={selectedReviewProductId || (products.length > 0 ? products[0].id : '')}
+                  onChange={e => setSelectedReviewProductId(Number(e.target.value))}
+                  style={{
+                    width: '100%',
+                    padding: '10px 14px',
+                    borderRadius: '8px',
+                    border: '1px solid var(--line)',
+                    fontSize: '13.5px',
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                    backgroundColor: 'var(--surface)',
+                    color: 'var(--ink)'
+                  }}
+                >
+                  {products.map(p => (
+                    <option key={p.id} value={p.id}>{p.name} ({p.category})</option>
+                  ))}
+                </select>
+              </div>
+
               {/* Họ và tên */}
               <div style={{ marginBottom: '14px' }}>
                 <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: 'var(--ink)', marginBottom: '6px' }}>
@@ -1609,6 +1908,7 @@ export default function LanhLandingPage() {
               <div style={{ display: 'flex', gap: '10px' }}>
                 <button
                   type="button"
+                  disabled={submittingReview}
                   onClick={() => setShowWriteReviewModal(false)}
                   style={{
                     flex: 1,
@@ -1619,27 +1919,28 @@ export default function LanhLandingPage() {
                     color: '#475569',
                     fontWeight: '600',
                     fontSize: '13.5px',
-                    cursor: 'pointer'
+                    cursor: submittingReview ? 'not-allowed' : 'pointer'
                   }}
                 >
                   Hủy bỏ
                 </button>
                 <button
                   type="submit"
+                  disabled={submittingReview}
                   style={{
                     flex: 1.5,
                     padding: '11px',
                     borderRadius: '8px',
                     border: 'none',
-                    backgroundColor: 'var(--green-700)',
+                    backgroundColor: submittingReview ? '#94A3B8' : 'var(--green-700)',
                     color: '#ffffff',
                     fontWeight: '700',
                     fontSize: '13.5px',
-                    cursor: 'pointer',
+                    cursor: submittingReview ? 'not-allowed' : 'pointer',
                     boxShadow: '0 4px 12px rgba(46,125,50,0.25)'
                   }}
                 >
-                  Xuất bản đánh giá
+                  {submittingReview ? 'Đang lưu vào hệ thống...' : 'Xuất bản đánh giá'}
                 </button>
               </div>
             </form>
@@ -1742,36 +2043,48 @@ export default function LanhLandingPage() {
             </div>
 
             {/* Cột phải: Thông tin & Mua hàng */}
-            <div style={{ padding: '32px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            <div style={{ padding: '28px 32px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
               <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12.5px', color: 'var(--ink-soft)', marginBottom: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12.5px', color: 'var(--ink-soft)', marginBottom: '8px', flexWrap: 'wrap' }}>
                   <span>Xuất xứ: <strong>{quickViewProduct.region}</strong></span>
                   <span>•</span>
                   <span>Mã lô: <strong>{quickViewProduct.lot}</strong></span>
+                  <span>•</span>
+                  {/* Mục 4: Gợi ý Nông trại, Độ tươi & Mùa vụ */}
+                  <span style={{ color: 'var(--green-700)', fontWeight: '700', background: 'var(--green-100)', padding: '2px 8px', borderRadius: '4px', fontSize: '11.5px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                    🌿 Hái sáng nay 05:30 • Đang rộ vụ
+                  </span>
                 </div>
 
                 <h2 style={{ fontSize: '24px', fontWeight: '800', color: 'var(--ink)', margin: '0 0 10px 0', lineHeight: '1.3' }}>
                   {quickViewProduct.name}
                 </h2>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
-                  <div className="stars" style={{ fontSize: '14px' }}>
-                    <span className="fill">★★★★★</span>
-                  </div>
-                  <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--ink)' }}>{quickViewProduct.rating}</span>
-                  <span style={{ fontSize: '12.5px', color: 'var(--ink-soft)' }}>({quickViewProduct.reviews} lượt đánh giá)</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
+                  {quickViewProduct.reviews > 0 ? (
+                    <>
+                      <div className="stars" style={{ fontSize: '14px' }}>
+                        <span className="fill">{'★'.repeat(Math.min(5, Math.max(1, Math.round(quickViewProduct.rating))))}</span>
+                        <span style={{ color: '#D1D5DB' }}>{'☆'.repeat(5 - Math.min(5, Math.max(1, Math.round(quickViewProduct.rating))))}</span>
+                      </div>
+                      <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--ink)' }}>{quickViewProduct.rating.toFixed(1)}</span>
+                      <span style={{ fontSize: '12.5px', color: 'var(--ink-soft)' }}>({quickViewProduct.reviews} lượt đánh giá)</span>
+                    </>
+                  ) : (
+                    <span style={{ fontSize: '13px', color: 'var(--ink-soft)', fontStyle: 'italic' }}>Chưa có đánh giá</span>
+                  )}
                 </div>
 
                 <div style={{
                   backgroundColor: 'var(--bg)',
-                  padding: '12px 18px',
-                  borderRadius: '12px',
-                  marginBottom: '20px',
+                  padding: '10px 16px',
+                  borderRadius: '10px',
+                  marginBottom: '14px',
                   display: 'flex',
                   alignItems: 'baseline',
                   gap: '8px'
                 }}>
-                  <span style={{ fontSize: '28px', fontWeight: '800', color: 'var(--green-900)' }}>
+                  <span style={{ fontSize: '26px', fontWeight: '800', color: 'var(--green-900)' }}>
                     {quickViewProduct.price}
                   </span>
                   <span style={{ fontSize: '14px', color: 'var(--ink-soft)' }}>
@@ -1779,49 +2092,101 @@ export default function LanhLandingPage() {
                   </span>
                 </div>
 
-                <p style={{ fontSize: '13.5px', color: 'var(--ink-soft)', lineHeight: '1.6', margin: '0 0 24px 0' }}>
-                  <strong>Cam kết chất lượng:</strong> Nông sản tươi hái sáng sớm tại nông trại đối tác LÀNH. Bảo quản chuỗi lạnh 4°C giữ trọn vẹn vitamin, không dư lượng hóa chất độc hại.
-                </p>
+                {/* Mục 3: Mẹo bảo quản & Món ngon chế biến */}
+                <div style={{ backgroundColor: '#F0FDF4', border: '1px dashed #86EFAC', borderRadius: '8px', padding: '9px 12px', fontSize: '12.5px', color: '#166534', marginBottom: '16px', lineHeight: '1.5' }}>
+                  💡 <strong>Mẹo bảo quản &amp; Chế biến:</strong> Bảo quản chuỗi lạnh 4°C giữ vitamin 3-5 ngày. Rất thích hợp làm salad tươi giòn, luộc thanh mát hoặc xào tỏi thơm nức!
+                </div>
 
                 {/* Chọn số lượng */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '24px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '18px' }}>
                   <span style={{ fontSize: '13.5px', fontWeight: '700', color: 'var(--ink)' }}>Số lượng:</span>
                   <div style={{
                     display: 'flex',
                     alignItems: 'center',
                     border: '1.5px solid var(--line)',
                     borderRadius: '8px',
-                    overflow: 'hidden'
+                    overflow: 'hidden',
+                    background: 'var(--surface)'
                   }}>
                     <button
+                      type="button"
                       onClick={() => setQuickViewQty(q => Math.max(1, q - 1))}
-                      style={{ width: '36px', height: '36px', border: 'none', background: 'var(--bg)', cursor: 'pointer', fontSize: '16px', fontWeight: 'bold' }}
+                      style={{ width: '36px', height: '36px', border: 'none', background: 'var(--bg)', cursor: 'pointer', fontSize: '16px', fontWeight: 'bold', userSelect: 'none' }}
+                      aria-label="Giảm"
+                      title="Giảm 1 (hoặc dùng phím mũi tên Xuống)"
                     >
                       -
                     </button>
-                    <span style={{ width: '40px', textAlign: 'center', fontSize: '14px', fontWeight: 'bold' }}>
-                      {quickViewQty}
-                    </span>
+                    <input
+                      type="number"
+                      min={1}
+                      max={999}
+                      step={1}
+                      value={quickViewQty}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value, 10);
+                        if (isNaN(val)) {
+                          setQuickViewQty(1);
+                        } else {
+                          setQuickViewQty(Math.max(1, Math.min(999, val)));
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'ArrowUp') {
+                          e.preventDefault();
+                          setQuickViewQty(q => Math.min(999, q + 1));
+                        } else if (e.key === 'ArrowDown') {
+                          e.preventDefault();
+                          setQuickViewQty(q => Math.max(1, q - 1));
+                        }
+                      }}
+                      onBlur={() => {
+                        if (!quickViewQty || quickViewQty < 1) setQuickViewQty(1);
+                      }}
+                      style={{
+                        width: '46px',
+                        height: '36px',
+                        textAlign: 'center',
+                        fontSize: '14px',
+                        fontWeight: 'bold',
+                        color: 'var(--ink)',
+                        border: 'none',
+                        background: 'transparent',
+                        outline: 'none',
+                        MozAppearance: 'textfield'
+                      }}
+                      title="Nhập số lượng hoặc dùng phím mũi tên Lên/Xuống trên bàn phím"
+                      aria-label="Số lượng sản phẩm"
+                    />
                     <button
+                      type="button"
                       onClick={() => setQuickViewQty(q => q + 1)}
-                      style={{ width: '36px', height: '36px', border: 'none', background: 'var(--bg)', cursor: 'pointer', fontSize: '16px', fontWeight: 'bold' }}
+                      style={{ width: '36px', height: '36px', border: 'none', background: 'var(--bg)', cursor: 'pointer', fontSize: '16px', fontWeight: 'bold', userSelect: 'none' }}
+                      aria-label="Tăng"
+                      title="Tăng 1 (hoặc dùng phím mũi tên Lên)"
                     >
                       +
                     </button>
                   </div>
                 </div>
+
+                {/* Mục 2: Gợi ý Ưu đãi Freeship / Mua thêm */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#B45309', background: '#FEF3C7', padding: '7px 12px', borderRadius: '6px', marginBottom: '14px', fontWeight: '600' }}>
+                  <span>🚚</span>
+                  <span><strong>Ưu đãi:</strong> Freeship 30K cho đơn từ 150.000₫ • Giao hỏa tốc 2H</span>
+                </div>
               </div>
 
               {/* Nút thao tác */}
               <div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '14px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
                   <button
                     onClick={() => {
                       addToCart(quickViewProduct, quickViewQty);
                       setQuickViewProduct(null);
                     }}
                     className="btn btn-accent"
-                    style={{ padding: '12px', fontSize: '13.5px', fontWeight: 'bold', justifyContent: 'center' }}
+                    style={{ padding: '11px', fontSize: '13.5px', fontWeight: 'bold', justifyContent: 'center' }}
                   >
                     Thêm Vào Giỏ
                   </button>
@@ -1832,7 +2197,7 @@ export default function LanhLandingPage() {
                       router.push('/checkout');
                     }}
                     style={{
-                      padding: '12px',
+                      padding: '11px',
                       fontSize: '13.5px',
                       fontWeight: 'bold',
                       borderRadius: '8px',
@@ -1847,12 +2212,78 @@ export default function LanhLandingPage() {
                   </button>
                 </div>
 
-                <div style={{ textAlign: 'center' }}>
+                {/* Mục 1: Gợi ý Thường mua cùng (Frequently Bought Together) */}
+                {boughtTogether.length > 0 && (
+                  <div style={{ marginTop: '14px', paddingTop: '12px', borderTop: '1px solid var(--line)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                      <span style={{ fontSize: '12.5px', fontWeight: '800', color: 'var(--ink)' }}>
+                        🛒 Thường được mua cùng:
+                      </span>
+                      <span style={{ fontSize: '11px', color: 'var(--green-700)', fontWeight: '700', background: 'var(--green-100)', padding: '1px 6px', borderRadius: '4px' }}>
+                        AI Top-K
+                      </span>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: boughtTogether.length > 1 ? '1fr 1fr' : '1fr', gap: '8px' }}>
+                      {boughtTogether.slice(0, 2).map((item: any) => (
+                        <div
+                          key={item.productId}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            gap: '6px',
+                            border: '1px solid var(--line)',
+                            borderRadius: '8px',
+                            padding: '6px 8px',
+                            background: 'var(--surface)'
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+                            <img
+                              src={item.imageUrl || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=80&h=80&q=80'}
+                              alt={item.productName}
+                              style={{ width: '36px', height: '36px', objectFit: 'cover', borderRadius: '6px', flexShrink: 0 }}
+                            />
+                            <div style={{ minWidth: 0 }}>
+                              <div style={{ fontSize: '12px', fontWeight: '700', color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={item.productName}>
+                                {item.productName}
+                              </div>
+                              <div style={{ fontSize: '11px', color: 'var(--green-700)', fontWeight: '800' }}>
+                                {item.formattedPrice}
+                              </div>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleAddRecommendedToCart(item)}
+                            style={{
+                              padding: '4px 8px',
+                              borderRadius: '6px',
+                              backgroundColor: 'var(--green-700)',
+                              color: '#FFFFFF',
+                              fontSize: '11px',
+                              fontWeight: '700',
+                              border: 'none',
+                              cursor: 'pointer',
+                              flexShrink: 0,
+                              transition: 'opacity 0.2s'
+                            }}
+                            title="Thêm nhanh vào giỏ hàng"
+                          >
+                            + Thêm
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div style={{ textAlign: 'center', marginTop: '12px' }}>
                   <Link
                     href={`/products/${quickViewProduct.id}`}
                     onClick={() => setQuickViewProduct(null)}
                     style={{
-                      fontSize: '13px',
+                      fontSize: '12.5px',
                       color: 'var(--green-700)',
                       fontWeight: '700',
                       textDecoration: 'none',
@@ -1895,10 +2326,47 @@ export default function LanhLandingPage() {
                 <div className="info">
                   <b>{item.product.name}</b>
                   <span>{item.product.price} {item.product.unit}</span>
-                  <div className="qty-ctrl">
-                    <button onClick={() => updateCartQty(item.product.id, -1)}>-</button>
-                    <span>{item.qty}</span>
-                    <button onClick={() => updateCartQty(item.product.id, 1)}>+</button>
+                  <div className="qty-ctrl" style={{ display: 'inline-flex', alignItems: 'center', border: '1px solid var(--line)', borderRadius: '6px', overflow: 'hidden' }}>
+                    <button onClick={() => updateCartQty(item.product.id, -1)} style={{ userSelect: 'none' }} aria-label="Giảm 1">-</button>
+                    <input
+                      type="number"
+                      min={1}
+                      max={999}
+                      step={1}
+                      value={item.qty}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value, 10);
+                        setCartItemQty(item.product.id, isNaN(val) ? 1 : Math.max(1, Math.min(999, val)));
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'ArrowUp') {
+                          e.preventDefault();
+                          setCartItemQty(item.product.id, Math.min(999, item.qty + 1));
+                        } else if (e.key === 'ArrowDown') {
+                          e.preventDefault();
+                          setCartItemQty(item.product.id, Math.max(1, item.qty - 1));
+                        }
+                      }}
+                      onBlur={() => {
+                        if (!item.qty || item.qty < 1) setCartItemQty(item.product.id, 1);
+                      }}
+                      style={{
+                        width: '36px',
+                        height: '24px',
+                        textAlign: 'center',
+                        fontSize: '13px',
+                        fontWeight: 'bold',
+                        color: 'var(--ink)',
+                        border: 'none',
+                        background: 'transparent',
+                        outline: 'none',
+                        padding: 0,
+                        MozAppearance: 'textfield'
+                      }}
+                      title="Nhập số lượng hoặc dùng phím mũi tên Lên/Xuống trên bàn phím"
+                      aria-label="Số lượng sản phẩm"
+                    />
+                    <button onClick={() => updateCartQty(item.product.id, 1)} style={{ userSelect: 'none' }} aria-label="Tăng 1">+</button>
                   </div>
                 </div>
                 <button className="remove-btn" onClick={() => removeFromCart(item.product.id)} aria-label="Xóa">
@@ -1918,6 +2386,29 @@ export default function LanhLandingPage() {
           </button>
         </div>
       </aside>
+
+      {/* Toast thông báo gợi ý */}
+      {recToast && (
+        <div style={{
+          position: 'fixed',
+          bottom: '24px',
+          right: '24px',
+          zIndex: 9999,
+          background: '#14532D',
+          color: '#FFFFFF',
+          padding: '12px 20px',
+          borderRadius: '10px',
+          boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
+          fontSize: '13.5px',
+          fontWeight: '600',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px'
+        }}>
+          <span>✅</span>
+          <span>{recToast}</span>
+        </div>
+      )}
     </>
   );
 }

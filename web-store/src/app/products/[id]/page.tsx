@@ -412,60 +412,184 @@ export default function ProductDetailPage() {
   const [batches, setBatches] = useState<BatchInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const dropdownRef = React.useRef<HTMLDivElement>(null);
   const [activeTab, setActiveTab] = useState<'intro' | 'nutrition' | 'origin' | 'storage' | 'reviews'>('intro');
   
-  // Đánh giá sản phẩm từ khách hàng
-  const [productReviews, setProductReviews] = useState<Array<{
+  // Đánh giá sản phẩm từ khách hàng (kết nối CSDL thật)
+  interface ReviewItem {
+    reviewId: number;
+    customerId: number;
     author: string;
     role: string;
     date: string;
+    updatedAt?: string | null;
     rating: number;
     comment: string;
-  }>>([
-    {
-      author: 'Thuỳ Linh',
-      role: 'Quận 7, TP.HCM · Đã mua hàng',
-      date: '10/09/2026',
-      rating: 5,
-      comment: 'Rau củ nhận được còn tươi rói đọng nguyên sương sớm, đóng gói trong túi giấy có màng FreshLock rất cẩn thận. Mình xào ăn ngay bữa trưa cảm nhận rõ vị ngọt tự nhiên, không bị hăng mùi phân bón.'
-    },
-    {
-      author: 'Minh Hoàng',
-      role: 'Cầu Giấy, Hà Nội · Đã mua hàng',
-      date: '08/09/2026',
-      rating: 5,
-      comment: 'Quét mã QR ra đầy đủ nhật ký ngày cắt tỉa và kiểm định dư lượng nitrat 0%. Cả nhà mình rất an tâm khi dùng đồ của LÀNH Farm.'
-    },
-    {
-      author: 'Phương Thảo',
-      role: 'Hải Châu, Đà Nẵng · Đã mua hàng',
-      date: '05/09/2026',
-      rating: 5,
-      comment: 'Giao hàng đúng hẹn 2 tiếng, củ quả nguyên vẹn không bị dập xước tí nào. Giá thành rất xứng đáng với chất lượng organic chuẩn.'
-    }
-  ]);
+    helpfulCount: number;
+    isHelpfulByMe?: boolean;
+    reportCount: number;
+    isPurchased: boolean;
+    images?: string[];
+  }
 
+  const [productReviews, setProductReviews] = useState<ReviewItem[]>([]);
+  const [avgRating, setAvgRating] = useState<number>(0.0);
+  const [totalReviewsCount, setTotalReviewsCount] = useState<number>(0);
+  const [hasImagesCount, setHasImagesCount] = useState<number>(0);
+  const [ratingCounts, setRatingCounts] = useState<{ [key: number]: number }>({ 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 });
+  const [ratingPercentages, setRatingPercentages] = useState<{ [key: number]: number }>({ 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 });
+
+  // Bộ lọc & Phân trang
+  const [filterStar, setFilterStar] = useState<number | null>(null);
+  const [filterHasImages, setFilterHasImages] = useState<boolean>(false);
+  const [sortBy, setSortBy] = useState<string>('newest');
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [totalPages, setTotalPages] = useState<number>(1);
+
+  // Form viết / sửa đánh giá
   const [showReviewForm, setShowReviewForm] = useState(false);
+  const [editingReviewId, setEditingReviewId] = useState<number | null>(null);
   const [revRating, setRevRating] = useState(5);
   const [revAuthor, setRevAuthor] = useState('');
   const [revRole, setRevRole] = useState('');
   const [revComment, setRevComment] = useState('');
+  const [revImages, setRevImages] = useState<string[]>([]);
+  const [newImageUrl, setNewImageUrl] = useState('');
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
-  // Tải đánh giá đã lưu của sản phẩm này từ localStorage
-  useEffect(() => {
+  // Tương tác người dùng: Báo cáo & Xem ảnh phóng to
+  const [reportedClicked, setReportedClicked] = useState<number[]>([]);
+  const [previewReviewImg, setPreviewReviewImg] = useState<string | null>(null);
+
+  // Tải đánh giá thực tế từ Database thông qua Backend WebApi
+  const fetchReviewsFromDb = async (page = 1, star = filterStar, withImages = filterHasImages, sort = sortBy) => {
     if (!productId) return;
     try {
-      const saved = localStorage.getItem('product_reviews_' + productId);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setProductReviews(prev => [...parsed, ...prev]);
+      const params = new URLSearchParams();
+      if (star) params.append('star', star.toString());
+      if (withImages) params.append('hasImages', 'true');
+      if (sort) params.append('sort', sort);
+      params.append('page', page.toString());
+      params.append('pageSize', '6');
+
+      const currentUid = currentUser?.id || currentUser?.userId;
+      if (currentUid) {
+        params.append('currentUserId', currentUid.toString());
+      }
+
+      const res = await fetch(`http://localhost:5023/api/reviews/product/${productId}?${params.toString()}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data) {
+          const mapped: ReviewItem[] = (data.reviews || []).map((r: any) => ({
+            reviewId: r.reviewId,
+            customerId: r.customerId,
+            author: r.customerName || 'Khách hàng',
+            role: r.isPurchased ? 'Đã mua hàng · Đã kiểm định' : 'Khách quan tâm',
+            date: r.createdAt || 'Gần đây',
+            updatedAt: r.updatedAt,
+            rating: r.rating || 5,
+            comment: r.comment || '',
+            helpfulCount: r.helpfulCount || 0,
+            isHelpfulByMe: r.isHelpfulByMe || false,
+            reportCount: r.reportCount || 0,
+            isPurchased: r.isPurchased || false,
+            images: r.images || []
+          }));
+          setProductReviews(mapped);
+          setAvgRating(data.averageRating || 0.0);
+          setTotalReviewsCount(data.totalReviews || 0);
+          setHasImagesCount(data.hasImagesCount || 0);
+          if (data.ratingCounts) setRatingCounts(data.ratingCounts);
+          if (data.ratingPercentages) setRatingPercentages(data.ratingPercentages);
+          if (data.pagination) {
+            setCurrentPage(data.pagination.page || 1);
+            setTotalPages(data.pagination.totalPages || 1);
+          }
         }
+      }
+    } catch (err) {
+      console.error('Lỗi khi tải đánh giá từ database:', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchReviewsFromDb(1, filterStar, filterHasImages, sortBy);
+  }, [productId, filterStar, filterHasImages, sortBy, currentUser]);
+
+  // Xử lý bấm Hữu ích (Like / Unlike thuộc về 1 tài khoản)
+  const handleHelpful = async (reviewId: number) => {
+    const currentUid = currentUser?.id || currentUser?.userId;
+    if (!currentUid) {
+      alert('Vui lòng đăng nhập tài khoản để đánh giá hoặc bỏ thích hữu ích!');
+      router.push('/login');
+      return;
+    }
+    try {
+      const res = await fetch(`http://localhost:5023/api/reviews/${reviewId}/helpful?userId=${currentUid}`, {
+        method: 'POST'
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setProductReviews(prev => prev.map(r => 
+          r.reviewId === reviewId 
+            ? { ...r, helpfulCount: data.helpfulCount, isHelpfulByMe: data.liked }
+            : r
+        ));
+      } else {
+        alert(data.message || 'Không thể xử lý bình chọn hữu ích.');
+      }
+    } catch (e) {
+      console.error('Lỗi khi xử lý hữu ích:', e);
+    }
+  };
+
+  // Xử lý Báo cáo vi phạm
+  const handleReport = async (reviewId: number) => {
+    if (reportedClicked.includes(reviewId)) {
+      alert('Bạn đã báo cáo đánh giá này rồi!');
+      return;
+    }
+    if (!confirm('Bạn có chắc chắn muốn báo cáo đánh giá này là vi phạm/spam?')) return;
+    try {
+      setReportedClicked(prev => [...prev, reviewId]);
+      await fetch(`http://localhost:5023/api/reviews/${reviewId}/report`, { method: 'POST' });
+      alert('Cảm ơn bạn! Báo cáo vi phạm đã được gửi đến ban quản trị.');
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  // Xử lý Xóa đánh giá của chính mình
+  const handleDeleteReview = async (reviewId: number) => {
+    if (!confirm('Bạn có chắc muốn xóa vĩnh viễn nhận xét này?')) return;
+    try {
+      const res = await fetch(`http://localhost:5023/api/reviews/${reviewId}`, { method: 'DELETE' });
+      if (res.ok) {
+        await fetchReviewsFromDb(currentPage, filterStar, filterHasImages, sortBy);
+        alert('Đã xóa đánh giá thành công.');
+      } else {
+        alert('Không thể xóa đánh giá.');
       }
     } catch (e) {
       console.error(e);
     }
-  }, [productId]);
+  };
+
+  // Xử lý nạp dữ liệu để Sửa đánh giá
+  const handleStartEdit = (rev: ReviewItem) => {
+    setEditingReviewId(rev.reviewId);
+    setRevRating(rev.rating);
+    setRevAuthor(rev.author);
+    setRevComment(rev.comment);
+    setRevImages(rev.images || []);
+    setShowReviewForm(true);
+    // Cuộn tới form
+    const el = document.getElementById('review-form-section');
+    if (el) el.scrollIntoView({ behavior: 'smooth' });
+  };
   const [addedToast, setAddedToast] = useState(false);
   const [relatedProducts, setRelatedProducts] = useState<any[]>([]);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -474,9 +598,6 @@ export default function ProductDetailPage() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [cartBounce, setCartBounce] = useState(false);
-  const [currentUser, setCurrentUser] = useState<any>(null);
-  const [showUserDropdown, setShowUserDropdown] = useState(false);
-  const dropdownRef = React.useRef<HTMLDivElement>(null);
 
   const [theme, setTheme] = useState('light');
   const [lang, setLang] = useState('vi');
@@ -639,6 +760,17 @@ export default function ProductDetailPage() {
       }
       return item;
     }).filter(Boolean) as CartItem[];
+    saveCart(updated);
+  };
+
+  const setCartItemQty = (id: number, exactQty: number) => {
+    const safe = Math.max(1, Math.min(999, isNaN(exactQty) ? 1 : exactQty));
+    const updated = cart.map(item => {
+      if (item.product.id === id) {
+        return { ...item, qty: safe };
+      }
+      return item;
+    });
     saveCart(updated);
   };
 
@@ -1122,9 +1254,40 @@ export default function ProductDetailPage() {
 
             {/* Đánh giá sao */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px', fontSize: '13.5px' }}>
-              <div style={{ color: '#FFB800', letterSpacing: '2px' }}>★★★★★</div>
-              <span style={{ fontWeight: 700, color: 'var(--ink)' }}>4.9</span>
-              <span style={{ color: 'var(--ink-soft)' }}>· 186 lượt đánh giá từ khách mua</span>
+              {totalReviewsCount > 0 ? (
+                <>
+                  <div style={{ color: '#FFB800', letterSpacing: '2px' }}>
+                    {'★'.repeat(Math.min(5, Math.max(1, Math.round(avgRating))))}{'☆'.repeat(Math.max(0, 5 - Math.round(avgRating)))}
+                  </div>
+                  <span style={{ fontWeight: 700, color: 'var(--ink)' }}>{avgRating}</span>
+                  <span style={{ color: 'var(--ink-soft)' }}>· {totalReviewsCount} lượt đánh giá</span>
+                </>
+              ) : (
+                <>
+                  <div style={{ color: '#cbd5e1', letterSpacing: '2px' }}>☆☆☆☆☆</div>
+                  <span style={{ color: 'var(--ink-soft)', fontStyle: 'italic' }}>Chưa có đánh giá</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveTab('reviews');
+                      setShowReviewForm(true);
+                      const el = document.getElementById('review-form-section');
+                      if (el) el.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      padding: 0,
+                      color: 'var(--green-700)',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      textDecoration: 'underline'
+                    }}
+                  >
+                    Viết đánh giá đầu tiên
+                  </button>
+                </>
+              )}
               <span style={{ color: 'var(--line)' }}>|</span>
               <span style={{ color: '#2E7D32', fontWeight: 600 }}>Đã bán 1.400+ kg</span>
             </div>
@@ -1163,19 +1326,61 @@ export default function ProductDetailPage() {
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '18px', flexWrap: 'wrap' }}>
               <div style={{ display: 'inline-flex', alignItems: 'center', background: 'var(--surface)', border: '1.5px solid var(--line)', borderRadius: '999px', padding: '4px' }}>
                 <button 
+                  type="button"
                   onClick={() => setQuantity(prev => Math.max(1, prev - 1))}
-                  style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'var(--green-100)', color: 'var(--green-700)', fontSize: '18px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'var(--green-100)', color: 'var(--green-700)', fontSize: '18px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer', userSelect: 'none' }}
                   aria-label="Giảm"
+                  title="Giảm 1 (hoặc dùng phím mũi tên Xuống)"
                 >
                   -
                 </button>
-                <span style={{ width: '48px', textAlign: 'center', fontWeight: 700, fontSize: '15px' }}>
-                  {quantity}
-                </span>
+                <input
+                  type="number"
+                  min={1}
+                  max={999}
+                  step={1}
+                  value={quantity}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value, 10);
+                    if (isNaN(val)) {
+                      setQuantity(1);
+                    } else {
+                      setQuantity(Math.max(1, Math.min(999, val)));
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'ArrowUp') {
+                      e.preventDefault();
+                      setQuantity(q => Math.min(999, q + 1));
+                    } else if (e.key === 'ArrowDown') {
+                      e.preventDefault();
+                      setQuantity(q => Math.max(1, q - 1));
+                    }
+                  }}
+                  onBlur={() => {
+                    if (!quantity || quantity < 1) setQuantity(1);
+                  }}
+                  style={{
+                    width: '56px',
+                    height: '36px',
+                    textAlign: 'center',
+                    fontWeight: 800,
+                    fontSize: '15px',
+                    color: 'var(--ink)',
+                    background: 'transparent',
+                    border: 'none',
+                    outline: 'none',
+                    MozAppearance: 'textfield'
+                  }}
+                  title="Nhập số lượng hoặc dùng phím mũi tên Lên/Xuống trên bàn phím"
+                  aria-label="Số lượng sản phẩm"
+                />
                 <button 
+                  type="button"
                   onClick={() => setQuantity(prev => prev + 1)}
-                  style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'var(--green-100)', color: 'var(--green-700)', fontSize: '18px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'var(--green-100)', color: 'var(--green-700)', fontSize: '18px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer', userSelect: 'none' }}
                   aria-label="Tăng"
+                  title="Tăng 1 (hoặc dùng phím mũi tên Lên)"
                 >
                   +
                 </button>
@@ -1558,46 +1763,107 @@ export default function ProductDetailPage() {
           {/* TAB CONTENT 5: ĐÁNH GIÁ TỪ KHÁCH MUA */}
           {activeTab === 'reviews' && (
             <div style={{ background: 'var(--surface)', padding: '36px', borderRadius: '24px', marginTop: '24px', border: '1px solid var(--line)' }}>
-              <div style={{ maxWidth: '850px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '28px', flexWrap: 'wrap', gap: '16px' }}>
-                  <div>
-                    <h3 style={{ fontSize: '22px', color: 'var(--green-900)', margin: '0 0 6px 0' }}>
-                      Đánh giá thực tế từ khách hàng ({productReviews.length})
-                    </h3>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: 'var(--ink-soft)' }}>
-                      <span style={{ color: '#FFB800', fontSize: '16px' }}>★★★★★</span>
-                      <strong style={{ color: 'var(--ink)', fontSize: '16px' }}>4.9 / 5.0</strong>
-                      <span>· 100% người mua hài lòng với độ tươi ngon</span>
+              <div style={{ maxWidth: '900px' }}>
+                
+                {/* 1. KHỐI TỔNG QUAN ĐIỂM TRUNG BÌNH & BIỂU ĐỒ PHÂN BỔ SAO */}
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+                  gap: '24px',
+                  padding: '24px',
+                  backgroundColor: 'var(--bg)',
+                  borderRadius: '20px',
+                  border: '1px solid var(--line)',
+                  marginBottom: '28px'
+                }}>
+                  {/* Cột trái: Điểm trung bình */}
+                  <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center', borderRight: '1px solid var(--line)', paddingRight: '16px' }}>
+                    <div style={{ fontSize: '46px', fontWeight: 900, color: 'var(--green-900)', lineHeight: 1 }}>
+                      {avgRating > 0 ? avgRating.toFixed(1) : '0.0'}
                     </div>
+                    <div style={{ color: '#FFB800', fontSize: '20px', letterSpacing: '3px', margin: '8px 0 4px 0' }}>
+                      {avgRating > 0
+                        ? '★'.repeat(Math.min(5, Math.max(1, Math.round(avgRating)))) + '☆'.repeat(Math.max(0, 5 - Math.round(avgRating)))
+                        : '☆☆☆☆☆'}
+                    </div>
+                    <span style={{ fontSize: '13.5px', color: 'var(--ink-soft)', fontWeight: 500 }}>
+                      {totalReviewsCount > 0 ? `Dựa trên ${totalReviewsCount} đánh giá thực tế` : 'Chưa có lượt đánh giá nào'}
+                    </span>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (!revAuthor && currentUser?.fullName) {
-                        setRevAuthor(currentUser.fullName);
-                      }
-                      setShowReviewForm(!showReviewForm);
-                    }}
-                    style={{
-                      padding: '10px 20px',
-                      borderRadius: '8px',
-                      border: 'none',
-                      backgroundColor: showReviewForm ? '#f1f5f9' : 'var(--green-700)',
-                      color: showReviewForm ? 'var(--ink)' : '#ffffff',
-                      fontSize: '13.5px',
-                      fontWeight: 700,
-                      cursor: 'pointer'
-                    }}
-                  >
-                    {showReviewForm ? 'Đóng biểu mẫu' : 'Viết đánh giá của bạn'}
-                  </button>
+                  {/* Cột giữa: Biểu đồ thanh ngang phân bổ số sao (bấm để lọc) */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', justifyContent: 'center' }}>
+                    {[5, 4, 3, 2, 1].map((star) => {
+                      const count = ratingCounts[star] || 0;
+                      const pct = ratingPercentages[star] || 0;
+                      const isSelected = filterStar === star;
+                      return (
+                        <div
+                          key={star}
+                          onClick={() => setFilterStar(isSelected ? null : star)}
+                          title={`Bấm để lọc đánh giá ${star} sao`}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '10px',
+                            cursor: 'pointer',
+                            padding: '4px 8px',
+                            borderRadius: '8px',
+                            backgroundColor: isSelected ? 'var(--green-100)' : 'transparent',
+                            transition: 'background-color 0.2s'
+                          }}
+                        >
+                          <span style={{ fontSize: '12.5px', fontWeight: 600, color: 'var(--ink)', width: '38px' }}>
+                            {star} ★
+                          </span>
+                          <div style={{ flex: 1, height: '8px', backgroundColor: '#e2e8f0', borderRadius: '999px', overflow: 'hidden' }}>
+                            <div style={{ width: `${pct}%`, height: '100%', backgroundColor: star >= 4 ? '#2E7D32' : star === 3 ? '#FFB800' : '#ef4444', borderRadius: '999px', transition: 'width 0.3s' }} />
+                          </div>
+                          <span style={{ fontSize: '12px', color: 'var(--ink-soft)', width: '55px', textAlign: 'right' }}>
+                            {count} ({pct}%)
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Cột phải: Nút kêu gọi viết đánh giá */}
+                  <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center', paddingLeft: '8px' }}>
+                    <p style={{ fontSize: '13px', color: 'var(--ink-soft)', margin: '0 0 12px 0' }}>
+                      Bạn đã thử qua sản phẩm này? Chia sẻ cảm nhận để nhận ngay <strong>+500 điểm LÀNH xu</strong>!
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!revAuthor && currentUser?.fullName) {
+                          setRevAuthor(currentUser.fullName);
+                        }
+                        setEditingReviewId(null);
+                        setShowReviewForm(!showReviewForm);
+                      }}
+                      style={{
+                        padding: '12px 24px',
+                        borderRadius: '12px',
+                        border: 'none',
+                        backgroundColor: showReviewForm ? '#e2e8f0' : 'var(--green-700)',
+                        color: showReviewForm ? 'var(--ink)' : '#ffffff',
+                        fontSize: '14px',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        boxShadow: showReviewForm ? 'none' : '0 4px 12px rgba(46, 125, 50, 0.25)',
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      {showReviewForm ? 'Đóng biểu mẫu' : '✍️ Viết đánh giá của bạn'}
+                    </button>
+                  </div>
                 </div>
 
-                {/* FORM VIẾT ĐÁNH GIÁ TRỰC TIẾP */}
+                {/* 2. FORM VIẾT / CHỈNH SỬA ĐÁNH GIÁ */}
                 {showReviewForm && (
                   <form
-                    onSubmit={(e) => {
+                    id="review-form-section"
+                    onSubmit={async (e) => {
                       e.preventDefault();
                       const authorName = revAuthor.trim() || currentUser?.fullName || 'Khách hàng LÀNH Farm';
                       if (!revComment.trim()) {
@@ -1605,125 +1871,183 @@ export default function ProductDetailPage() {
                         return;
                       }
 
-                      const newReview = {
-                        author: authorName,
-                        role: revRole.trim() || 'Khách mua hàng LÀNH Farm',
-                        date: new Date().toLocaleDateString('vi-VN'),
-                        rating: revRating,
-                        comment: revComment.trim()
-                      };
-
-                      const updated = [newReview, ...productReviews];
-                      setProductReviews(updated);
-
+                      setIsSubmittingReview(true);
                       try {
-                        const existingSaved = JSON.parse(localStorage.getItem('product_reviews_' + productId) || '[]');
-                        localStorage.setItem('product_reviews_' + productId, JSON.stringify([newReview, ...existingSaved]));
-                      } catch (err) {
-                        console.error(err);
-                      }
+                        if (editingReviewId) {
+                          // Chế độ sửa đánh giá
+                          const res = await fetch(`http://localhost:5023/api/reviews/${editingReviewId}`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              rating: revRating,
+                              comment: revComment.trim(),
+                              imageUrls: revImages
+                            })
+                          });
+                          if (res.ok) {
+                            await fetchReviewsFromDb(currentPage, filterStar, filterHasImages, sortBy);
+                            setEditingReviewId(null);
+                            setRevComment('');
+                            setRevImages([]);
+                            setShowReviewForm(false);
+                            alert('Đã cập nhật đánh giá thành công!');
+                          } else {
+                            const err = await res.json().catch(() => ({}));
+                            alert('Lỗi: ' + (err.message || 'Không thể cập nhật đánh giá.'));
+                          }
+                        } else {
+                          // Chế độ tạo mới
+                          const payload = {
+                            productId: Number(productId),
+                            customerId: currentUser?.id || currentUser?.userId || null,
+                            customerName: authorName,
+                            email: currentUser?.email || null,
+                            rating: revRating,
+                            comment: revComment.trim(),
+                            imageUrls: revImages
+                          };
 
-                      setRevComment('');
-                      setShowReviewForm(false);
-                      setAddedToast(true);
-                      setTimeout(() => setAddedToast(false), 3000);
+                          const res = await fetch('http://localhost:5023/api/reviews', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                          });
+
+                          if (res.ok) {
+                            await fetchReviewsFromDb(1, null, false, 'newest');
+                            setFilterStar(null);
+                            setFilterHasImages(false);
+                            setSortBy('newest');
+                            setRevComment('');
+                            setRevImages([]);
+                            setShowReviewForm(false);
+                            setAddedToast(true);
+                            setTimeout(() => setAddedToast(false), 3000);
+                          } else {
+                            const err = await res.json().catch(() => ({}));
+                            alert('Lỗi: ' + (err.message || 'Không thể lưu đánh giá.'));
+                          }
+                        }
+                      } catch (err) {
+                        console.error('Lỗi khi gửi đánh giá:', err);
+                        alert('Không thể kết nối đến máy chủ.');
+                      } finally {
+                        setIsSubmittingReview(false);
+                      }
                     }}
                     style={{
                       backgroundColor: 'var(--bg)',
-                      padding: '24px',
-                      borderRadius: '16px',
-                      border: '1px solid var(--line)',
-                      marginBottom: '32px'
+                      padding: '28px',
+                      borderRadius: '20px',
+                      border: '2px solid var(--green-600)',
+                      marginBottom: '32px',
+                      boxShadow: '0 8px 24px rgba(0,0,0,0.06)'
                     }}
                   >
-                    <h4 style={{ margin: '0 0 16px 0', fontSize: '16px', color: 'var(--green-900)' }}>
-                      Chia sẻ trải nghiệm thực tế của bạn
-                    </h4>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
+                      <div>
+                        <h4 style={{ margin: '0 0 4px 0', fontSize: '18px', color: 'var(--green-900)' }}>
+                          {editingReviewId ? '✏️ Chỉnh sửa đánh giá của bạn' : '✍️ Chia sẻ trải nghiệm thực tế của bạn'}
+                        </h4>
+                        <p style={{ margin: 0, fontSize: '12.5px', color: 'var(--ink-soft)' }}>
+                          Khách hàng nào cũng có thể gửi đánh giá chân thực để cùng nhau xây dựng cộng đồng nông sản sạch
+                        </p>
+                      </div>
+                      {editingReviewId && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingReviewId(null);
+                            setRevComment('');
+                            setRevImages([]);
+                            setShowReviewForm(false);
+                          }}
+                          style={{ fontSize: '12px', color: '#e11d48', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
+                        >
+                          Hủy chế độ sửa
+                        </button>
+                      )}
+                    </div>
 
-                    {/* Chọn số sao */}
-                    <div style={{ marginBottom: '16px' }}>
-                      <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px', color: 'var(--ink)' }}>
-                        Đánh giá chất lượng sản phẩm:
+                    {/* Chọn số sao tương tác */}
+                    <div style={{ marginBottom: '18px' }}>
+                      <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, marginBottom: '8px', color: 'var(--ink)' }}>
+                        Đánh giá mức độ hài lòng:
                       </label>
-                      <div style={{ display: 'flex', gap: '8px' }}>
-                        {[1, 2, 3, 4, 5].map((star) => (
+                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                        {[
+                          { val: 1, label: 'Rất tệ' },
+                          { val: 2, label: 'Chưa tốt' },
+                          { val: 3, label: 'Bình thường' },
+                          { val: 4, label: 'Hài lòng' },
+                          { val: 5, label: 'Tuyệt vời' }
+                        ].map((item) => (
                           <button
-                            key={star}
+                            key={item.val}
                             type="button"
-                            onClick={() => setRevRating(star)}
+                            onClick={() => setRevRating(item.val)}
                             style={{
-                              padding: '6px 14px',
-                              borderRadius: '6px',
-                              border: revRating === star ? '2px solid var(--green-700)' : '1px solid var(--line)',
-                              backgroundColor: revRating === star ? 'var(--green-100)' : 'var(--surface)',
-                              color: revRating === star ? 'var(--green-900)' : 'var(--ink)',
+                              padding: '8px 16px',
+                              borderRadius: '8px',
+                              border: revRating === item.val ? '2px solid var(--green-700)' : '1px solid var(--line)',
+                              backgroundColor: revRating === item.val ? 'var(--green-100)' : 'var(--surface)',
+                              color: revRating === item.val ? 'var(--green-900)' : 'var(--ink)',
                               fontSize: '13px',
                               fontWeight: 700,
-                              cursor: 'pointer'
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px'
                             }}
                           >
-                            {star} ★ {star === 5 ? '(Rất hài lòng)' : star === 4 ? '(Hài lòng)' : ''}
+                            <span>{'★'.repeat(item.val)}</span>
+                            <span style={{ fontSize: '12px', fontWeight: 500 }}>{item.label}</span>
                           </button>
                         ))}
                       </div>
                     </div>
 
-                    {/* Họ tên & Khu vực */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '16px' }}>
-                      <div>
-                        <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px', color: 'var(--ink)' }}>
-                          Họ và tên của bạn:
-                        </label>
-                        <input
-                          type="text"
-                          required
-                          value={revAuthor}
-                          onChange={(e) => setRevAuthor(e.target.value)}
-                          placeholder={currentUser?.fullName || 'VD: Nguyễn Thị Lan'}
-                          style={{
-                            width: '100%',
-                            padding: '10px 14px',
-                            borderRadius: '8px',
-                            border: '1px solid var(--line)',
-                            backgroundColor: 'var(--surface)',
-                            color: 'var(--ink)',
-                            fontSize: '13.5px'
-                          }}
-                        />
-                      </div>
-                      <div>
-                        <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px', color: 'var(--ink)' }}>
-                          Khu vực / Quận huyện:
-                        </label>
-                        <input
-                          type="text"
-                          value={revRole}
-                          onChange={(e) => setRevRole(e.target.value)}
-                          placeholder="VD: Quận 1, TP.HCM hoặc Hà Nội"
-                          style={{
-                            width: '100%',
-                            padding: '10px 14px',
-                            borderRadius: '8px',
-                            border: '1px solid var(--line)',
-                            backgroundColor: 'var(--surface)',
-                            color: 'var(--ink)',
-                            fontSize: '13.5px'
-                          }}
-                        />
-                      </div>
+                    {/* Tên người đánh giá */}
+                    <div style={{ marginBottom: '16px' }}>
+                      <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, marginBottom: '6px', color: 'var(--ink)' }}>
+                        Họ và tên của bạn:
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={revAuthor}
+                        onChange={(e) => setRevAuthor(e.target.value)}
+                        placeholder={currentUser?.fullName || 'VD: Nguyễn Minh Anh'}
+                        style={{
+                          width: '100%',
+                          maxWidth: '400px',
+                          padding: '10px 14px',
+                          borderRadius: '8px',
+                          border: '1px solid var(--line)',
+                          backgroundColor: 'var(--surface)',
+                          color: 'var(--ink)',
+                          fontSize: '13.5px'
+                        }}
+                      />
                     </div>
 
-                    {/* Nội dung đánh giá */}
+                    {/* Nội dung nhận xét có đếm ký tự (giới hạn 1000 ký tự) */}
                     <div style={{ marginBottom: '18px' }}>
-                      <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px', color: 'var(--ink)' }}>
-                        Nhận xét chi tiết về độ tươi ngon, đóng gói và thời gian nhận:
-                      </label>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                        <label style={{ fontSize: '13px', fontWeight: 700, color: 'var(--ink)' }}>
+                          Nội dung đánh giá (tối đa 1.000 ký tự):
+                        </label>
+                        <span style={{ fontSize: '12px', color: revComment.length > 900 ? '#e11d48' : 'var(--ink-soft)' }}>
+                          {revComment.length} / 1000 ký tự
+                        </span>
+                      </div>
                       <textarea
                         required
+                        maxLength={1000}
                         rows={4}
                         value={revComment}
                         onChange={(e) => setRevComment(e.target.value)}
-                        placeholder="VD: Nông sản nhận được rất tươi, vị ngọt tự nhiên khác hẳn mua ngoài chợ..."
+                        placeholder="Chia sẻ về độ tươi giòn, hương vị tự nhiên, quy cách đóng gói và thời gian giao hàng..."
                         style={{
                           width: '100%',
                           padding: '12px 14px',
@@ -1737,12 +2061,98 @@ export default function ProductDetailPage() {
                       />
                     </div>
 
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                    {/* Đính kèm ảnh minh họa (tối đa 3 ảnh) */}
+                    <div style={{ marginBottom: '24px' }}>
+                      <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, marginBottom: '6px', color: 'var(--ink)' }}>
+                        Đính kèm ảnh minh họa (tối đa 3 ảnh):
+                      </label>
+                      
+                      {/* Danh sách ảnh đã đính kèm */}
+                      {revImages.length > 0 && (
+                        <div style={{ display: 'flex', gap: '10px', marginBottom: '12px', flexWrap: 'wrap' }}>
+                          {revImages.map((url, idx) => (
+                            <div key={idx} style={{ position: 'relative', width: '80px', height: '80px', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--line)' }}>
+                              <img src={url} alt={`preview ${idx}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                              <button
+                                type="button"
+                                onClick={() => setRevImages(revImages.filter((_, i) => i !== idx))}
+                                style={{
+                                  position: 'absolute',
+                                  top: '2px',
+                                  right: '2px',
+                                  background: 'rgba(0,0,0,0.6)',
+                                  color: '#fff',
+                                  border: 'none',
+                                  borderRadius: '50%',
+                                  width: '20px',
+                                  height: '20px',
+                                  fontSize: '12px',
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center'
+                                }}
+                                title="Xóa ảnh này"
+                              >
+                                ×
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {revImages.length < 3 && (
+                        <div style={{ display: 'flex', gap: '8px', maxWidth: '560px' }}>
+                          <input
+                            type="url"
+                            value={newImageUrl}
+                            onChange={(e) => setNewImageUrl(e.target.value)}
+                            placeholder="Dán đường dẫn URL ảnh (VD: https://...)"
+                            style={{
+                              flex: 1,
+                              padding: '8px 12px',
+                              borderRadius: '8px',
+                              border: '1px solid var(--line)',
+                              backgroundColor: 'var(--surface)',
+                              color: 'var(--ink)',
+                              fontSize: '13px'
+                            }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (newImageUrl.trim()) {
+                                setRevImages([...revImages, newImageUrl.trim()]);
+                                setNewImageUrl('');
+                              }
+                            }}
+                            style={{
+                              padding: '8px 16px',
+                              borderRadius: '8px',
+                              border: '1px solid var(--line)',
+                              backgroundColor: 'var(--surface)',
+                              color: 'var(--ink)',
+                              fontSize: '13px',
+                              fontWeight: 600,
+                              cursor: 'pointer'
+                            }}
+                          >
+                            + Thêm ảnh
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Nút hành động Form */}
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
                       <button
                         type="button"
-                        onClick={() => setShowReviewForm(false)}
+                        onClick={() => {
+                          setShowReviewForm(false);
+                          setEditingReviewId(null);
+                        }}
                         style={{
-                          padding: '10px 18px',
+                          padding: '10px 20px',
                           borderRadius: '8px',
                           border: '1px solid var(--line)',
                           backgroundColor: 'transparent',
@@ -1756,59 +2166,481 @@ export default function ProductDetailPage() {
                       </button>
                       <button
                         type="submit"
+                        disabled={isSubmittingReview}
                         style={{
-                          padding: '10px 22px',
+                          padding: '10px 24px',
                           borderRadius: '8px',
                           border: 'none',
-                          backgroundColor: 'var(--green-700)',
+                          backgroundColor: isSubmittingReview ? '#94a3b8' : 'var(--green-700)',
                           color: '#ffffff',
                           fontSize: '13.5px',
                           fontWeight: 700,
-                          cursor: 'pointer'
+                          cursor: isSubmittingReview ? 'not-allowed' : 'pointer',
+                          boxShadow: '0 4px 12px rgba(46, 125, 50, 0.2)'
                         }}
                       >
-                        Gửi đánh giá ngay
+                        {isSubmittingReview ? 'Đang lưu...' : (editingReviewId ? '💾 Lưu thay đổi' : '🚀 Gửi đánh giá ngay')}
                       </button>
                     </div>
                   </form>
                 )}
 
-                {/* DANH SÁCH ĐÁNH GIÁ ĐÃ CÓ */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  {productReviews.map((rev, idx) => (
-                    <div
-                      key={idx}
+                {/* 3. THANH BỘ LỌC & SẮP XẾP ĐÁNH GIÁ */}
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: '12px',
+                  marginBottom: '20px',
+                  paddingBottom: '16px',
+                  borderBottom: '1px solid var(--line)'
+                }}>
+                  {/* Các nút lọc sao */}
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      onClick={() => setFilterStar(null)}
                       style={{
-                        padding: '20px 24px',
-                        backgroundColor: 'var(--bg)',
-                        borderRadius: '16px',
-                        border: '1px solid var(--line)'
+                        padding: '6px 14px',
+                        borderRadius: '20px',
+                        border: filterStar === null ? '1px solid var(--green-700)' : '1px solid var(--line)',
+                        backgroundColor: filterStar === null ? 'var(--green-100)' : 'var(--surface)',
+                        color: filterStar === null ? 'var(--green-900)' : 'var(--ink)',
+                        fontSize: '12.5px',
+                        fontWeight: 600,
+                        cursor: 'pointer'
                       }}
                     >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                        <div>
-                          <strong style={{ fontSize: '15px', color: 'var(--ink)' }}>{rev.author}</strong>
-                          <span style={{ fontSize: '12.5px', color: 'var(--ink-soft)', marginLeft: '8px' }}>· {rev.role}</span>
-                        </div>
-                        <div style={{ fontSize: '12px', color: 'var(--ink-soft)' }}>
-                          {rev.date}
-                        </div>
-                      </div>
+                      Tất cả ({totalReviewsCount})
+                    </button>
+                    {[5, 4, 3, 2, 1].map((s) => (
+                      <button
+                        key={s}
+                        type="button"
+                        onClick={() => setFilterStar(filterStar === s ? null : s)}
+                        style={{
+                          padding: '6px 14px',
+                          borderRadius: '20px',
+                          border: filterStar === s ? '1px solid var(--green-700)' : '1px solid var(--line)',
+                          backgroundColor: filterStar === s ? 'var(--green-100)' : 'var(--surface)',
+                          color: filterStar === s ? 'var(--green-900)' : 'var(--ink)',
+                          fontSize: '12.5px',
+                          fontWeight: 600,
+                          cursor: 'pointer'
+                        }}
+                      >
+                        {s} ★ ({ratingCounts[s] || 0})
+                      </button>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => setFilterHasImages(!filterHasImages)}
+                      style={{
+                        padding: '6px 14px',
+                        borderRadius: '20px',
+                        border: filterHasImages ? '1px solid var(--green-700)' : '1px solid var(--line)',
+                        backgroundColor: filterHasImages ? 'var(--green-100)' : 'var(--surface)',
+                        color: filterHasImages ? 'var(--green-900)' : 'var(--ink)',
+                        fontSize: '12.5px',
+                        fontWeight: 600,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      📷 Có hình ảnh ({hasImagesCount})
+                    </button>
+                  </div>
 
-                      <div style={{ color: '#FFB800', fontSize: '14px', marginBottom: '10px', letterSpacing: '2px' }}>
-                        {'★'.repeat(rev.rating)}{'☆'.repeat(5 - rev.rating)}
-                      </div>
-
-                      <p style={{ margin: 0, fontSize: '14px', color: 'var(--ink)', lineHeight: '1.6' }}>
-                        {rev.comment}
-                      </p>
-                    </div>
-                  ))}
+                  {/* Dropdown sắp xếp */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '12.5px', color: 'var(--ink-soft)' }}>Sắp xếp:</span>
+                    <select
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value)}
+                      style={{
+                        padding: '6px 12px',
+                        borderRadius: '8px',
+                        border: '1px solid var(--line)',
+                        backgroundColor: 'var(--surface)',
+                        color: 'var(--ink)',
+                        fontSize: '12.5px',
+                        fontWeight: 600,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <option value="newest">Mới nhất</option>
+                      <option value="oldest">Cũ nhất</option>
+                      <option value="rating-desc">Đánh giá cao nhất</option>
+                      <option value="rating-asc">Đánh giá thấp nhất</option>
+                      <option value="helpful">Hữu ích nhất</option>
+                    </select>
+                  </div>
                 </div>
+
+                {/* 4. DANH SÁCH CÁC THẺ ĐÁNH GIÁ (HOẶC TRẠNG THÁI RỖNG) */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  {productReviews.length === 0 ? (
+                    <div style={{
+                      padding: '48px 24px',
+                      textAlign: 'center',
+                      backgroundColor: 'var(--bg)',
+                      borderRadius: '20px',
+                      border: '1px dashed var(--line)'
+                    }}>
+                      <div style={{ fontSize: '40px', marginBottom: '12px' }}>🌱</div>
+                      <h4 style={{ fontSize: '16px', color: 'var(--green-900)', margin: '0 0 6px 0' }}>
+                        {totalReviewsCount === 0 ? 'Chưa có đánh giá nào cho sản phẩm này' : 'Không có đánh giá phù hợp với bộ lọc'}
+                      </h4>
+                      <p style={{ fontSize: '13.5px', color: 'var(--ink-soft)', margin: '0 0 16px 0' }}>
+                        {totalReviewsCount === 0
+                          ? 'Hãy là người đầu tiên chia sẻ cảm nhận về sản phẩm để giúp mọi người mua sắm tốt hơn!'
+                          : 'Thử chọn lại mức sao hoặc xóa bộ lọc để xem toàn bộ đánh giá.'}
+                      </p>
+                      {totalReviewsCount === 0 ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowReviewForm(true);
+                            const el = document.getElementById('review-form-section');
+                            if (el) el.scrollIntoView({ behavior: 'smooth' });
+                          }}
+                          style={{
+                            padding: '10px 20px',
+                            borderRadius: '8px',
+                            border: 'none',
+                            backgroundColor: 'var(--green-700)',
+                            color: '#ffffff',
+                            fontSize: '13.5px',
+                            fontWeight: 700,
+                            cursor: 'pointer'
+                          }}
+                        >
+                          Viết đánh giá ngay
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setFilterStar(null);
+                            setFilterHasImages(false);
+                            setSortBy('newest');
+                          }}
+                          style={{
+                            padding: '8px 16px',
+                            borderRadius: '8px',
+                            border: '1px solid var(--line)',
+                            backgroundColor: 'var(--surface)',
+                            color: 'var(--ink)',
+                            fontSize: '13px',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          Xóa bộ lọc
+                        </button>
+                      )}
+                    </div>
+                  ) : (
+                    productReviews.map((rev) => {
+                      const isMyReview = currentUser && (currentUser.id === rev.customerId || currentUser.userId === rev.customerId);
+                      const isHelpful = rev.isHelpfulByMe ?? false;
+                      const isReported = reportedClicked.includes(rev.reviewId);
+
+                      return (
+                        <div
+                          key={rev.reviewId}
+                          style={{
+                            padding: '22px 26px',
+                            backgroundColor: 'var(--bg)',
+                            borderRadius: '18px',
+                            border: '1px solid var(--line)',
+                            transition: 'box-shadow 0.2s'
+                          }}
+                        >
+                          {/* Dòng tác giả, huy hiệu & thời gian */}
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                              <div style={{
+                                width: '38px',
+                                height: '38px',
+                                borderRadius: '50%',
+                                backgroundColor: 'var(--green-700)',
+                                color: '#ffffff',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontWeight: 700,
+                                fontSize: '14px'
+                              }}>
+                                {rev.author.charAt(0).toUpperCase()}
+                              </div>
+                              <div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                  <strong style={{ fontSize: '14.5px', color: 'var(--ink)' }}>{rev.author}</strong>
+                                  {rev.isPurchased ? (
+                                    <span style={{
+                                      fontSize: '11px',
+                                      fontWeight: 600,
+                                      padding: '2px 8px',
+                                      borderRadius: '12px',
+                                      backgroundColor: '#E8F5E9',
+                                      color: '#2E7D32'
+                                    }}>
+                                      ✓ Đã mua hàng
+                                    </span>
+                                  ) : (
+                                    <span style={{
+                                      fontSize: '11px',
+                                      fontWeight: 500,
+                                      padding: '2px 8px',
+                                      borderRadius: '12px',
+                                      backgroundColor: '#f1f5f9',
+                                      color: '#64748b'
+                                    }}>
+                                      Khách quan tâm
+                                    </span>
+                                  )}
+                                </div>
+                                <div style={{ fontSize: '12px', color: 'var(--ink-soft)', marginTop: '2px' }}>
+                                  {rev.date} {rev.updatedAt ? `(Đã sửa: ${rev.updatedAt})` : ''}
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Menu Thao tác: Sửa / Xóa đối với đánh giá của chính mình */}
+                            {isMyReview && (
+                              <div style={{ display: 'flex', gap: '8px' }}>
+                                <button
+                                  type="button"
+                                  onClick={() => handleStartEdit(rev)}
+                                  style={{
+                                    fontSize: '12px',
+                                    color: 'var(--green-700)',
+                                    background: 'none',
+                                    border: '1px solid var(--green-700)',
+                                    padding: '4px 10px',
+                                    borderRadius: '6px',
+                                    cursor: 'pointer'
+                                  }}
+                                >
+                                  ✏️ Sửa
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteReview(rev.reviewId)}
+                                  style={{
+                                    fontSize: '12px',
+                                    color: '#e11d48',
+                                    background: 'none',
+                                    border: '1px solid #fda4af',
+                                    padding: '4px 10px',
+                                    borderRadius: '6px',
+                                    cursor: 'pointer'
+                                  }}
+                                >
+                                  🗑️ Xóa
+                                </button>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Số sao hiển thị */}
+                          <div style={{ color: '#FFB800', fontSize: '14px', marginBottom: '8px', letterSpacing: '2px' }}>
+                            {'★'.repeat(rev.rating)}{'☆'.repeat(5 - rev.rating)}
+                          </div>
+
+                          {/* Nội dung nhận xét */}
+                          <p style={{ margin: '0 0 12px 0', fontSize: '14px', color: 'var(--ink)', lineHeight: '1.6' }}>
+                            {rev.comment}
+                          </p>
+
+                          {/* Ảnh đính kèm (nếu có) */}
+                          {rev.images && rev.images.length > 0 && (
+                            <div style={{ display: 'flex', gap: '10px', marginBottom: '14px', flexWrap: 'wrap' }}>
+                              {rev.images.map((img, i) => (
+                                <img
+                                  key={i}
+                                  src={img}
+                                  alt="Ảnh đính kèm"
+                                  onClick={() => setPreviewReviewImg(img)}
+                                  title="Bấm để xem ảnh phóng to"
+                                  style={{
+                                    width: '85px',
+                                    height: '85px',
+                                    objectFit: 'cover',
+                                    borderRadius: '10px',
+                                    border: '1px solid var(--line)',
+                                    cursor: 'pointer',
+                                    transition: 'transform 0.2s'
+                                  }}
+                                />
+                              ))}
+                            </div>
+                          )}
+
+                          {/* Dòng tương tác: Nút Hữu ích & Báo cáo */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', paddingTop: '10px', borderTop: '1px dashed var(--line)' }}>
+                            <button
+                              type="button"
+                              onClick={() => handleHelpful(rev.reviewId)}
+                              title={isHelpful ? "Bấm để bỏ thích hữu ích" : "Bấm để đánh giá hữu ích"}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                background: isHelpful ? 'var(--green-100)' : 'transparent',
+                                border: isHelpful ? '1px solid var(--green-700)' : '1px solid transparent',
+                                padding: '5px 12px',
+                                borderRadius: '8px',
+                                color: isHelpful ? 'var(--green-900)' : 'var(--ink-soft)',
+                                fontSize: '13px',
+                                cursor: 'pointer',
+                                fontWeight: isHelpful ? 700 : 500,
+                                transition: 'all 0.15s ease'
+                              }}
+                            >
+                              <span>👍</span>
+                              <span>{isHelpful ? `Đã thích (${rev.helpfulCount})` : `Hữu ích (${rev.helpfulCount})`}</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => handleReport(rev.reviewId)}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                background: 'transparent',
+                                border: 'none',
+                                padding: '4px 8px',
+                                borderRadius: '6px',
+                                color: isReported ? '#e11d48' : 'var(--ink-soft)',
+                                fontSize: '12.5px',
+                                cursor: 'pointer'
+                              }}
+                            >
+                              <span>🚩</span>
+                              <span>{isReported ? 'Đã báo cáo' : 'Báo cáo'}</span>
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+
+                {/* 5. PHÂN TRANG ĐÁNH GIÁ (KHI CÓ NHIỀU TRANG) */}
+                {totalPages > 1 && (
+                  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', marginTop: '28px' }}>
+                    <button
+                      type="button"
+                      disabled={currentPage <= 1}
+                      onClick={() => fetchReviewsFromDb(currentPage - 1, filterStar, filterHasImages, sortBy)}
+                      style={{
+                        padding: '6px 14px',
+                        borderRadius: '8px',
+                        border: '1px solid var(--line)',
+                        backgroundColor: 'var(--surface)',
+                        color: 'var(--ink)',
+                        fontSize: '13px',
+                        cursor: currentPage <= 1 ? 'not-allowed' : 'pointer',
+                        opacity: currentPage <= 1 ? 0.5 : 1
+                      }}
+                    >
+                      ← Trang trước
+                    </button>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                      <button
+                        key={p}
+                        type="button"
+                        onClick={() => fetchReviewsFromDb(p, filterStar, filterHasImages, sortBy)}
+                        style={{
+                          width: '34px',
+                          height: '34px',
+                          borderRadius: '8px',
+                          border: currentPage === p ? 'none' : '1px solid var(--line)',
+                          backgroundColor: currentPage === p ? 'var(--green-700)' : 'var(--surface)',
+                          color: currentPage === p ? '#ffffff' : 'var(--ink)',
+                          fontSize: '13px',
+                          fontWeight: currentPage === p ? 700 : 500,
+                          cursor: 'pointer'
+                        }}
+                      >
+                        {p}
+                      </button>
+                    ))}
+                    <button
+                      type="button"
+                      disabled={currentPage >= totalPages}
+                      onClick={() => fetchReviewsFromDb(currentPage + 1, filterStar, filterHasImages, sortBy)}
+                      style={{
+                        padding: '6px 14px',
+                        borderRadius: '8px',
+                        border: '1px solid var(--line)',
+                        backgroundColor: 'var(--surface)',
+                        color: 'var(--ink)',
+                        fontSize: '13px',
+                        cursor: currentPage >= totalPages ? 'not-allowed' : 'pointer',
+                        opacity: currentPage >= totalPages ? 0.5 : 1
+                      }}
+                    >
+                      Trang sau →
+                    </button>
+                  </div>
+                )}
+
               </div>
             </div>
           )}
         </div>
+
+        {/* MODAL PHÓNG TO ẢNH ĐÁNH GIÁ (LIGHTBOX) */}
+        {previewReviewImg && (
+          <div
+            onClick={() => setPreviewReviewImg(null)}
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0,0,0,0.85)',
+              zIndex: 9999,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '20px'
+            }}
+          >
+            <div style={{ position: 'relative', maxWidth: '800px', maxHeight: '90vh' }} onClick={(e) => e.stopPropagation()}>
+              <img
+                src={previewReviewImg}
+                alt="Phóng to ảnh đánh giá"
+                style={{ width: '100%', height: 'auto', maxHeight: '85vh', objectFit: 'contain', borderRadius: '12px' }}
+              />
+              <button
+                type="button"
+                onClick={() => setPreviewReviewImg(null)}
+                style={{
+                  position: 'absolute',
+                  top: '-14px',
+                  right: '-14px',
+                  backgroundColor: '#ffffff',
+                  color: '#000000',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '32px',
+                  height: '32px',
+                  fontSize: '16px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
+                }}
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* QUY TRÌNH MINH BẠCH FARM-TO-TABLE */}
         <section style={{ marginTop: '64px', marginBottom: '64px' }}>
@@ -1967,10 +2799,47 @@ export default function ProductDetailPage() {
                     <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--ink)' }}>{item.product.name}</div>
                     <div style={{ fontSize: '13px', color: 'var(--green-700)', fontWeight: 600, marginTop: '2px' }}>{item.product.price}</div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
-                      <div style={{ display: 'inline-flex', alignItems: 'center', border: '1px solid var(--line)', borderRadius: '20px', padding: '2px' }}>
-                        <button onClick={() => updateCartQty(item.product.id, -1)} style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'var(--bg)', fontSize: '14px', fontWeight: 700 }}>-</button>
-                        <span style={{ width: '28px', textAlign: 'center', fontSize: '13px', fontWeight: 600 }}>{item.qty}</span>
-                        <button onClick={() => updateCartQty(item.product.id, 1)} style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'var(--bg)', fontSize: '14px', fontWeight: 700 }}>+</button>
+                      <div style={{ display: 'inline-flex', alignItems: 'center', border: '1px solid var(--line)', borderRadius: '20px', padding: '2px', overflow: 'hidden' }}>
+                        <button onClick={() => updateCartQty(item.product.id, -1)} style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'var(--bg)', fontSize: '14px', fontWeight: 700, border: 'none', cursor: 'pointer', userSelect: 'none' }} aria-label="Giảm 1">-</button>
+                        <input
+                          type="number"
+                          min={1}
+                          max={999}
+                          step={1}
+                          value={item.qty}
+                          onChange={(e) => {
+                            const val = parseInt(e.target.value, 10);
+                            setCartItemQty(item.product.id, isNaN(val) ? 1 : Math.max(1, Math.min(999, val)));
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'ArrowUp') {
+                              e.preventDefault();
+                              setCartItemQty(item.product.id, Math.min(999, item.qty + 1));
+                            } else if (e.key === 'ArrowDown') {
+                              e.preventDefault();
+                              setCartItemQty(item.product.id, Math.max(1, item.qty - 1));
+                            }
+                          }}
+                          onBlur={() => {
+                            if (!item.qty || item.qty < 1) setCartItemQty(item.product.id, 1);
+                          }}
+                          style={{
+                            width: '32px',
+                            height: '24px',
+                            textAlign: 'center',
+                            fontSize: '13px',
+                            fontWeight: 700,
+                            color: 'var(--ink)',
+                            border: 'none',
+                            background: 'transparent',
+                            outline: 'none',
+                            padding: 0,
+                            MozAppearance: 'textfield'
+                          }}
+                          title="Nhập số lượng hoặc dùng phím mũi tên Lên/Xuống trên bàn phím"
+                          aria-label="Số lượng sản phẩm"
+                        />
+                        <button onClick={() => updateCartQty(item.product.id, 1)} style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'var(--bg)', fontSize: '14px', fontWeight: 700, border: 'none', cursor: 'pointer', userSelect: 'none' }} aria-label="Tăng 1">+</button>
                       </div>
                       <button onClick={() => removeCartItem(item.product.id)} style={{ color: '#C0392B', fontSize: '12px', marginLeft: 'auto', background: 'none', cursor: 'pointer' }}>
                         Xóa

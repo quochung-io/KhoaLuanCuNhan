@@ -432,3 +432,13 @@ footer{background:var(--green-900); color:var(--bg); margin-top:40px; padding-to
 .skip-link{position:absolute; left:-999px; top:0; background:var(--green-700); color:#fff; padding:10px 16px; border-radius:0 0 8px 0; z-index:200;}
 .skip-link:focus{left:0;}
 :focus-visible{outline:2.5px solid var(--green-700); outline-offset:2px;}
+
+/* Ẩn hoàn toàn 2 mũi tên lên xuống mặc định của trình duyệt khi nhập số lượng */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none !important;
+  margin: 0 !important;
+}
+input[type="number"] {
+  -moz-appearance: textfield !important;
+}

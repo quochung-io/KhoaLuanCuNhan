@@ -1,4 +1,4 @@
-﻿import axios from 'axios';
+import axios from 'axios';
 
 const API_BASE_URL = 'http://localhost:5023/api';
 
@@ -69,4 +69,20 @@ export const productImageService = {
   create: (data: any) => api.post('/productimages', data),
   syncProductImages: (productId: number, images: any[]) => api.put(`/productimages/product/${productId}/sync`, images),
   delete: (id: number) => api.delete(`/productimages/${id}`),
+};
+
+export const recommendationService = {
+  getAnalytics: () => api.get('/recommendations/analytics'),
+  track: (data: { productId?: number; actionType: string; recommendationType?: string; searchKeyword?: string; userId?: number | null }) =>
+    api.post('/recommendations/track', data),
+  getFrequentlyBoughtTogether: (productId: number, limit = 4) =>
+    api.get(`/recommendations/frequently-bought-together/${productId}?limit=${limit}`),
+  getForYou: (userId?: number, limit = 4) =>
+    api.get(`/recommendations/for-you?${userId ? `userId=${userId}&` : ''}limit=${limit}`),
+  getSimilar: (productId: number, limit = 4) =>
+    api.get(`/recommendations/similar/${productId}?limit=${limit}`),
+  getInSeason: (limit = 4) =>
+    api.get(`/recommendations/in-season?limit=${limit}`),
+  getNearDelivery: (limit = 4) =>
+    api.get(`/recommendations/near-delivery?limit=${limit}`),
 };

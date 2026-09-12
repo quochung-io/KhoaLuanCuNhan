@@ -8,6 +8,7 @@ type CartDrawerProps = {
   setIsDrawerOpen: (o: boolean) => void;
   cart: CartItem[];
   updateCartQty: (id: number, delta: number) => void;
+  setCartItemQty?: (id: number, qty: number) => void;
   removeFromCart: (id: number) => void;
   totalCart: number;
   toVND: (n: number) => string;
@@ -18,10 +19,22 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   setIsDrawerOpen,
   cart,
   updateCartQty,
+  setCartItemQty,
   removeFromCart,
   totalCart,
   toVND,
 }) => {
+  const handleDirectQtyChange = (id: number, newQty: number) => {
+    if (setCartItemQty) {
+      setCartItemQty(id, newQty);
+    } else {
+      const current = cart.find(c => c.product.id === id);
+      if (current) {
+        updateCartQty(id, newQty - current.qty);
+      }
+    }
+  };
+
   return (
     <>
       <div className={`overlay ${isDrawerOpen ? 'show' : ''}`} onClick={() => setIsDrawerOpen(false)}></div>
@@ -42,10 +55,47 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                 <div className="info">
                   <b>{item.product.name}</b>
                   <span>{item.product.price} {item.product.unit}</span>
-                  <div className="qty-ctrl">
-                    <button onClick={() => updateCartQty(item.product.id, -1)}>-</button>
-                    <span>{item.qty}</span>
-                    <button onClick={() => updateCartQty(item.product.id, 1)}>+</button>
+                  <div className="qty-ctrl" style={{ display: 'inline-flex', alignItems: 'center', border: '1px solid var(--line)', borderRadius: '6px', overflow: 'hidden' }}>
+                    <button onClick={() => updateCartQty(item.product.id, -1)} style={{ userSelect: 'none' }} aria-label="Giảm 1">-</button>
+                    <input
+                      type="number"
+                      min={1}
+                      max={999}
+                      step={1}
+                      value={item.qty}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value, 10);
+                        handleDirectQtyChange(item.product.id, isNaN(val) ? 1 : Math.max(1, Math.min(999, val)));
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'ArrowUp') {
+                          e.preventDefault();
+                          handleDirectQtyChange(item.product.id, Math.min(999, item.qty + 1));
+                        } else if (e.key === 'ArrowDown') {
+                          e.preventDefault();
+                          handleDirectQtyChange(item.product.id, Math.max(1, item.qty - 1));
+                        }
+                      }}
+                      onBlur={() => {
+                        if (!item.qty || item.qty < 1) handleDirectQtyChange(item.product.id, 1);
+                      }}
+                      style={{
+                        width: '36px',
+                        height: '24px',
+                        textAlign: 'center',
+                        fontSize: '13px',
+                        fontWeight: 'bold',
+                        color: 'var(--ink)',
+                        border: 'none',
+                        background: 'transparent',
+                        outline: 'none',
+                        padding: 0,
+                        MozAppearance: 'textfield'
+                      }}
+                      title="Nhập số lượng hoặc dùng phím mũi tên Lên/Xuống trên bàn phím"
+                      aria-label="Số lượng sản phẩm"
+                    />
+                    <button onClick={() => updateCartQty(item.product.id, 1)} style={{ userSelect: 'none' }} aria-label="Tăng 1">+</button>
                   </div>
                 </div>
                 <button className="remove-btn" onClick={() => removeFromCart(item.product.id)} aria-label="Xóa">

@@ -1,4 +1,4 @@
-﻿-- ==============================================================================
+-- ==============================================================================
 -- BẢN SAO LƯU TOÀN DIỆN CƠ SỞ DỮ LIỆU: QL_WebMuaBanNongSan (HOÀN CHỈNH NHẤT)
 -- Hệ thống Mua Bán Nông Sản Sạch & Truy Xuất Nguồn Gốc (Web Store + Admin + Mobile App)
 -- Ngày biên soạn & chuẩn hóa: 2026-09-11
@@ -643,7 +643,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 CREATE TABLE [dbo].[RecommendationLogs](
 	[RecommendationLogId] [bigint] IDENTITY(1,1) NOT NULL,
-	[UserId] [bigint] NOT NULL,
+	[UserId] [bigint] NULL,
 	[ProductId] [bigint] NOT NULL,
 	[RecommendationType] [nvarchar](50) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
 	[Score] [float] NULL,
@@ -733,11 +733,15 @@ CREATE TABLE [dbo].[Reviews](
 	[ReviewId] [bigint] IDENTITY(1,1) NOT NULL,
 	[CustomerId] [bigint] NOT NULL,
 	[ProductId] [bigint] NOT NULL,
-	[OrderId] [bigint] NOT NULL,
+	[OrderId] [bigint] NULL,
 	[Rating] [int] NOT NULL,
 	[Comment] [nvarchar](max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 	[CreatedAt] [datetime2](7) NULL,
 	[Status] [nvarchar](20) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	[HelpfulCount] [int] NOT NULL,
+	[ReportCount] [int] NOT NULL,
+	[UpdatedAt] [datetime2](7) NULL,
+	[IsPurchased] [bit] NOT NULL,
 PRIMARY KEY CLUSTERED 
 (
 	[ReviewId] ASC
@@ -746,7 +750,39 @@ PRIMARY KEY CLUSTERED
 
 ALTER TABLE [dbo].[Reviews] ADD  DEFAULT (getdate()) FOR [CreatedAt]
 ALTER TABLE [dbo].[Reviews] ADD  DEFAULT ('Approved') FOR [Status]
+ALTER TABLE [dbo].[Reviews] ADD  DEFAULT ((0)) FOR [HelpfulCount]
+ALTER TABLE [dbo].[Reviews] ADD  DEFAULT ((0)) FOR [ReportCount]
+ALTER TABLE [dbo].[Reviews] ADD  DEFAULT ((1)) FOR [IsPurchased]
 ALTER TABLE [dbo].[Reviews]  WITH CHECK ADD CHECK  (([Rating]>=(1) AND [Rating]<=(5)))
+END;
+GO
+
+-- -------------------------------------------------------------
+-- Table: [dbo].[ReviewHelpfulVotes]
+-- -------------------------------------------------------------
+IF OBJECT_ID('[dbo].[ReviewHelpfulVotes]', 'U') IS NULL
+BEGIN
+SET ANSI_NULLS ON
+SET QUOTED_IDENTIFIER ON
+CREATE TABLE [dbo].[ReviewHelpfulVotes](
+	[VoteId] [bigint] IDENTITY(1,1) NOT NULL,
+	[ReviewId] [bigint] NOT NULL,
+	[UserId] [bigint] NOT NULL,
+	[CreatedAt] [datetime2](7) NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[VoteId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+
+ALTER TABLE [dbo].[ReviewHelpfulVotes] ADD DEFAULT (getdate()) FOR [CreatedAt]
+ALTER TABLE [dbo].[ReviewHelpfulVotes] WITH CHECK ADD CONSTRAINT [FK_ReviewHelpfulVotes_Reviews] FOREIGN KEY([ReviewId])
+REFERENCES [dbo].[Reviews] ([ReviewId])
+ON DELETE CASCADE
+ALTER TABLE [dbo].[ReviewHelpfulVotes] CHECK CONSTRAINT [FK_ReviewHelpfulVotes_Reviews]
+ALTER TABLE [dbo].[ReviewHelpfulVotes] WITH CHECK ADD CONSTRAINT [FK_ReviewHelpfulVotes_Users] FOREIGN KEY([UserId])
+REFERENCES [dbo].[Users] ([UserId])
+ALTER TABLE [dbo].[ReviewHelpfulVotes] CHECK CONSTRAINT [FK_ReviewHelpfulVotes_Users]
 END;
 GO
 
@@ -817,7 +853,7 @@ SET QUOTED_IDENTIFIER ON
 SET ANSI_PADDING ON
 CREATE TABLE [dbo].[UserBehaviors](
 	[BehaviorId] [bigint] IDENTITY(1,1) NOT NULL,
-	[UserId] [bigint] NOT NULL,
+	[UserId] [bigint] NULL,
 	[ProductId] [bigint] NULL,
 	[ActionType] [nvarchar](30) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
 	[SearchKeyword] [nvarchar](255) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,

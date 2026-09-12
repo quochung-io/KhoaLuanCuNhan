@@ -10,6 +10,7 @@ import {
   PercentageOutlined,
   LogoutOutlined,
   DownOutlined,
+  ThunderboltOutlined,
 } from '@ant-design/icons';
 
 // Import Pages
@@ -19,6 +20,7 @@ import { Products } from './pages/Products';
 import { Orders } from './pages/Orders';
 import { Batches } from './pages/Batches';
 import { PromotionsReviews } from './pages/PromotionsReviews';
+import { RecommendationAnalytics } from './pages/RecommendationAnalytics';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 
@@ -95,6 +97,11 @@ const AppContent: React.FC = () => {
       icon: <PercentageOutlined />,
       label: <Link to="/promotions">Khuyến Mãi & Đánh Giá</Link>,
     },
+    {
+      key: '/recommendations',
+      icon: <ThunderboltOutlined style={{ color: '#52c41a' }} />,
+      label: <Link to="/recommendations">Gợi Ý AI & Hành Vi</Link>,
+    },
   ];
 
   const userMenuItems = [
@@ -168,6 +175,7 @@ const AppContent: React.FC = () => {
               <Route path="/batches" element={<Batches />} />
               <Route path="/orders" element={<Orders />} />
               <Route path="/promotions" element={<PromotionsReviews />} />
+              <Route path="/recommendations" element={<RecommendationAnalytics />} />
             </Routes>
           </div>
         </Content>

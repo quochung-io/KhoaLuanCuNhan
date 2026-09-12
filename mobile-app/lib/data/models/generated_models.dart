@@ -1,5 +1,5 @@
 // TU DONG SINH TU BACKEND OPENAPI SCHEMA - KHONG CHINH SUA BANG TAY
-// Generated at: 2026-09-10T21:51:39.637Z
+// Generated at: 2026-09-12T19:14:04.389Z
 
 class Address {
   final int? addressId;
@@ -89,6 +89,50 @@ class Category {
   };
 }
 
+class CreateReviewRequest {
+  final int? productId;
+  final int? customerId;
+  final String? customerName;
+  final String? email;
+  final int? orderId;
+  final int? rating;
+  final String? comment;
+  final List<String>? imageUrls;
+
+  CreateReviewRequest({
+    this.productId,
+    this.customerId,
+    this.customerName,
+    this.email,
+    this.orderId,
+    this.rating,
+    this.comment,
+    this.imageUrls,
+  });
+
+  factory CreateReviewRequest.fromJson(Map<String, dynamic> json) => CreateReviewRequest(
+    productId: json['productId'],
+    customerId: json['customerId'],
+    customerName: json['customerName'],
+    email: json['email'],
+    orderId: json['orderId'],
+    rating: json['rating'],
+    comment: json['comment'],
+    imageUrls: json['imageUrls'],
+  );
+
+  Map<String, dynamic> toJson() => {
+    'productId': productId,
+    'customerId': customerId,
+    'customerName': customerName,
+    'email': email,
+    'orderId': orderId,
+    'rating': rating,
+    'comment': comment,
+    'imageUrls': imageUrls,
+  };
+}
+
 class ForgotPasswordRequest {
   final String? email;
 
@@ -102,6 +146,22 @@ class ForgotPasswordRequest {
 
   Map<String, dynamic> toJson() => {
     'email': email,
+  };
+}
+
+class HelpfulVoteRequest {
+  final int? userId;
+
+  HelpfulVoteRequest({
+    this.userId,
+  });
+
+  factory HelpfulVoteRequest.fromJson(Map<String, dynamic> json) => HelpfulVoteRequest(
+    userId: json['userId'],
+  );
+
+  Map<String, dynamic> toJson() => {
+    'userId': userId,
   };
 }
 
@@ -389,6 +449,8 @@ class Product {
   final String? updatedAt;
   final Category? category;
   final List<ProductImage>? productImages;
+  final double? averageRating;
+  final int? reviewsCount;
 
   Product({
     this.productId,
@@ -406,6 +468,8 @@ class Product {
     this.updatedAt,
     this.category,
     this.productImages,
+    this.averageRating,
+    this.reviewsCount,
   });
 
   factory Product.fromJson(Map<String, dynamic> json) => Product(
@@ -424,6 +488,8 @@ class Product {
     updatedAt: json['updatedAt'],
     category: json['category'],
     productImages: json['productImages'],
+    averageRating: json['averageRating'],
+    reviewsCount: json['reviewsCount'],
   );
 
   Map<String, dynamic> toJson() => {
@@ -442,6 +508,8 @@ class Product {
     'updatedAt': updatedAt,
     'category': category,
     'productImages': productImages,
+    'averageRating': averageRating,
+    'reviewsCount': reviewsCount,
   };
 }
 
@@ -722,6 +790,66 @@ class SyncProductImagesDto {
     'imageUrl': imageUrl,
     'isPrimary': isPrimary,
     'sortOrder': sortOrder,
+  };
+}
+
+class TrackBehaviorDto {
+  final int? userId;
+  final String? sessionId;
+  final int? productId;
+  final String? actionType;
+  final String? searchKeyword;
+  final String? recommendationType;
+
+  TrackBehaviorDto({
+    this.userId,
+    this.sessionId,
+    this.productId,
+    this.actionType,
+    this.searchKeyword,
+    this.recommendationType,
+  });
+
+  factory TrackBehaviorDto.fromJson(Map<String, dynamic> json) => TrackBehaviorDto(
+    userId: json['userId'],
+    sessionId: json['sessionId'],
+    productId: json['productId'],
+    actionType: json['actionType'],
+    searchKeyword: json['searchKeyword'],
+    recommendationType: json['recommendationType'],
+  );
+
+  Map<String, dynamic> toJson() => {
+    'userId': userId,
+    'sessionId': sessionId,
+    'productId': productId,
+    'actionType': actionType,
+    'searchKeyword': searchKeyword,
+    'recommendationType': recommendationType,
+  };
+}
+
+class UpdateReviewRequest {
+  final int? rating;
+  final String? comment;
+  final List<String>? imageUrls;
+
+  UpdateReviewRequest({
+    this.rating,
+    this.comment,
+    this.imageUrls,
+  });
+
+  factory UpdateReviewRequest.fromJson(Map<String, dynamic> json) => UpdateReviewRequest(
+    rating: json['rating'],
+    comment: json['comment'],
+    imageUrls: json['imageUrls'],
+  );
+
+  Map<String, dynamic> toJson() => {
+    'rating': rating,
+    'comment': comment,
+    'imageUrls': imageUrls,
   };
 }
 

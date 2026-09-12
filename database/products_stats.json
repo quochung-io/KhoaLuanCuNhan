@@ -1,0 +1,788 @@
+﻿[
+    {
+        "ProductId":  1,
+        "ProductName":  "Cà chua bi Đà Lạt",
+        "CategoryId":  1,
+        "ExistingReviews":  5
+    },
+    {
+        "ProductId":  2,
+        "ProductName":  "Xà lách Lolo xanh",
+        "CategoryId":  1,
+        "ExistingReviews":  4
+    },
+    {
+        "ProductId":  3,
+        "ProductName":  "Nấm đùi gà",
+        "CategoryId":  1,
+        "ExistingReviews":  6
+    },
+    {
+        "ProductId":  4,
+        "ProductName":  "Dâu tây Đà Lạt",
+        "CategoryId":  2,
+        "ExistingReviews":  7
+    },
+    {
+        "ProductId":  5,
+        "ProductName":  "Rau cải xanh",
+        "CategoryId":  1,
+        "ExistingReviews":  3
+    },
+    {
+        "ProductId":  6,
+        "ProductName":  "Rau muống sạch",
+        "CategoryId":  1,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  7,
+        "ProductName":  "Ngò rí",
+        "CategoryId":  3,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  8,
+        "ProductName":  "Dưa leo hữu cơ",
+        "CategoryId":  1,
+        "ExistingReviews":  4
+    },
+    {
+        "ProductId":  9,
+        "ProductName":  "Cam sành Đồng Nai",
+        "CategoryId":  2,
+        "ExistingReviews":  5
+    },
+    {
+        "ProductId":  10,
+        "ProductName":  "Thanh long ruột đỏ",
+        "CategoryId":  2,
+        "ExistingReviews":  3
+    },
+    {
+        "ProductId":  11,
+        "ProductName":  "Xoài cát chu",
+        "CategoryId":  2,
+        "ExistingReviews":  4
+    },
+    {
+        "ProductId":  12,
+        "ProductName":  "Ổi nữ hoàng",
+        "CategoryId":  2,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  13,
+        "ProductName":  "Cải thìa hữu cơ Đà Lạt",
+        "CategoryId":  1,
+        "ExistingReviews":  1
+    },
+    {
+        "ProductId":  14,
+        "ProductName":  "Bắp cải tím Đà Lạt",
+        "CategoryId":  1,
+        "ExistingReviews":  1
+    },
+    {
+        "ProductId":  15,
+        "ProductName":  "Cải ngọt VietGAP",
+        "CategoryId":  1,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  16,
+        "ProductName":  "Cải ngồng Mộc Châu",
+        "CategoryId":  1,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  17,
+        "ProductName":  "Rau dền đỏ Miền Tây",
+        "CategoryId":  1,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  18,
+        "ProductName":  "Rau mồng tơi vườn",
+        "CategoryId":  1,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  19,
+        "ProductName":  "Xà lách Romaine hữu cơ",
+        "CategoryId":  1,
+        "ExistingReviews":  3
+    },
+    {
+        "ProductId":  20,
+        "ProductName":  "Rau càng cua tự nhiên",
+        "CategoryId":  3,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  21,
+        "ProductName":  "Rau ngót Nhật sạch",
+        "CategoryId":  1,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  22,
+        "ProductName":  "Đọt bí non Mộc Châu",
+        "CategoryId":  1,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  23,
+        "ProductName":  "Bông cải xanh Đà Lạt",
+        "CategoryId":  1,
+        "ExistingReviews":  4
+    },
+    {
+        "ProductId":  24,
+        "ProductName":  "Củ dền đỏ Đà Lạt",
+        "CategoryId":  1,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  25,
+        "ProductName":  "Bí đỏ hồ lô Hưng Yên",
+        "CategoryId":  1,
+        "ExistingReviews":  2
+    },
+    {
+        "ProductId":  26,
+        "ProductName":  "Bầu sao Miền Tây",
+        "CategoryId":  1,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  27,
+        "ProductName":  "Mướp hương đồng quê",
+        "CategoryId":  1,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  28,
+        "ProductName":  "Khổ qua rừng Đắk Lắk",
+        "CategoryId":  1,
+        "ExistingReviews":  2
+    },
+    {
+        "ProductId":  29,
+        "ProductName":  "Đậu bắp baby xanh",
+        "CategoryId":  1,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  30,
+        "ProductName":  "Su hào Mộc Châu",
+        "CategoryId":  1,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  31,
+        "ProductName":  "Củ cải trắng hữu cơ",
+        "CategoryId":  1,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  32,
+        "ProductName":  "Khoai lang mật Đà Lạt",
+        "CategoryId":  1,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  33,
+        "ProductName":  "Sầu riêng Ri6 Bến Tre",
+        "CategoryId":  2,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  34,
+        "ProductName":  "Bưởi da xanh Ruột Hồng Bến Tre",
+        "CategoryId":  2,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  35,
+        "ProductName":  "Măng cụt Lái Thiêu",
+        "CategoryId":  2,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  36,
+        "ProductName":  "Chôm chôm nhãn Tiền Giang",
+        "CategoryId":  2,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  37,
+        "ProductName":  "Mận hậu Bắc Hà",
+        "CategoryId":  2,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  38,
+        "ProductName":  "Nhãn xuồng cơm vàng Vũng Tàu",
+        "CategoryId":  2,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  39,
+        "ProductName":  "Đu đủ ruột đỏ tự nhiên",
+        "CategoryId":  2,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  40,
+        "ProductName":  "Dưa lưới Taki Nhật Bản",
+        "CategoryId":  2,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  41,
+        "ProductName":  "Chuối ngự Đại Hoàng",
+        "CategoryId":  2,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  42,
+        "ProductName":  "Vải thiều Lục Ngạn",
+        "CategoryId":  2,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  43,
+        "ProductName":  "Na dai Đồng Mỏ Chi Lăng",
+        "CategoryId":  2,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  44,
+        "ProductName":  "Mít tố nữ Miền Tây",
+        "CategoryId":  2,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  45,
+        "ProductName":  "Quýt hồng Lai Vung",
+        "CategoryId":  2,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  46,
+        "ProductName":  "Chanh không hạt Long An",
+        "CategoryId":  2,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  47,
+        "ProductName":  "Tắc sành Bến Tre (Quất tươi)",
+        "CategoryId":  2,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  48,
+        "ProductName":  "Cam sành Hàm Yên",
+        "CategoryId":  2,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  49,
+        "ProductName":  "Cà chua socola Đà Lạt",
+        "CategoryId":  1,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  50,
+        "ProductName":  "Cà chua beef hữu cơ",
+        "CategoryId":  1,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  51,
+        "ProductName":  "Việt quất tươi Đà Lạt",
+        "CategoryId":  2,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  52,
+        "ProductName":  "Phúc bồn tử đen (Mâm xôi)",
+        "CategoryId":  2,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  53,
+        "ProductName":  "Dâu tằm tươi Đà Lạt",
+        "CategoryId":  2,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  54,
+        "ProductName":  "Nho xanh Ninh Thuận",
+        "CategoryId":  2,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  55,
+        "ProductName":  "Nấm mối đen hữu cơ",
+        "CategoryId":  1,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  56,
+        "ProductName":  "Nấm hoàng kim tươi",
+        "CategoryId":  1,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  57,
+        "ProductName":  "Nấm kim châm sạch",
+        "CategoryId":  1,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  58,
+        "ProductName":  "Nấm hương tươi Sapa",
+        "CategoryId":  1,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  59,
+        "ProductName":  "Hành lá tươi gốc to",
+        "CategoryId":  3,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  60,
+        "ProductName":  "Húng quế thơm hữu cơ",
+        "CategoryId":  3,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  61,
+        "ProductName":  "Gừng sẻ đồi Tây Bắc",
+        "CategoryId":  3,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  62,
+        "ProductName":  "Sả chanh củ tươi",
+        "CategoryId":  3,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  64,
+        "ProductName":  "Hạt sen tươi sấy giòn Đồng Tháp",
+        "CategoryId":  4,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  65,
+        "ProductName":  "Hạt macca nứt vỏ Lâm Đồng",
+        "CategoryId":  4,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  66,
+        "ProductName":  "Đậu phộng sẻ Củ Chi",
+        "CategoryId":  4,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  67,
+        "ProductName":  "Đậu xanh hạt tiêu sẻ Tây Bắc",
+        "CategoryId":  4,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  68,
+        "ProductName":  "Đậu đen xanh lòng Tây Bắc",
+        "CategoryId":  4,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  69,
+        "ProductName":  "Hạt mè vàng tự nhiên (Vừng)",
+        "CategoryId":  4,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  70,
+        "ProductName":  "Hạt chia hữu cơ tự nhiên",
+        "CategoryId":  4,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  71,
+        "ProductName":  "Rau dền xanh non",
+        "CategoryId":  1,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  72,
+        "ProductName":  "Cải cúc (Tần ô) Đà Lạt",
+        "CategoryId":  1,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  73,
+        "ProductName":  "Xà lách Carol Đà Lạt",
+        "CategoryId":  1,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  74,
+        "ProductName":  "Xà lách mỡ (Butterhead)",
+        "CategoryId":  1,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  75,
+        "ProductName":  "Bắp cải trắng Đà Lạt",
+        "CategoryId":  1,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  76,
+        "ProductName":  "Cải thảo Đà Lạt",
+        "CategoryId":  1,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  77,
+        "ProductName":  "Cà chua thường quê",
+        "CategoryId":  1,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  78,
+        "ProductName":  "Bí xanh (Bí đao chanh)",
+        "CategoryId":  1,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  79,
+        "ProductName":  "Khổ qua (Mướp đắng) trái to",
+        "CategoryId":  1,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  80,
+        "ProductName":  "Cà tím dài Đà Lạt",
+        "CategoryId":  1,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  81,
+        "ProductName":  "Ớt chuông Đà Lạt (Đỏ/Vàng)",
+        "CategoryId":  1,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  82,
+        "ProductName":  "Khoai tây hồng Đà Lạt",
+        "CategoryId":  1,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  83,
+        "ProductName":  "Cà rốt tươi Đà Lạt",
+        "CategoryId":  1,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  84,
+        "ProductName":  "Khoai lang tím Nhật",
+        "CategoryId":  1,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  85,
+        "ProductName":  "Củ sắn (Củ đậu) ngọt mát",
+        "CategoryId":  1,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  86,
+        "ProductName":  "Khoai môn sáp ruột tím",
+        "CategoryId":  1,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  87,
+        "ProductName":  "Khoai sọ nếp Tây Bắc",
+        "CategoryId":  1,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  88,
+        "ProductName":  "Hành tây Đà Lạt",
+        "CategoryId":  1,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  89,
+        "ProductName":  "Nấm rơm tươi quê",
+        "CategoryId":  1,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  90,
+        "ProductName":  "Nấm bào ngư xám (Nấm sò)",
+        "CategoryId":  1,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  91,
+        "ProductName":  "Súp lơ trắng (Bông cải trắng)",
+        "CategoryId":  1,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  92,
+        "ProductName":  "Bắp non (Ngô bao tử)",
+        "CategoryId":  1,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  93,
+        "ProductName":  "Ngò gai (Mùi tàu) tươi",
+        "CategoryId":  3,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  94,
+        "ProductName":  "Húng lủi (Húng nhủi) sạch",
+        "CategoryId":  3,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  95,
+        "ProductName":  "Rau kinh giới thơm",
+        "CategoryId":  3,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  96,
+        "ProductName":  "Tía tô xanh đỏ hữu cơ",
+        "CategoryId":  3,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  97,
+        "ProductName":  "Rau diếp cá mát lành",
+        "CategoryId":  3,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  98,
+        "ProductName":  "Thì là thơm Tây Bắc",
+        "CategoryId":  3,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  99,
+        "ProductName":  "Ớt hiểm chỉ thiên cay nồng",
+        "CategoryId":  3,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  100,
+        "ProductName":  "Ớt sừng đỏ tươi",
+        "CategoryId":  3,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  101,
+        "ProductName":  "Tỏi cô đơn Lý Sơn",
+        "CategoryId":  3,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  102,
+        "ProductName":  "Nghệ vàng tươi Hưng Yên",
+        "CategoryId":  3,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  103,
+        "ProductName":  "Chuối già Nam Mỹ (Chuối tiêu)",
+        "CategoryId":  2,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  104,
+        "ProductName":  "Chuối sứ (Chuối xiêm) Bến Tre",
+        "CategoryId":  2,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  105,
+        "ProductName":  "Dưa hấu không hạt Mặt Trời Đỏ",
+        "CategoryId":  2,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  106,
+        "ProductName":  "Ổi lê ruột trắng giòn ngọt",
+        "CategoryId":  2,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  107,
+        "ProductName":  "Thanh long ruột trắng Bình Thuận",
+        "CategoryId":  2,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  108,
+        "ProductName":  "Bưởi Năm Roi Vĩnh Long",
+        "CategoryId":  2,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  109,
+        "ProductName":  "Táo mèo Tây Bắc (Sơn tra)",
+        "CategoryId":  2,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  110,
+        "ProductName":  "Xoài cát Hòa Lộc Tiền Giang",
+        "CategoryId":  2,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  111,
+        "ProductName":  "Xoài keo vàng giòn",
+        "CategoryId":  2,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  112,
+        "ProductName":  "Cóc non bao tử",
+        "CategoryId":  2,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  113,
+        "ProductName":  "Thơm (Dứa) mật Cầu Đúc",
+        "CategoryId":  2,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  114,
+        "ProductName":  "Sầu riêng Monthong (Dona)",
+        "CategoryId":  2,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  115,
+        "ProductName":  "Chôm chôm Thái Chợ Lách",
+        "CategoryId":  2,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  116,
+        "ProductName":  "Nhãn lồng Hưng Yên tiến vua",
+        "CategoryId":  2,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  117,
+        "ProductName":  "Vú sữa Lò Rèn Vĩnh Kim",
+        "CategoryId":  2,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  118,
+        "ProductName":  "Mít Thái siêu sớm múi giòn",
+        "CategoryId":  2,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  119,
+        "ProductName":  "Bơ sáp Đắk Lắk",
+        "CategoryId":  2,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  120,
+        "ProductName":  "Bơ 034 Lâm Đồng",
+        "CategoryId":  2,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  121,
+        "ProductName":  "Hồng giòn Fuyu Đà Lạt",
+        "CategoryId":  2,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  122,
+        "ProductName":  "Đậu xanh cà bóc vỏ",
+        "CategoryId":  4,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  123,
+        "ProductName":  "Đậu đỏ hạt nhỏ Đà Lạt",
+        "CategoryId":  4,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  124,
+        "ProductName":  "Đậu nành thuần chủng không GMO",
+        "CategoryId":  4,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  125,
+        "ProductName":  "Đậu trắng hạt to vùng cao",
+        "CategoryId":  4,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  126,
+        "ProductName":  "Hạt điều nhân trắng sấy khô",
+        "CategoryId":  4,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  127,
+        "ProductName":  "Hạt sen khô Huế tiến vua",
+        "CategoryId":  4,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  128,
+        "ProductName":  "Hạt dẻ Trùng Khánh Cao Bằng",
+        "CategoryId":  4,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  129,
+        "ProductName":  "Mè đen (Vừng đen) nguyên vỏ",
+        "CategoryId":  4,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  132,
+        "ProductName":  "Ngô nếp (Bắp nếp) dẻo ngọt",
+        "CategoryId":  4,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  133,
+        "ProductName":  "Ngô ngọt (Bắp Mỹ) giòn thơm",
+        "CategoryId":  4,
+        "ExistingReviews":  0
+    },
+    {
+        "ProductId":  134,
+        "ProductName":  "Yến mạch nguyên hạt cán dẹt",
+        "CategoryId":  4,
+        "ExistingReviews":  0
+    }
+]

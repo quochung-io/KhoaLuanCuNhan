@@ -44,8 +44,18 @@ public class ProductsController : ControllerBase
             }
 
             var products = await query
+                .Include(p => p.Reviews)
                 .OrderByDescending(p => p.ProductId)
                 .ToListAsync();
+
+            foreach (var prod in products)
+            {
+                var approvedReviews = prod.Reviews.Where(r => r.Status == "Approved" || string.IsNullOrEmpty(r.Status)).ToList();
+                prod.ReviewsCount = approvedReviews.Count;
+                prod.AverageRating = approvedReviews.Count > 0 
+                    ? Math.Round(approvedReviews.Average(r => r.Rating), 1) 
+                    : 0.0;
+            }
 
             return Ok(products);
         }
@@ -78,8 +88,8 @@ public class ProductsController : ControllerBase
                     price = prod.Price,
                     unit = prod.Unit,
                     imageUrl = prod.ProductImages.Where(img => img.IsPrimary).Select(img => img.ImageUrl).FirstOrDefault() 
-                               ?? prod.ProductImages.Select(img => img.ImageUrl).FirstOrDefault() 
-                               ?? ""
+                                ?? prod.ProductImages.Select(img => img.ImageUrl).FirstOrDefault() 
+                                ?? ""
                 })
                 .ToListAsync();
 
@@ -101,12 +111,19 @@ public class ProductsController : ControllerBase
                 .Include(p => p.Category)
                 .Include(p => p.ProductImages)
                 .Include(p => p.ProductBatches)
+                .Include(p => p.Reviews)
                 .FirstOrDefaultAsync(p => p.ProductId == id);
 
             if (product == null)
             {
                 return NotFound(new { message = $"Không tìm thấy sản phẩm có ID = {id}" });
             }
+
+            var approvedReviews = product.Reviews.Where(r => r.Status == "Approved" || string.IsNullOrEmpty(r.Status)).ToList();
+            product.ReviewsCount = approvedReviews.Count;
+            product.AverageRating = approvedReviews.Count > 0 
+                ? Math.Round(approvedReviews.Average(r => r.Rating), 1) 
+                : 0.0;
 
             return Ok(product);
         }

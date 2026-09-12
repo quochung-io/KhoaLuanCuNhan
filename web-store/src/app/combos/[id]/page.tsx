@@ -856,22 +856,64 @@ export default function ComboDetailPage() {
                   alignItems: 'center',
                   border: '1px solid var(--line)',
                   borderRadius: '8px',
-                  backgroundColor: '#ffffff'
+                  backgroundColor: '#ffffff',
+                  overflow: 'hidden'
                 }}>
                   <button
                     type="button"
                     onClick={() => setQuantity(prev => Math.max(1, prev - 1))}
-                    style={{ border: 'none', background: 'none', padding: '10px 14px', cursor: 'pointer', fontSize: '16px', fontWeight: 'bold' }}
+                    style={{ border: 'none', background: 'none', padding: '10px 14px', cursor: 'pointer', fontSize: '16px', fontWeight: 'bold', userSelect: 'none' }}
+                    aria-label="Giảm"
+                    title="Giảm 1 (hoặc dùng phím mũi tên Xuống)"
                   >
                     -
                   </button>
-                  <span style={{ minWidth: '32px', textAlign: 'center', fontWeight: '700', fontSize: '14px' }}>
-                    {quantity}
-                  </span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={999}
+                    step={1}
+                    value={quantity}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value, 10);
+                      if (isNaN(val)) {
+                        setQuantity(1);
+                      } else {
+                        setQuantity(Math.max(1, Math.min(999, val)));
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        setQuantity(q => Math.min(999, q + 1));
+                      } else if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        setQuantity(q => Math.max(1, q - 1));
+                      }
+                    }}
+                    onBlur={() => {
+                      if (!quantity || quantity < 1) setQuantity(1);
+                    }}
+                    style={{
+                      width: '46px',
+                      height: '36px',
+                      textAlign: 'center',
+                      fontWeight: 700,
+                      fontSize: '14px',
+                      border: 'none',
+                      background: 'transparent',
+                      outline: 'none',
+                      MozAppearance: 'textfield'
+                    }}
+                    title="Nhập số lượng hoặc dùng phím mũi tên Lên/Xuống trên bàn phím"
+                    aria-label="Số lượng gói combo"
+                  />
                   <button
                     type="button"
                     onClick={() => setQuantity(prev => prev + 1)}
-                    style={{ border: 'none', background: 'none', padding: '10px 14px', cursor: 'pointer', fontSize: '16px', fontWeight: 'bold' }}
+                    style={{ border: 'none', background: 'none', padding: '10px 14px', cursor: 'pointer', fontSize: '16px', fontWeight: 'bold', userSelect: 'none' }}
+                    aria-label="Tăng"
+                    title="Tăng 1 (hoặc dùng phím mũi tên Lên)"
                   >
                     +
                   </button>
