@@ -1,52 +1,35 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Button, Space, Modal, Form, Input, Select, message, Card, Tabs, InputNumber, Checkbox, Image, Tag, Tooltip, Row, Col, Divider } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, PictureOutlined, StarOutlined, StarFilled, ThunderboltOutlined, SaveOutlined } from '@ant-design/icons';
+import { Table, Button, Space, Modal, Form, Input, Select, message, Card, Tabs, InputNumber, Image, Tag, Tooltip, Row, Col } from 'antd';
+import { PlusOutlined, EditOutlined, DeleteOutlined, PictureOutlined, StarOutlined, ThunderboltOutlined, SaveOutlined } from '@ant-design/icons';
 import { productService, categoryService, productImageService } from '../services/api';
 
 const SAMPLE_SUB_IMAGES: Record<string, string[]> = {
   'Trái cây': [
     'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=800&auto=format&fit=crop&q=80',
     'https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=800&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1550258987-190a2d41a8ba?w=800&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1519996529931-28324d5a630e?w=800&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1490818387583-1baba5e638af?w=800&auto=format&fit=crop&q=80'
-  ],
-  'Gạo': [
-    'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=800&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1530595467537-0b5996c41f2d?w=800&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1536304929831-ee1ca9d44906?w=800&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=800&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1516684732162-798a0062be99?w=800&auto=format&fit=crop&q=80'
+    'https://images.unsplash.com/photo-1550258987-190a2d41a8ba?w=800&auto=format&fit=crop&q=80'
   ],
   'Hạt': [
     'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=800&auto=format&fit=crop&q=80',
     'https://images.unsplash.com/photo-1536591375315-1b838421c0f0?w=800&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=800&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1528751014936-863e6e7a319c?w=800&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1517673132405-a56a62b18caf?w=800&auto=format&fit=crop&q=80'
+    'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=800&auto=format&fit=crop&q=80'
   ],
   'Rau thơm': [
     'https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?w=800&auto=format&fit=crop&q=80',
     'https://images.unsplash.com/photo-1509358271058-acd22cc93898?w=800&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=800&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1532336414038-cf19250c5757?w=800&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1547592180-85f173990554?w=800&auto=format&fit=crop&q=80'
+    'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=800&auto=format&fit=crop&q=80'
   ],
   'Rau củ': [
     'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=800&auto=format&fit=crop&q=80',
     'https://images.unsplash.com/photo-1592417817098-8f3d6910985c?w=800&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1595855759920-86582396756a?w=800&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1566385101042-1a0aa0c1268c?w=800&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800&auto=format&fit=crop&q=80'
+    'https://images.unsplash.com/photo-1595855759920-86582396756a?w=800&auto=format&fit=crop&q=80'
   ]
 };
 
 const SUB_IMAGE_LABELS = [
   'Góc 1: Cận cảnh độ tươi ngon',
   'Góc 2: Vườn trồng / Trang trại',
-  'Góc 3: Thu hoạch tại vườn',
-  'Góc 4: Đóng gói sạch FreshLock',
-  'Góc 5: Chế biến món ăn ngon'
+  'Góc 3: Thu hoạch tại vườn'
 ];
 
 interface Category {
@@ -89,10 +72,10 @@ export const Products: React.FC = () => {
   const [editingProd, setEditingProd] = useState<Product | null>(null);
   const [editingCat, setEditingCat] = useState<Category | null>(null);
   
-  // States cho Quản lý 1 Ảnh chính & 5 Ảnh phụ
+  // States cho Quản lý 1 Ảnh chính & 3 Ảnh phụ
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [primaryUrl, setPrimaryUrl] = useState<string>('');
-  const [subUrls, setSubUrls] = useState<string[]>(['', '', '', '', '']);
+  const [subUrls, setSubUrls] = useState<string[]>(['', '', '']);
   const [imgLoading, setImgLoading] = useState(false);
 
   const [prodForm] = Form.useForm();
@@ -117,7 +100,7 @@ export const Products: React.FC = () => {
     loadData();
   }, []);
 
-  // --- Image Management (1 Ảnh chính + 5 Ảnh phụ) ---
+  // --- Image Management (1 Ảnh chính + 3 Ảnh phụ) ---
   const handleOpenImages = async (prod: Product) => {
     setSelectedProduct(prod);
     setIsImgModalOpen(true);
@@ -133,9 +116,9 @@ export const Products: React.FC = () => {
         .filter(img => !primary || img.productImageId !== primary.productImageId)
         .map(img => img.imageUrl);
 
-      const fiveSubs = [...subs];
-      while (fiveSubs.length < 5) fiveSubs.push('');
-      setSubUrls(fiveSubs.slice(0, 5));
+      const threeSubs = [...subs];
+      while (threeSubs.length < 3) threeSubs.push('');
+      setSubUrls(threeSubs.slice(0, 3));
     } catch (error) {
       message.error('Không thể tải danh sách hình ảnh.');
     } finally {
@@ -167,8 +150,8 @@ export const Products: React.FC = () => {
     if (!selectedProduct) return;
     const catName = selectedProduct.category?.categoryName || 'Rau củ';
     const samples = SAMPLE_SUB_IMAGES[catName] || SAMPLE_SUB_IMAGES['Rau củ'];
-    setSubUrls([...samples]);
-    message.info(`Đã tự động gợi ý 5 ảnh phụ cho danh mục "${catName}". Vui lòng nhấn "Lưu tất cả ảnh" để ghi nhận.`);
+    setSubUrls([...samples.slice(0, 3)]);
+    message.info(`Đã tự động gợi ý 3 ảnh phụ cho danh mục "${catName}". Vui lòng nhấn "Lưu tất cả ảnh" để ghi nhận.`);
   };
 
   const handleSaveAllImages = async () => {
@@ -470,7 +453,7 @@ export const Products: React.FC = () => {
         title={
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <PictureOutlined style={{ color: '#2E7D32', fontSize: '20px' }} />
-            <span>Quản Lý Hình Ảnh (1 Ảnh Chính + 5 Ảnh Phụ): <strong>{selectedProduct?.productName}</strong></span>
+            <span>Quản Lý Hình Ảnh (1 Ảnh Chính + 3 Ảnh Phụ): <strong>{selectedProduct?.productName}</strong></span>
           </div>
         }
         open={isImgModalOpen}
@@ -478,7 +461,7 @@ export const Products: React.FC = () => {
         onCancel={() => setIsImgModalOpen(false)}
         footer={[
           <Button key="fill" icon={<ThunderboltOutlined />} onClick={handleFillSampleImages} style={{ float: 'left', color: '#FF9800', borderColor: '#FF9800' }}>
-            Gợi ý 5 ảnh phụ mẫu
+            Gợi ý 3 ảnh phụ mẫu
           </Button>,
           <Button key="close" onClick={() => setIsImgModalOpen(false)}>
             Hủy
@@ -531,13 +514,13 @@ export const Products: React.FC = () => {
             </Row>
           </Card>
 
-          {/* PHẦN 2: 5 ẢNH PHỤ NHỎ */}
+          {/* PHẦN 2: 3 ẢNH PHỤ NHỎ */}
           <Card 
             size="small" 
             title={
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <span style={{ color: '#1B5E20', fontWeight: 700 }}>
-                  🖼️ 2. Danh Sách 5 Ảnh Phụ Nhỏ Phía Dưới Ảnh Chính (Secondary Thumbnails)
+                  🖼️ 2. Danh Sách 3 Ảnh Phụ Nhỏ Phía Dưới Ảnh Chính (Secondary Thumbnails)
                 </span>
                 <span style={{ fontSize: '12px', color: '#666' }}>
                   Có thể bấm ⭐ để đưa ảnh phụ lên làm ảnh chính

@@ -344,51 +344,39 @@ function getSecondaryImages(category: string, productName: string, dbImages?: Pr
     defaultSubImages = [
       { url: 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=800&auto=format&fit=crop&q=80', label: 'Quả tươi tại vườn' },
       { url: 'https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=800&auto=format&fit=crop&q=80', label: 'Vườn trĩu quả' },
-      { url: 'https://images.unsplash.com/photo-1550258987-190a2d41a8ba?w=800&auto=format&fit=crop&q=80', label: 'Cắt lát mọng nước' },
-      { url: 'https://images.unsplash.com/photo-1519996529931-28324d5a630e?w=800&auto=format&fit=crop&q=80', label: 'Đóng gói lạnh' },
-      { url: 'https://images.unsplash.com/photo-1490818387583-1baba5e638af?w=800&auto=format&fit=crop&q=80', label: 'Thưởng thức tươi' }
+      { url: 'https://images.unsplash.com/photo-1550258987-190a2d41a8ba?w=800&auto=format&fit=crop&q=80', label: 'Cắt lát mọng nước' }
     ];
   } else if (category === 'Gạo' || n.includes('gạo') || n.includes('nếp')) {
     defaultSubImages = [
       { url: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=800&auto=format&fit=crop&q=80', label: 'Hạt gạo đều mẩy' },
       { url: 'https://images.unsplash.com/photo-1530595467537-0b5996c41f2d?w=800&auto=format&fit=crop&q=80', label: 'Đồng lúa chín vàng' },
-      { url: 'https://images.unsplash.com/photo-1536304929831-ee1ca9d44906?w=800&auto=format&fit=crop&q=80', label: 'Thu hoạch cơ giới' },
-      { url: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=800&auto=format&fit=crop&q=80', label: 'Túi hút chân không' },
-      { url: 'https://images.unsplash.com/photo-1516684732162-798a0062be99?w=800&auto=format&fit=crop&q=80', label: 'Cơm nóng dẻo thơm' }
+      { url: 'https://images.unsplash.com/photo-1536304929831-ee1ca9d44906?w=800&auto=format&fit=crop&q=80', label: 'Thu hoạch cơ giới' }
     ];
   } else if (category === 'Hạt' || n.includes('hạt') || n.includes('đậu') || n.includes('macca') || n.includes('điều') || n.includes('ngô')) {
     defaultSubImages = [
       { url: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=800&auto=format&fit=crop&q=80', label: 'Hạt chắc mẩy' },
       { url: 'https://images.unsplash.com/photo-1536591375315-1b838421c0f0?w=800&auto=format&fit=crop&q=80', label: 'Sấy lạnh tự nhiên' },
-      { url: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=800&auto=format&fit=crop&q=80', label: 'Nông trại thu hái' },
-      { url: 'https://images.unsplash.com/photo-1528751014936-863e6e7a319c?w=800&auto=format&fit=crop&q=80', label: 'Hũ thủy tinh kín' },
-      { url: 'https://images.unsplash.com/photo-1517673132405-a56a62b18caf?w=800&auto=format&fit=crop&q=80', label: 'Ngũ cốc dinh dưỡng' }
+      { url: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=800&auto=format&fit=crop&q=80', label: 'Nông trại thu hái' }
     ];
   } else if (category === 'Rau thơm' || n.includes('hành') || n.includes('ngò') || n.includes('húng') || n.includes('tía tô') || n.includes('ớt') || n.includes('tỏi') || n.includes('gừng')) {
     defaultSubImages = [
       { url: 'https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?w=800&auto=format&fit=crop&q=80', label: 'Bó thơm tươi rói' },
       { url: 'https://images.unsplash.com/photo-1509358271058-acd22cc93898?w=800&auto=format&fit=crop&q=80', label: 'Cận cảnh lá non' },
-      { url: 'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=800&auto=format&fit=crop&q=80', label: 'Vườn gia vị hữu cơ' },
-      { url: 'https://images.unsplash.com/photo-1532336414038-cf19250c5757?w=800&auto=format&fit=crop&q=80', label: 'Sơ chế sạch sẽ' },
-      { url: 'https://images.unsplash.com/photo-1547592180-85f173990554?w=800&auto=format&fit=crop&q=80', label: 'Món ăn dậy mùi' }
+      { url: 'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=800&auto=format&fit=crop&q=80', label: 'Vườn gia vị hữu cơ' }
     ];
   } else {
     // Mặc định: Rau củ quả
     defaultSubImages = [
       { url: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=800&auto=format&fit=crop&q=80', label: 'Cận cảnh độ tươi giòn' },
       { url: 'https://images.unsplash.com/photo-1592417817098-8f3d6910985c?w=800&auto=format&fit=crop&q=80', label: 'Vườn rau công nghệ' },
-      { url: 'https://images.unsplash.com/photo-1595855759920-86582396756a?w=800&auto=format&fit=crop&q=80', label: 'Hái sáng tinh mơ' },
-      { url: 'https://images.unsplash.com/photo-1566385101042-1a0aa0c1268c?w=800&auto=format&fit=crop&q=80', label: 'Đóng gói chuẩn VietGAP' },
-      { url: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800&auto=format&fit=crop&q=80', label: 'Salad giòn ngọt' }
+      { url: 'https://images.unsplash.com/photo-1595855759920-86582396756a?w=800&auto=format&fit=crop&q=80', label: 'Hái sáng tinh mơ' }
     ];
   }
 
   const SUB_LABELS = [
     'Cận cảnh độ tươi ngon',
     'Vườn trồng / Trang trại',
-    'Thu hoạch tại vườn',
-    'Đóng gói sạch FreshLock',
-    'Chế biến món ăn ngon'
+    'Thu hoạch tại vườn'
   ];
 
   const result: SecondaryImage[] = [];
@@ -404,7 +392,7 @@ function getSecondaryImages(category: string, productName: string, dbImages?: Pr
   }
 
   let defaultIdx = 0;
-  while (result.length < 5 && defaultIdx < defaultSubImages.length) {
+  while (result.length < 3 && defaultIdx < defaultSubImages.length) {
     result.push({
       url: defaultSubImages[defaultIdx].url,
       label: defaultSubImages[defaultIdx].label
@@ -412,7 +400,7 @@ function getSecondaryImages(category: string, productName: string, dbImages?: Pr
     defaultIdx++;
   }
 
-  return result.slice(0, 5);
+  return result.slice(0, 3);
 }
 
 export default function ProductDetailPage() {
@@ -424,7 +412,60 @@ export default function ProductDetailPage() {
   const [batches, setBatches] = useState<BatchInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
-  const [activeTab, setActiveTab] = useState<'intro' | 'nutrition' | 'origin' | 'storage'>('intro');
+  const [activeTab, setActiveTab] = useState<'intro' | 'nutrition' | 'origin' | 'storage' | 'reviews'>('intro');
+  
+  // Đánh giá sản phẩm từ khách hàng
+  const [productReviews, setProductReviews] = useState<Array<{
+    author: string;
+    role: string;
+    date: string;
+    rating: number;
+    comment: string;
+  }>>([
+    {
+      author: 'Thuỳ Linh',
+      role: 'Quận 7, TP.HCM · Đã mua hàng',
+      date: '10/09/2026',
+      rating: 5,
+      comment: 'Rau củ nhận được còn tươi rói đọng nguyên sương sớm, đóng gói trong túi giấy có màng FreshLock rất cẩn thận. Mình xào ăn ngay bữa trưa cảm nhận rõ vị ngọt tự nhiên, không bị hăng mùi phân bón.'
+    },
+    {
+      author: 'Minh Hoàng',
+      role: 'Cầu Giấy, Hà Nội · Đã mua hàng',
+      date: '08/09/2026',
+      rating: 5,
+      comment: 'Quét mã QR ra đầy đủ nhật ký ngày cắt tỉa và kiểm định dư lượng nitrat 0%. Cả nhà mình rất an tâm khi dùng đồ của LÀNH Farm.'
+    },
+    {
+      author: 'Phương Thảo',
+      role: 'Hải Châu, Đà Nẵng · Đã mua hàng',
+      date: '05/09/2026',
+      rating: 5,
+      comment: 'Giao hàng đúng hẹn 2 tiếng, củ quả nguyên vẹn không bị dập xước tí nào. Giá thành rất xứng đáng với chất lượng organic chuẩn.'
+    }
+  ]);
+
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [revRating, setRevRating] = useState(5);
+  const [revAuthor, setRevAuthor] = useState('');
+  const [revRole, setRevRole] = useState('');
+  const [revComment, setRevComment] = useState('');
+
+  // Tải đánh giá đã lưu của sản phẩm này từ localStorage
+  useEffect(() => {
+    if (!productId) return;
+    try {
+      const saved = localStorage.getItem('product_reviews_' + productId);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setProductReviews(prev => [...parsed, ...prev]);
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }, [productId]);
   const [addedToast, setAddedToast] = useState(false);
   const [relatedProducts, setRelatedProducts] = useState<any[]>([]);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -434,6 +475,35 @@ export default function ProductDetailPage() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [cartBounce, setCartBounce] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const dropdownRef = React.useRef<HTMLDivElement>(null);
+
+  const [theme, setTheme] = useState('light');
+  const [lang, setLang] = useState('vi');
+
+  useEffect(() => {
+    document.body.setAttribute('data-theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => setTheme(prev => (prev === 'light' ? 'dark' : 'light'));
+
+  const handleCustomerLogout = () => {
+    localStorage.removeItem('customer_user');
+    setCurrentUser(null);
+    setShowUserDropdown(false);
+    window.location.reload();
+  };
+
+  // Click outside to close user dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowUserDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Đọc user và cart từ localStorage
   useEffect(() => {
@@ -651,49 +721,233 @@ export default function ProductDetailPage() {
         </div>
       )}
 
-      {/* HEADER TỐI GIẢN & HIỆN ĐẠI */}
-      <header style={{ position: 'sticky', top: 0, zIndex: 60, background: 'color-mix(in srgb, var(--bg) 92%, transparent)', backdropFilter: 'blur(16px)', borderBottom: '1px solid var(--line)' }}>
-        <div className="wrap nav-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 0' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-            <Link href="/" className="logo" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span className="mark" style={{ width: '32px', height: '32px', display: 'inline-block' }}>
-                <svg viewBox="0 0 40 40" fill="none" style={{ width: '100%', height: '100%' }}>
-                  <rect width="40" height="40" rx="10" fill="var(--green-700)"/>
-                  <path d="M12 28C12 18 20 12 28 12C28 22 20 28 12 28Z" fill="#A5D6A7"/>
-                  <path d="M12 28L28 12" stroke="var(--green-900)" strokeWidth="2"/>
-                </svg>
-              </span>
-              <span style={{ fontSize: '22px', fontWeight: 800, color: 'var(--green-900)', letterSpacing: '-0.5px' }}>LÀNH</span>
-            </Link>
+      {/* ── HEADER 3 TẦNG ĐỒNG BỘ 100% ── */}
+      <header>
+        {/* ── TẦNG 1: TOP BAR TIỆN ÍCH ── */}
+        <div className="header-topbar">
+          <div className="wrap topbar-row">
+            <div className="topbar-left">
+              <span><strong>LÀNH Farm</strong> - Nông sản sạch chuẩn VietGAP & Hữu cơ</span>
+              <span style={{ opacity: 0.4 }}>|</span>
+              <span className="topbar-link">Hotline: <strong>1900 8899</strong> (7:00 - 21:00)</span>
+            </div>
+            <div className="topbar-right">
+              <a href="http://localhost:5174" target="_blank" rel="noreferrer" className="topbar-link">
+                Kênh Đối Tác / HTX
+              </a>
+              <span style={{ opacity: 0.4 }}>|</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <button className="icon-btn" onClick={toggleTheme} style={{ width: '24px', height: '24px' }} title="Sáng / Tối">
+                  {theme === "light" ? "Tối" : "Sáng"}
+                </button>
+                <div className="lang-switch">
+                  <button className={lang === 'vi' ? 'active' : (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>)} onClick={() => setLang('vi')}>VI</button>
+                  <button className={lang === 'en' ? 'active' : (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>)} onClick={() => setLang('en')}>EN</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
-            <Link href="/" style={{ fontSize: '13.5px', color: 'var(--ink-soft)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', borderRadius: '20px', border: '1px solid var(--line)' }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-              Quay lại danh sách sản phẩm
-            </Link>
+        {/* ── TẦNG 2: MAIN HEADER (LOGO, SEARCH, USER, CART) ── */}
+        <div className="wrap nav-row">
+          <Link href="/" className="logo">
+            <svg className="mark" viewBox="0 0 40 40" fill="none">
+              <circle cx="20" cy="20" r="20" fill="var(--green-700)"/>
+              <path d="M20 30C20 30 12 26 12 18C12 13 16 10 20 10C24 10 28 13 28 18C28 26 20 30 20 30Z" fill="var(--green-500)"/>
+              <path d="M20 30V16" stroke="var(--green-900)" strokeWidth="1.4" strokeLinecap="round"/>
+            </svg>
+            <div>
+              <span style={{ letterSpacing: '1px' }}>LÀNH</span>
+              <div style={{ fontSize: '10.5px', fontWeight: '500', color: 'var(--green-700)', marginTop: '-4px' }}>NÔNG SẢN TƯƠI SẠCH</div>
+            </div>
+          </Link>
+
+          {/* Ô tìm kiếm chuyển về trang sản phẩm */}
+          <div className="search-shell">
+            <input 
+              type="text" 
+              placeholder="Bạn muốn tìm nông sản gì? (Rau cải, bơ sáp, dâu tây...)" 
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  const val = (e.target as HTMLInputElement).value;
+                  router.push(`/products?search=${encodeURIComponent(val)}`);
+                }
+              }}
+            />
+            <button className="go" onClick={() => router.push('/products')} aria-label="Tìm kiếm">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+              <span>Tìm</span>
+            </button>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-            {currentUser ? (
-              <span style={{ fontSize: '13.5px', color: 'var(--green-700)', fontWeight: 600 }}>
-                Chào, {currentUser.fullName || currentUser.username}
-              </span>
-            ) : (
-              <Link href="/login" style={{ fontSize: '13px', color: 'var(--ink-soft)', textDecoration: 'none', fontWeight: 500 }}>
-                Đăng nhập
-              </Link>
-            )}
+          {/* Nhóm nút tác vụ Header */}
+          <div className="header-actions">
+            {/* Mục Tài khoản */}
+            <div style={{ position: 'relative' }} ref={dropdownRef}>
+              <button 
+                className="header-action-item" 
+                onClick={() => setShowUserDropdown(!showUserDropdown)} 
+                style={{ border: 'none', background: 'none' }}
+              >
+                <span className="header-action-icon">
+                  {currentUser && currentUser.avatarUrl ? (
+                    <img 
+                      src={currentUser.avatarUrl} 
+                      alt="Avatar" 
+                      style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--green-700)' }} 
+                    />
+                  ) : (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>)}
+                </span>
+                <div className="header-action-text">
+                  <span className="header-action-label">{currentUser ? 'Xin chào,' : 'Tài khoản'}</span>
+                  <span className="header-action-value" style={{ maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {currentUser ? currentUser.fullName : 'Đăng nhập'}
+                  </span>
+                </div>
+              </button>
+              
+              {showUserDropdown && (
+                <div style={{
+                  position: 'absolute',
+                  top: 'calc(100% + 8px)',
+                  right: 0,
+                  backgroundColor: 'var(--surface)',
+                  border: '1px solid var(--line)',
+                  borderRadius: '10px',
+                  boxShadow: '0 10px 25px rgba(0,0,0,0.12)',
+                  zIndex: 1000,
+                  width: '200px',
+                  padding: '6px 0',
+                  textAlign: 'left'
+                }}>
+                  {currentUser ? (
+                    <>
+                      <div style={{ padding: '10px 14px', borderBottom: '1px solid var(--line)', fontSize: '12px', color: 'var(--ink-soft)' }}>
+                        <div style={{ fontWeight: '700', color: 'var(--ink)', fontSize: '13.5px' }}>{currentUser.fullName}</div>
+                        <div style={{ marginTop: '2px' }}>{currentUser.email}</div>
+                      </div>
+                      <Link 
+                        href="/profile"
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          padding: '10px 14px',
+                          textDecoration: 'none',
+                          color: 'var(--ink)',
+                          fontSize: '13px',
+                          fontWeight: '500',
+                          borderBottom: '1px solid var(--line)'
+                        }}
+                      >
+                        Hồ sơ & Sổ địa chỉ
+                      </Link>
+                      <Link 
+                        href="/orders"
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          padding: '10px 14px',
+                          textDecoration: 'none',
+                          color: 'var(--ink)',
+                          fontSize: '13px',
+                          fontWeight: '500',
+                          borderBottom: '1px solid var(--line)'
+                        }}
+                      >
+                        Lịch sử đơn hàng
+                      </Link>
+                      <button 
+                        onClick={handleCustomerLogout}
+                        style={{
+                          width: '100%',
+                          padding: '10px 14px',
+                          border: 'none',
+                          background: 'none',
+                          textAlign: 'left',
+                          cursor: 'pointer',
+                          color: '#e53e3e',
+                          fontSize: '13px',
+                          fontWeight: '700',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px'
+                        }}
+                      >
+                        Đăng xuất
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <Link 
+                        href="/login"
+                        style={{
+                          display: 'block',
+                          padding: '10px 14px',
+                          textDecoration: 'none',
+                          color: 'var(--ink)',
+                          fontSize: '13px',
+                          fontWeight: '600'
+                        }}
+                      >
+                        Đăng nhập
+                      </Link>
+                      <Link 
+                        href="/register"
+                        style={{
+                          display: 'block',
+                          padding: '10px 14px',
+                          textDecoration: 'none',
+                          color: 'var(--green-700)',
+                          fontSize: '13px',
+                          fontWeight: '600'
+                        }}
+                      >
+                        Đăng ký thành viên
+                      </Link>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
 
-            <button 
-              className={`icon-btn ${cartBounce ? "bounce" : ""}`} 
-              onClick={() => setIsDrawerOpen(true)} 
-              aria-label="Giỏ hàng"
-              style={{ position: 'relative', background: 'var(--surface)', border: '1px solid var(--line)', padding: '10px', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            {/* Nút Giỏ Hàng */}
+            <div 
+              className={`header-cart-btn ${cartBounce ? 'bounce' : (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>)}`}
+              onClick={() => setIsDrawerOpen(true)}
+              title="Xem giỏ hàng"
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 4h2l2.4 12.2a2 2 0 002 1.8h7.7a2 2 0 002-1.6L21 8H6"/><circle cx="9.5" cy="21" r="1.3" fill="currentColor" stroke="none"/><circle cx="17.5" cy="21" r="1.3" fill="currentColor" stroke="none"/></svg>
-              <span style={{ position: 'absolute', top: '-4px', right: '-4px', background: 'var(--green-700)', color: '#fff', fontSize: '11px', fontWeight: 700, width: '18px', height: '18px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                {cart.reduce((s, i) => s + i.qty, 0)}
-              </span>
-            </button>
+              <div className="header-action-icon" style={{ display: 'flex', alignItems: 'center' }}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg><span className="badge">{cart.reduce((s, i) => s + i.qty, 0)}</span>
+              </div>
+              <div className="header-action-text">
+                <span className="header-action-label">Giỏ hàng</span>
+                <span className="header-action-value" style={{ color: 'var(--green-900)' }}>
+                  {subtotalNumber.toLocaleString('vi-VN')}₫
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── TẦNG 3: SUB-NAVBAR 4 MỤC ĐIỀU HƯỚNG CHÍNH ── */}
+        <div className="header-subnav">
+          <div className="wrap subnav-row">
+            <div className="subnav-links">
+              <Link href="/" className="subnav-link">
+                Trang chủ
+              </Link>
+              <Link href="/products" className="subnav-link active" style={{ color: 'var(--green-700)', fontWeight: '700' }}>
+                Tất cả nông sản
+              </Link>
+              <Link href="/combos" className="subnav-link">
+                Combo định kỳ
+              </Link>
+              <Link href="/traceability" className="subnav-link">
+                Truy xuất nguồn gốc
+              </Link>
+            </div>
           </div>
         </div>
       </header>
@@ -750,16 +1004,16 @@ export default function ProductDetailPage() {
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
                   <span>Mã lô: <strong>{lotCode}</strong></span>
                 </div>
-                <span style={{ color: 'var(--green-700)', fontWeight: 600 }}>Quét QR truy xuất ✓</span>
+                <Link href={`/traceability?batch=${encodeURIComponent(lotCode)}`} style={{ color: 'var(--green-700)', fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '3px' }}><span>Quét QR truy xuất →</span></Link>
               </div>
             </div>
 
-            {/* 5 ẢNH PHỤ NHỎ Ở PHÍA DƯỚI ẢNH CHÍNH */}
+            {/* 3 ẢNH PHỤ NHỎ Ở PHÍA DƯỚI ẢNH CHÍNH */}
             <div style={{ marginTop: '14px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', padding: '0 2px' }}>
                 <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--ink-soft)', textTransform: 'uppercase', letterSpacing: '0.4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                  5 Góc ảnh thực tế (nhấp để phóng to ảnh chính)
+                  3 Góc ảnh thực tế (nhấp để phóng to ảnh chính)
                 </span>
                 {selectedImage && (
                   <button 
@@ -771,7 +1025,7 @@ export default function ProductDetailPage() {
                 )}
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '10px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
                 {subImages.map((sub, index) => {
                   const isActive = selectedImage === sub.url;
                   return (
@@ -838,17 +1092,17 @@ export default function ProductDetailPage() {
             {/* Khối cam kết dưới ảnh */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginTop: '18px' }}>
               <div style={{ background: 'var(--surface)', padding: '14px', borderRadius: '16px', border: '1px solid var(--line)', textAlign: 'center' }}>
-                <div style={{ color: 'var(--green-700)', marginBottom: '4px' }}>🌱</div>
+                
                 <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--ink)' }}>100% Tự nhiên</div>
                 <div style={{ fontSize: '11px', color: 'var(--ink-soft)' }}>Không hóa chất BVTV</div>
               </div>
               <div style={{ background: 'var(--surface)', padding: '14px', borderRadius: '16px', border: '1px solid var(--line)', textAlign: 'center' }}>
-                <div style={{ color: 'var(--green-700)', marginBottom: '4px' }}>❄️</div>
+                
                 <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--ink)' }}>Chuỗi lạnh FreshLock</div>
                 <div style={{ fontSize: '11px', color: 'var(--ink-soft)' }}>Giữ nguyên độ tươi</div>
               </div>
               <div style={{ background: 'var(--surface)', padding: '14px', borderRadius: '16px', border: '1px solid var(--line)', textAlign: 'center' }}>
-                <div style={{ color: 'var(--green-700)', marginBottom: '4px' }}>🛡️</div>
+                
                 <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--ink)' }}>Đổi trả 24h</div>
                 <div style={{ fontSize: '11px', color: 'var(--ink-soft)' }}>Nếu dập úa lỗi hàng</div>
               </div>
@@ -885,7 +1139,7 @@ export default function ProductDetailPage() {
                   / {product.unit}
                 </span>
                 <span style={{ marginLeft: 'auto', background: '#E8F5E9', color: '#2E7D32', fontSize: '12px', fontWeight: 700, padding: '4px 10px', borderRadius: '8px' }}>
-                  ✓ Còn hàng thu hoạch mới
+                  Còn hàng thu hoạch mới
                 </span>
               </div>
               <p style={{ fontSize: '13px', color: 'var(--ink-soft)', marginTop: '8px' }}>
@@ -972,7 +1226,7 @@ export default function ProductDetailPage() {
                 whiteSpace: 'nowrap'
               }}
             >
-              📖 Giới thiệu sản phẩm
+              Giới thiệu sản phẩm
             </button>
             <button
               onClick={() => setActiveTab('nutrition')}
@@ -990,7 +1244,7 @@ export default function ProductDetailPage() {
                 whiteSpace: 'nowrap'
               }}
             >
-              🥗 Giá trị dinh dưỡng
+              Giá trị dinh dưỡng
             </button>
             <button
               onClick={() => setActiveTab('origin')}
@@ -1008,7 +1262,7 @@ export default function ProductDetailPage() {
                 whiteSpace: 'nowrap'
               }}
             >
-              📍 Xuất xứ &amp; Vùng trồng
+              Xuất xứ &amp; Vùng trồng
             </button>
             <button
               onClick={() => setActiveTab('storage')}
@@ -1026,7 +1280,25 @@ export default function ProductDetailPage() {
                 whiteSpace: 'nowrap'
               }}
             >
-              ⏳ Hạn sử dụng &amp; Bảo quản
+              Hạn sử dụng &amp; Bảo quản
+            </button>
+            <button
+              onClick={() => setActiveTab('reviews')}
+              style={{
+                padding: '14px 24px',
+                fontWeight: 700,
+                fontSize: '15px',
+                color: activeTab === 'reviews' ? 'var(--green-700)' : 'var(--ink-soft)',
+                borderBottom: activeTab === 'reviews' ? '3px solid var(--green-700)' : '3px solid transparent',
+                marginBottom: '-2px',
+                transition: 'all 0.2s ease',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              Đánh giá từ khách mua ({productReviews.length})
             </button>
           </div>
 
@@ -1061,7 +1333,7 @@ export default function ProductDetailPage() {
 
                 <div style={{ marginTop: '28px', padding: '18px 24px', background: 'var(--green-100)', borderRadius: '16px', borderLeft: '4px solid var(--green-700)' }}>
                   <div style={{ fontWeight: 700, color: 'var(--green-900)', fontSize: '15px', marginBottom: '4px' }}>
-                    💡 Gợi ý thưởng thức &amp; Chế biến ngon
+                    Gợi ý thưởng thức &amp; Chế biến ngon
                   </div>
                   <p style={{ fontSize: '14px', color: 'var(--ink-soft)', margin: 0 }}>
                     Nông sản tươi sạch tại LÀNH có vị ngọt đậm thanh khiết tự nhiên. Thích hợp dùng ăn trực tiếp, làm salad tươi giòn, ép nước detox dinh dưỡng hoặc nấu canh/xào nhẹ lửa để giữ trọn vẹn vitamin và khoáng chất.
@@ -1150,7 +1422,7 @@ export default function ProductDetailPage() {
 
                   <div style={{ marginTop: '24px', padding: '16px', background: '#FFF8E1', borderRadius: '16px', border: '1px solid #FFE082' }}>
                     <div style={{ fontSize: '13px', fontWeight: 700, color: '#F57F17', marginBottom: '4px' }}>
-                      🌟 Tiêu chuẩn Nông Nghiệp Xanh LÀNH
+                      Tiêu chuẩn Nông Nghiệp Xanh LÀNH
                     </div>
                     <p style={{ fontSize: '13px', color: '#795548', margin: 0 }}>
                       Sản phẩm được giữ nguyên vỏ hoặc lớp bảo vệ tự nhiên để bảo tồn tối đa hàm lượng khoáng chất và chất xơ hòa tan.
@@ -1173,7 +1445,7 @@ export default function ProductDetailPage() {
                     {farm.farmName}
                   </h3>
                   <p style={{ fontSize: '14px', color: 'var(--ink-soft)', marginBottom: '24px' }}>
-                    📍 {farm.address}
+                    {farm.address}
                   </p>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
@@ -1198,14 +1470,21 @@ export default function ProductDetailPage() {
 
                 {/* Khối Mã QR & Quy trình truy xuất */}
                 <div style={{ background: 'var(--green-100)', padding: '28px', borderRadius: '20px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                  <div style={{ background: '#fff', padding: '18px', borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.08)', marginBottom: '18px' }}>
+                  <Link
+                    href={`/traceability?batch=${encodeURIComponent(lotCode)}`}
+                    style={{ background: '#fff', padding: '18px', borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.08)', marginBottom: '18px', display: 'inline-block', textDecoration: 'none', cursor: 'pointer' }}
+                    title="Bấm để xem toàn bộ hồ sơ truy xuất của lô hàng này"
+                  >
                     <svg width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" strokeWidth="1.6">
                       <rect x="2" y="2" width="7" height="7"/>
                       <rect x="15" y="2" width="7" height="7"/>
                       <rect x="2" y="15" width="7" height="7"/>
                       <path d="M15 15h3v3h-3zM21 15v3M15 21h3M21 21v.01M5 5h1M18 5h1M5 18h1"/>
                     </svg>
-                  </div>
+                    <div style={{ fontSize: '11px', color: 'var(--green-700)', fontWeight: 700, marginTop: '8px' }}>
+                      Bấm để tra cứu hồ sơ ↗
+                    </div>
+                  </Link>
                   <div style={{ fontWeight: 800, fontSize: '16px', color: 'var(--green-900)' }}>
                     Mã Lô Hàng: {lotCode}
                   </div>
@@ -1267,10 +1546,264 @@ export default function ProductDetailPage() {
                 </div>
 
                 <div style={{ marginTop: '24px', padding: '16px 20px', background: '#FFF3E0', borderRadius: '14px', border: '1px solid #FFE0B2', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <span style={{ fontSize: '20px' }}>⚠️</span>
+                  
                   <p style={{ fontSize: '13px', color: '#E65100', margin: 0 }}>
                     <strong>Lưu ý:</strong> Nông sản hữu cơ không sử dụng chất chống mốc và chất ức chế sinh trưởng. Quý khách vui lòng kiểm tra và dùng theo hạn sử dụng khuyến cáo để đảm bảo chất lượng dinh dưỡng tối ưu nhất.
                   </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB CONTENT 5: ĐÁNH GIÁ TỪ KHÁCH MUA */}
+          {activeTab === 'reviews' && (
+            <div style={{ background: 'var(--surface)', padding: '36px', borderRadius: '24px', marginTop: '24px', border: '1px solid var(--line)' }}>
+              <div style={{ maxWidth: '850px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '28px', flexWrap: 'wrap', gap: '16px' }}>
+                  <div>
+                    <h3 style={{ fontSize: '22px', color: 'var(--green-900)', margin: '0 0 6px 0' }}>
+                      Đánh giá thực tế từ khách hàng ({productReviews.length})
+                    </h3>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: 'var(--ink-soft)' }}>
+                      <span style={{ color: '#FFB800', fontSize: '16px' }}>★★★★★</span>
+                      <strong style={{ color: 'var(--ink)', fontSize: '16px' }}>4.9 / 5.0</strong>
+                      <span>· 100% người mua hài lòng với độ tươi ngon</span>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!revAuthor && currentUser?.fullName) {
+                        setRevAuthor(currentUser.fullName);
+                      }
+                      setShowReviewForm(!showReviewForm);
+                    }}
+                    style={{
+                      padding: '10px 20px',
+                      borderRadius: '8px',
+                      border: 'none',
+                      backgroundColor: showReviewForm ? '#f1f5f9' : 'var(--green-700)',
+                      color: showReviewForm ? 'var(--ink)' : '#ffffff',
+                      fontSize: '13.5px',
+                      fontWeight: 700,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {showReviewForm ? 'Đóng biểu mẫu' : 'Viết đánh giá của bạn'}
+                  </button>
+                </div>
+
+                {/* FORM VIẾT ĐÁNH GIÁ TRỰC TIẾP */}
+                {showReviewForm && (
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      const authorName = revAuthor.trim() || currentUser?.fullName || 'Khách hàng LÀNH Farm';
+                      if (!revComment.trim()) {
+                        alert('Vui lòng nhập nhận xét của bạn!');
+                        return;
+                      }
+
+                      const newReview = {
+                        author: authorName,
+                        role: revRole.trim() || 'Khách mua hàng LÀNH Farm',
+                        date: new Date().toLocaleDateString('vi-VN'),
+                        rating: revRating,
+                        comment: revComment.trim()
+                      };
+
+                      const updated = [newReview, ...productReviews];
+                      setProductReviews(updated);
+
+                      try {
+                        const existingSaved = JSON.parse(localStorage.getItem('product_reviews_' + productId) || '[]');
+                        localStorage.setItem('product_reviews_' + productId, JSON.stringify([newReview, ...existingSaved]));
+                      } catch (err) {
+                        console.error(err);
+                      }
+
+                      setRevComment('');
+                      setShowReviewForm(false);
+                      setAddedToast(true);
+                      setTimeout(() => setAddedToast(false), 3000);
+                    }}
+                    style={{
+                      backgroundColor: 'var(--bg)',
+                      padding: '24px',
+                      borderRadius: '16px',
+                      border: '1px solid var(--line)',
+                      marginBottom: '32px'
+                    }}
+                  >
+                    <h4 style={{ margin: '0 0 16px 0', fontSize: '16px', color: 'var(--green-900)' }}>
+                      Chia sẻ trải nghiệm thực tế của bạn
+                    </h4>
+
+                    {/* Chọn số sao */}
+                    <div style={{ marginBottom: '16px' }}>
+                      <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px', color: 'var(--ink)' }}>
+                        Đánh giá chất lượng sản phẩm:
+                      </label>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <button
+                            key={star}
+                            type="button"
+                            onClick={() => setRevRating(star)}
+                            style={{
+                              padding: '6px 14px',
+                              borderRadius: '6px',
+                              border: revRating === star ? '2px solid var(--green-700)' : '1px solid var(--line)',
+                              backgroundColor: revRating === star ? 'var(--green-100)' : 'var(--surface)',
+                              color: revRating === star ? 'var(--green-900)' : 'var(--ink)',
+                              fontSize: '13px',
+                              fontWeight: 700,
+                              cursor: 'pointer'
+                            }}
+                          >
+                            {star} ★ {star === 5 ? '(Rất hài lòng)' : star === 4 ? '(Hài lòng)' : ''}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Họ tên & Khu vực */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '16px' }}>
+                      <div>
+                        <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px', color: 'var(--ink)' }}>
+                          Họ và tên của bạn:
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={revAuthor}
+                          onChange={(e) => setRevAuthor(e.target.value)}
+                          placeholder={currentUser?.fullName || 'VD: Nguyễn Thị Lan'}
+                          style={{
+                            width: '100%',
+                            padding: '10px 14px',
+                            borderRadius: '8px',
+                            border: '1px solid var(--line)',
+                            backgroundColor: 'var(--surface)',
+                            color: 'var(--ink)',
+                            fontSize: '13.5px'
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px', color: 'var(--ink)' }}>
+                          Khu vực / Quận huyện:
+                        </label>
+                        <input
+                          type="text"
+                          value={revRole}
+                          onChange={(e) => setRevRole(e.target.value)}
+                          placeholder="VD: Quận 1, TP.HCM hoặc Hà Nội"
+                          style={{
+                            width: '100%',
+                            padding: '10px 14px',
+                            borderRadius: '8px',
+                            border: '1px solid var(--line)',
+                            backgroundColor: 'var(--surface)',
+                            color: 'var(--ink)',
+                            fontSize: '13.5px'
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Nội dung đánh giá */}
+                    <div style={{ marginBottom: '18px' }}>
+                      <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px', color: 'var(--ink)' }}>
+                        Nhận xét chi tiết về độ tươi ngon, đóng gói và thời gian nhận:
+                      </label>
+                      <textarea
+                        required
+                        rows={4}
+                        value={revComment}
+                        onChange={(e) => setRevComment(e.target.value)}
+                        placeholder="VD: Nông sản nhận được rất tươi, vị ngọt tự nhiên khác hẳn mua ngoài chợ..."
+                        style={{
+                          width: '100%',
+                          padding: '12px 14px',
+                          borderRadius: '8px',
+                          border: '1px solid var(--line)',
+                          backgroundColor: 'var(--surface)',
+                          color: 'var(--ink)',
+                          fontSize: '13.5px',
+                          lineHeight: '1.5'
+                        }}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                      <button
+                        type="button"
+                        onClick={() => setShowReviewForm(false)}
+                        style={{
+                          padding: '10px 18px',
+                          borderRadius: '8px',
+                          border: '1px solid var(--line)',
+                          backgroundColor: 'transparent',
+                          color: 'var(--ink)',
+                          fontSize: '13px',
+                          fontWeight: 600,
+                          cursor: 'pointer'
+                        }}
+                      >
+                        Hủy
+                      </button>
+                      <button
+                        type="submit"
+                        style={{
+                          padding: '10px 22px',
+                          borderRadius: '8px',
+                          border: 'none',
+                          backgroundColor: 'var(--green-700)',
+                          color: '#ffffff',
+                          fontSize: '13.5px',
+                          fontWeight: 700,
+                          cursor: 'pointer'
+                        }}
+                      >
+                        Gửi đánh giá ngay
+                      </button>
+                    </div>
+                  </form>
+                )}
+
+                {/* DANH SÁCH ĐÁNH GIÁ ĐÃ CÓ */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  {productReviews.map((rev, idx) => (
+                    <div
+                      key={idx}
+                      style={{
+                        padding: '20px 24px',
+                        backgroundColor: 'var(--bg)',
+                        borderRadius: '16px',
+                        border: '1px solid var(--line)'
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                        <div>
+                          <strong style={{ fontSize: '15px', color: 'var(--ink)' }}>{rev.author}</strong>
+                          <span style={{ fontSize: '12.5px', color: 'var(--ink-soft)', marginLeft: '8px' }}>· {rev.role}</span>
+                        </div>
+                        <div style={{ fontSize: '12px', color: 'var(--ink-soft)' }}>
+                          {rev.date}
+                        </div>
+                      </div>
+
+                      <div style={{ color: '#FFB800', fontSize: '14px', marginBottom: '10px', letterSpacing: '2px' }}>
+                        {'★'.repeat(rev.rating)}{'☆'.repeat(5 - rev.rating)}
+                      </div>
+
+                      <p style={{ margin: 0, fontSize: '14px', color: 'var(--ink)', lineHeight: '1.6' }}>
+                        {rev.comment}
+                      </p>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -1339,9 +1872,7 @@ export default function ProductDetailPage() {
                       <div style={{ width: '100%', height: '170px', background: 'var(--green-100)', position: 'relative' }}>
                         {rpImg ? (
                           <img src={rpImg} alt={rp.productName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        ) : (
-                          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '32px' }}>🥬</div>
-                        )}
+                        ) : (<div style={{ width: '100%', height: '100%', backgroundColor: 'var(--line, #e2e8f0)', borderRadius: '4px' }} />)}
                         <span style={{ position: 'absolute', top: '8px', left: '8px', background: 'var(--green-700)', color: '#fff', fontSize: '11px', fontWeight: 600, padding: '3px 8px', borderRadius: '12px' }}>
                           {rp.status || 'VietGAP'}
                         </span>
@@ -1371,7 +1902,7 @@ export default function ProductDetailPage() {
 
       {/* DRAWER GIỎ HÀNG */}
       <div 
-        className={`drawer-overlay ${isDrawerOpen ? 'open' : ''}`} 
+        className={`drawer-overlay ${isDrawerOpen ? 'open' : (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>)}`} 
         onClick={() => setIsDrawerOpen(false)}
         style={{
           position: 'fixed',
@@ -1413,7 +1944,7 @@ export default function ProductDetailPage() {
         <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
           {cart.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--ink-soft)' }}>
-              <div style={{ fontSize: '48px', marginBottom: '12px' }}>🛒</div>
+              
               <p style={{ fontSize: '15px' }}>Giỏ hàng của bạn đang trống</p>
               <button 
                 onClick={() => setIsDrawerOpen(false)}
@@ -1430,9 +1961,7 @@ export default function ProductDetailPage() {
                   <div style={{ width: '60px', height: '60px', borderRadius: '12px', background: 'var(--green-100)', overflow: 'hidden', flexShrink: 0 }}>
                     {item.product.imageUrl ? (
                       <img src={item.product.imageUrl} alt={item.product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    ) : (
-                      <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>🥬</div>
-                    )}
+                    ) : (<div style={{ width: '100%', height: '100%', backgroundColor: 'var(--line, #e2e8f0)', borderRadius: '4px' }} />)}
                   </div>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--ink)' }}>{item.product.name}</div>
@@ -1482,46 +2011,46 @@ export default function ProductDetailPage() {
       </div>
 
       {/* FOOTER */}
-      <footer style={{ background: 'var(--surface)', borderTop: '1px solid var(--line)', padding: '48px 0 24px' }}>
-        <div className="wrap" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '32px', marginBottom: '36px' }}>
-          <div>
-            <div className="logo" style={{ marginBottom: '12px' }}>
-              <span style={{ fontSize: '22px', fontWeight: 800, color: 'var(--green-900)' }}>LÀNH</span>
+            <footer>
+        <div className="wrap">
+          <div className="foot-grid">
+            <div>
+              <div className="logo">LÀNH</div>
+              <p>Nền tảng nông sản hữu cơ minh bạch — kết nối trực tiếp nông trại Việt Nam đến bữa ăn của bạn.</p>
+              <div className="cert-row">
+                <span className="cert-pill">VietGAP</span>
+                <span className="cert-pill">GlobalGAP</span>
+                <span className="cert-pill">USDA Organic</span>
+              </div>
             </div>
-            <p style={{ fontSize: '13.5px', color: 'var(--ink-soft)', lineHeight: 1.6 }}>
-              Hệ thống nông sản sạch minh bạch nguồn gốc từ hơn 120 nông trại hữu cơ chuẩn VietGAP &amp; GlobalGAP.
-            </p>
-          </div>
-          <div>
-            <h4 style={{ fontSize: '14.5px', color: 'var(--green-900)', marginBottom: '12px' }}>Danh mục sản phẩm</h4>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13.5px', color: 'var(--ink-soft)' }}>
-              <Link href="/">Rau củ hữu cơ</Link>
-              <Link href="/">Trái cây đặc sản</Link>
-              <Link href="/">Rau thơm &amp; Gia vị</Link>
-              <Link href="/">Hạt &amp; Đậu dinh dưỡng</Link>
-              <Link href="/">Gạo đặc sản</Link>
+            <div>
+              <h5>Liên hệ</h5>
+              <ul>
+                <li>1900 6868 (7:00–21:00)</li>
+                <li>hello@lanh.vn</li>
+                <li>92 Nguyễn Huệ, Q.1, TP.HCM</li>
+              </ul>
+            </div>
+            <div>
+              <h5>Chính sách</h5>
+              <ul>
+                <li>Vận chuyển &amp; giao nhận</li>
+                <li>Đổi trả trong 24h</li>
+                <li>Bảo mật thông tin</li>
+                <li>Điều khoản dịch vụ</li>
+              </ul>
+            </div>
+            <div>
+              <h5>Thanh toán</h5>
+              <div className="pay-icons">
+                <span>VISA</span><span>MoMo</span><span>ZaloPay</span><span>COD</span>
+              </div>
             </div>
           </div>
-          <div>
-            <h4 style={{ fontSize: '14.5px', color: 'var(--green-900)', marginBottom: '12px' }}>Cam kết dịch vụ</h4>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13.5px', color: 'var(--ink-soft)' }}>
-              <span>✓ 100% Không hóa chất BVTV</span>
-              <span>✓ Giao lạnh nhanh trong 2 giờ</span>
-              <span>✓ Đổi trả miễn phí trong 24 giờ</span>
-              <span>✓ Truy xuất nguồn gốc QR lô hàng</span>
-            </div>
+          <div className="foot-bottom">
+            <span>© 2026 LÀNH — Đồ án tốt nghiệp UI/UX, Đại học ABC.</span>
+            <span>Thiết kế minh họa cho mục đích học thuật.</span>
           </div>
-          <div>
-            <h4 style={{ fontSize: '14.5px', color: 'var(--green-900)', marginBottom: '12px' }}>Liên hệ hỗ trợ</h4>
-            <p style={{ fontSize: '13.5px', color: 'var(--ink-soft)', lineHeight: 1.6 }}>
-              Hotline: <strong>1900 8888</strong> (7h30 - 21h00)<br/>
-              Email: nongsanlanh@lanhfarm.vn<br/>
-              Trụ sở: TP. Hồ Chí Minh, Việt Nam
-            </p>
-          </div>
-        </div>
-        <div className="wrap" style={{ textAlign: 'center', paddingTop: '20px', borderTop: '1px solid var(--line)', fontSize: '12.5px', color: 'var(--ink-soft)' }}>
-          © 2026 LÀNH Farm - Nông sản hữu cơ &amp; Truy xuất nguồn gốc.
         </div>
       </footer>
     </div>

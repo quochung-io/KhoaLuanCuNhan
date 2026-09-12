@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../../data/models/product_model.dart';
 import '../main_container.dart';
 
@@ -116,7 +116,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               width: double.infinity,
               height: 220,
               decoration: BoxDecoration(
-                color: product.color.withOpacity(0.06),
+                color: product.color.withValues(alpha: 0.06),
               ),
               child: Hero(
                 tag: 'product-icon-${product.id}',
