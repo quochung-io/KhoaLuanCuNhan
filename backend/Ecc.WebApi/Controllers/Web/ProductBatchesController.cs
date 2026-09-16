@@ -41,6 +41,26 @@ public class ProductBatchesController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<ProductBatch>> CreateProductBatch(ProductBatch batch)
     {
+        if (batch.ExpiryDate <= batch.HarvestDate)
+        {
+            return BadRequest(new { message = "Hạn sử dụng phải sau ngày thu hoạch ít nhất 1 ngày!" });
+        }
+
+        if (string.IsNullOrWhiteSpace(batch.BatchCode))
+        {
+            batch.BatchCode = $"LHN-{DateTime.Now:yyyyMMdd}-{new Random().Next(1000, 9999)}";
+        }
+        else
+        {
+            if (await _context.ProductBatches.AnyAsync(b => b.BatchCode == batch.BatchCode))
+            {
+                return BadRequest(new { message = $"Mã lô hàng '{batch.BatchCode}' đã tồn tại trên hệ thống!" });
+            }
+        }
+
+        batch.CreatedAt = DateTime.UtcNow;
+        if (string.IsNullOrEmpty(batch.Status)) batch.Status = "Active";
+
         _context.ProductBatches.Add(batch);
         await _context.SaveChangesAsync();
         return CreatedAtAction(nameof(GetProductBatch), new { id = batch.BatchId }, batch);
@@ -50,19 +70,26 @@ public class ProductBatchesController : ControllerBase
     public async Task<IActionResult> UpdateProductBatch(long id, ProductBatch batch)
     {
         if (id != batch.BatchId) return BadRequest();
-        _context.Entry(batch).State = EntityState.Modified;
 
-        try
+        if (batch.ExpiryDate <= batch.HarvestDate)
         {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            if (!_context.ProductBatches.Any(e => e.BatchId == id)) return NotFound();
-            throw;
+            return BadRequest(new { message = "Hạn sử dụng phải sau ngày thu hoạch ít nhất 1 ngày!" });
         }
 
-        return NoContent();
+        var existing = await _context.ProductBatches.FindAsync(id);
+        if (existing == null) return NotFound(new { message = "Không tìm thấy lô hàng." });
+
+        existing.ProductId = batch.ProductId;
+        existing.FarmId = batch.FarmId;
+        existing.BatchCode = batch.BatchCode;
+        existing.InitialQuantity = batch.InitialQuantity;
+        existing.Unit = batch.Unit;
+        existing.HarvestDate = batch.HarvestDate;
+        existing.ExpiryDate = batch.ExpiryDate;
+        existing.Status = batch.Status;
+
+        await _context.SaveChangesAsync();
+        return Ok(existing);
     }
 
     [HttpDelete("{id}")]

@@ -13,16 +13,27 @@ export const Register: React.FC = () => {
   const [showOtpModal, setShowOtpModal] = useState(false);
   const [otpMethod, setOtpMethod] = useState<'EMAIL' | 'SMS'>('EMAIL');
   const [otpCode, setOtpCode] = useState('');
-  const [serverOtp, setServerOtp] = useState<string | null>(null);
+  const [countdown, setCountdown] = useState(0);
   const [formValues, setFormValues] = useState<any>(null);
 
   const navigate = useNavigate();
 
-  const onOpenOtpModal = (values: any) => {
-    setFormValues(values);
-    setShowOtpModal(true);
-    setOtpCode('');
-    setServerOtp(null);
+  const onOpenOtpModal = async (values: any) => {
+    setLoading(true);
+    try {
+      await authService.checkUnique({
+        fullName: values.username,
+        email: values.email,
+        phone: values.phone,
+      });
+      setFormValues(values);
+      setShowOtpModal(true);
+      setOtpCode('');
+    } catch (err: any) {
+      message.error(err.response?.data?.message || 'Thông tin đã tồn tại trên hệ thống!');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleRequestOtp = async () => {
@@ -30,9 +41,18 @@ export const Register: React.FC = () => {
     setIsSendingOtp(true);
     try {
       const recipient = otpMethod === 'EMAIL' ? formValues.email : formValues.phone;
-      const res = await authService.sendRegisterOtp({ recipient, type: otpMethod });
-      setServerOtp(res.data.otp);
-      message.success(`Đã gửi mã OTP tới ${recipient} qua ${otpMethod}!`);
+      await authService.sendRegisterOtp({ recipient, type: otpMethod });
+      message.success(`Đã gửi mã OTP tới ${recipient} qua ${otpMethod}. Vui lòng kiểm tra hộp thư/tin nhắn!`);
+      setCountdown(60);
+      const timer = setInterval(() => {
+        setCountdown((prev) => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
     } catch (err: any) {
       message.error(err.response?.data?.message || 'Không thể gửi mã OTP.');
     } finally {
@@ -188,20 +208,19 @@ export const Register: React.FC = () => {
         </div>
 
         <div style={{ backgroundColor: '#f5f5f5', padding: 12, borderRadius: 8, marginBottom: 16 }}>
-          <div>Mã sẽ được gửi tới: <strong>{otpMethod === 'EMAIL' ? formValues?.email : formValues?.phone}</strong></div>
-          {serverOtp && (
-            <div style={{ color: '#1890ff', fontWeight: 'bold', marginTop: 4 }}>
-              Mã OTP hệ thống: {serverOtp}
-            </div>
-          )}
+          <div>Mã xác thực sẽ được gửi tới: <strong>{otpMethod === 'EMAIL' ? formValues?.email : formValues?.phone}</strong></div>
+          <div style={{ color: '#888', fontSize: '12px', marginTop: 4 }}>
+            Mã OTP có hiệu lực trong 5 phút. Vui lòng kiểm tra hộp thư hoặc tin nhắn điện thoại.
+          </div>
         </div>
 
         <Button
           onClick={handleRequestOtp}
           loading={isSendingOtp}
+          disabled={countdown > 0}
           style={{ width: '100%', marginBottom: 16 }}
         >
-          {serverOtp ? 'Gửi lại mã OTP mới' : 'Bấm để Gửi mã OTP'}
+          {countdown > 0 ? `Gửi lại mã sau (${countdown}s)` : 'Bấm để Gửi mã OTP'}
         </Button>
 
         <Form.Item label="Nhập mã OTP (6 chữ số)">

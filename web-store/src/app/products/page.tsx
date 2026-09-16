@@ -399,8 +399,8 @@ export default function AllProductsPage() {
                   {theme === "light" ? "Tối" : "Sáng"}
                 </button>
                 <div className="lang-switch">
-                  <button className={lang === 'vi' ? 'active' : (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>)} onClick={() => setLang('vi')}>VI</button>
-                  <button className={lang === 'en' ? 'active' : (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>)} onClick={() => setLang('en')}>EN</button>
+                  <button className={lang === 'vi' ? 'active' : ''} onClick={() => setLang('vi')}>VI</button>
+                  <button className={lang === 'en' ? 'active' : ''} onClick={() => setLang('en')}>EN</button>
                 </div>
               </div>
             </div>
@@ -511,7 +511,7 @@ export default function AllProductsPage() {
                       alt="Avatar" 
                       style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--green-700)' }} 
                     />
-                  ) : (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>)}
+                  ) : ''}
                 </span>
                 <div className="header-action-text">
                   <span className="header-action-label">{currentUser ? 'Xin chào,' : 'Tài khoản'}</span>
@@ -629,7 +629,7 @@ export default function AllProductsPage() {
 
             {/* Nút Giỏ Hàng nổi bật */}
             <div 
-              className={`header-cart-btn ${cartBounce ? 'bounce' : (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>)}`}
+              className={`header-cart-btn ${cartBounce ? 'bounce' : ''}`}
               onClick={() => setIsDrawerOpen(true)}
               title="Xem giỏ hàng"
             >
@@ -711,7 +711,7 @@ export default function AllProductsPage() {
                 ].map(cat => (
                   <button
                     key={cat.id}
-                    className={`chip ${filterCategory === cat.id ? 'active' : (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>)}`}
+                    className={`chip ${filterCategory === cat.id ? 'active' : ''}`}
                     onClick={() => setFilterCategory(cat.id)}
                     style={{ fontSize: '13px', padding: '6px 14px' }}
                   >
@@ -755,7 +755,7 @@ export default function AllProductsPage() {
                 {['all', 'Đà Lạt', 'Mộc Châu', 'Đồng Tháp'].map(r => (
                   <button
                     key={r}
-                    className={`chip ${filterRegion === r ? 'active' : (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>)}`}
+                    className={`chip ${filterRegion === r ? 'active' : ''}`}
                     onClick={() => setFilterRegion(r)}
                   >
                     {r === 'all' ? 'Tất cả vùng' : r}
@@ -771,7 +771,7 @@ export default function AllProductsPage() {
                 {['all', 'VietGAP', 'GlobalGAP', 'USDA'].map(c => (
                   <button
                     key={c}
-                    className={`chip ${filterCert === c ? 'active' : (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>)}`}
+                    className={`chip ${filterCert === c ? 'active' : ''}`}
                     onClick={() => setFilterCert(c)}
                   >
                     {c === 'all' ? 'Tất cả chuẩn' : (c === 'USDA' ? 'USDA Organic' : c)}
@@ -909,7 +909,7 @@ export default function AllProductsPage() {
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" strokeWidth="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM20 14v3M14 20h3M20 20v.01"/></svg>
                       </button>
                     </div>
-                    <div className={`qr-panel ${openQrFor === p.id ? 'show' : (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>)}`} onClick={(e) => e.stopPropagation()}>
+                    <div className={`qr-panel ${openQrFor === p.id ? 'show' : ''}`} onClick={(e) => e.stopPropagation()}>
                       <button className="qr-close" onClick={(e) => { e.stopPropagation(); setOpenQrFor(null); }} aria-label="Đóng">
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg>
                       </button>
@@ -938,7 +938,7 @@ export default function AllProductsPage() {
                     <div className="price-row">
                       <span className="price">{p.price}<span>{p.unit}</span></span>
                       <button 
-                        className={`add-btn ${addedItem === p.id ? 'added' : (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>)}`} 
+                        className={`add-btn ${addedItem === p.id ? 'added' : ''}`} 
                         onClick={(e) => {
                           e.stopPropagation();
                           addToCart(p, 1);
@@ -1355,8 +1355,8 @@ export default function AllProductsPage() {
       </footer>
 
       {/* Cart Drawer */}
-      <div className={`overlay ${isDrawerOpen ? 'show' : (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>)}`} onClick={() => setIsDrawerOpen(false)}></div>
-      <aside className={`drawer ${isDrawerOpen ? 'show' : (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>)}`} aria-label="Giỏ hàng">
+      <div className={`overlay ${isDrawerOpen ? 'show' : ''}`} onClick={() => setIsDrawerOpen(false)}></div>
+      <aside className={`drawer ${isDrawerOpen ? 'show' : ''}`} aria-label="Giỏ hàng">
         <div className="drawer-head">
           <h3>Giỏ hàng của bạn</h3>
           <button className="icon-btn" onClick={() => setIsDrawerOpen(false)} aria-label="Đóng giỏ hàng">

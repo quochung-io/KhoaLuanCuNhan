@@ -1,4 +1,4 @@
-﻿const fs = require('fs');
+const fs = require('fs');
 const path = require('path');
 
 let raw = fs.readFileSync(path.join(__dirname, 'products_stats.json'), 'utf8');
@@ -163,6 +163,11 @@ sqlStatements.push('-- SEED EXPANDED REVIEWS SCRIPT (TARGET ~75% COVERAGE)');
 sqlStatements.push('USE QL_WebMuaBanNongSan;');
 sqlStatements.push('SET NOCOUNT ON;');
 sqlStatements.push('BEGIN TRANSACTION;');
+sqlStatements.push('DELETE FROM ReviewHelpfulVotes WHERE ReviewId >= 11;');
+sqlStatements.push('DELETE FROM ReviewImages WHERE ReviewId >= 11;');
+sqlStatements.push('DELETE FROM Reviews WHERE ReviewId >= 11;');
+sqlStatements.push("DBCC CHECKIDENT ('Reviews', RESEED, 10);");
+sqlStatements.push("DBCC CHECKIDENT ('ReviewImages', RESEED, 4);");
 sqlStatements.push('DECLARE @NewReviewId BIGINT;');
 
 function getWeightedRating() {
@@ -243,10 +248,10 @@ SET @NewReviewId = SCOPE_IDENTITY();`);
 });
 
 sqlStatements.push('COMMIT TRANSACTION;');
-sqlStatements.push('PRINT N"SUCCESS: Seeded reviews successfully!";');
+sqlStatements.push("PRINT N'SUCCESS: Seeded reviews successfully!';");
 
 const finalSql = sqlStatements.join('\n');
-fs.writeFileSync(path.join(__dirname, 'Seed_Reviews_Expanded.sql'), finalSql, 'utf8');
+fs.writeFileSync(path.join(__dirname, 'Seed_Reviews_Expanded.sql'), '\uFEFF' + finalSql, 'utf8');
 
 console.log(`Successfully generated Seed_Reviews_Expanded.sql!`);
 console.log(`Total new reviews generated: ${totalGeneratedReviews}`);

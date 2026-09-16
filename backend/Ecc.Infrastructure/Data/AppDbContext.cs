@@ -126,7 +126,7 @@ public class AppDbContext : DbContext
         // ── ProductBatch (Table: Batches) ─────────────
         modelBuilder.Entity<ProductBatch>(e =>
         {
-            e.ToTable("Batches");
+            e.ToTable("Batches", tb => tb.UseSqlOutputClause(false));
             e.HasKey(b => b.BatchId);
             e.Property(b => b.BatchId).HasColumnName("BatchId");
             e.Property(b => b.ProductId).HasColumnName("ProductId").IsRequired();

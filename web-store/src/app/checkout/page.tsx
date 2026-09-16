@@ -229,7 +229,35 @@ export default function CheckoutPage() {
 
     const storedCart = localStorage.getItem('cart');
     if (storedCart) {
-      setCart(JSON.parse(storedCart));
+      try {
+        const parsedCart = JSON.parse(storedCart);
+        setCart(parsedCart);
+
+        // Đồng bộ giá mới nhất từ Server để tránh giá cũ (Stale Cart Data)
+        fetch('http://localhost:5023/api/products')
+          .then(res => res.json())
+          .then((dbProducts: any[]) => {
+            if (Array.isArray(dbProducts) && dbProducts.length > 0) {
+              let changed = false;
+              const synced = parsedCart.map((item: any) => {
+                const live = dbProducts.find((p: any) => p.productId === item.product.id);
+                if (live && live.price) {
+                  const livePriceStr = Number(live.price).toLocaleString('vi-VN') + ' ₫';
+                  if (livePriceStr !== item.product.price) {
+                    changed = true;
+                    return { ...item, product: { ...item.product, price: livePriceStr } };
+                  }
+                }
+                return item;
+              });
+              if (changed) {
+                setCart(synced);
+                localStorage.setItem('cart', JSON.stringify(synced));
+              }
+            }
+          })
+          .catch(() => {});
+      } catch {}
     }
 
     fetchAddresses(parsedUser.userId);
@@ -442,8 +470,20 @@ export default function CheckoutPage() {
     e.preventDefault();
     setAddressModalError('');
 
-    if (!newReceiverName.trim() || !newPhone.trim() || !newDistrict.trim() || !newWard.trim() || !newAddressDetail.trim()) {
-      setAddressModalError('Vui lòng điền đầy đủ các thông tin địa chỉ.');
+    if (!newReceiverName.trim() || !newPhone.trim() || !newProvince.trim() || !newDistrict.trim() || !newWard.trim() || !newAddressDetail.trim()) {
+      setAddressModalError('Vui lòng điền đầy đủ tất cả các thông tin địa chỉ.');
+      return;
+    }
+
+    if (newReceiverName.trim().length < 2) {
+      setAddressModalError('Họ và tên người nhận phải từ 2 ký tự.');
+      return;
+    }
+
+    const cleanPhone = newPhone.trim().replace(/[\s.-]/g, '');
+    const phoneRegex = /^(0|\+84)[3|5|7|8|9][0-9]{8}$/;
+    if (!phoneRegex.test(cleanPhone)) {
+      setAddressModalError('Số điện thoại nhận hàng không hợp lệ (phải đủ 10 số, đầu số 03, 05, 07, 08, 09).');
       return;
     }
 
@@ -452,7 +492,7 @@ export default function CheckoutPage() {
       const payload = {
         userId: currentUser.userId,
         receiverName: newReceiverName.trim(),
-        phone: newPhone.trim(),
+        phone: cleanPhone,
         province: newProvince.trim(),
         district: newDistrict.trim(),
         ward: newWard.trim(),
@@ -468,8 +508,13 @@ export default function CheckoutPage() {
       });
 
       if (!res.ok) {
-        const errText = await res.text();
-        throw new Error(errText || 'Không thể lưu địa chỉ mới.');
+        const rawErr = await res.text();
+        let displayMsg = rawErr;
+        try {
+          const parsed = JSON.parse(rawErr);
+          if (parsed.message) displayMsg = parsed.message;
+        } catch {}
+        throw new Error(displayMsg || 'Không thể lưu địa chỉ mới.');
       }
 
       const created: CustomerAddress = await res.json();
@@ -520,6 +565,7 @@ export default function CheckoutPage() {
         customerId: currentUser.userId,
         subtotal: subtotal,
         discountAmount: discountAmount,
+        voucherCode: selectedVoucher ? selectedVoucher.code : null,
         shippingFee: shippingFee,
         paymentMethod: paymentMethod,
         addressId: currentSelected.addressId,
@@ -533,8 +579,14 @@ export default function CheckoutPage() {
       });
 
       if (!res.ok) {
-        const errText = await res.text();
-        throw new Error(errText || 'Có lỗi xảy ra khi tạo đơn hàng.');
+        const rawErr = await res.text();
+        let displayMsg = rawErr;
+        try {
+          const parsed = JSON.parse(rawErr);
+          if (parsed.message) displayMsg = parsed.message;
+          else if (parsed.title) displayMsg = parsed.title;
+        } catch {}
+        throw new Error(displayMsg || 'Có lỗi xảy ra khi tạo đơn hàng.');
       }
 
       const orderData = await res.json();
@@ -580,8 +632,8 @@ export default function CheckoutPage() {
                   {theme === "light" ? "Tối" : "Sáng"}
                 </button>
                 <div className="lang-switch">
-                  <button className={lang === 'vi' ? 'active' : (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>)} onClick={() => setLang('vi')}>VI</button>
-                  <button className={lang === 'en' ? 'active' : (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>)} onClick={() => setLang('en')}>EN</button>
+                  <button className={lang === 'vi' ? 'active' : ''} onClick={() => setLang('vi')}>VI</button>
+                  <button className={lang === 'en' ? 'active' : ''} onClick={() => setLang('en')}>EN</button>
                 </div>
               </div>
             </div>
@@ -634,7 +686,7 @@ export default function CheckoutPage() {
                       alt="Avatar" 
                       style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--green-700)' }} 
                     />
-                  ) : (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>)}
+                  ) : ''}
                 </span>
                 <div className="header-action-text">
                   <span className="header-action-label">{currentUser ? 'Xin chào,' : 'Tài khoản'}</span>
@@ -745,7 +797,7 @@ export default function CheckoutPage() {
 
             {/* Giỏ Hàng */}
             <div 
-              className={`header-cart-btn ${cartBounce ? 'bounce' : (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>)}`}
+              className={`header-cart-btn ${cartBounce ? 'bounce' : ''}`}
               onClick={() => setIsDrawerOpen(true)}
               title="Xem giỏ hàng"
             >

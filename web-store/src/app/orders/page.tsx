@@ -531,7 +531,8 @@ export default function CustomerOrdersPage() {
     setCancellingId(targetOrder.orderId);
 
     try {
-      const res = await fetch(`http://localhost:5023/api/orders/${targetOrder.orderId}/cancel`, {
+      const custId = currentUser?.userId ? `?customerId=${currentUser.userId}` : '';
+      const res = await fetch(`http://localhost:5023/api/orders/${targetOrder.orderId}/cancel${custId}`, {
         method: 'POST'
       });
 
@@ -721,8 +722,8 @@ export default function CustomerOrdersPage() {
                   {theme === "light" ? "Tối" : "Sáng"}
                 </button>
                 <div className="lang-switch">
-                  <button className={lang === "vi" ? "active" : (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>)} onClick={() => setLang("vi")}>VI</button>
-                  <button className={lang === "en" ? "active" : (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>)} onClick={() => setLang("en")}>EN</button>
+                  <button className={lang === "vi" ? "active" : ''} onClick={() => setLang("vi")}>VI</button>
+                  <button className={lang === "en" ? "active" : ''} onClick={() => setLang("en")}>EN</button>
                 </div>
               </div>
             </div>
@@ -777,7 +778,7 @@ export default function CustomerOrdersPage() {
                       alt="Avatar" 
                       style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--green-700)' }} 
                     />
-                  ) : (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>)}
+                  ) : ''}
                 </span>
                 <div className="header-action-text">
                   <span className="header-action-label">Xin chào,</span>
@@ -863,7 +864,7 @@ export default function CustomerOrdersPage() {
 
             {/* Nút Giỏ Hàng nổi bật */}
             <div 
-              className={`header-cart-btn ${cartBounce ? "bounce" : (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>)}`}
+              className={`header-cart-btn ${cartBounce ? "bounce" : ''}`}
               onClick={() => setIsDrawerOpen(true)}
               title="Xem giỏ hàng"
             >

@@ -145,7 +145,7 @@ public class OrdersController : ControllerBase
     public async Task<IActionResult> GetNearExpiryBatches()
     {
         var today = DateTime.Today;
-        var limitDate = today.AddDays(15);
+        var limitDate = today.AddDays(45);
 
         var batches = await _context.ProductBatches
             .Include(b => b.Product)
@@ -229,15 +229,164 @@ public class OrdersController : ControllerBase
             finalAddressId = newAddress.AddressId;
         }
 
-        // 2. Chuẩn bị đối tượng Order để lưu vào DB
+        if (dto.OrderItems == null || !dto.OrderItems.Any())
+        {
+            return BadRequest("Đơn hàng phải có ít nhất một sản phẩm.");
+        }
+
+        // Lấy danh sách ProductId từ Database để lấy giá niêm yết chuẩn
+        var productIds = dto.OrderItems.Select(i => i.ProductId).Distinct().ToList();
+        var dbProducts = await _context.Products
+            .AsNoTracking()
+            .Where(p => productIds.Contains(p.ProductId))
+            .ToDictionaryAsync(p => p.ProductId);
+
+        foreach (var item in dto.OrderItems)
+        {
+            if (!dbProducts.ContainsKey(item.ProductId))
+            {
+                return BadRequest($"Sản phẩm với ID {item.ProductId} không tồn tại trên hệ thống.");
+            }
+            if (item.Quantity <= 0)
+            {
+                return BadRequest("Số lượng sản phẩm đặt mua phải lớn hơn 0.");
+            }
+        }
+
+        // Tự động tính toán lại Subtotal trên Server bằng giá thực tế từ Database (Chống Price Tampering)
+        decimal calculatedSubtotal = 0;
+        foreach (var item in dto.OrderItems)
+        {
+            var dbProduct = dbProducts[item.ProductId];
+            item.UnitPrice = dbProduct.Price; // Ghi đè giá thực tế từ DB
+            calculatedSubtotal += item.Quantity * dbProduct.Price;
+        }
+
+        // 1. Kiểm tra tồn kho & Trừ tồn kho theo nguyên tắc FEFO (Hết hạn trước xuất trước)
+        var itemAssignedBatches = new Dictionary<int, long?>();
+
+        for (int i = 0; i < dto.OrderItems.Count; i++)
+        {
+            var item = dto.OrderItems[i];
+            var dbProduct = dbProducts[item.ProductId];
+
+            // Lấy danh sách lô hàng còn hạn, còn số lượng tồn kho
+            var availableBatches = await _context.ProductBatches
+                .Where(b => b.ProductId == item.ProductId && b.ExpiryDate >= DateTime.Today && b.InitialQuantity > 0 && (b.Status == "Active" || string.IsNullOrEmpty(b.Status)))
+                .OrderBy(b => b.ExpiryDate)
+                .ToListAsync();
+
+            var totalStock = availableBatches.Sum(b => b.InitialQuantity);
+            if (totalStock < item.Quantity)
+            {
+                return BadRequest($"Sản phẩm '{dbProduct.ProductName}' hiện chỉ còn {totalStock:N0} {dbProduct.Unit} trong kho, không đủ số lượng đặt mua ({item.Quantity:N0}).");
+            }
+
+            decimal neededQty = item.Quantity;
+            long? assignedBatchId = null;
+
+            foreach (var batch in availableBatches)
+            {
+                if (neededQty <= 0) break;
+                if (!assignedBatchId.HasValue) assignedBatchId = batch.BatchId;
+
+                if (batch.InitialQuantity >= neededQty)
+                {
+                    batch.InitialQuantity -= neededQty;
+                    neededQty = 0;
+                }
+                else
+                {
+                    neededQty -= batch.InitialQuantity;
+                    batch.InitialQuantity = 0;
+                    batch.Status = "OutOfStock";
+                }
+            }
+
+            itemAssignedBatches[i] = assignedBatchId ?? availableBatches.FirstOrDefault()?.BatchId;
+        }
+
+        // 2. Xác thực và tính toán Mã giảm giá (Voucher) trên Server
+        decimal discountAmount = 0;
+        decimal shippingFee = Math.Max(0, dto.ShippingFee ?? 30000);
+
+        if (!string.IsNullOrWhiteSpace(dto.VoucherCode))
+        {
+            var vCode = dto.VoucherCode.Trim().ToUpper();
+            var userVoucher = await _context.UserVouchers
+                .FirstOrDefaultAsync(v => (v.UserId == dto.CustomerId || v.UserId == 1) 
+                                       && v.Code.ToUpper() == vCode 
+                                       && !v.IsUsed);
+
+            if (userVoucher != null)
+            {
+                if (calculatedSubtotal < userVoucher.MinOrderAmount)
+                {
+                    return BadRequest($"Mã giảm giá '{vCode}' yêu cầu đơn hàng đạt tối thiểu {userVoucher.MinOrderAmount:N0}₫.");
+                }
+
+                if (userVoucher.VoucherType.ToLower() == "ship")
+                {
+                    discountAmount = Math.Min(shippingFee, userVoucher.DiscountValue);
+                }
+                else if (userVoucher.VoucherType.ToLower() == "percent" || userVoucher.VoucherType.ToLower() == "discount")
+                {
+                    discountAmount = Math.Round((calculatedSubtotal * userVoucher.DiscountValue) / 100);
+                }
+                else // cash / fixed
+                {
+                    discountAmount = Math.Min(calculatedSubtotal, userVoucher.DiscountValue);
+                }
+
+                userVoucher.IsUsed = true;
+                userVoucher.UsedAt = DateTime.UtcNow;
+            }
+            else
+            {
+                // Hỗ trợ các mã voucher tiêu chuẩn của hệ thống LÀNH Farm
+                switch (vCode)
+                {
+                    case "LANHNEW":
+                        if (calculatedSubtotal >= 100000)
+                            discountAmount = Math.Min(40000, (calculatedSubtotal * 15) / 100);
+                        break;
+                    case "FREESHIP30K":
+                    case "FREESHIP50":
+                        if (calculatedSubtotal >= 150000)
+                            discountAmount = Math.Min(shippingFee, 30000);
+                        break;
+                    case "ORGANIC50K":
+                    case "WELCOME50":
+                        if (calculatedSubtotal >= 250000)
+                            discountAmount = 50000;
+                        break;
+                    case "DALATFARM":
+                    case "LANHFRESH20":
+                        if (calculatedSubtotal >= 120000)
+                            discountAmount = 20000;
+                        break;
+                    default:
+                        return BadRequest($"Mã giảm giá '{dto.VoucherCode}' không hợp lệ hoặc đã hết lượt sử dụng.");
+                }
+            }
+        }
+        else if (dto.DiscountAmount.HasValue && dto.DiscountAmount.Value > 0)
+        {
+            discountAmount = Math.Min(dto.DiscountAmount.Value, calculatedSubtotal);
+        }
+
+        decimal totalAmount = Math.Max(0, calculatedSubtotal + shippingFee - discountAmount);
+
+        // 3. Chuẩn bị đối tượng Order để lưu vào DB
         var order = new Order
         {
             CustomerId = dto.CustomerId,
             AddressId = finalAddressId,
             OrderCode = "DH-" + DateTime.Now.ToString("yyyyMMdd") + "-" + new Random().Next(1000, 9999),
-            Subtotal = dto.Subtotal,
-            DiscountAmount = dto.DiscountAmount ?? 0,
-            ShippingFee = dto.ShippingFee ?? 30000,
+            Subtotal = calculatedSubtotal,
+            DiscountAmount = discountAmount,
+            ShippingFee = shippingFee,
+            TotalAmount = totalAmount,
             PaymentMethod = dto.PaymentMethod,
             OrderStatus = "Pending",
             PaymentStatus = "Pending",
@@ -245,57 +394,20 @@ public class OrdersController : ControllerBase
             UpdatedAt = DateTime.Now
         };
 
-        order.TotalAmount = order.Subtotal + order.ShippingFee.Value - order.DiscountAmount.Value;
-
-        // 3. Xử lý gán Lô hàng (BatchId) tự động dựa theo nguyên lý FEFO cho từng sản phẩm
-        foreach (var item in dto.OrderItems)
+        // 4. Tạo OrderItems kèm theo Lô hàng đã gán
+        for (int i = 0; i < dto.OrderItems.Count; i++)
         {
+            var item = dto.OrderItems[i];
+            var dbProduct = dbProducts[item.ProductId];
             var orderItem = new OrderItem
             {
                 ProductId = item.ProductId,
                 Quantity = item.Quantity,
-                UnitPrice = item.UnitPrice,
+                UnitPrice = dbProduct.Price, // Luôn lấy giá từ DB
                 DiscountAmount = item.DiscountAmount ?? 0,
-                TotalAmount = item.Quantity * item.UnitPrice
+                TotalAmount = item.Quantity * dbProduct.Price,
+                BatchId = (itemAssignedBatches.TryGetValue(i, out var bId) && bId.HasValue) ? bId.Value : 1
             };
-
-            // Tìm lô hàng còn hạn sử dụng gần nhất (FEFO)
-            var firstBatch = await _context.ProductBatches
-                .Where(b => b.ProductId == item.ProductId && b.ExpiryDate >= DateTime.Today)
-                .OrderBy(b => b.ExpiryDate)
-                .FirstOrDefaultAsync();
-
-            if (firstBatch != null)
-            {
-                orderItem.BatchId = firstBatch.BatchId;
-            }
-            else
-            {
-                var fallbackBatch = await _context.ProductBatches.FirstOrDefaultAsync(b => b.ProductId == item.ProductId);
-                if (fallbackBatch != null)
-                {
-                    orderItem.BatchId = fallbackBatch.BatchId;
-                }
-                else
-                {
-                    // Lô hàng giả lập nếu database chưa có lô nào cho sản phẩm này
-                    var tempBatch = new ProductBatch
-                    {
-                        ProductId = item.ProductId,
-                        FarmId = 1,
-                        BatchCode = "LOT-AUTO-" + item.ProductId,
-                        HarvestDate = DateTime.Today.AddDays(-2),
-                        ExpiryDate = DateTime.Today.AddDays(15),
-                        InitialQuantity = 1000,
-                        Unit = "kg",
-                        Status = "Active",
-                        CreatedAt = DateTime.UtcNow
-                    };
-                    _context.ProductBatches.Add(tempBatch);
-                    await _context.SaveChangesAsync();
-                    orderItem.BatchId = tempBatch.BatchId;
-                }
-            }
 
             order.OrderItems.Add(orderItem);
         }
@@ -331,15 +443,23 @@ public class OrdersController : ControllerBase
 
     // ── 6. Hủy đơn hàng trong vòng 30 phút kể từ lúc đặt ──
     [HttpPost("{id}/cancel")]
-    public async Task<IActionResult> CancelOrder(long id)
+    [HttpPut("{id}/cancel")]
+    public async Task<IActionResult> CancelOrder(long id, [FromQuery] long? customerId = null)
     {
         var order = await _context.Orders
             .Include(o => o.Customer)
+            .Include(o => o.OrderItems)
             .FirstOrDefaultAsync(o => o.OrderId == id);
 
         if (order == null)
         {
             return NotFound(new { message = "Không tìm thấy đơn hàng cần hủy." });
+        }
+
+        // Kiểm tra quyền sở hữu đơn hàng (Chống lỗ hổng IDOR)
+        if (customerId.HasValue && customerId.Value > 0 && order.CustomerId != customerId.Value)
+        {
+            return StatusCode(403, new { message = "Bạn không có quyền hủy đơn hàng của khách hàng khác!" });
         }
 
         if (order.OrderStatus?.ToLower() == "cancelled")
@@ -368,32 +488,138 @@ public class OrdersController : ControllerBase
             }
         }
 
+        // Hoàn trả số lượng tồn kho cho các lô hàng tương ứng
+        if (order.OrderItems != null)
+        {
+            foreach (var item in order.OrderItems)
+            {
+                if (item.BatchId > 0)
+                {
+                    var batch = await _context.ProductBatches.FindAsync(item.BatchId);
+                    if (batch != null)
+                    {
+                        batch.InitialQuantity += item.Quantity;
+                        if (batch.Status == "OutOfStock") batch.Status = "Active";
+                    }
+                }
+            }
+        }
+
         order.OrderStatus = "Cancelled";
         order.UpdatedAt = DateTime.Now;
         await _context.SaveChangesAsync();
 
-        _logger.LogInformation($"[HỦY ĐƠN HÀNG] Đơn #{order.OrderCode} đã được khách hàng hủy thành công.");
+        _logger.LogInformation($"[HỦY ĐƠN HÀNG] Đơn #{order.OrderCode} đã được khách hàng hủy thành công và hoàn tồn kho.");
 
         return Ok(new { message = "Hủy đơn hàng thành công!", orderCode = order.OrderCode, orderStatus = "Cancelled" });
     }
 
-    [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateOrder(long id, Order order)
+    // ── 7. Cập nhật trạng thái đơn hàng tuân thủ quy chuẩn State Machine ──
+    [HttpPut("{id}/status")]
+    public async Task<IActionResult> UpdateOrderStatus(long id, [FromBody] UpdateOrderStatusDto dto)
     {
-        if (id != order.OrderId) return BadRequest();
-        _context.Entry(order).State = EntityState.Modified;
-
-        try
+        var order = await _context.Orders.FindAsync(id);
+        if (order == null)
         {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            if (!_context.Orders.Any(e => e.OrderId == id)) return NotFound();
-            throw;
+            return NotFound(new { message = "Không tìm thấy đơn hàng cần cập nhật." });
         }
 
-        return NoContent();
+        var currentStatus = order.OrderStatus ?? "Pending";
+        var requestedStatus = dto.OrderStatus?.Trim();
+        if (string.IsNullOrWhiteSpace(requestedStatus))
+        {
+            return BadRequest(new { message = "Trạng thái mới không được để trống." });
+        }
+
+        // Chuẩn hóa tên trạng thái về PascalCase
+        string normalizedStatus = requestedStatus.ToLower() switch
+        {
+            "pending" => "Pending",
+            "confirmed" => "Confirmed",
+            "shipping" => "Shipping",
+            "completed" => "Completed",
+            "cancelled" => "Cancelled",
+            _ => requestedStatus
+        };
+
+        // Nếu trạng thái mới giống trạng thái hiện tại
+        if (string.Equals(currentStatus, normalizedStatus, StringComparison.OrdinalIgnoreCase))
+        {
+            return Ok(new { message = "Trạng thái đơn hàng không thay đổi.", orderId = order.OrderId, orderStatus = order.OrderStatus, paymentStatus = order.PaymentStatus });
+        }
+
+        // Kiểm tra State Machine: Nếu đơn hàng đã kết thúc (Terminal states)
+        if (string.Equals(currentStatus, "Completed", StringComparison.OrdinalIgnoreCase))
+        {
+            return BadRequest(new { message = "Đơn hàng đã hoàn thành (Completed), không thể thay đổi trạng thái nữa." });
+        }
+        if (string.Equals(currentStatus, "Cancelled", StringComparison.OrdinalIgnoreCase))
+        {
+            return BadRequest(new { message = "Đơn hàng đã bị hủy (Cancelled), không thể kích hoạt lại." });
+        }
+
+        // Kiểm tra các bước chuyển tiếp hợp lệ (Valid Transitions)
+        bool isValidTransition = (currentStatus.ToLower(), normalizedStatus.ToLower()) switch
+        {
+            ("pending", "confirmed") => true,
+            ("pending", "cancelled") => true,
+            ("confirmed", "shipping") => true,
+            ("confirmed", "cancelled") => true,
+            ("shipping", "completed") => true,
+            ("shipping", "cancelled") => true,
+            _ => false
+        };
+
+        if (!isValidTransition)
+        {
+            return BadRequest(new { 
+                message = $"Chuyển trạng thái bất hợp lệ: Không thể chuyển từ '{currentStatus}' sang '{normalizedStatus}'. Các trạng thái hợp lệ tiếp theo: {(currentStatus.ToLower() switch { "pending" => "Confirmed, Cancelled", "confirmed" => "Shipping, Cancelled", "shipping" => "Completed, Cancelled", _ => "Không còn trạng thái chuyển tiếp" })}." 
+            });
+        }
+
+        order.OrderStatus = normalizedStatus;
+        order.UpdatedAt = DateTime.Now;
+
+        // Tự động cập nhật thanh toán nếu hoàn tất đơn hàng giao tận nơi (COD)
+        if (normalizedStatus == "Completed" && (order.PaymentStatus == "Pending" || order.PaymentStatus == "Unpaid" || string.IsNullOrEmpty(order.PaymentStatus)))
+        {
+            order.PaymentStatus = "Paid";
+        }
+        else if (!string.IsNullOrWhiteSpace(dto.PaymentStatus))
+        {
+            order.PaymentStatus = dto.PaymentStatus;
+        }
+
+        await _context.SaveChangesAsync();
+        _logger.LogInformation($"[STATE MACHINE] Đơn #{order.OrderCode ?? order.OrderId.ToString()} chuyển từ '{currentStatus}' -> '{normalizedStatus}'");
+
+        return Ok(new
+        {
+            message = "Cập nhật trạng thái đơn hàng thành công!",
+            orderId = order.OrderId,
+            orderStatus = order.OrderStatus,
+            paymentStatus = order.PaymentStatus
+        });
+    }
+
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdateOrder(long id, [FromBody] Order updated)
+    {
+        var existing = await _context.Orders.FindAsync(id);
+        if (existing == null) return NotFound(new { message = "Không tìm thấy đơn hàng." });
+
+        if (!string.IsNullOrEmpty(updated.OrderStatus))
+        {
+            existing.OrderStatus = updated.OrderStatus;
+        }
+        if (!string.IsNullOrEmpty(updated.PaymentStatus))
+        {
+            existing.PaymentStatus = updated.PaymentStatus;
+        }
+        existing.UpdatedAt = DateTime.Now;
+
+        await _context.SaveChangesAsync();
+        return Ok(existing);
     }
 
     [HttpDelete("{id}")]
@@ -554,6 +780,7 @@ public class OrderCreateDto
     public long CustomerId { get; set; }
     public decimal Subtotal { get; set; }
     public decimal? DiscountAmount { get; set; }
+    public string? VoucherCode { get; set; }
     public decimal? ShippingFee { get; set; }
     public string PaymentMethod { get; set; } = null!;
     public List<OrderItemDto> OrderItems { get; set; } = new();
@@ -579,3 +806,11 @@ public class OrderItemDto
     public decimal UnitPrice { get; set; }
     public decimal? DiscountAmount { get; set; }
 }
+
+public class UpdateOrderStatusDto
+{
+    public string OrderStatus { get; set; } = string.Empty;
+    public string? PaymentStatus { get; set; }
+    public string? Note { get; set; }
+}
+

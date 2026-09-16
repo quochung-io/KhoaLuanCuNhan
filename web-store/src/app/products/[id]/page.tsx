@@ -704,7 +704,12 @@ export default function ProductDetailPage() {
 
   // Thêm vào giỏ hàng
   const handleAddToCart = (redirectCheckout = false) => {
-    if (!product) return;
+    if (!product || isOutOfStock) return;
+
+    if (totalAvailableStock > 0 && quantity > totalAvailableStock) {
+      alert(`Sản phẩm này hiện chỉ còn ${totalAvailableStock} ${product.unit} trong kho, không đủ số lượng bạn yêu cầu.`);
+      return;
+    }
 
     const img = product.productImages && product.productImages.length > 0
       ? (product.productImages.find(i => i.isPrimary)?.imageUrl || product.productImages[0].imageUrl)
@@ -828,6 +833,16 @@ export default function ProductDetailPage() {
     ? new Date(primaryBatch.expiryDate).toLocaleDateString('vi-VN') 
     : 'Khuyên dùng trong 7 ngày';
 
+  // Tính tổng tồn kho khả dụng từ các lô hàng còn hạn
+  const activeBatches = batches.filter(b => {
+    const notExpired = !b.expiryDate || new Date(b.expiryDate) >= new Date();
+    const hasQty = (b.initialQuantity || 0) > 0;
+    const isActive = b.status === 'Active' || !b.status;
+    return notExpired && hasQty && isActive;
+  });
+  const totalAvailableStock = activeBatches.reduce((sum, b) => sum + (b.initialQuantity || 0), 0);
+  const isOutOfStock = batches.length > 0 && totalAvailableStock <= 0;
+
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--ink)' }}>
       {/* Toast thông báo thêm thành công */}
@@ -873,8 +888,8 @@ export default function ProductDetailPage() {
                   {theme === "light" ? "Tối" : "Sáng"}
                 </button>
                 <div className="lang-switch">
-                  <button className={lang === 'vi' ? 'active' : (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>)} onClick={() => setLang('vi')}>VI</button>
-                  <button className={lang === 'en' ? 'active' : (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>)} onClick={() => setLang('en')}>EN</button>
+                  <button className={lang === 'vi' ? 'active' : ''} onClick={() => setLang('vi')}>VI</button>
+                  <button className={lang === 'en' ? 'active' : ''} onClick={() => setLang('en')}>EN</button>
                 </div>
               </div>
             </div>
@@ -929,7 +944,7 @@ export default function ProductDetailPage() {
                       alt="Avatar" 
                       style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--green-700)' }} 
                     />
-                  ) : (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>)}
+                  ) : ''}
                 </span>
                 <div className="header-action-text">
                   <span className="header-action-label">{currentUser ? 'Xin chào,' : 'Tài khoản'}</span>
@@ -1047,7 +1062,7 @@ export default function ProductDetailPage() {
 
             {/* Nút Giỏ Hàng */}
             <div 
-              className={`header-cart-btn ${cartBounce ? 'bounce' : (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>)}`}
+              className={`header-cart-btn ${cartBounce ? 'bounce' : ''}`}
               onClick={() => setIsDrawerOpen(true)}
               title="Xem giỏ hàng"
             >
@@ -1301,9 +1316,19 @@ export default function ProductDetailPage() {
                 <span style={{ fontSize: '16px', color: 'var(--ink-soft)', fontWeight: 500 }}>
                   / {product.unit}
                 </span>
-                <span style={{ marginLeft: 'auto', background: '#E8F5E9', color: '#2E7D32', fontSize: '12px', fontWeight: 700, padding: '4px 10px', borderRadius: '8px' }}>
-                  Còn hàng thu hoạch mới
-                </span>
+                {isOutOfStock ? (
+                  <span style={{ marginLeft: 'auto', background: '#FFEBEE', color: '#C62828', fontSize: '12px', fontWeight: 700, padding: '4px 10px', borderRadius: '8px' }}>
+                    Tạm hết hàng
+                  </span>
+                ) : totalAvailableStock > 0 && totalAvailableStock <= 10 ? (
+                  <span style={{ marginLeft: 'auto', background: '#FFF3E0', color: '#E65100', fontSize: '12px', fontWeight: 700, padding: '4px 10px', borderRadius: '8px' }}>
+                    Chỉ còn {totalAvailableStock} {product.unit}
+                  </span>
+                ) : (
+                  <span style={{ marginLeft: 'auto', background: '#E8F5E9', color: '#2E7D32', fontSize: '12px', fontWeight: 700, padding: '4px 10px', borderRadius: '8px' }}>
+                    Còn hàng thu hoạch mới
+                  </span>
+                )}
               </div>
               <p style={{ fontSize: '13px', color: 'var(--ink-soft)', marginTop: '8px' }}>
                 Giá đã bao gồm VAT và kiểm định chất lượng VietGAP tại nguồn.
@@ -1327,8 +1352,9 @@ export default function ProductDetailPage() {
               <div style={{ display: 'inline-flex', alignItems: 'center', background: 'var(--surface)', border: '1.5px solid var(--line)', borderRadius: '999px', padding: '4px' }}>
                 <button 
                   type="button"
+                  disabled={isOutOfStock || quantity <= 1}
                   onClick={() => setQuantity(prev => Math.max(1, prev - 1))}
-                  style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'var(--green-100)', color: 'var(--green-700)', fontSize: '18px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer', userSelect: 'none' }}
+                  style={{ width: '36px', height: '36px', borderRadius: '50%', background: isOutOfStock ? 'var(--line)' : 'var(--green-100)', color: isOutOfStock ? 'var(--ink-soft)' : 'var(--green-700)', fontSize: '18px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: isOutOfStock ? 'not-allowed' : 'pointer', userSelect: 'none' }}
                   aria-label="Giảm"
                   title="Giảm 1 (hoặc dùng phím mũi tên Xuống)"
                 >
@@ -1336,22 +1362,25 @@ export default function ProductDetailPage() {
                 </button>
                 <input
                   type="number"
+                  disabled={isOutOfStock}
                   min={1}
-                  max={999}
+                  max={totalAvailableStock > 0 ? Math.min(999, totalAvailableStock) : 999}
                   step={1}
-                  value={quantity}
+                  value={isOutOfStock ? 0 : quantity}
                   onChange={(e) => {
                     const val = parseInt(e.target.value, 10);
+                    const maxVal = totalAvailableStock > 0 ? Math.min(999, totalAvailableStock) : 999;
                     if (isNaN(val)) {
                       setQuantity(1);
                     } else {
-                      setQuantity(Math.max(1, Math.min(999, val)));
+                      setQuantity(Math.max(1, Math.min(maxVal, val)));
                     }
                   }}
                   onKeyDown={(e) => {
+                    const maxVal = totalAvailableStock > 0 ? Math.min(999, totalAvailableStock) : 999;
                     if (e.key === 'ArrowUp') {
                       e.preventDefault();
-                      setQuantity(q => Math.min(999, q + 1));
+                      setQuantity(q => Math.min(maxVal, q + 1));
                     } else if (e.key === 'ArrowDown') {
                       e.preventDefault();
                       setQuantity(q => Math.max(1, q - 1));
@@ -1366,19 +1395,20 @@ export default function ProductDetailPage() {
                     textAlign: 'center',
                     fontWeight: 800,
                     fontSize: '15px',
-                    color: 'var(--ink)',
+                    color: isOutOfStock ? 'var(--ink-soft)' : 'var(--ink)',
                     background: 'transparent',
                     border: 'none',
                     outline: 'none',
                     MozAppearance: 'textfield'
                   }}
-                  title="Nhập số lượng hoặc dùng phím mũi tên Lên/Xuống trên bàn phím"
+                  title={isOutOfStock ? 'Sản phẩm tạm hết hàng' : 'Nhập số lượng'}
                   aria-label="Số lượng sản phẩm"
                 />
                 <button 
                   type="button"
+                  disabled={isOutOfStock || (totalAvailableStock > 0 && quantity >= totalAvailableStock)}
                   onClick={() => setQuantity(prev => prev + 1)}
-                  style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'var(--green-100)', color: 'var(--green-700)', fontSize: '18px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer', userSelect: 'none' }}
+                  style={{ width: '36px', height: '36px', borderRadius: '50%', background: isOutOfStock ? 'var(--line)' : 'var(--green-100)', color: isOutOfStock ? 'var(--ink-soft)' : 'var(--green-700)', fontSize: '18px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: (isOutOfStock || (totalAvailableStock > 0 && quantity >= totalAvailableStock)) ? 'not-allowed' : 'pointer', userSelect: 'none' }}
                   aria-label="Tăng"
                   title="Tăng 1 (hoặc dùng phím mũi tên Lên)"
                 >
@@ -1387,20 +1417,44 @@ export default function ProductDetailPage() {
               </div>
 
               <button 
+                disabled={isOutOfStock}
                 onClick={() => handleAddToCart(false)}
                 className="btn btn-ghost" 
-                style={{ flex: 1, padding: '14px 24px', borderRadius: '999px', borderColor: 'var(--green-700)', color: 'var(--green-700)', fontWeight: 700, fontSize: '14.5px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                style={{ 
+                  flex: 1, 
+                  padding: '14px 24px', 
+                  borderRadius: '999px', 
+                  borderColor: isOutOfStock ? 'var(--line)' : 'var(--green-700)', 
+                  color: isOutOfStock ? 'var(--ink-soft)' : 'var(--green-700)', 
+                  fontWeight: 700, 
+                  fontSize: '14.5px', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  gap: '8px',
+                  opacity: isOutOfStock ? 0.6 : 1,
+                  cursor: isOutOfStock ? 'not-allowed' : 'pointer'
+                }}
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M3 4h2l2.4 12.2a2 2 0 002 1.8h7.7a2 2 0 002-1.6L21 8H6"/></svg>
-                Thêm vào giỏ hàng
+                {isOutOfStock ? 'Tạm hết hàng' : 'Thêm vào giỏ hàng'}
               </button>
 
               <button 
+                disabled={isOutOfStock}
                 onClick={() => handleAddToCart(true)}
                 className="btn btn-accent" 
-                style={{ flex: 1, padding: '14px 24px', borderRadius: '999px', fontWeight: 700, fontSize: '14.5px' }}
+                style={{ 
+                  flex: 1, 
+                  padding: '14px 24px', 
+                  borderRadius: '999px', 
+                  fontWeight: 700, 
+                  fontSize: '14.5px',
+                  opacity: isOutOfStock ? 0.6 : 1,
+                  cursor: isOutOfStock ? 'not-allowed' : 'pointer'
+                }}
               >
-                Mua ngay
+                {isOutOfStock ? 'Hết hàng' : 'Mua ngay'}
               </button>
             </div>
 
@@ -1762,7 +1816,7 @@ export default function ProductDetailPage() {
 
           {/* TAB CONTENT 5: ĐÁNH GIÁ TỪ KHÁCH MUA */}
           {activeTab === 'reviews' && (
-            <div style={{ background: 'var(--surface)', padding: '36px', borderRadius: '24px', marginTop: '24px', border: '1px solid var(--line)' }}>
+            <div className="reviews-container" style={{ background: 'var(--surface)', padding: '36px', borderRadius: '24px', marginTop: '24px', border: '1px solid var(--line)', fontFamily: 'var(--font-review)' }}>
               <div style={{ maxWidth: '900px' }}>
                 
                 {/* 1. KHỐI TỔNG QUAN ĐIỂM TRUNG BÌNH & BIỂU ĐỒ PHÂN BỔ SAO */}
@@ -2348,12 +2402,14 @@ export default function ProductDetailPage() {
                       return (
                         <div
                           key={rev.reviewId}
+                          className="review-item"
                           style={{
                             padding: '22px 26px',
                             backgroundColor: 'var(--bg)',
                             borderRadius: '18px',
                             border: '1px solid var(--line)',
-                            transition: 'box-shadow 0.2s'
+                            transition: 'box-shadow 0.2s',
+                            fontFamily: 'var(--font-review)'
                           }}
                         >
                           {/* Dòng tác giả, huy hiệu & thời gian */}
@@ -2369,13 +2425,24 @@ export default function ProductDetailPage() {
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 fontWeight: 700,
-                                fontSize: '14px'
+                                fontSize: '14px',
+                                fontFamily: 'var(--font-review)'
                               }}>
                                 {rev.author.charAt(0).toUpperCase()}
                               </div>
                               <div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                  <strong style={{ fontSize: '14.5px', color: 'var(--ink)' }}>{rev.author}</strong>
+                                  <strong 
+                                    className="review-author-name"
+                                    style={{ 
+                                      fontSize: '15px', 
+                                      color: 'var(--ink)',
+                                      fontWeight: 600,
+                                      fontFamily: 'var(--font-review)'
+                                    }}
+                                  >
+                                    {rev.author}
+                                  </strong>
                                   {rev.isPurchased ? (
                                     <span style={{
                                       fontSize: '11px',
@@ -2383,7 +2450,8 @@ export default function ProductDetailPage() {
                                       padding: '2px 8px',
                                       borderRadius: '12px',
                                       backgroundColor: '#E8F5E9',
-                                      color: '#2E7D32'
+                                      color: '#2E7D32',
+                                      fontFamily: 'var(--font-review)'
                                     }}>
                                       ✓ Đã mua hàng
                                     </span>
@@ -2394,13 +2462,22 @@ export default function ProductDetailPage() {
                                       padding: '2px 8px',
                                       borderRadius: '12px',
                                       backgroundColor: '#f1f5f9',
-                                      color: '#64748b'
+                                      color: '#64748b',
+                                      fontFamily: 'var(--font-review)'
                                     }}>
                                       Khách quan tâm
                                     </span>
                                   )}
                                 </div>
-                                <div style={{ fontSize: '12px', color: 'var(--ink-soft)', marginTop: '2px' }}>
+                                <div 
+                                  className="review-meta-text"
+                                  style={{ 
+                                    fontSize: '12px', 
+                                    color: 'var(--ink-soft)', 
+                                    marginTop: '2px',
+                                    fontFamily: 'var(--font-review)'
+                                  }}
+                                >
                                   {rev.date} {rev.updatedAt ? `(Đã sửa: ${rev.updatedAt})` : ''}
                                 </div>
                               </div>
@@ -2419,7 +2496,8 @@ export default function ProductDetailPage() {
                                     border: '1px solid var(--green-700)',
                                     padding: '4px 10px',
                                     borderRadius: '6px',
-                                    cursor: 'pointer'
+                                    cursor: 'pointer',
+                                    fontFamily: 'var(--font-review)'
                                   }}
                                 >
                                   ✏️ Sửa
@@ -2434,7 +2512,8 @@ export default function ProductDetailPage() {
                                     border: '1px solid #fda4af',
                                     padding: '4px 10px',
                                     borderRadius: '6px',
-                                    cursor: 'pointer'
+                                    cursor: 'pointer',
+                                    fontFamily: 'var(--font-review)'
                                   }}
                                 >
                                   🗑️ Xóa
@@ -2449,7 +2528,18 @@ export default function ProductDetailPage() {
                           </div>
 
                           {/* Nội dung nhận xét */}
-                          <p style={{ margin: '0 0 12px 0', fontSize: '14px', color: 'var(--ink)', lineHeight: '1.6' }}>
+                          <p 
+                            className="review-content-text"
+                            style={{ 
+                              margin: '0 0 14px 0', 
+                              fontSize: '14.5px', 
+                              color: 'var(--ink)', 
+                              lineHeight: '1.68',
+                              fontFamily: 'var(--font-review)',
+                              letterSpacing: '-0.01em',
+                              fontWeight: 400
+                            }}
+                          >
                             {rev.comment}
                           </p>
 
@@ -2734,7 +2824,7 @@ export default function ProductDetailPage() {
 
       {/* DRAWER GIỎ HÀNG */}
       <div 
-        className={`drawer-overlay ${isDrawerOpen ? 'open' : (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>)}`} 
+        className={`drawer-overlay ${isDrawerOpen ? 'open' : ''}`} 
         onClick={() => setIsDrawerOpen(false)}
         style={{
           position: 'fixed',

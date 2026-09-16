@@ -1,19 +1,13 @@
-import axios from 'axios';
+import axiosClient from '../config/axiosClient';
 
-const API_BASE_URL = 'http://localhost:5023/api';
-
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
+const api = axiosClient;
 
 export default api;
 
 export const authService = {
   login: (data: { email: string; password: string }) => api.post('/auth/login', data),
   sendRegisterOtp: (data: { recipient: string; type: string }) => api.post('/auth/send-register-otp', data),
+  checkUnique: (data: { fullName?: string; email?: string; phone?: string }) => api.post('/auth/check-unique', data),
   register: (data: any) => api.post('/auth/register', data),
   forgotPassword: (data: { email: string }) => api.post('/auth/forgot-password', data),
   resetPassword: (data: any) => api.post('/auth/reset-password', data),
@@ -25,6 +19,8 @@ export const userService = {
   register: (data: any) => api.post('/auth/register', data),
   login: (data: any) => api.post('/auth/login', { email: data.username || data.email, password: data.password }),
   update: (id: number, data: any) => api.put(`/users/${id}`, data),
+  approveSupplier: (id: number) => api.put(`/users/${id}/approve`),
+  toggleStatus: (id: number) => api.put(`/users/${id}/toggle-status`),
   delete: (id: number) => api.delete(`/users/${id}`),
 };
 
@@ -57,6 +53,7 @@ export const orderService = {
   getById: (id: number) => api.get(`/orders/${id}`),
   create: (data: any) => api.post('/orders', data),
   update: (id: number, data: any) => api.put(`/orders/${id}`, data),
+  updateStatus: (id: number, data: { orderStatus: string; paymentStatus?: string }) => api.put(`/orders/${id}/status`, data),
   delete: (id: number) => api.delete(`/orders/${id}`),
   getSummary: () => api.get('/orders/stats/summary'),
   getRevenueWeekly: () => api.get('/orders/stats/revenue-weekly'),

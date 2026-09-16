@@ -164,7 +164,7 @@ export default function RegisterPage() {
   const phoneRegex = /^(03|05|07|08|09)\d{8}$/;
   const nameRegex = /^[a-zA-ZÀ-ỹ\s]+$/;
 
-  const handleOpenOtpModal = (e: React.FormEvent) => {
+  const handleOpenOtpModal = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setSuccess('');
@@ -200,8 +200,28 @@ export default function RegisterPage() {
       return;
     }
 
-    setShowOtpModal(true);
-    setOtpCode('');
+    setLoading(true);
+    try {
+      const checkRes = await fetch('http://localhost:5023/api/auth/check-unique', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fullName: fullName.trim(), email: email.trim(), phone: phone.trim() })
+      });
+      const checkData = await checkRes.json();
+      if (!checkRes.ok) {
+        setError(checkData.message || 'Thông tin đã tồn tại trên hệ thống!');
+        setLoading(false);
+        return;
+      }
+      setShowOtpModal(true);
+      setOtpCode('');
+    } catch {
+      // Nếu có lỗi kết nối, vẫn cho phép mở modal để kiểm tra bước gửi OTP
+      setShowOtpModal(true);
+      setOtpCode('');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleRequestOtp = async () => {
@@ -318,8 +338,8 @@ export default function RegisterPage() {
                   {theme === "light" ? "Tối" : "Sáng"}
                 </button>
                 <div className="lang-switch">
-                  <button className={lang === "vi" ? "active" : (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>)} onClick={() => setLang("vi")}>VI</button>
-                  <button className={lang === "en" ? "active" : (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>)} onClick={() => setLang("en")}>EN</button>
+                  <button className={lang === "vi" ? "active" : ''} onClick={() => setLang("vi")}>VI</button>
+                  <button className={lang === "en" ? "active" : ''} onClick={() => setLang("en")}>EN</button>
                 </div>
               </div>
             </div>
@@ -423,7 +443,7 @@ export default function RegisterPage() {
                       alt="Avatar" 
                       style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--green-700)' }} 
                     />
-                  ) : (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>)}
+                  ) : ''}
                 </span>
                 <div className="header-action-text">
                   <span className="header-action-label">{currentUser ? 'Xin chào,' : 'Tài khoản'}</span>
@@ -534,7 +554,7 @@ export default function RegisterPage() {
 
             {/* Giỏ Hàng */}
             <div 
-              className={`header-cart-btn ${cartBounce ? 'bounce' : (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>)}`}
+              className={`header-cart-btn ${cartBounce ? 'bounce' : ''}`}
               onClick={() => setIsDrawerOpen(true)}
               title="Xem giỏ hàng"
             >

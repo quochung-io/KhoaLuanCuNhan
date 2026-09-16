@@ -561,8 +561,8 @@ export default function LanhLandingPage() {
                   {theme === "light" ? "Tối" : "Sáng"}
                 </button>
                 <div className="lang-switch">
-                  <button className={lang === 'vi' ? 'active' : (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>)} onClick={() => setLang('vi')}>VI</button>
-                  <button className={lang === 'en' ? 'active' : (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>)} onClick={() => setLang('en')}>EN</button>
+                  <button className={lang === 'vi' ? 'active' : ''} onClick={() => setLang('vi')}>VI</button>
+                  <button className={lang === 'en' ? 'active' : ''} onClick={() => setLang('en')}>EN</button>
                 </div>
               </div>
             </div>
@@ -675,7 +675,7 @@ export default function LanhLandingPage() {
                       alt="Avatar" 
                       style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--green-700)' }} 
                     />
-                  ) : (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>)}
+                  ) : ''}
                 </span>
                 <div className="header-action-text">
                   <span className="header-action-label">{currentUser ? 'Xin chào,' : 'Tài khoản'}</span>
@@ -793,7 +793,7 @@ export default function LanhLandingPage() {
 
             {/* Nút Giỏ Hàng nổi bật */}
             <div 
-              className={`header-cart-btn ${cartBounce ? 'bounce' : (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>)}`}
+              className={`header-cart-btn ${cartBounce ? 'bounce' : ''}`}
               onClick={() => setIsDrawerOpen(true)}
               title="Xem giỏ hàng"
             >
@@ -1035,7 +1035,7 @@ export default function LanhLandingPage() {
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" strokeWidth="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM20 14v3M14 20h3M20 20v.01"/></svg>
                       </button>
                     </div>
-                    <div className={`qr-panel ${openQrFor === p.id ? 'show' : (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>)}`} onClick={(e) => e.stopPropagation()}>
+                    <div className={`qr-panel ${openQrFor === p.id ? 'show' : ''}`} onClick={(e) => e.stopPropagation()}>
                       <button className="qr-close" onClick={(e) => { e.stopPropagation(); setOpenQrFor(null); }} aria-label="Đóng">
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg>
                       </button>
@@ -1064,7 +1064,7 @@ export default function LanhLandingPage() {
                     <div className="price-row">
                       <span className="price">{p.price}<span>{p.unit}</span></span>
                       <button 
-                        className={`add-btn ${addedItem === p.id ? 'added' : (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>)}`} 
+                        className={`add-btn ${addedItem === p.id ? 'added' : ''}`} 
                         onClick={(e) => {
                           e.stopPropagation();
                           addToCart(p, 1);
@@ -1422,6 +1422,7 @@ export default function LanhLandingPage() {
                 {currentReviews.map(review => (
                   <div
                     key={review.id}
+                    className="review-card"
                     style={{
                       backgroundColor: 'var(--surface)',
                       borderRadius: '16px',
@@ -1430,7 +1431,8 @@ export default function LanhLandingPage() {
                       boxShadow: '0 2px 10px rgba(0,0,0,0.03)',
                       display: 'flex',
                       flexDirection: 'column',
-                      justifyContent: 'space-between'
+                      justifyContent: 'space-between',
+                      fontFamily: 'var(--font-review)'
                     }}
                   >
                     <div>
@@ -1446,7 +1448,8 @@ export default function LanhLandingPage() {
                               display: 'inline-flex',
                               alignItems: 'center',
                               gap: '5px',
-                              textDecoration: 'none'
+                              textDecoration: 'none',
+                              fontFamily: 'var(--font-review)'
                             }}
                           >
                             <span>🌱</span>
@@ -1461,10 +1464,24 @@ export default function LanhLandingPage() {
                           <span className="fill">{'★'.repeat(Math.min(5, Math.max(1, review.rating || 5)))}</span>
                           <span style={{ color: '#D1D5DB' }}>{'☆'.repeat(5 - Math.min(5, Math.max(1, review.rating || 5)))}</span>
                         </div>
-                        <span style={{ fontSize: '12px', color: 'var(--ink-soft)' }}>{review.date}</span>
+                        <span className="review-meta-text" style={{ fontSize: '12px', color: 'var(--ink-soft)', fontFamily: 'var(--font-review)' }}>
+                          {review.date}
+                        </span>
                       </div>
 
-                      <p style={{ fontSize: '14px', color: 'var(--ink)', lineHeight: '1.6', margin: '0 0 14px 0', fontStyle: 'italic' }}>
+                      <p 
+                        className="review-content-text"
+                        style={{ 
+                          fontSize: '14.5px', 
+                          color: 'var(--ink)', 
+                          lineHeight: '1.68', 
+                          margin: '0 0 14px 0', 
+                          fontStyle: 'normal',
+                          fontFamily: 'var(--font-review)',
+                          fontWeight: 400,
+                          letterSpacing: '-0.01em'
+                        }}
+                      >
                         "{review.text}"
                       </p>
 
@@ -1516,21 +1533,34 @@ export default function LanhLandingPage() {
                           {(review.name || 'K').charAt(0)}
                         </div>
                         <div>
-                          <div style={{ fontSize: '14px', fontWeight: '700', color: 'var(--ink)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <div 
+                            className="review-author-name"
+                            style={{ 
+                              fontSize: '14px', 
+                              fontWeight: '600', 
+                              color: 'var(--ink)', 
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              gap: '6px',
+                              fontFamily: 'var(--font-review)'
+                            }}
+                          >
                             {review.name}
-                            <span style={{
-                              fontSize: '10.5px',
-                              padding: '2px 6px',
-                              borderRadius: '4px',
-                              backgroundColor: review.verified ? 'rgba(46,125,50,0.1)' : 'rgba(100,116,139,0.1)',
-                              color: review.verified ? 'var(--green-700)' : 'var(--ink-soft)',
-                              fontWeight: '600'
-                            }}>
-                              {review.verified ? '✓ Đã mua hàng' : 'Khách quan tâm'}
-                            </span>
+                            {review.verified && (
+                              <span style={{
+                                backgroundColor: '#E8F5E9',
+                                color: '#2E7D32',
+                                fontSize: '11px',
+                                padding: '1px 6px',
+                                borderRadius: '4px',
+                                fontWeight: '600'
+                              }}>
+                                ✓ Đã mua hàng
+                              </span>
+                            )}
                           </div>
-                          <div style={{ fontSize: '11.5px', color: 'var(--ink-soft)' }}>
-                            {review.role || 'Khách hàng LÀNH Farm'}
+                          <div className="review-meta-text" style={{ fontSize: '12px', color: 'var(--ink-soft)', fontFamily: 'var(--font-review)' }}>
+                            {review.role}
                           </div>
                         </div>
                       </div>
@@ -2302,8 +2332,8 @@ export default function LanhLandingPage() {
       )}
 
       {/* Cart Drawer */}
-      <div className={`overlay ${isDrawerOpen ? 'show' : (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>)}`} onClick={() => setIsDrawerOpen(false)}></div>
-      <aside className={`drawer ${isDrawerOpen ? 'show' : (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>)}`} aria-label="Giỏ hàng">
+      <div className={`overlay ${isDrawerOpen ? 'show' : ''}`} onClick={() => setIsDrawerOpen(false)}></div>
+      <aside className={`drawer ${isDrawerOpen ? 'show' : ''}`} aria-label="Giỏ hàng">
         <div className="drawer-head">
           <h3>Giỏ hàng của bạn</h3>
           <button className="icon-btn" onClick={() => setIsDrawerOpen(false)} aria-label="Đóng giỏ hàng">

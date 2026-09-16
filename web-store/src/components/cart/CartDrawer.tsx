@@ -104,10 +104,19 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
               </div>
             ))
           )}
-        </div>
         <div className="drawer-foot">
           <div className="row"><span>Tạm tính</span><span>{toVND(totalCart)}</span></div>
-          <button className="btn btn-accent">Thanh toán nhanh</button>
+          <button 
+            className="btn btn-accent" 
+            disabled={cart.length === 0}
+            onClick={() => {
+              setIsDrawerOpen(false);
+              window.location.href = '/checkout';
+            }}
+            style={{ opacity: cart.length === 0 ? 0.6 : 1, cursor: cart.length === 0 ? 'not-allowed' : 'pointer' }}
+          >
+            Thanh toán ngay
+          </button>
         </div>
       </aside>
     </>

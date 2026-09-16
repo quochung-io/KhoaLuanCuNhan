@@ -39,8 +39,20 @@ const AppContent: React.FC = () => {
   // Check login state
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
+    const token = localStorage.getItem('auth_token') || localStorage.getItem('token');
+    if (storedUser && token) {
+      try {
+        const parsed = JSON.parse(storedUser);
+        const role = (parsed.role || '').toUpperCase();
+        if (role === 'ADMIN' || parsed.roleId === 1) {
+          setUser(parsed);
+        } else {
+          // Tài khoản không phải ADMIN thì đăng xuất
+          handleLogout();
+        }
+      } catch {
+        handleLogout();
+      }
     } else {
       // Nếu chưa đăng nhập và không ở trang login/register, đá về login
       if (location.pathname !== '/login' && location.pathname !== '/register') {
@@ -51,6 +63,8 @@ const AppContent: React.FC = () => {
 
   const handleLogout = () => {
     localStorage.removeItem('user');
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('token');
     setUser(null);
     navigate('/login');
   };

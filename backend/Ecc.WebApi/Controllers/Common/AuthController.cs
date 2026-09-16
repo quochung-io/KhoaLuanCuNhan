@@ -59,8 +59,8 @@ public class AuthController : ControllerBase
 
             if (!isPasswordValid)
             {
-                // Cho phép fallback mật khẩu mặc định '123456', 'admin123', 'Demo@123' cho các tài khoản demo có sẵn
-                if (request.Password == "123456" || request.Password == "admin123" || request.Password == "minhanh123" || request.Password == "Demo@123" || user.PasswordHash == request.Password)
+                // Cho phép fallback nâng cấp hash nếu mật khẩu trong DB đang lưu dạng plain-text
+                if (user.PasswordHash == request.Password)
                 {
                     isPasswordValid = true;
                     // Tự động nâng cấp hash mật khẩu chuẩn BCrypt
@@ -113,35 +113,73 @@ public class AuthController : ControllerBase
                 return BadRequest(new { message = "Thông tin người nhận không hợp lệ!" });
             }
 
+            var input = request.Recipient.Trim();
+
             if (request.Type.ToUpper() == "EMAIL")
             {
-                try
+                var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == input.ToLower());
+                if (existingUser != null)
                 {
-                    var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == request.Recipient.Trim().ToLower());
-                    if (existingUser != null)
-                    {
-                        return BadRequest(new { message = "Email này đã được sử dụng bởi một tài khoản khác!" });
-                    }
+                    return BadRequest(new { message = $"Email '{input}' đã được sử dụng để đăng ký tài khoản! Vui lòng nhập email khác." });
                 }
-                catch (Exception dbEx)
+            }
+            else if (request.Type.ToUpper() == "SMS")
+            {
+                var existingPhone = await _context.Users.FirstOrDefaultAsync(u => u.Phone == input);
+                if (existingPhone != null)
                 {
-                    // Ghi nhận cảnh báo kết nối DB nhưng không để sập endpoint tạo OTP
-                    Console.WriteLine($"[Cảnh báo DB khi kiểm tra email]: {dbEx.Message}");
+                    return BadRequest(new { message = $"Số điện thoại '{input}' đã được sử dụng để đăng ký tài khoản! Vui lòng sử dụng số điện thoại khác." });
                 }
             }
 
-            string otp = await _otpService.GenerateAndSendOtpAsync(request.Recipient.Trim(), request.Type);
+            await _otpService.GenerateAndSendOtpAsync(input, request.Type);
 
             return Ok(new
             {
-                message = $"Đã tạo và gửi mã OTP thành công tới {request.Recipient} qua {request.Type}!",
-                otp = otp
+                message = $"Đã tạo và gửi mã OTP thành công tới {input} qua {request.Type}!"
             });
         }
         catch (Exception ex)
         {
             return StatusCode(500, new { message = $"Lỗi máy chủ khi gửi mã OTP: {ex.Message}" });
         }
+    }
+
+    [HttpPost("check-unique")]
+    public async Task<IActionResult> CheckUnique([FromBody] CheckUniqueRequest request)
+    {
+        var cleanFullName = request.FullName?.Trim();
+        var cleanEmail = request.Email?.Trim().ToLower();
+        var cleanPhone = request.Phone?.Trim();
+
+        if (!string.IsNullOrWhiteSpace(cleanFullName))
+        {
+            var isFullNameTaken = await _context.Users.AnyAsync(u => u.FullName.ToLower() == cleanFullName.ToLower());
+            if (isFullNameTaken)
+            {
+                return BadRequest(new { message = $"Tên người dùng '{cleanFullName}' đã tồn tại trên hệ thống! Vui lòng chọn tên người dùng khác." });
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(cleanEmail))
+        {
+            var isEmailTaken = await _context.Users.AnyAsync(u => u.Email.ToLower() == cleanEmail);
+            if (isEmailTaken)
+            {
+                return BadRequest(new { message = $"Email '{cleanEmail}' đã được đăng ký tài khoản! Vui lòng nhập email khác." });
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(cleanPhone))
+        {
+            var isPhoneTaken = await _context.Users.AnyAsync(u => u.Phone == cleanPhone);
+            if (isPhoneTaken)
+            {
+                return BadRequest(new { message = $"Số điện thoại '{cleanPhone}' đã được đăng ký cho một tài khoản khác! Vui lòng sử dụng số điện thoại khác." });
+            }
+        }
+
+        return Ok(new { message = "Thông tin hợp lệ, chưa tồn tại trên hệ thống." });
     }
 
     [HttpPost("register")]
@@ -154,9 +192,38 @@ public class AuthController : ControllerBase
                 return BadRequest(new { message = "Vui lòng nhập đầy đủ các thông tin bắt buộc!" });
             }
 
+            var cleanFullName = request.FullName.Trim();
+            var cleanEmail = request.Email.Trim().ToLower();
+            var cleanPhone = request.Phone?.Trim();
+
+            // 1. Kiểm tra ràng buộc: Tên người dùng chỉ được tồn tại 1 lần
+            var isFullNameTaken = await _context.Users.AnyAsync(u => u.FullName.ToLower() == cleanFullName.ToLower());
+            if (isFullNameTaken)
+            {
+                return BadRequest(new { message = $"Tên người dùng '{cleanFullName}' đã tồn tại trên hệ thống! Vui lòng chọn tên người dùng khác." });
+            }
+
+            // 2. Kiểm tra ràng buộc: Email chỉ được tồn tại 1 lần
+            var isEmailTaken = await _context.Users.AnyAsync(u => u.Email.ToLower() == cleanEmail);
+            if (isEmailTaken)
+            {
+                return BadRequest(new { message = $"Email '{cleanEmail}' đã được đăng ký tài khoản! Vui lòng nhập email khác." });
+            }
+
+            // 3. Kiểm tra ràng buộc: Số điện thoại chỉ được tồn tại 1 lần
+            if (!string.IsNullOrWhiteSpace(cleanPhone))
+            {
+                var isPhoneTaken = await _context.Users.AnyAsync(u => u.Phone == cleanPhone);
+                if (isPhoneTaken)
+                {
+                    return BadRequest(new { message = $"Số điện thoại '{cleanPhone}' đã được đăng ký cho một tài khoản khác! Vui lòng sử dụng số điện thoại khác." });
+                }
+            }
+
+            // 4. Kiểm tra mã OTP nếu có
             if (!string.IsNullOrWhiteSpace(request.Otp))
             {
-                string verifyKey = request.VerifyMethod?.ToUpper() == "SMS" ? (request.Phone ?? "") : request.Email;
+                string verifyKey = request.VerifyMethod?.ToUpper() == "SMS" ? (cleanPhone ?? "") : cleanEmail;
                 bool isOtpValid = _otpService.VerifyOtp(verifyKey, request.Otp);
                 if (!isOtpValid)
                 {
@@ -164,17 +231,11 @@ public class AuthController : ControllerBase
                 }
             }
 
-            var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == request.Email.Trim().ToLower());
-            if (existingUser != null)
-            {
-                return BadRequest(new { message = "Email này đã được đăng ký tài khoản!" });
-            }
-
             var newUser = new User
             {
-                FullName = request.FullName.Trim(),
-                Email = request.Email.Trim().ToLower(),
-                Phone = request.Phone?.Trim(),
+                FullName = cleanFullName,
+                Email = cleanEmail,
+                Phone = cleanPhone,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
                 RoleId = 3, // CUSTOMER
                 Status = "Active",
@@ -186,6 +247,10 @@ public class AuthController : ControllerBase
             await _context.SaveChangesAsync();
 
             return Ok(new { message = "Đăng ký tài khoản thành công! Vui lòng đăng nhập." });
+        }
+        catch (DbUpdateException)
+        {
+            return BadRequest(new { message = "Thông tin đăng ký (Tên người dùng, Email hoặc Số điện thoại) đã tồn tại trên hệ thống. Vui lòng nhập thông tin khác!" });
         }
         catch (Exception ex)
         {
@@ -209,12 +274,11 @@ public class AuthController : ControllerBase
                 return NotFound(new { message = "Không tìm thấy tài khoản với email này!" });
             }
 
-            string otp = await _otpService.GenerateAndSendOtpAsync(request.Email.Trim(), "EMAIL");
+            await _otpService.GenerateAndSendOtpAsync(request.Email.Trim(), "EMAIL");
 
             return Ok(new
             {
-                message = "Đã gửi mã xác minh OTP về email của bạn!",
-                otp = otp
+                message = "Đã gửi mã xác minh OTP về email của bạn!"
             });
         }
         catch (Exception ex)
@@ -291,3 +355,11 @@ public class ResetPasswordRequest
     public string Otp { get; set; } = string.Empty;
     public string NewPassword { get; set; } = string.Empty;
 }
+
+public class CheckUniqueRequest
+{
+    public string? FullName { get; set; }
+    public string? Email { get; set; }
+    public string? Phone { get; set; }
+}
+
