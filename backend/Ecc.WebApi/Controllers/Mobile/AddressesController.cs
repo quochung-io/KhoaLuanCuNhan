@@ -60,6 +60,25 @@ END";
     public async Task<ActionResult<Address>> CreateAddress(Address address)
     {
         await EnsureAddressTypeColumnExistsAsync();
+
+        if (string.IsNullOrWhiteSpace(address.ReceiverName) || address.ReceiverName.Trim().Length < 2)
+        {
+            return BadRequest(new { message = "Họ và tên người nhận không được để trống và phải từ 2 ký tự." });
+        }
+
+        var cleanPhone = (address.Phone ?? "").Trim().Replace(" ", "").Replace(".", "").Replace("-", "");
+        if (string.IsNullOrWhiteSpace(cleanPhone) || !System.Text.RegularExpressions.Regex.IsMatch(cleanPhone, @"^(0|\+84)[3|5|7|8|9][0-9]{8}$"))
+        {
+            return BadRequest(new { message = "Số điện thoại nhận hàng không hợp lệ (phải là số di động Việt Nam 10 số, đầu số 03, 05, 07, 08, 09)." });
+        }
+        address.Phone = cleanPhone;
+
+        if (string.IsNullOrWhiteSpace(address.Province) || string.IsNullOrWhiteSpace(address.District) || 
+            string.IsNullOrWhiteSpace(address.Ward) || string.IsNullOrWhiteSpace(address.AddressDetail))
+        {
+            return BadRequest(new { message = "Vui lòng nhập đầy đủ thông tin Tỉnh/Thành phố, Quận/Huyện, Phường/Xã và Số nhà/Tên đường." });
+        }
+
         // Chuẩn hóa loại địa chỉ ("Nhà ở" hoặc "Công ty")
         if (string.IsNullOrWhiteSpace(address.AddressType))
         {
@@ -99,6 +118,24 @@ END";
 
         var existing = await _context.Addresses.FindAsync(id);
         if (existing == null) return NotFound();
+
+        if (string.IsNullOrWhiteSpace(address.ReceiverName) || address.ReceiverName.Trim().Length < 2)
+        {
+            return BadRequest(new { message = "Họ và tên người nhận không được để trống và phải từ 2 ký tự." });
+        }
+
+        var cleanPhone = (address.Phone ?? "").Trim().Replace(" ", "").Replace(".", "").Replace("-", "");
+        if (string.IsNullOrWhiteSpace(cleanPhone) || !System.Text.RegularExpressions.Regex.IsMatch(cleanPhone, @"^(0|\+84)[3|5|7|8|9][0-9]{8}$"))
+        {
+            return BadRequest(new { message = "Số điện thoại nhận hàng không hợp lệ (phải là số di động Việt Nam 10 số, đầu số 03, 05, 07, 08, 09)." });
+        }
+        address.Phone = cleanPhone;
+
+        if (string.IsNullOrWhiteSpace(address.Province) || string.IsNullOrWhiteSpace(address.District) || 
+            string.IsNullOrWhiteSpace(address.Ward) || string.IsNullOrWhiteSpace(address.AddressDetail))
+        {
+            return BadRequest(new { message = "Vui lòng nhập đầy đủ thông tin Tỉnh/Thành phố, Quận/Huyện, Phường/Xã và Số nhà/Tên đường." });
+        }
 
         // Nếu địa chỉ này được đặt làm mặc định, hủy mặc định ở các địa chỉ khác
         if (address.IsDefault && !existing.IsDefault)

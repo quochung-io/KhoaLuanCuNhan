@@ -856,22 +856,64 @@ export default function ComboDetailPage() {
                   alignItems: 'center',
                   border: '1px solid var(--line)',
                   borderRadius: '8px',
-                  backgroundColor: '#ffffff'
+                  backgroundColor: '#ffffff',
+                  overflow: 'hidden'
                 }}>
                   <button
                     type="button"
                     onClick={() => setQuantity(prev => Math.max(1, prev - 1))}
-                    style={{ border: 'none', background: 'none', padding: '10px 14px', cursor: 'pointer', fontSize: '16px', fontWeight: 'bold' }}
+                    style={{ border: 'none', background: 'none', padding: '10px 14px', cursor: 'pointer', fontSize: '16px', fontWeight: 'bold', userSelect: 'none' }}
+                    aria-label="Giảm"
+                    title="Giảm 1 (hoặc dùng phím mũi tên Xuống)"
                   >
                     -
                   </button>
-                  <span style={{ minWidth: '32px', textAlign: 'center', fontWeight: '700', fontSize: '14px' }}>
-                    {quantity}
-                  </span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={999}
+                    step={1}
+                    value={quantity}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value, 10);
+                      if (isNaN(val)) {
+                        setQuantity(1);
+                      } else {
+                        setQuantity(Math.max(1, Math.min(999, val)));
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        setQuantity(q => Math.min(999, q + 1));
+                      } else if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        setQuantity(q => Math.max(1, q - 1));
+                      }
+                    }}
+                    onBlur={() => {
+                      if (!quantity || quantity < 1) setQuantity(1);
+                    }}
+                    style={{
+                      width: '46px',
+                      height: '36px',
+                      textAlign: 'center',
+                      fontWeight: 700,
+                      fontSize: '14px',
+                      border: 'none',
+                      background: 'transparent',
+                      outline: 'none',
+                      MozAppearance: 'textfield'
+                    }}
+                    title="Nhập số lượng hoặc dùng phím mũi tên Lên/Xuống trên bàn phím"
+                    aria-label="Số lượng gói combo"
+                  />
                   <button
                     type="button"
                     onClick={() => setQuantity(prev => prev + 1)}
-                    style={{ border: 'none', background: 'none', padding: '10px 14px', cursor: 'pointer', fontSize: '16px', fontWeight: 'bold' }}
+                    style={{ border: 'none', background: 'none', padding: '10px 14px', cursor: 'pointer', fontSize: '16px', fontWeight: 'bold', userSelect: 'none' }}
+                    aria-label="Tăng"
+                    title="Tăng 1 (hoặc dùng phím mũi tên Lên)"
                   >
                     +
                   </button>
@@ -1235,25 +1277,36 @@ export default function ComboDetailPage() {
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                     {reviewsList.map((rev, idx) => (
-                      <div key={idx} style={{
+                      <div key={idx} className="review-item" style={{
                         padding: '18px 20px',
-                        borderRadius: '10px',
+                        borderRadius: '12px',
                         border: '1px solid var(--line)',
-                        backgroundColor: 'var(--bg)'
+                        backgroundColor: 'var(--bg)',
+                        fontFamily: 'var(--font-review)'
                       }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                           <div>
-                            <strong style={{ fontSize: '14px', color: 'var(--ink)' }}>{rev.author}</strong>
-                            <span style={{ fontSize: '12px', color: 'var(--ink-soft)', marginLeft: '8px' }}>({rev.role})</span>
+                            <strong className="review-author-name" style={{ fontSize: '14.5px', color: 'var(--ink)', fontFamily: 'var(--font-review)', fontWeight: 600 }}>{rev.author}</strong>
+                            <span className="review-meta-text" style={{ fontSize: '12px', color: 'var(--ink-soft)', marginLeft: '8px', fontFamily: 'var(--font-review)' }}>({rev.role})</span>
                           </div>
-                          <div style={{ fontSize: '12.5px', color: '#eab308' }}>
+                          <div style={{ fontSize: '13px', color: '#FFB800', letterSpacing: '1px' }}>
                             {'★'.repeat(rev.rating)}
                           </div>
                         </div>
-                        <p style={{ margin: '0 0 6px 0', fontSize: '13.5px', color: 'var(--ink)', lineHeight: '1.5' }}>
+                        <p 
+                          className="review-content-text"
+                          style={{ 
+                            margin: '0 0 8px 0', 
+                            fontSize: '14.5px', 
+                            color: 'var(--ink)', 
+                            lineHeight: '1.65',
+                            fontFamily: 'var(--font-review)',
+                            fontWeight: 400
+                          }}
+                        >
                           "{rev.comment}"
                         </p>
-                        <div style={{ fontSize: '11.5px', color: 'var(--ink-soft)' }}>
+                        <div className="review-meta-text" style={{ fontSize: '12px', color: 'var(--ink-soft)', fontFamily: 'var(--font-review)' }}>
                           Ngày đánh giá: {rev.date} • Đã mua combo định kỳ
                         </div>
                       </div>

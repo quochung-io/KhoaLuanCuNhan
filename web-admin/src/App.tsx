@@ -10,6 +10,7 @@ import {
   PercentageOutlined,
   LogoutOutlined,
   DownOutlined,
+  ThunderboltOutlined,
 } from '@ant-design/icons';
 
 // Import Pages
@@ -19,6 +20,7 @@ import { Products } from './pages/Products';
 import { Orders } from './pages/Orders';
 import { Batches } from './pages/Batches';
 import { PromotionsReviews } from './pages/PromotionsReviews';
+import { RecommendationAnalytics } from './pages/RecommendationAnalytics';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 
@@ -37,8 +39,20 @@ const AppContent: React.FC = () => {
   // Check login state
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
+    const token = localStorage.getItem('auth_token') || localStorage.getItem('token');
+    if (storedUser && token) {
+      try {
+        const parsed = JSON.parse(storedUser);
+        const role = (parsed.role || '').toUpperCase();
+        if (role === 'ADMIN' || parsed.roleId === 1) {
+          setUser(parsed);
+        } else {
+          // Tài khoản không phải ADMIN thì đăng xuất
+          handleLogout();
+        }
+      } catch {
+        handleLogout();
+      }
     } else {
       // Nếu chưa đăng nhập và không ở trang login/register, đá về login
       if (location.pathname !== '/login' && location.pathname !== '/register') {
@@ -49,6 +63,8 @@ const AppContent: React.FC = () => {
 
   const handleLogout = () => {
     localStorage.removeItem('user');
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('token');
     setUser(null);
     navigate('/login');
   };
@@ -94,6 +110,11 @@ const AppContent: React.FC = () => {
       key: '/promotions',
       icon: <PercentageOutlined />,
       label: <Link to="/promotions">Khuyến Mãi & Đánh Giá</Link>,
+    },
+    {
+      key: '/recommendations',
+      icon: <ThunderboltOutlined style={{ color: '#52c41a' }} />,
+      label: <Link to="/recommendations">Gợi Ý AI & Hành Vi</Link>,
     },
   ];
 
@@ -168,6 +189,7 @@ const AppContent: React.FC = () => {
               <Route path="/batches" element={<Batches />} />
               <Route path="/orders" element={<Orders />} />
               <Route path="/promotions" element={<PromotionsReviews />} />
+              <Route path="/recommendations" element={<RecommendationAnalytics />} />
             </Routes>
           </div>
         </Content>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Button, Space, Modal, Form, Select, Tag, message, Card } from 'antd';
+import { Table, Button, Space, Modal, Form, Select, Tag, message, Card, Tooltip } from 'antd';
 import { EditOutlined, EyeOutlined } from '@ant-design/icons';
 import { orderService } from '../services/api';
 
@@ -61,11 +61,36 @@ export const Orders: React.FC = () => {
     fetchOrders();
   }, []);
 
+  const getNextAllowedStatuses = (current?: string) => {
+    switch (current?.toLowerCase()) {
+      case 'pending':
+        return [
+          { value: 'Confirmed', label: 'Confirmed (Xác nhận đơn)' },
+          { value: 'Cancelled', label: 'Cancelled (Hủy đơn hàng)' },
+        ];
+      case 'confirmed':
+        return [
+          { value: 'Shipping', label: 'Shipping (Đang giao hàng)' },
+          { value: 'Cancelled', label: 'Cancelled (Hủy đơn hàng)' },
+        ];
+      case 'shipping':
+        return [
+          { value: 'Completed', label: 'Completed (Giao hàng thành công)' },
+          { value: 'Cancelled', label: 'Cancelled (Giao thất bại / Hủy đơn)' },
+        ];
+      default:
+        return [];
+    }
+  };
+
   const handleOpenEdit = (order: Order) => {
+    const isTerminal = ['completed', 'cancelled'].includes(order.orderStatus?.toLowerCase());
+    if (isTerminal) {
+      message.warning(`Đơn hàng #${order.orderId} đã ở trạng thái kết thúc (${order.orderStatus}), không thể đổi trạng thái.`);
+      return;
+    }
     setSelectedOrder(order);
-    form.setFieldsValue({
-      orderStatus: order.orderStatus,
-    });
+    form.resetFields();
     setIsEditModalOpen(true);
   };
 
@@ -74,17 +99,55 @@ export const Orders: React.FC = () => {
     setIsViewModalOpen(true);
   };
 
+  const executeUpdateStatus = async (orderId: number, status: string) => {
+    try {
+      const res = await orderService.updateStatus(orderId, { orderStatus: status });
+      message.success(res.data?.message || 'Cập nhật trạng thái đơn hàng thành công.');
+      setIsEditModalOpen(false);
+      fetchOrders();
+    } catch (error: any) {
+      message.error(error.response?.data?.message || 'Cập nhật trạng thái thất bại.');
+    }
+  };
+
   const handleSaveStatus = async () => {
     if (!selectedOrder) return;
     try {
       const values = await form.validateFields();
-      const updatedOrder = { ...selectedOrder, orderStatus: values.orderStatus };
-      await orderService.update(selectedOrder.orderId, updatedOrder);
-      message.success('Cập nhật trạng thái đơn hàng thành công.');
-      setIsEditModalOpen(false);
-      fetchOrders();
-    } catch (error) {
-      message.error('Cập nhật trạng thái thất bại.');
+      const newStatus = values.orderStatus;
+
+      // Xác nhận an toàn cho các trạng thái kết thúc (Terminal states)
+      if (newStatus === 'Cancelled') {
+        Modal.confirm({
+          title: 'Xác nhận hủy đơn hàng',
+          content: `Bạn có chắc chắn muốn HỦY đơn hàng #${selectedOrder.orderId}? Thao tác hủy đơn là không thể đảo ngược!`,
+          okText: 'Xác nhận hủy',
+          cancelText: 'Quay lại',
+          okType: 'danger',
+          onOk: async () => {
+            await executeUpdateStatus(selectedOrder.orderId, newStatus);
+          }
+        });
+        return;
+      }
+
+      if (newStatus === 'Completed') {
+        Modal.confirm({
+          title: 'Xác nhận hoàn tất đơn hàng',
+          content: `Xác nhận khách hàng đã nhận hàng và hoàn tất đơn hàng #${selectedOrder.orderId}? Trạng thái thanh toán sẽ tự động chuyển sang Đã thanh toán (Paid).`,
+          okText: 'Xác nhận hoàn tất',
+          cancelText: 'Quay lại',
+          onOk: async () => {
+            await executeUpdateStatus(selectedOrder.orderId, newStatus);
+          }
+        });
+        return;
+      }
+
+      await executeUpdateStatus(selectedOrder.orderId, newStatus);
+    } catch (error: any) {
+      if (error.errorFields) return;
+      message.error(error.response?.data?.message || 'Cập nhật trạng thái thất bại.');
     }
   };
 
@@ -152,12 +215,23 @@ export const Orders: React.FC = () => {
     { 
       title: 'Tác vụ', 
       key: 'actions',
-      render: (_: any, record: Order) => (
-        <Space size="middle">
-          <Button icon={<EyeOutlined />} onClick={() => handleOpenView(record)}>Chi tiết</Button>
-          <Button icon={<EditOutlined />} onClick={() => handleOpenEdit(record)}>Cập nhật</Button>
-        </Space>
-      )
+      render: (_: any, record: Order) => {
+        const isTerminal = ['completed', 'cancelled'].includes(record.orderStatus?.toLowerCase());
+        return (
+          <Space size="middle">
+            <Button icon={<EyeOutlined />} onClick={() => handleOpenView(record)}>Chi tiết</Button>
+            <Tooltip title={isTerminal ? 'Đơn hàng đã kết thúc (Terminal), không thể đổi trạng thái' : 'Cập nhật trạng thái kế tiếp'}>
+              <Button 
+                icon={<EditOutlined />} 
+                disabled={isTerminal}
+                onClick={() => handleOpenEdit(record)}
+              >
+                Cập nhật
+              </Button>
+            </Tooltip>
+          </Space>
+        );
+      }
     }
   ];
 
@@ -175,24 +249,44 @@ export const Orders: React.FC = () => {
 
       {/* Edit Status Modal */}
       <Modal
-        title="Cập Nhật Trạng Thái Đơn Hàng"
+        title={`Cập Nhật Trạng Thái Đơn Hàng #${selectedOrder?.orderId}`}
         open={isEditModalOpen}
         onOk={handleSaveStatus}
         onCancel={() => setIsEditModalOpen(false)}
-        okText="Lưu"
+        okText="Xác nhận lưu"
         cancelText="Hủy"
       >
-        <Form form={form} layout="vertical" style={{ marginTop: 15 }}>
-          <Form.Item name="orderStatus" label="Trạng thái đơn hàng" rules={[{ required: true }]}>
-            <Select placeholder="Chọn trạng thái">
-              <Select.Option value="pending">Pending (Chờ xử lý)</Select.Option>
-              <Select.Option value="confirmed">Confirmed (Đã xác nhận)</Select.Option>
-              <Select.Option value="shipping">Shipping (Đang giao hàng)</Select.Option>
-              <Select.Option value="completed">Completed (Đã hoàn thành)</Select.Option>
-              <Select.Option value="cancelled">Cancelled (Đã hủy)</Select.Option>
-            </Select>
-          </Form.Item>
-        </Form>
+        {selectedOrder && (
+          <div style={{ marginTop: 10 }}>
+            <div style={{ marginBottom: 15, padding: 12, backgroundColor: '#f5f5f5', borderRadius: 6 }}>
+              <div style={{ marginBottom: 4 }}>
+                <strong>Trạng thái hiện tại: </strong>
+                <Tag color={getStatusTagColor(selectedOrder.orderStatus)}>
+                  {(selectedOrder.orderStatus || 'PENDING').toUpperCase()}
+                </Tag>
+              </div>
+              <div style={{ fontSize: 12, color: '#666' }}>
+                * Hệ thống áp dụng quy chuẩn State Machine: Chỉ cho phép chuyển tiếp sang các trạng thái nghiệp vụ hợp lệ.
+              </div>
+            </div>
+
+            <Form form={form} layout="vertical">
+              <Form.Item 
+                name="orderStatus" 
+                label="Trạng thái tiếp theo" 
+                rules={[{ required: true, message: 'Vui lòng chọn trạng thái tiếp theo!' }]}
+              >
+                <Select placeholder="Chọn trạng thái hợp lệ tiếp theo">
+                  {getNextAllowedStatuses(selectedOrder.orderStatus).map((st) => (
+                    <Select.Option key={st.value} value={st.value}>
+                      {st.label}
+                    </Select.Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </Form>
+          </div>
+        )}
       </Modal>
 
       {/* View Details Modal */}

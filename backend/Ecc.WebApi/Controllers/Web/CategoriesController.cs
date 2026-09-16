@@ -61,10 +61,18 @@ public class CategoriesController : ControllerBase
     public async Task<IActionResult> DeleteCategory(int id)
     {
         var category = await _context.Categories.FindAsync(id);
-        if (category == null) return NotFound();
+        if (category == null) return NotFound(new { message = "Không tìm thấy danh mục cần xóa." });
+
+        int productCount = await _context.Products.CountAsync(p => p.CategoryId == id);
+        if (productCount > 0)
+        {
+            return BadRequest(new { 
+                message = $"Không thể xóa danh mục '{category.CategoryName}' vì hiện có {productCount} sản phẩm nông sản trực thuộc danh mục này. Vui lòng chuyển danh mục hoặc xóa các sản phẩm đó trước!" 
+            });
+        }
 
         _context.Categories.Remove(category);
         await _context.SaveChangesAsync();
-        return NoContent();
+        return Ok(new { message = $"Đã xóa danh mục '{category.CategoryName}' thành công!" });
     }
 }

@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { Form, Input, Button, Card, message } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import { useNavigate, Link } from 'react-router-dom';
@@ -28,6 +28,7 @@ export const Login: React.FC = () => {
       message.success(`Chào mừng Quản trị viên ${user.fullName || user.email}!`);
       localStorage.setItem('user', JSON.stringify(user));
       localStorage.setItem('auth_token', res.data.token);
+      localStorage.setItem('token', res.data.token);
 
       navigate('/');
     } catch (error: any) {

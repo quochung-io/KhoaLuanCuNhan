@@ -608,8 +608,8 @@ export default function ProfilePage() {
                   {theme === "light" ? "Tối" : "Sáng"}
                 </button>
                 <div className="lang-switch">
-                  <button className={lang === "vi" ? "active" : (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>)} onClick={() => setLang("vi")}>VI</button>
-                  <button className={lang === "en" ? "active" : (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>)} onClick={() => setLang("en")}>EN</button>
+                  <button className={lang === "vi" ? "active" : ''} onClick={() => setLang("vi")}>VI</button>
+                  <button className={lang === "en" ? "active" : ''} onClick={() => setLang("en")}>EN</button>
                 </div>
               </div>
             </div>
@@ -720,7 +720,7 @@ export default function ProfilePage() {
                       alt="Avatar" 
                       style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--green-700)' }} 
                     />
-                  ) : (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>)}
+                  ) : ''}
                 </span>
                 <div className="header-action-text">
                   <span className="header-action-label">Xin chào,</span>
@@ -806,7 +806,7 @@ export default function ProfilePage() {
 
             {/* Nút Giỏ Hàng nổi bật */}
             <div 
-              className={`header-cart-btn ${cartBounce ? "bounce" : (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>)}`}
+              className={`header-cart-btn ${cartBounce ? "bounce" : ''}`}
               onClick={() => setIsDrawerOpen(true)}
               title="Xem giỏ hàng"
             >
@@ -1679,7 +1679,7 @@ export default function ProfilePage() {
                           pointHistory.map((item, idx) => (
                             <tr key={item.transactionId || idx} style={{ borderBottom: '1px solid var(--line)' }}>
                               <td style={{ padding: '12px', color: 'var(--ink-soft)' }}>
-                                {item.createdAt ? new Date(item.createdAt).toLocaleString('vi-VN') : (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>)}
+                                {item.createdAt ? new Date(item.createdAt).toLocaleString('vi-VN') : ''}
                               </td>
                               <td style={{ padding: '12px', color: 'var(--ink)', fontWeight: '500' }}>
                                 {item.description}
@@ -2308,8 +2308,8 @@ export default function ProfilePage() {
       </footer>
 
       {/* ── 4. CART DRAWER ĐỒNG BỘ ── */}
-      <div className={`overlay ${isDrawerOpen ? 'show' : (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>)}`} onClick={() => setIsDrawerOpen(false)}></div>
-      <aside className={`drawer ${isDrawerOpen ? 'show' : (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>)}`} aria-label="Giỏ hàng">
+      <div className={`overlay ${isDrawerOpen ? 'show' : ''}`} onClick={() => setIsDrawerOpen(false)}></div>
+      <aside className={`drawer ${isDrawerOpen ? 'show' : ''}`} aria-label="Giỏ hàng">
         <div className="drawer-head">
           <h3>Giỏ hàng của bạn</h3>
           <button className="icon-btn" onClick={() => setIsDrawerOpen(false)} aria-label="Đóng giỏ hàng">

@@ -87,7 +87,7 @@ const subPlans: Record<string, Array<{
       name: 'Combo Gia Đình Nhỏ (Tháng)',
       desc: 'Giao 4 đợt / tháng — Tươi mới mỗi tuần',
       price: '680.000₫',
-      rawPrice: 68000,
+      rawPrice: 680000,
       badge: 'Tiết kiệm 10%',
       imageUrl: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600&auto=format&fit=crop&q=80',
       features: [
@@ -276,8 +276,8 @@ export default function CombosPage() {
                   {theme === "light" ? "Tối" : "Sáng"}
                 </button>
                 <div className="lang-switch">
-                  <button className={lang === 'vi' ? 'active' : (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>)} onClick={() => setLang('vi')}>VI</button>
-                  <button className={lang === 'en' ? 'active' : (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>)} onClick={() => setLang('en')}>EN</button>
+                  <button className={lang === 'vi' ? 'active' : ''} onClick={() => setLang('vi')}>VI</button>
+                  <button className={lang === 'en' ? 'active' : ''} onClick={() => setLang('en')}>EN</button>
                 </div>
               </div>
             </div>
@@ -332,7 +332,7 @@ export default function CombosPage() {
                       alt="Avatar" 
                       style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--green-700)' }} 
                     />
-                  ) : (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>)}
+                  ) : ''}
                 </span>
                 <div className="header-action-text">
                   <span className="header-action-label">{currentUser ? 'Xin chào,' : 'Tài khoản'}</span>
@@ -450,7 +450,7 @@ export default function CombosPage() {
 
             {/* Nút Giỏ Hàng nổi bật */}
             <div 
-              className={`header-cart-btn ${cartBounce ? 'bounce' : (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>)}`}
+              className={`header-cart-btn ${cartBounce ? 'bounce' : ''}`}
               onClick={() => setIsDrawerOpen(true)}
               title="Xem giỏ hàng"
             >
@@ -810,8 +810,8 @@ export default function CombosPage() {
       </footer>
 
       {/* Cart Drawer */}
-      <div className={`overlay ${isDrawerOpen ? 'show' : (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>)}`} onClick={() => setIsDrawerOpen(false)}></div>
-      <aside className={`drawer ${isDrawerOpen ? 'show' : (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>)}`} aria-label="Giỏ hàng">
+      <div className={`overlay ${isDrawerOpen ? 'show' : ''}`} onClick={() => setIsDrawerOpen(false)}></div>
+      <aside className={`drawer ${isDrawerOpen ? 'show' : ''}`} aria-label="Giỏ hàng">
         <div className="drawer-head">
           <h3>Giỏ hàng của bạn</h3>
           <button className="icon-btn" onClick={() => setIsDrawerOpen(false)} aria-label="Đóng giỏ hàng">

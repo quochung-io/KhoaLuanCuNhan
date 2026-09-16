@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Table, Button, Space, Modal, Form, Input, Select, message, Card, Tabs, InputNumber, Image, Tag, Tooltip, Row, Col } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, PictureOutlined, StarOutlined, ThunderboltOutlined, SaveOutlined } from '@ant-design/icons';
-import { productService, categoryService, productImageService } from '../services/api';
+import { productService, categoryService, productImageService, userService } from '../services/api';
 
 const SAMPLE_SUB_IMAGES: Record<string, string[]> = {
   'Trái cây': [
@@ -62,6 +62,7 @@ interface Product {
 export const Products: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [suppliers, setSuppliers] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   
   // Modals
@@ -84,11 +85,16 @@ export const Products: React.FC = () => {
   const loadData = async () => {
     setLoading(true);
     try {
-      const catRes = await categoryService.getAll();
-      setCategories(catRes.data);
-
-      const prodRes = await productService.getAll();
-      setProducts(prodRes.data);
+      const [catRes, prodRes, userRes] = await Promise.all([
+        categoryService.getAll(),
+        productService.getAll(),
+        userService.getAll().catch(() => ({ data: [] }))
+      ]);
+      setCategories(catRes.data || []);
+      setProducts(prodRes.data || []);
+      
+      const supList = (userRes.data || []).filter((u: any) => u.roleId === 2);
+      setSuppliers(supList.length > 0 ? supList : [{ userId: 2, fullName: 'HTX Nông Nghiệp Lành' }]);
     } catch (error) {
       message.error('Không thể tải dữ liệu sản phẩm/danh mục.');
     } finally {
@@ -215,11 +221,11 @@ export const Products: React.FC = () => {
       okType: 'danger',
       onOk: async () => {
         try {
-          await categoryService.delete(id);
-          message.success('Xóa danh mục thành công.');
+          const res = await categoryService.delete(id);
+          message.success(res.data?.message || 'Xóa danh mục thành công.');
           loadData();
-        } catch (error) {
-          message.error('Xóa danh mục thất bại.');
+        } catch (error: any) {
+          message.error(error.response?.data?.message || 'Xóa danh mục thất bại do có sản phẩm trực thuộc.');
         }
       }
     });
@@ -243,8 +249,8 @@ export const Products: React.FC = () => {
       }
       setIsCatModalOpen(false);
       loadData();
-    } catch (error) {
-      message.error('Lưu danh mục thất bại.'); 
+    } catch (error: any) {
+      message.error(error.response?.data?.message || 'Lưu danh mục thất bại.'); 
     }
   };
 
@@ -252,6 +258,9 @@ export const Products: React.FC = () => {
   const handleOpenAddProd = () => {
     setEditingProd(null);
     prodForm.resetFields();
+    if (suppliers.length > 0) {
+      prodForm.setFieldsValue({ supplierId: suppliers[0].userId });
+    }
     setIsProdModalOpen(true);
   };
 
@@ -402,8 +411,14 @@ export const Products: React.FC = () => {
               ))}
             </Select>
           </Form.Item>
-          <Form.Item name="supplierId" label="Mã nhà cung cấp (Supplier ID)" rules={[{ required: true, message: 'Nhập Supplier ID' }]}>
-            <InputNumber style={{ width: '100%' }} placeholder="Ví dụ: 2" />
+          <Form.Item name="supplierId" label="Nhà cung cấp / Hợp tác xã (Supplier)" rules={[{ required: true, message: 'Vui lòng chọn nhà cung cấp / HTX sở hữu' }]}>
+            <Select placeholder="Chọn Nhà cung cấp / HTX">
+              {suppliers.map(s => (
+                <Select.Option key={s.userId} value={s.userId}>
+                  {s.fullName} ({s.email || `ID: ${s.userId}`})
+                </Select.Option>
+              ))}
+            </Select>
           </Form.Item>
           <Form.Item name="price" label="Giá bán" rules={[{ required: true, message: 'Nhập giá bán' }]}>
             <InputNumber min={0} addonAfter="đ" style={{ width: '100%' }} />

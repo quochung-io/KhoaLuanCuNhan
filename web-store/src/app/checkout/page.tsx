@@ -229,7 +229,35 @@ export default function CheckoutPage() {
 
     const storedCart = localStorage.getItem('cart');
     if (storedCart) {
-      setCart(JSON.parse(storedCart));
+      try {
+        const parsedCart = JSON.parse(storedCart);
+        setCart(parsedCart);
+
+        // Đồng bộ giá mới nhất từ Server để tránh giá cũ (Stale Cart Data)
+        fetch('http://localhost:5023/api/products')
+          .then(res => res.json())
+          .then((dbProducts: any[]) => {
+            if (Array.isArray(dbProducts) && dbProducts.length > 0) {
+              let changed = false;
+              const synced = parsedCart.map((item: any) => {
+                const live = dbProducts.find((p: any) => p.productId === item.product.id);
+                if (live && live.price) {
+                  const livePriceStr = Number(live.price).toLocaleString('vi-VN') + ' ₫';
+                  if (livePriceStr !== item.product.price) {
+                    changed = true;
+                    return { ...item, product: { ...item.product, price: livePriceStr } };
+                  }
+                }
+                return item;
+              });
+              if (changed) {
+                setCart(synced);
+                localStorage.setItem('cart', JSON.stringify(synced));
+              }
+            }
+          })
+          .catch(() => {});
+      } catch {}
     }
 
     fetchAddresses(parsedUser.userId);
@@ -260,6 +288,18 @@ export default function CheckoutPage() {
     const updated = cart.map(item => {
       if (item.product.id === id) {
         return { ...item, qty: Math.max(1, item.qty + delta) };
+      }
+      return item;
+    });
+    setCart(updated);
+    localStorage.setItem('cart', JSON.stringify(updated));
+  };
+
+  const setCartItemQty = (id: number, exactQty: number) => {
+    const safe = Math.max(1, Math.min(999, isNaN(exactQty) ? 1 : exactQty));
+    const updated = cart.map(item => {
+      if (item.product.id === id) {
+        return { ...item, qty: safe };
       }
       return item;
     });
@@ -430,8 +470,20 @@ export default function CheckoutPage() {
     e.preventDefault();
     setAddressModalError('');
 
-    if (!newReceiverName.trim() || !newPhone.trim() || !newDistrict.trim() || !newWard.trim() || !newAddressDetail.trim()) {
-      setAddressModalError('Vui lòng điền đầy đủ các thông tin địa chỉ.');
+    if (!newReceiverName.trim() || !newPhone.trim() || !newProvince.trim() || !newDistrict.trim() || !newWard.trim() || !newAddressDetail.trim()) {
+      setAddressModalError('Vui lòng điền đầy đủ tất cả các thông tin địa chỉ.');
+      return;
+    }
+
+    if (newReceiverName.trim().length < 2) {
+      setAddressModalError('Họ và tên người nhận phải từ 2 ký tự.');
+      return;
+    }
+
+    const cleanPhone = newPhone.trim().replace(/[\s.-]/g, '');
+    const phoneRegex = /^(0|\+84)[3|5|7|8|9][0-9]{8}$/;
+    if (!phoneRegex.test(cleanPhone)) {
+      setAddressModalError('Số điện thoại nhận hàng không hợp lệ (phải đủ 10 số, đầu số 03, 05, 07, 08, 09).');
       return;
     }
 
@@ -440,7 +492,7 @@ export default function CheckoutPage() {
       const payload = {
         userId: currentUser.userId,
         receiverName: newReceiverName.trim(),
-        phone: newPhone.trim(),
+        phone: cleanPhone,
         province: newProvince.trim(),
         district: newDistrict.trim(),
         ward: newWard.trim(),
@@ -456,8 +508,13 @@ export default function CheckoutPage() {
       });
 
       if (!res.ok) {
-        const errText = await res.text();
-        throw new Error(errText || 'Không thể lưu địa chỉ mới.');
+        const rawErr = await res.text();
+        let displayMsg = rawErr;
+        try {
+          const parsed = JSON.parse(rawErr);
+          if (parsed.message) displayMsg = parsed.message;
+        } catch {}
+        throw new Error(displayMsg || 'Không thể lưu địa chỉ mới.');
       }
 
       const created: CustomerAddress = await res.json();
@@ -508,6 +565,7 @@ export default function CheckoutPage() {
         customerId: currentUser.userId,
         subtotal: subtotal,
         discountAmount: discountAmount,
+        voucherCode: selectedVoucher ? selectedVoucher.code : null,
         shippingFee: shippingFee,
         paymentMethod: paymentMethod,
         addressId: currentSelected.addressId,
@@ -521,8 +579,14 @@ export default function CheckoutPage() {
       });
 
       if (!res.ok) {
-        const errText = await res.text();
-        throw new Error(errText || 'Có lỗi xảy ra khi tạo đơn hàng.');
+        const rawErr = await res.text();
+        let displayMsg = rawErr;
+        try {
+          const parsed = JSON.parse(rawErr);
+          if (parsed.message) displayMsg = parsed.message;
+          else if (parsed.title) displayMsg = parsed.title;
+        } catch {}
+        throw new Error(displayMsg || 'Có lỗi xảy ra khi tạo đơn hàng.');
       }
 
       const orderData = await res.json();
@@ -568,8 +632,8 @@ export default function CheckoutPage() {
                   {theme === "light" ? "Tối" : "Sáng"}
                 </button>
                 <div className="lang-switch">
-                  <button className={lang === 'vi' ? 'active' : (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>)} onClick={() => setLang('vi')}>VI</button>
-                  <button className={lang === 'en' ? 'active' : (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>)} onClick={() => setLang('en')}>EN</button>
+                  <button className={lang === 'vi' ? 'active' : ''} onClick={() => setLang('vi')}>VI</button>
+                  <button className={lang === 'en' ? 'active' : ''} onClick={() => setLang('en')}>EN</button>
                 </div>
               </div>
             </div>
@@ -622,7 +686,7 @@ export default function CheckoutPage() {
                       alt="Avatar" 
                       style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--green-700)' }} 
                     />
-                  ) : (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>)}
+                  ) : ''}
                 </span>
                 <div className="header-action-text">
                   <span className="header-action-label">{currentUser ? 'Xin chào,' : 'Tài khoản'}</span>
@@ -733,7 +797,7 @@ export default function CheckoutPage() {
 
             {/* Giỏ Hàng */}
             <div 
-              className={`header-cart-btn ${cartBounce ? 'bounce' : (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>)}`}
+              className={`header-cart-btn ${cartBounce ? 'bounce' : ''}`}
               onClick={() => setIsDrawerOpen(true)}
               title="Xem giỏ hàng"
             >
@@ -1086,15 +1150,54 @@ export default function CheckoutPage() {
                         <button 
                           type="button"
                           onClick={() => updateCartQty(item.product.id, -1)}
-                          style={{ border: 'none', background: 'none', padding: '3px 7px', cursor: 'pointer', fontSize: '13px', color: '#334155' }}
+                          style={{ border: 'none', background: 'none', padding: '3px 7px', cursor: 'pointer', fontSize: '13px', color: '#334155', userSelect: 'none' }}
+                          aria-label="Giảm 1"
+                          title="Giảm 1 (hoặc dùng phím mũi tên Xuống)"
                         >-</button>
-                        <span style={{ padding: '0 6px', fontSize: '12.5px', fontWeight: '600', minWidth: '16px', textAlign: 'center', color: '#0f172a' }}>
-                          {item.qty}
-                        </span>
+                        <input
+                          type="number"
+                          min={1}
+                          max={999}
+                          step={1}
+                          value={item.qty}
+                          onChange={(e) => {
+                            const val = parseInt(e.target.value, 10);
+                            setCartItemQty(item.product.id, isNaN(val) ? 1 : Math.max(1, Math.min(999, val)));
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'ArrowUp') {
+                              e.preventDefault();
+                              setCartItemQty(item.product.id, Math.min(999, item.qty + 1));
+                            } else if (e.key === 'ArrowDown') {
+                              e.preventDefault();
+                              setCartItemQty(item.product.id, Math.max(1, item.qty - 1));
+                            }
+                          }}
+                          onBlur={() => {
+                            if (!item.qty || item.qty < 1) setCartItemQty(item.product.id, 1);
+                          }}
+                          style={{
+                            width: '36px',
+                            height: '24px',
+                            textAlign: 'center',
+                            fontSize: '12.5px',
+                            fontWeight: '700',
+                            color: '#0f172a',
+                            border: 'none',
+                            background: 'transparent',
+                            outline: 'none',
+                            padding: 0,
+                            MozAppearance: 'textfield'
+                          }}
+                          title="Nhập số lượng hoặc dùng phím mũi tên Lên/Xuống trên bàn phím"
+                          aria-label="Số lượng sản phẩm"
+                        />
                         <button 
                           type="button"
                           onClick={() => updateCartQty(item.product.id, 1)}
-                          style={{ border: 'none', background: 'none', padding: '3px 7px', cursor: 'pointer', fontSize: '13px', color: '#334155' }}
+                          style={{ border: 'none', background: 'none', padding: '3px 7px', cursor: 'pointer', fontSize: '13px', color: '#334155', userSelect: 'none' }}
+                          aria-label="Tăng 1"
+                          title="Tăng 1 (hoặc dùng phím mũi tên Lên)"
                         >+</button>
                       </div>
                       {/* Nút xóa */}
@@ -2003,10 +2106,47 @@ export default function CheckoutPage() {
                       <div className="info" style={{ flex: 1 }}>
                         <b style={{ display: 'block', fontSize: '14px', color: 'var(--ink)' }}>{item.product.name}</b>
                         <span style={{ fontSize: '12px', color: 'var(--ink-soft)' }}>{item.product.price} {item.product.unit}</span>
-                        <div className="qty-ctrl" style={{ display: 'flex', alignItems: 'center', marginTop: '6px', border: '1px solid var(--line)', borderRadius: '4px', width: 'fit-content' }}>
-                          <button onClick={() => updateCartQty(item.product.id, -1)} style={{ border: 'none', background: 'none', padding: '2px 8px', cursor: 'pointer' }}>-</button>
-                          <span style={{ fontSize: '13px', padding: '0 6px', fontWeight: 'bold' }}>{item.qty}</span>
-                          <button onClick={() => updateCartQty(item.product.id, 1)} style={{ border: 'none', background: 'none', padding: '2px 8px', cursor: 'pointer' }}>+</button>
+                        <div className="qty-ctrl" style={{ display: 'flex', alignItems: 'center', marginTop: '6px', border: '1px solid var(--line)', borderRadius: '4px', width: 'fit-content', overflow: 'hidden' }}>
+                          <button onClick={() => updateCartQty(item.product.id, -1)} style={{ border: 'none', background: 'none', padding: '2px 8px', cursor: 'pointer', userSelect: 'none' }} aria-label="Giảm 1">-</button>
+                          <input
+                            type="number"
+                            min={1}
+                            max={999}
+                            step={1}
+                            value={item.qty}
+                            onChange={(e) => {
+                              const val = parseInt(e.target.value, 10);
+                              setCartItemQty(item.product.id, isNaN(val) ? 1 : Math.max(1, Math.min(999, val)));
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'ArrowUp') {
+                                e.preventDefault();
+                                setCartItemQty(item.product.id, Math.min(999, item.qty + 1));
+                              } else if (e.key === 'ArrowDown') {
+                                e.preventDefault();
+                                setCartItemQty(item.product.id, Math.max(1, item.qty - 1));
+                              }
+                            }}
+                            onBlur={() => {
+                              if (!item.qty || item.qty < 1) setCartItemQty(item.product.id, 1);
+                            }}
+                            style={{
+                              width: '36px',
+                              height: '24px',
+                              textAlign: 'center',
+                              fontSize: '13px',
+                              fontWeight: 'bold',
+                              color: 'var(--ink)',
+                              border: 'none',
+                              background: 'transparent',
+                              outline: 'none',
+                              padding: 0,
+                              MozAppearance: 'textfield'
+                            }}
+                            title="Nhập số lượng hoặc dùng phím mũi tên Lên/Xuống trên bàn phím"
+                            aria-label="Số lượng sản phẩm"
+                          />
+                          <button onClick={() => updateCartQty(item.product.id, 1)} style={{ border: 'none', background: 'none', padding: '2px 8px', cursor: 'pointer', userSelect: 'none' }} aria-label="Tăng 1">+</button>
                         </div>
                       </div>
                       <button className="remove-btn" onClick={() => removeFromCart(item.product.id)} aria-label="Xóa" style={{ cursor: 'pointer', border: 'none', background: 'none', color: '#e53e3e' }}>

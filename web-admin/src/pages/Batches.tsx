@@ -98,6 +98,11 @@ export const Batches: React.FC = () => {
   const handleSave = async () => {
     try {
       const values = await form.validateFields();
+      if (values.expiryDate.isBefore(values.harvestDate) || values.expiryDate.isSame(values.harvestDate, 'day')) {
+        message.error('Hạn sử dụng phải sau ngày thu hoạch ít nhất 1 ngày!');
+        return;
+      }
+
       const payload = {
         ...values,
         harvestDate: values.harvestDate.toISOString(),
@@ -113,8 +118,9 @@ export const Batches: React.FC = () => {
       }
       setIsModalOpen(false);
       loadData();
-    } catch (error) {
-      message.error('Lưu lô hàng thất bại.');
+    } catch (error: any) {
+      if (error.errorFields) return;
+      message.error(error.response?.data?.message || 'Lưu lô hàng thất bại.');
     }
   };
 
@@ -220,12 +226,36 @@ export const Batches: React.FC = () => {
           <Row gutter={8}>
             <Col span={12}>
               <Form.Item name="harvestDate" label="Ngày thu hoạch" rules={[{ required: true, message: 'Chọn ngày thu hoạch' }]}>
-                <DatePicker style={{ width: '100%' }} />
+                <DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" placeholder="Chọn ngày" />
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item name="expiryDate" label="Hạn sử dụng" rules={[{ required: true, message: 'Chọn hạn sử dụng' }]}>
-                <DatePicker style={{ width: '100%' }} />
+              <Form.Item 
+                name="expiryDate" 
+                label="Hạn sử dụng" 
+                dependencies={['harvestDate']}
+                rules={[
+                  { required: true, message: 'Chọn hạn sử dụng' },
+                  ({ getFieldValue }) => ({
+                    validator(_, value) {
+                      const harvest = getFieldValue('harvestDate');
+                      if (!value || !harvest || value.isAfter(harvest, 'day')) {
+                        return Promise.resolve();
+                      }
+                      return Promise.reject(new Error('Hạn sử dụng phải sau ngày thu hoạch!'));
+                    },
+                  }),
+                ]}
+              >
+                <DatePicker 
+                  style={{ width: '100%' }} 
+                  format="DD/MM/YYYY" 
+                  placeholder="Chọn hạn dùng"
+                  disabledDate={(current) => {
+                    const harvest = form.getFieldValue('harvestDate');
+                    return harvest ? current && current <= harvest.startOf('day') : false;
+                  }}
+                />
               </Form.Item>
             </Col>
           </Row>

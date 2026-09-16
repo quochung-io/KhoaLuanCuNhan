@@ -27,4 +27,10 @@ public class Product
     
     [JsonIgnore]
     public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
+
+    [JsonIgnore]
+    public ICollection<Review> Reviews { get; set; } = new List<Review>();
+
+    public double? AverageRating { get; set; }
+    public int? ReviewsCount { get; set; }
 }
