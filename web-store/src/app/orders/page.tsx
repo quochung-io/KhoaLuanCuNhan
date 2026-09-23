@@ -1979,6 +1979,29 @@ export default function CustomerOrdersPage() {
 
                 <button
                   type="button"
+                  onClick={() => {
+                    handleReorder(selectedOrderDetails);
+                    setSelectedOrderDetails(null);
+                  }}
+                  style={{
+                    padding: '10px 18px',
+                    backgroundColor: 'var(--green-700)',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '6px',
+                    fontSize: '13.5px',
+                    fontWeight: '700',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  Mua lại đơn này
+                </button>
+
+                <button
+                  type="button"
                   onClick={() => setSelectedOrderDetails(null)}
                   style={{
                     padding: '10px 20px',

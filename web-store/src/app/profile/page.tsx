@@ -30,10 +30,16 @@ type CartItem = {
     id: number;
     name: string;
     price: string;
+    rawPrice?: number;
     unit: string;
     category?: string;
     imageUrl?: string;
     icon?: string;
+    cert?: string;
+    region?: string;
+    rating?: number;
+    reviews?: number;
+    lot?: string;
   };
   qty: number;
 };
@@ -59,6 +65,16 @@ export default function ProfilePage() {
   const [orders, setOrders] = useState<any[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [orderFilterStatus, setOrderFilterStatus] = useState<string>('all');
+  const [searchOrderQuery, setSearchOrderQuery] = useState('');
+  const [selectedOrderDetails, setSelectedOrderDetails] = useState<any | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => {
+      setToast(null);
+    }, 4000);
+  };
 
   // Form Thông tin cá nhân
   const [fullName, setFullName] = useState('');
@@ -234,6 +250,184 @@ export default function ProfilePage() {
       console.error('Lỗi lấy danh sách đơn hàng:', err);
     } finally {
       setOrdersLoading(false);
+    }
+  };
+
+  // Mua lại các sản phẩm trong đơn hàng
+  const handleReorder = (order: any) => {
+    if (!order.orderItems || order.orderItems.length === 0) return;
+    
+    let currentCart: CartItem[] = [];
+    const stored = localStorage.getItem('cart');
+    if (stored) {
+      try { currentCart = JSON.parse(stored); } catch {}
+    }
+
+    order.orderItems.forEach((item: any) => {
+      const existing = currentCart.find(c => c.product.id === item.productId);
+      if (existing) {
+        existing.qty += item.quantity;
+      } else {
+        currentCart.push({
+          product: {
+            id: item.productId,
+            name: item.product?.productName || 'Nông sản LÀNH',
+            price: item.unitPrice ? (item.unitPrice.toLocaleString('vi-VN') + '₫') : '0₫',
+            rawPrice: item.unitPrice,
+            unit: ' / ' + (item.product?.unit || 'kg'),
+            category: item.product?.category?.categoryName || 'Nông sản',
+            cert: 'VietGAP',
+            region: 'Đà Lạt',
+            rating: 5,
+            reviews: 10,
+            icon: 'leaf',
+            lot: item.lotCode || ('LOT#VN-REC-' + item.productId),
+            imageUrl: item.product?.productImages && item.product.productImages.length > 0 ? item.product.productImages[0].imageUrl : undefined
+          },
+          qty: item.quantity
+        });
+      }
+    });
+
+    setCart([...currentCart]);
+    localStorage.setItem('cart', JSON.stringify(currentCart));
+    setIsDrawerOpen(true);
+    showToast(`Đã thêm ${order.orderItems.length} sản phẩm từ đơn #${order.orderCode} vào giỏ hàng!`, 'success');
+  };
+
+  // In / Tải hóa đơn PDF chuẩn A4
+  const printOrderToPDF = (order: any) => {
+    if (!order) return;
+    let orderDate = new Date();
+    if (order.createdAt) {
+      const d = new Date(order.createdAt);
+      if (!isNaN(d.getTime())) orderDate = d;
+    }
+    const formattedDate = orderDate.toLocaleDateString('vi-VN') + ' ' + orderDate.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+
+    let payMethodText = 'Thanh toán khi nhận hàng (COD)';
+    if (order.paymentMethod === 'MOMO') payMethodText = 'Ví điện tử MoMo';
+    else if (order.paymentMethod === 'BANK') payMethodText = 'Chuyển khoản Ngân hàng (VietQR)';
+
+    const fullAddress = [order.address?.addressDetail, order.address?.ward, order.address?.district, order.address?.province].filter(Boolean).join(', ');
+    const discount = (order.subtotal || 0) + (order.shippingFee || 0) - (order.totalAmount || 0);
+
+    const printContent = `<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Hoa_Don_${order.orderCode} - LANH Farm</title>
+  <style>
+    @page { size: A4; margin: 15mm 20mm; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #1f2937; background: #ffffff; padding: 24px; font-size: 13px; line-height: 1.5; }
+    .invoice-card { max-width: 820px; margin: 0 auto; border: 1px solid #e5e7eb; padding: 36px 40px; border-radius: 8px; }
+    .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2.5px solid #15803d; padding-bottom: 20px; margin-bottom: 24px; }
+    .brand-name { font-size: 24px; font-weight: 800; color: #15803d; letter-spacing: 0.5px; }
+    .brand-sub { font-size: 11px; font-weight: 600; color: #4b5563; margin-top: 2px; }
+    .company-info { font-size: 12px; color: #4b5563; line-height: 1.6; }
+    .invoice-title { text-align: right; }
+    .invoice-title h1 { font-size: 22px; font-weight: 800; color: #111827; margin-bottom: 4px; }
+    .order-meta { font-size: 12.5px; color: #4b5563; }
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+    .info-box { background: #f9fafb; border: 1px solid #e5e7eb; padding: 14px 16px; border-radius: 6px; }
+    .box-title { font-weight: 700; font-size: 11px; text-transform: uppercase; color: #6b7280; margin-bottom: 8px; }
+    .table-container { margin-bottom: 24px; }
+    table { width: 100%; border-collapse: collapse; text-align: left; }
+    th { background: #f3f4f6; color: #374151; font-weight: 700; font-size: 12px; padding: 10px 14px; border: 1px solid #e5e7eb; }
+    td { padding: 12px 14px; border: 1px solid #e5e7eb; font-size: 12.5px; vertical-align: middle; }
+    .totals-area { display: flex; justify-content: flex-end; margin-bottom: 28px; }
+    .totals-table { width: 320px; }
+    .totals-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 13px; color: #4b5563; }
+    .totals-row.grand { border-top: 2px solid #111827; padding-top: 10px; margin-top: 6px; font-weight: 800; font-size: 16px; color: #15803d; }
+    .footer-note { border-top: 1px dashed #d1d5db; padding-top: 18px; text-align: center; font-size: 11.5px; color: #6b7280; line-height: 1.6; }
+  </style>
+</head>
+<body>
+  <div class="invoice-card">
+    <div class="header">
+      <div>
+        <div class="brand-name">🌿 LÀNH FARM</div>
+        <div class="brand-sub">NÔNG SẢN SẠCH & CHUỖI CUNG ỨNG MINH BẠCH</div>
+        <div class="company-info" style="margin-top: 6px;">
+          Hotline: 1900 8899 | Email: contact@lanhfarm.vn<br/>
+          Website: https://lanhfarm.vn
+        </div>
+      </div>
+      <div class="invoice-title">
+        <h1>HÓA ĐƠN BÁN HÀNG</h1>
+        <div class="order-meta">Mã đơn: <strong>#${order.orderCode}</strong></div>
+        <div class="order-meta">Ngày đặt: ${formattedDate}</div>
+      </div>
+    </div>
+    <div class="info-grid">
+      <div class="info-box">
+        <div class="box-title">ĐƠN VỊ VẬN CHUYỂN & NHẬN HÀNG</div>
+        <div><strong>Người nhận:</strong> ${order.address?.receiverName || user?.fullName || 'Khách hàng'}</div>
+        <div><strong>Điện thoại:</strong> ${order.address?.phone || user?.phone || 'N/A'}</div>
+        <div><strong>Địa chỉ:</strong> ${fullAddress || 'Địa chỉ tiêu chuẩn'}</div>
+      </div>
+      <div class="info-box">
+        <div class="box-title">THANH TOÁN & GIAO HÀNG</div>
+        <div><strong>Hình thức:</strong> ${payMethodText}</div>
+        <div><strong>Trạng thái:</strong> ${order.paymentStatus?.toLowerCase() === 'paid' ? 'Đã thanh toán' : 'Chưa thanh toán'}</div>
+        <div><strong>Trạng thái đơn:</strong> ${order.orderStatus || 'Đang xử lý'}</div>
+      </div>
+    </div>
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 40px; text-align: center;">STT</th>
+            <th>Tên nông sản / Sản phẩm</th>
+            <th style="width: 100px; text-align: center;">Đơn vị</th>
+            <th style="width: 80px; text-align: center;">Số lượng</th>
+            <th style="width: 120px; text-align: right;">Đơn giá</th>
+            <th style="width: 130px; text-align: right;">Thành tiền</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${(order.orderItems || []).map((item: any, idx: number) => `
+            <tr>
+              <td style="text-align: center;">${idx + 1}</td>
+              <td><strong>${item.product?.productName || 'Nông sản LÀNH'}</strong></td>
+              <td style="text-align: center;">${item.product?.unit || 'kg'}</td>
+              <td style="text-align: center;">${item.quantity}</td>
+              <td style="text-align: right;">${toVND(item.unitPrice || 0)}</td>
+              <td style="text-align: right;"><strong>${toVND(item.totalAmount || 0)}</strong></td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+    <div class="totals-area">
+      <div class="totals-table">
+        <div class="totals-row"><span>Tạm tính tiền hàng:</span><span>${toVND(order.subtotal || 0)}</span></div>
+        <div class="totals-row"><span>Phí vận chuyển:</span><span>${toVND(order.shippingFee || 0)}</span></div>
+        ${discount > 0 ? `<div class="totals-row" style="color: #15803d; font-weight: 600;"><span>Giảm giá Voucher:</span><span>-${toVND(discount)}</span></div>` : ''}
+        <div class="totals-row grand"><span>TỔNG CỘNG:</span><span>${toVND(order.totalAmount || 0)}</span></div>
+      </div>
+    </div>
+    <div class="footer-note">
+      Cảm ơn quý khách đã tin dùng nông sản tươi sạch chuẩn VietGAP tại LÀNH Farm!<br/>
+      Mọi thắc mắc hoặc yêu cầu hỗ trợ khiếu nại, vui lòng liên hệ tổng đài 1900 8899 trong vòng 48h.
+    </div>
+  </div>
+</body>
+</html>`;
+
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.open();
+      printWindow.document.write(printContent);
+      printWindow.document.close();
+      printWindow.focus();
+      setTimeout(() => {
+        printWindow.print();
+      }, 400);
+      showToast('Đang mở cửa sổ in hóa đơn PDF');
+    } else {
+      showToast('Vui lòng cho phép mở popup trên trình duyệt để in hoặc tải hóa đơn PDF.', 'error');
     }
   };
 
@@ -1778,56 +1972,126 @@ export default function ProfilePage() {
             {/* TAB 5: LỊCH SỬ ĐƠN HÀNG */}
             {activeTab === 'orders' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                {/* Thanh lọc trạng thái đơn */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
-                  <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }}>
-                    {[
-                      { key: 'all', label: 'Tất cả' },
-                      { key: 'pending', label: 'Chờ duyệt' },
-                      { key: 'shipping', label: 'Đang giao' },
-                      { key: 'delivered', label: 'Hoàn thành' },
-                      { key: 'cancelled', label: 'Đã hủy' }
-                    ].map(f => (
+                {/* Thanh tìm kiếm đơn hàng & Lọc trạng thái */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                  {/* Ô tìm kiếm */}
+                  <div style={{ position: 'relative', width: '100%' }}>
+                    <input
+                      type="text"
+                      placeholder="Tìm theo mã đơn hàng (#ORD-...) hoặc tên nông sản..."
+                      value={searchOrderQuery}
+                      onChange={(e) => setSearchOrderQuery(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '11px 40px 11px 40px',
+                        borderRadius: '10px',
+                        border: '1.5px solid var(--line)',
+                        fontSize: '13.5px',
+                        backgroundColor: 'var(--surface)',
+                        color: 'var(--ink)',
+                        outline: 'none',
+                        boxShadow: '0 2px 6px rgba(0,0,0,0.03)'
+                      }}
+                    />
+                    <svg style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-soft)' }} width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                    {searchOrderQuery && (
                       <button
-                        key={f.key}
                         type="button"
-                        onClick={() => setOrderFilterStatus(f.key)}
+                        onClick={() => setSearchOrderQuery('')}
                         style={{
-                          padding: '6px 12px',
-                          borderRadius: '6px',
-                          border: orderFilterStatus === f.key ? '1px solid var(--green-700)' : '1px solid var(--line)',
-                          backgroundColor: orderFilterStatus === f.key ? 'var(--green-100)' : 'var(--surface)',
-                          color: orderFilterStatus === f.key ? 'var(--green-900)' : 'var(--ink-soft)',
-                          fontWeight: orderFilterStatus === f.key ? '700' : '500',
-                          fontSize: '12.5px',
+                          position: 'absolute',
+                          right: '12px',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          border: 'none',
+                          background: '#e2e8f0',
+                          borderRadius: '50%',
+                          width: '20px',
+                          height: '20px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '12px',
                           cursor: 'pointer',
-                          whiteSpace: 'nowrap'
+                          color: '#475569'
                         }}
+                        title="Xóa tìm kiếm"
                       >
-                        {f.label}
+                        ✕
                       </button>
-                    ))}
+                    )}
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={() => user && fetchOrders(user.userId)}
-                    style={{
-                      background: 'none',
-                      border: '1px solid var(--line)',
-                      padding: '6px 12px',
-                      borderRadius: '6px',
-                      fontSize: '12px',
-                      color: 'var(--ink)',
-                      fontWeight: '600',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px'
-                    }}
-                  >
-                    Làm mới
-                  </button>
+                  {/* Thanh lọc trạng thái đơn & Nút làm mới */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+                    <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }}>
+                      {[
+                        { key: 'all', label: 'Tất cả' },
+                        { key: 'pending', label: 'Chờ duyệt' },
+                        { key: 'shipping', label: 'Đang giao' },
+                        { key: 'delivered', label: 'Hoàn thành' },
+                        { key: 'cancelled', label: 'Đã hủy' }
+                      ].map(f => (
+                        <button
+                          key={f.key}
+                          type="button"
+                          onClick={() => setOrderFilterStatus(f.key)}
+                          style={{
+                            padding: '6px 14px',
+                            borderRadius: '8px',
+                            border: orderFilterStatus === f.key ? '1px solid var(--green-700)' : '1px solid var(--line)',
+                            backgroundColor: orderFilterStatus === f.key ? 'var(--green-100)' : 'var(--surface)',
+                            color: orderFilterStatus === f.key ? 'var(--green-900)' : 'var(--ink-soft)',
+                            fontWeight: orderFilterStatus === f.key ? '700' : '500',
+                            fontSize: '12.5px',
+                            cursor: 'pointer',
+                            whiteSpace: 'nowrap',
+                            transition: 'all 0.15s'
+                          }}
+                        >
+                          {f.label}
+                        </button>
+                      ))}
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <span style={{ fontSize: '12.5px', color: 'var(--ink-soft)' }}>
+                        Tìm thấy <strong>{orders.filter(order => {
+                          const oStatus = order.orderStatus?.toLowerCase() || 'pending';
+                          let matchesTab = true;
+                          if (orderFilterStatus === 'pending') matchesTab = oStatus === 'pending';
+                          else if (orderFilterStatus === 'shipping') matchesTab = oStatus === 'shipping';
+                          else if (orderFilterStatus === 'delivered') matchesTab = oStatus === 'delivered' || oStatus === 'completed';
+                          else if (orderFilterStatus === 'cancelled') matchesTab = oStatus === 'cancelled';
+                          if (!matchesTab) return false;
+                          if (!searchOrderQuery.trim()) return true;
+                          const q = searchOrderQuery.toLowerCase().trim();
+                          return order.orderCode?.toLowerCase().includes(q) || order.orderItems?.some((i: any) => i.product?.productName?.toLowerCase().includes(q));
+                        }).length}</strong> đơn
+                      </span>
+
+                      <button
+                        type="button"
+                        onClick={() => user && fetchOrders(user.userId)}
+                        style={{
+                          background: 'none',
+                          border: '1px solid var(--line)',
+                          padding: '6px 12px',
+                          borderRadius: '8px',
+                          fontSize: '12px',
+                          color: 'var(--ink)',
+                          fontWeight: '600',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px'
+                        }}
+                      >
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                        Làm mới
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
                 {ordersLoading ? (
@@ -1836,7 +2100,6 @@ export default function ProfilePage() {
                   </div>
                 ) : orders.length === 0 ? (
                   <div style={{ textAlign: 'center', padding: '60px 20px', border: '1.5px dashed var(--line)', borderRadius: 'var(--radius-md)' }}>
-                    
                     <div style={{ fontSize: '16px', fontWeight: '700', color: 'var(--ink)', marginBottom: '6px' }}>
                       Bạn chưa có đơn hàng nào
                     </div>
@@ -1850,12 +2113,24 @@ export default function ProfilePage() {
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                     {orders
-                      .filter(o => orderFilterStatus === 'all' || o.orderStatus?.toLowerCase() === orderFilterStatus)
+                      .filter(order => {
+                        const oStatus = order.orderStatus?.toLowerCase() || 'pending';
+                        let matchesTab = true;
+                        if (orderFilterStatus === 'pending') matchesTab = oStatus === 'pending';
+                        else if (orderFilterStatus === 'shipping') matchesTab = oStatus === 'shipping';
+                        else if (orderFilterStatus === 'delivered') matchesTab = oStatus === 'delivered' || oStatus === 'completed';
+                        else if (orderFilterStatus === 'cancelled') matchesTab = oStatus === 'cancelled';
+                        if (!matchesTab) return false;
+                        if (!searchOrderQuery.trim()) return true;
+                        const q = searchOrderQuery.toLowerCase().trim();
+                        return order.orderCode?.toLowerCase().includes(q) || order.orderItems?.some((i: any) => i.product?.productName?.toLowerCase().includes(q));
+                      })
                       .map(order => {
+                        const oStatus = order.orderStatus?.toLowerCase() || 'pending';
                         const statusColor = 
-                          order.orderStatus === 'delivered' ? { bg: 'var(--green-100)', color: 'var(--green-700)', text: 'Đã giao hàng' } :
-                          order.orderStatus === 'shipping' ? { bg: '#E3F2FD', color: '#0D47A1', text: 'Đang giao hàng' } :
-                          order.orderStatus === 'cancelled' ? { bg: '#FFEBEE', color: '#C62828', text: 'Đã hủy' } :
+                          (oStatus === 'delivered' || oStatus === 'completed') ? { bg: 'var(--green-100)', color: 'var(--green-700)', text: 'Đã hoàn tất' } :
+                          oStatus === 'shipping' ? { bg: '#E3F2FD', color: '#0D47A1', text: 'Đang giao hàng' } :
+                          oStatus === 'cancelled' ? { bg: '#FFEBEE', color: '#C62828', text: 'Đã hủy' } :
                           { bg: '#FFF3E0', color: '#E65100', text: 'Chờ xác nhận' };
 
                         return (
@@ -1868,7 +2143,9 @@ export default function ProfilePage() {
                               backgroundColor: 'var(--surface)',
                               display: 'flex',
                               flexDirection: 'column',
-                              gap: '14px'
+                              gap: '14px',
+                              transition: 'box-shadow 0.2s',
+                              boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
                             }}
                           >
                             {/* Header Đơn */}
@@ -1876,7 +2153,7 @@ export default function ProfilePage() {
                               <div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                   <span style={{ fontSize: '12px', color: 'var(--ink-soft)', fontWeight: '600' }}>MÃ ĐƠN:</span>
-                                  <span style={{ fontFamily: 'monospace', fontWeight: '800', fontSize: '14px', color: 'var(--ink)' }}>{order.orderCode}</span>
+                                  <span style={{ fontFamily: 'monospace', fontWeight: '800', fontSize: '14.5px', color: 'var(--ink)' }}>#{order.orderCode}</span>
                                 </div>
                                 <div style={{ fontSize: '12px', color: 'var(--ink-soft)', marginTop: '2px' }}>
                                   Đặt lúc: {new Date(order.createdAt).toLocaleString('vi-VN')}
@@ -1885,9 +2162,9 @@ export default function ProfilePage() {
 
                               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                 <span style={{
-                                  padding: '4px 10px',
-                                  borderRadius: '4px',
-                                  fontSize: '11.5px',
+                                  padding: '4px 12px',
+                                  borderRadius: '6px',
+                                  fontSize: '12px',
                                   fontWeight: '700',
                                   backgroundColor: statusColor.bg,
                                   color: statusColor.color
@@ -1897,34 +2174,121 @@ export default function ProfilePage() {
                               </div>
                             </div>
 
-                            {/* Danh sách món hàng */}
+                            {/* Danh sách món hàng có kèm ảnh đại diện */}
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                              {order.orderItems?.map((item: any) => (
-                                <div key={item.orderItemId} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '13px' }}>
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                    
-                                    <div>
-                                      <span style={{ fontWeight: '600', color: 'var(--ink)' }}>{item.product?.productName || 'Nông sản LÀNH'}</span>
-                                      <span style={{ color: 'var(--ink-soft)', marginLeft: '6px' }}>x {item.quantity} {item.product?.unit || 'kg'}</span>
+                              {order.orderItems?.map((item: any, idx: number) => {
+                                const imgUrl = item.product?.productImages?.[0]?.imageUrl || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=300';
+                                return (
+                                  <div key={item.orderItemId || idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '13px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                      <img 
+                                        src={imgUrl} 
+                                        alt={item.product?.productName || 'Nông sản'} 
+                                        style={{ width: '42px', height: '42px', objectFit: 'cover', borderRadius: '6px', border: '1px solid var(--line)' }}
+                                      />
+                                      <div>
+                                        <div style={{ fontWeight: '600', color: 'var(--ink)', fontSize: '13.5px' }}>
+                                          {item.product?.productName || 'Nông sản LÀNH'}
+                                        </div>
+                                        <div style={{ color: 'var(--ink-soft)', fontSize: '12px', marginTop: '2px' }}>
+                                          {toVND(item.unitPrice || 0)} / {item.product?.unit || 'kg'} × <strong>{item.quantity}</strong>
+                                        </div>
+                                      </div>
+                                    </div>
+                                    <div style={{ fontWeight: '700', color: 'var(--ink)', fontSize: '13.5px' }}>
+                                      {toVND(item.totalAmount || 0)}
                                     </div>
                                   </div>
-                                  <div style={{ fontWeight: '700', color: 'var(--ink)' }}>
-                                    {item.totalAmount?.toLocaleString('vi-VN')} đ
-                                  </div>
-                                </div>
-                              ))}
+                                );
+                              })}
                             </div>
 
-                            {/* Footer Tổng tiền & Tích điểm */}
-                            <div style={{ borderTop: '1px dashed var(--line)', paddingTop: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
-                              <div style={{ fontSize: '12px', color: 'var(--green-700)', fontWeight: '600' }}>
-                                ⭐ Tích lũy: +{Math.round((order.totalAmount || 0) * 0.02 / 10).toLocaleString('vi-VN')} điểm
+                            {/* Footer Tổng tiền & Thanh tác vụ (Xem chi tiết, In PDF, Mua lại) */}
+                            <div style={{ borderTop: '1px dashed var(--line)', paddingTop: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+                              <div>
+                                <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                                  <span style={{ fontSize: '13px', color: 'var(--ink-soft)' }}>Tổng thanh toán:</span>
+                                  <span style={{ fontSize: '18px', fontWeight: '800', color: '#e53e3e' }}>
+                                    {toVND(order.totalAmount || 0)}
+                                  </span>
+                                </div>
+                                <div style={{ fontSize: '12px', color: 'var(--green-700)', fontWeight: '600', marginTop: '2px' }}>
+                                  ⭐ Tích lũy: +{Math.round((order.totalAmount || 0) * 0.02 / 10).toLocaleString('vi-VN')} điểm
+                                </div>
                               </div>
-                              <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-                                <span style={{ fontSize: '12.5px', color: 'var(--ink-soft)' }}>Tổng thanh toán:</span>
-                                <span style={{ fontSize: '17px', fontWeight: '800', color: '#e53e3e' }}>
-                                  {order.totalAmount?.toLocaleString('vi-VN')} đ
-                                </span>
+
+                              {/* Nhóm nút tác vụ */}
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                                {/* Nút Xem chi tiết */}
+                                <button
+                                  type="button"
+                                  onClick={() => setSelectedOrderDetails(order)}
+                                  style={{
+                                    padding: '8px 14px',
+                                    borderRadius: '8px',
+                                    border: '1px solid var(--line)',
+                                    backgroundColor: '#ffffff',
+                                    color: 'var(--ink)',
+                                    fontWeight: '600',
+                                    fontSize: '12.5px',
+                                    cursor: 'pointer',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    transition: 'all 0.15s'
+                                  }}
+                                >
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                  Chi tiết
+                                </button>
+
+                                {/* Nút In hóa đơn PDF */}
+                                <button
+                                  type="button"
+                                  onClick={() => printOrderToPDF(order)}
+                                  style={{
+                                    padding: '8px 14px',
+                                    borderRadius: '8px',
+                                    border: '1px solid #cbd5e1',
+                                    backgroundColor: '#ffffff',
+                                    color: '#15803d',
+                                    fontWeight: '600',
+                                    fontSize: '12.5px',
+                                    cursor: 'pointer',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    transition: 'all 0.15s'
+                                  }}
+                                  title="In hoặc tải hóa đơn PDF chuẩn A4"
+                                >
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                                  In PDF
+                                </button>
+
+                                {/* Nút Mua Lại */}
+                                <button
+                                  type="button"
+                                  onClick={() => handleReorder(order)}
+                                  style={{
+                                    padding: '8px 16px',
+                                    borderRadius: '8px',
+                                    border: 'none',
+                                    backgroundColor: 'var(--green-700)',
+                                    color: '#ffffff',
+                                    fontWeight: '700',
+                                    fontSize: '13px',
+                                    cursor: 'pointer',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    boxShadow: '0 2px 8px rgba(46,125,50,0.25)',
+                                    transition: 'all 0.15s'
+                                  }}
+                                >
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 2v6h6M21 12A9 9 0 0 0 6 5.3L3 8M21 22v-6h-6M3 12a9 9 0 0 0 15 6.7l3-2.7"/></svg>
+                                  Mua lại
+                                </button>
                               </div>
                             </div>
                           </div>
@@ -2356,6 +2720,255 @@ export default function ProfilePage() {
           </button>
         </div>
       </aside>
+
+      {/* ── 5. MODAL XEM CHI TIẾT ĐƠN HÀNG ── */}
+      {selectedOrderDetails && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.55)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          backdropFilter: 'blur(4px)',
+          padding: '20px'
+        }}>
+          <div style={{
+            backgroundColor: '#ffffff',
+            borderRadius: '16px',
+            maxWidth: '680px',
+            width: '100%',
+            maxHeight: '90vh',
+            overflowY: 'auto',
+            padding: '28px 24px',
+            boxShadow: '0 20px 40px rgba(0,0,0,0.25)',
+            border: '1px solid var(--line)',
+            animation: 'fadeIn 0.2s ease-out'
+          }}>
+            {/* Header Modal */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1.5px solid var(--line)', paddingBottom: '16px', marginBottom: '20px' }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '800', color: 'var(--ink)' }}>
+                    Chi tiết đơn hàng #{selectedOrderDetails.orderCode}
+                  </h3>
+                </div>
+                <div style={{ fontSize: '12.5px', color: 'var(--ink-soft)', marginTop: '4px' }}>
+                  Đặt lúc: {selectedOrderDetails.createdAt ? new Date(selectedOrderDetails.createdAt).toLocaleString('vi-VN') : 'N/A'}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedOrderDetails(null)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '22px',
+                  color: 'var(--ink-soft)',
+                  cursor: 'pointer',
+                  padding: '2px 8px',
+                  borderRadius: '6px'
+                }}
+                title="Đóng cửa sổ"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* 2 Khối Thông tin Giao hàng & Thanh toán */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '14px', marginBottom: '20px' }}>
+              <div style={{ backgroundColor: 'var(--bg, #f8fafc)', padding: '14px 16px', borderRadius: '10px', border: '1px solid var(--line)' }}>
+                <div style={{ fontSize: '12px', fontWeight: '700', color: 'var(--ink-soft)', textTransform: 'uppercase', marginBottom: '8px' }}>
+                  Địa chỉ nhận hàng
+                </div>
+                <div style={{ fontWeight: '700', color: 'var(--ink)', fontSize: '14px' }}>
+                  {selectedOrderDetails.address?.receiverName || user?.fullName || 'Khách hàng'} • {selectedOrderDetails.address?.phone || user?.phone || 'N/A'}
+                </div>
+                <div style={{ fontSize: '12.5px', color: 'var(--ink-soft)', marginTop: '4px', lineHeight: '1.4' }}>
+                  {[selectedOrderDetails.address?.addressDetail, selectedOrderDetails.address?.ward, selectedOrderDetails.address?.district, selectedOrderDetails.address?.province].filter(Boolean).join(', ') || 'Địa chỉ tiêu chuẩn'}
+                </div>
+                <div style={{ marginTop: '8px' }}>
+                  <span style={{ fontSize: '11px', fontWeight: '600', padding: '2px 8px', borderRadius: '4px', backgroundColor: '#e2e8f0', color: '#475569' }}>
+                    {selectedOrderDetails.address?.addressType || 'Nhà ở'}
+                  </span>
+                </div>
+              </div>
+
+              <div style={{ backgroundColor: 'var(--bg, #f8fafc)', padding: '14px 16px', borderRadius: '10px', border: '1px solid var(--line)' }}>
+                <div style={{ fontSize: '12px', fontWeight: '700', color: 'var(--ink-soft)', textTransform: 'uppercase', marginBottom: '8px' }}>
+                  Phương thức thanh toán
+                </div>
+                <div style={{ fontWeight: '700', color: 'var(--ink)', fontSize: '14px' }}>
+                  {selectedOrderDetails.paymentMethod === 'COD' ? 'Thanh toán khi nhận hàng (COD)' : selectedOrderDetails.paymentMethod === 'MOMO' ? 'Ví điện tử MoMo' : 'Chuyển khoản Ngân hàng (VietQR)'}
+                </div>
+                <div style={{ fontSize: '12.5px', color: 'var(--ink-soft)', marginTop: '4px' }}>
+                  Trạng thái: <strong style={{ color: selectedOrderDetails.paymentStatus?.toLowerCase() === 'paid' ? '#15803d' : '#d97706' }}>
+                    {selectedOrderDetails.paymentStatus?.toLowerCase() === 'paid' ? 'Đã hoàn tất thanh toán' : 'Chưa nhận được thanh toán'}
+                  </strong>
+                </div>
+              </div>
+            </div>
+
+            {/* Danh sách sản phẩm */}
+            <div style={{ marginBottom: '20px' }}>
+              <div style={{ fontSize: '13px', fontWeight: '700', color: 'var(--ink)', marginBottom: '10px' }}>
+                Sản phẩm đã đặt ({selectedOrderDetails.orderItems?.length || 0})
+              </div>
+              <div style={{ border: '1px solid var(--line)', borderRadius: '10px', overflow: 'hidden' }}>
+                {selectedOrderDetails.orderItems?.map((item: any, idx: number) => {
+                  const imgUrl = item.product?.productImages?.[0]?.imageUrl || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=300';
+                  return (
+                    <div key={item.orderItemId || idx} style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '12px 16px',
+                      borderBottom: idx < (selectedOrderDetails.orderItems?.length || 0) - 1 ? '1px solid var(--line)' : 'none',
+                      backgroundColor: '#ffffff'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <img
+                          src={imgUrl}
+                          alt={item.product?.productName}
+                          style={{ width: '46px', height: '46px', borderRadius: '6px', objectFit: 'cover', border: '1px solid var(--line)' }}
+                        />
+                        <div>
+                          <div style={{ fontWeight: '600', fontSize: '13.5px', color: 'var(--ink)' }}>
+                            {item.product?.productName || 'Nông sản LÀNH'}
+                          </div>
+                          <div style={{ fontSize: '12px', color: 'var(--ink-soft)', marginTop: '2px' }}>
+                            {toVND(item.unitPrice || 0)} / {item.product?.unit || 'kg'} × {item.quantity}
+                          </div>
+                        </div>
+                      </div>
+                      <div style={{ fontWeight: '700', fontSize: '14px', color: 'var(--ink)' }}>
+                        {toVND(item.totalAmount || 0)}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Tóm tắt chi phí */}
+            <div style={{ backgroundColor: 'var(--bg, #f8fafc)', padding: '16px', borderRadius: '10px', border: '1px solid var(--line)', marginBottom: '24px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: 'var(--ink-soft)', marginBottom: '6px' }}>
+                <span>Tạm tính tiền hàng:</span>
+                <span style={{ color: 'var(--ink)', fontWeight: '500' }}>{toVND(selectedOrderDetails.subtotal || 0)}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: 'var(--ink-soft)', marginBottom: '6px' }}>
+                <span>Phí vận chuyển:</span>
+                <span style={{ color: 'var(--ink)', fontWeight: '500' }}>{toVND(selectedOrderDetails.shippingFee || 0)}</span>
+              </div>
+              {((selectedOrderDetails.subtotal || 0) + (selectedOrderDetails.shippingFee || 0) - (selectedOrderDetails.totalAmount || 0) > 0) && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#15803d', fontWeight: '600', marginBottom: '6px' }}>
+                  <span>Giảm giá Voucher:</span>
+                  <span>-{toVND((selectedOrderDetails.subtotal || 0) + (selectedOrderDetails.shippingFee || 0) - (selectedOrderDetails.totalAmount || 0))}</span>
+                </div>
+              )}
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '16px', fontWeight: '700', color: 'var(--ink)', borderTop: '1px solid var(--line)', paddingTop: '10px', marginTop: '6px' }}>
+                <span>Tổng cộng thanh toán:</span>
+                <span style={{ color: '#e53e3e', fontSize: '18px' }}>{toVND(selectedOrderDetails.totalAmount || 0)}</span>
+              </div>
+            </div>
+
+            {/* Footer Modal với các nút hành động */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+              <button
+                type="button"
+                onClick={() => printOrderToPDF(selectedOrderDetails)}
+                style={{
+                  padding: '10px 18px',
+                  backgroundColor: '#ffffff',
+                  color: '#15803d',
+                  border: '1.5px solid #15803d',
+                  borderRadius: '8px',
+                  fontSize: '13px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                In hóa đơn PDF
+              </button>
+
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleReorder(selectedOrderDetails);
+                    setSelectedOrderDetails(null);
+                  }}
+                  style={{
+                    padding: '10px 18px',
+                    backgroundColor: 'var(--green-700)',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontSize: '13px',
+                    fontWeight: '700',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    boxShadow: '0 2px 8px rgba(46,125,50,0.25)'
+                  }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 2v6h6M21 12A9 9 0 0 0 6 5.3L3 8M21 22v-6h-6M3 12a9 9 0 0 0 15 6.7l3-2.7"/></svg>
+                  Mua lại đơn này
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSelectedOrderDetails(null)}
+                  style={{
+                    padding: '10px 18px',
+                    backgroundColor: '#334155',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontSize: '13px',
+                    fontWeight: '600',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Đóng
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── 6. THÔNG BÁO TOAST NỔI ── */}
+      {toast && (
+        <div style={{
+          position: 'fixed',
+          top: '24px',
+          right: '24px',
+          zIndex: 10000,
+          backgroundColor: toast.type === 'success' ? '#15803D' : '#DC2626',
+          color: '#ffffff',
+          padding: '14px 22px',
+          borderRadius: '12px',
+          boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
+          fontWeight: '600',
+          fontSize: '14px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          animation: 'fadeIn 0.2s ease-out'
+        }}>
+          {toast.type === 'success' ? '✓' : '⚠️'} {toast.message}
+        </div>
+      )}
     </>
   );
 }
