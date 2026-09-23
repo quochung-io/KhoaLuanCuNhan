@@ -66,17 +66,22 @@ export const Orders: React.FC = () => {
       case 'pending':
         return [
           { value: 'Confirmed', label: 'Confirmed (Xác nhận đơn)' },
-          { value: 'Cancelled', label: 'Cancelled (Hủy đơn hàng)' },
+          { value: 'Cancelled', label: 'Cancelled (Hủy đơn hàng - Tự động hoàn kho)' },
         ];
       case 'confirmed':
         return [
           { value: 'Shipping', label: 'Shipping (Đang giao hàng)' },
-          { value: 'Cancelled', label: 'Cancelled (Hủy đơn hàng)' },
+          { value: 'Cancelled', label: 'Cancelled (Hủy đơn hàng - Tự động hoàn kho)' },
         ];
       case 'shipping':
         return [
           { value: 'Completed', label: 'Completed (Giao hàng thành công)' },
-          { value: 'Cancelled', label: 'Cancelled (Giao thất bại / Hủy đơn)' },
+          { value: 'Cancelled', label: 'Cancelled (Giao thất bại / Hủy đơn - Tự động hoàn kho)' },
+          { value: 'Returned', label: 'Returned (Khách trả hàng - Tự động hoàn kho)' },
+        ];
+      case 'completed':
+        return [
+          { value: 'Returned', label: 'Returned (Trả hàng / Hoàn tiền - Tự động hoàn kho)' },
         ];
       default:
         return [];
@@ -84,7 +89,7 @@ export const Orders: React.FC = () => {
   };
 
   const handleOpenEdit = (order: Order) => {
-    const isTerminal = ['completed', 'cancelled'].includes(order.orderStatus?.toLowerCase());
+    const isTerminal = ['cancelled', 'returned'].includes(order.orderStatus?.toLowerCase());
     if (isTerminal) {
       message.warning(`Đơn hàng #${order.orderId} đã ở trạng thái kết thúc (${order.orderStatus}), không thể đổi trạng thái.`);
       return;
@@ -119,9 +124,23 @@ export const Orders: React.FC = () => {
       // Xác nhận an toàn cho các trạng thái kết thúc (Terminal states)
       if (newStatus === 'Cancelled') {
         Modal.confirm({
-          title: 'Xác nhận hủy đơn hàng',
-          content: `Bạn có chắc chắn muốn HỦY đơn hàng #${selectedOrder.orderId}? Thao tác hủy đơn là không thể đảo ngược!`,
-          okText: 'Xác nhận hủy',
+          title: 'Xác nhận hủy đơn hàng & Hoàn kho',
+          content: `Bạn có chắc chắn muốn HỦY đơn hàng #${selectedOrder.orderId}? Hệ thống sẽ tự động hoàn trả số lượng các sản phẩm trong đơn về kho theo chuẩn ACID!`,
+          okText: 'Xác nhận hủy & Hoàn kho',
+          cancelText: 'Quay lại',
+          okType: 'danger',
+          onOk: async () => {
+            await executeUpdateStatus(selectedOrder.orderId, newStatus);
+          }
+        });
+        return;
+      }
+
+      if (newStatus === 'Returned') {
+        Modal.confirm({
+          title: 'Xác nhận trả hàng & Hoàn tiền (Rollback)',
+          content: `Xác nhận khách hàng TRẢ HÀNG đơn #${selectedOrder.orderId}? Hệ thống sẽ tự động hoàn trả toàn bộ số lượng sản phẩm về kho tương ứng và cập nhật trạng thái thanh toán là Đã hoàn tiền (Refunded)!`,
+          okText: 'Xác nhận Trả hàng & Hoàn kho',
           cancelText: 'Quay lại',
           okType: 'danger',
           onOk: async () => {
@@ -158,6 +177,7 @@ export const Orders: React.FC = () => {
       case 'shipping': return 'purple';
       case 'completed': return 'green';
       case 'cancelled': return 'red';
+      case 'returned': return 'volcano';
       default: return 'default';
     }
   };

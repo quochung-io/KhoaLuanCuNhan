@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Table, Button, Space, Modal, Form, Input, Select, message, Card, Tabs, InputNumber, Image, Tag, Tooltip, Row, Col } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, PictureOutlined, StarOutlined, ThunderboltOutlined, SaveOutlined } from '@ant-design/icons';
+import dayjs from 'dayjs';
 import { productService, categoryService, productImageService, userService } from '../services/api';
 
 const SAMPLE_SUB_IMAGES: Record<string, string[]> = {
@@ -57,6 +58,8 @@ interface Product {
   unit: string;
   status?: string;
   category?: Category;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export const Products: React.FC = () => {
@@ -341,8 +344,15 @@ export const Products: React.FC = () => {
     { title: 'Tên nông sản', dataIndex: 'productName', key: 'productName' },
     { title: 'Danh mục', dataIndex: ['category', 'categoryName'], key: 'categoryName', render: (text: string) => text || 'Không có danh mục' },
     { title: 'Giá bán', dataIndex: 'price', key: 'price', render: (val: number) => `${val.toLocaleString('vi-VN')} đ` },
-    { title: 'Đơn vị', dataIndex: 'unit', key: 'unit' },
-    { title: 'Trạng thái', dataIndex: 'status', key: 'status' },
+    { title: 'Đơn vị', dataIndex: 'unit', key: 'unit', width: 90 },
+    { title: 'Trạng thái', dataIndex: 'status', key: 'status', width: 110, render: (st: string) => <Tag color={st === 'Active' ? 'green' : 'default'}>{st || 'Active'}</Tag> },
+    { 
+      title: 'Ngày cập nhật', 
+      dataIndex: 'updatedAt', 
+      key: 'updatedAt',
+      width: 150,
+      render: (d?: string) => d ? dayjs(d).format('DD/MM/YYYY HH:mm') : '-'
+    },
     { 
       title: 'Tác vụ', 
       key: 'actions',

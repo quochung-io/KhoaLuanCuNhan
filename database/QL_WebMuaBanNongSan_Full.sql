@@ -1181,8 +1181,8 @@ GO
 SET IDENTITY_INSERT [dbo].[Roles] ON;
 
 -- ==============================================================================
--- 2. SEED & PRODUCTION DATA (FULL)
--- Exported at: 2026-09-16 16:21:19
+-- 2. Náº P TOĂ€N Bá»˜ Dá»® LIá»†U THá»°C Táº¾ (LIVE DATABASE DUMP)
+-- NgĂ y sao lÆ°u: 2026-09-23 14:39:49
 -- ==============================================================================
 EXEC sp_MSforeachtable 'ALTER TABLE ? NOCHECK CONSTRAINT all';
 GO
@@ -1252,7 +1252,7 @@ INSERT INTO [dbo].[Users] ([UserId], [FullName], [Email], [Phone], [PasswordHash
 INSERT INTO [dbo].[Users] ([UserId], [FullName], [Email], [Phone], [PasswordHash], [RoleId], [Status], [CreatedAt], [UpdatedAt]) VALUES (17, N'Đỗ Văn Bình', N'binh.do@gmail.com', N'0911000012', N'/r/WRUH2LWeX5rpm', 3, N'Active', '2026-09-14 19:56:22.216', '2026-09-14 19:56:22.216');
 INSERT INTO [dbo].[Users] ([UserId], [FullName], [Email], [Phone], [PasswordHash], [RoleId], [Status], [CreatedAt], [UpdatedAt]) VALUES (18, N'Phan Bảo Ngọc', N'ngoc.phan@gmail.com', N'0911000013', N'/r/WRUH2LWeX5rpm', 3, N'Active', '2026-09-14 19:56:22.216', '2026-09-14 19:56:22.216');
 INSERT INTO [dbo].[Users] ([UserId], [FullName], [Email], [Phone], [PasswordHash], [RoleId], [Status], [CreatedAt], [UpdatedAt]) VALUES (19, N'Cao Thục Quyên', N'quyen.cao@gmail.com', N'0911000019', N'/r/WRUH2LWeX5rpm', 3, N'Active', '2026-09-14 19:56:22.216', '2026-09-16 07:31:59.543');
-INSERT INTO [dbo].[Users] ([UserId], [FullName], [Email], [Phone], [PasswordHash], [RoleId], [Status], [CreatedAt], [UpdatedAt]) VALUES (20, N'NGUYEN PHAT HUY', N'nguyenphathuy63@gmail.com', N'0342595813', N'$2a$11$WyTX7Cf6VJW32CAYKoF4CuBm.vr/SW4Cc54Ck2Nxw/aUEH1tK2Uiy', 3, N'Active', '2026-09-16 07:42:25.195', '2026-09-16 08:08:53.255');
+INSERT INTO [dbo].[Users] ([UserId], [FullName], [Email], [Phone], [PasswordHash], [RoleId], [Status], [CreatedAt], [UpdatedAt]) VALUES (20, N'NGUYEN PHAT HUY', N'nguyenphathuy63@gmail.com', N'0342595813', N'$2a$11$WAmG/kSr/LBvQbytw/xU1OEU/3swDslwtw.4KCMTZDHzhv2ySJ2NK', 3, N'Active', '2026-09-16 07:42:25.195', '2026-09-17 17:05:43.628');
 SET IDENTITY_INSERT [dbo].[Users] OFF;
 GO
 
@@ -1270,7 +1270,7 @@ SET IDENTITY_INSERT [dbo].[Farms] OFF;
 GO
 
 -- -------------------------------------------------------------
--- Data for: [dbo].[Products] (137 rows)
+-- Data for: [dbo].[Products] (131 rows)
 -- -------------------------------------------------------------
 SET IDENTITY_INSERT [dbo].[Products] ON;
 INSERT INTO [dbo].[Products] ([ProductId], [SupplierId], [CategoryId], [ProductName], [Description], [Price], [Unit], [Status], [ApprovedBy], [ApprovedAt], [RejectReason], [CreatedAt], [UpdatedAt]) VALUES (1, 1, 1, N'Cà chua bi Đà Lạt', N'Cà chua bi đỏ, vị ngọt nhẹ, thích hợp salad và nấu ăn.', 68000.00, N'kg', N'Active', 1, '2026-08-01 12:00:00.000', NULL, '2026-08-01 10:00:00.000', '2026-08-20 10:00:00.000');
@@ -1404,12 +1404,6 @@ INSERT INTO [dbo].[Products] ([ProductId], [SupplierId], [CategoryId], [ProductN
 INSERT INTO [dbo].[Products] ([ProductId], [SupplierId], [CategoryId], [ProductName], [Description], [Price], [Unit], [Status], [ApprovedBy], [ApprovedAt], [RejectReason], [CreatedAt], [UpdatedAt]) VALUES (132, 1, 4, N'Ngô nếp (Bắp nếp) dẻo ngọt', N'Ngô nếp bản địa bắp chắc nịch hạt căng bóng, luộc dẻo quánh ngọt lịm thơm mùi ngô đồng quê.', 25000.00, N'bắp', N'VietGAP', 1, '2026-09-10 16:05:55.720', NULL, '2026-09-10 16:05:55.720', '2026-09-10 16:05:55.720');
 INSERT INTO [dbo].[Products] ([ProductId], [SupplierId], [CategoryId], [ProductName], [Description], [Price], [Unit], [Status], [ApprovedBy], [ApprovedAt], [RejectReason], [CreatedAt], [UpdatedAt]) VALUES (133, 2, 4, N'Ngô ngọt (Bắp Mỹ) giòn thơm', N'Bắp ngọt hạt vàng tươi giòn bọng nước ngọt lịm, dùng luộc ăn vặt nấu canh sườn hay làm sữa bắp.', 28000.00, N'bắp', N'VietGAP', 1, '2026-09-10 16:05:55.720', NULL, '2026-09-10 16:05:55.720', '2026-09-10 16:05:55.720');
 INSERT INTO [dbo].[Products] ([ProductId], [SupplierId], [CategoryId], [ProductName], [Description], [Price], [Unit], [Status], [ApprovedBy], [ApprovedAt], [RejectReason], [CreatedAt], [UpdatedAt]) VALUES (134, 1, 4, N'Yến mạch nguyên hạt cán dẹt', N'Yến mạch nguyên cám giàu beta-glucan tốt cho tim mạch và tiêu hóa, bữa sáng lành mạnh hoàn hảo.', 85000.00, N'gói', N'USDA', 1, '2026-09-10 16:05:55.720', NULL, '2026-09-10 16:05:55.720', '2026-09-10 16:05:55.720');
-INSERT INTO [dbo].[Products] ([ProductId], [SupplierId], [CategoryId], [ProductName], [Description], [Price], [Unit], [Status], [ApprovedBy], [ApprovedAt], [RejectReason], [CreatedAt], [UpdatedAt]) VALUES (901, 1, 1, N'Combo Gia Đình Nhỏ (Tuần)', N'Phù hợp gia đình 2–3 người nấu ăn mỗi ngày', 189000.00, N'gói', N'Active', NULL, NULL, NULL, '2026-09-16 15:06:48.410', '2026-09-16 15:06:48.410');
-INSERT INTO [dbo].[Products] ([ProductId], [SupplierId], [CategoryId], [ProductName], [Description], [Price], [Unit], [Status], [ApprovedBy], [ApprovedAt], [RejectReason], [CreatedAt], [UpdatedAt]) VALUES (902, 1, 1, N'Combo Gia Đình Lớn (Tuần)', N'Đáp ứng khẩu phần cho gia đình 4–6 thành viên', 329000.00, N'gói', N'Active', NULL, NULL, NULL, '2026-09-16 15:06:48.410', '2026-09-16 15:06:48.410');
-INSERT INTO [dbo].[Products] ([ProductId], [SupplierId], [CategoryId], [ProductName], [Description], [Price], [Unit], [Status], [ApprovedBy], [ApprovedAt], [RejectReason], [CreatedAt], [UpdatedAt]) VALUES (903, 1, 1, N'Combo Thuần Chay Sạch (Tuần)', N'Giàu đạm thực vật, vitamin & khoáng chất', 249000.00, N'gói', N'Active', NULL, NULL, NULL, '2026-09-16 15:06:48.410', '2026-09-16 15:06:48.410');
-INSERT INTO [dbo].[Products] ([ProductId], [SupplierId], [CategoryId], [ProductName], [Description], [Price], [Unit], [Status], [ApprovedBy], [ApprovedAt], [RejectReason], [CreatedAt], [UpdatedAt]) VALUES (904, 1, 1, N'Combo Gia Đình Nhỏ (Tháng)', N'Giao 4 đợt / tháng — Tươi mới mỗi tuần', 680000.00, N'gói', N'Active', NULL, NULL, NULL, '2026-09-16 15:06:48.410', '2026-09-16 15:06:48.410');
-INSERT INTO [dbo].[Products] ([ProductId], [SupplierId], [CategoryId], [ProductName], [Description], [Price], [Unit], [Status], [ApprovedBy], [ApprovedAt], [RejectReason], [CreatedAt], [UpdatedAt]) VALUES (905, 1, 1, N'Combo Gia Đình Lớn (Tháng)', N'Chăm sóc sức khỏe cả nhà trọn vẹn cả tháng', 1180000.00, N'gói', N'Active', NULL, NULL, NULL, '2026-09-16 15:06:48.410', '2026-09-16 15:06:48.410');
-INSERT INTO [dbo].[Products] ([ProductId], [SupplierId], [CategoryId], [ProductName], [Description], [Price], [Unit], [Status], [ApprovedBy], [ApprovedAt], [RejectReason], [CreatedAt], [UpdatedAt]) VALUES (906, 1, 1, N'Combo Thuần Chay Sạch (Tháng)', N'Thanh lọc cơ thể, dinh dưỡng bền vững', 895000.00, N'gói', N'Active', NULL, NULL, NULL, '2026-09-16 15:06:48.410', '2026-09-16 15:06:48.410');
 SET IDENTITY_INSERT [dbo].[Products] OFF;
 GO
 
@@ -2213,10 +2207,10 @@ SET IDENTITY_INSERT [dbo].[ProductSeasons] OFF;
 GO
 
 -- -------------------------------------------------------------
--- Data for: [dbo].[Batches] (139 rows)
+-- Data for: [dbo].[Batches] (133 rows)
 -- -------------------------------------------------------------
 SET IDENTITY_INSERT [dbo].[Batches] ON;
-INSERT INTO [dbo].[Batches] ([BatchId], [ProductId], [FarmId], [BatchCode], [HarvestDate], [ReceivedDate], [ExpiryDate], [InitialQuantity], [Unit], [Status], [CreatedAt]) VALUES (1, 1, 2, N'CT-260820-001', '2026-09-10 08:00:00.000', '2026-09-12 14:00:00.000', '2026-11-24 23:59:59.000', 116.00, N'kg', N'Active', '2026-08-20 12:00:00.000');
+INSERT INTO [dbo].[Batches] ([BatchId], [ProductId], [FarmId], [BatchCode], [HarvestDate], [ReceivedDate], [ExpiryDate], [InitialQuantity], [Unit], [Status], [CreatedAt]) VALUES (1, 1, 2, N'CT-260820-001', '2026-09-10 08:00:00.000', '2026-09-12 14:00:00.000', '2026-11-24 23:59:59.000', 120.00, N'kg', N'Active', '2026-08-20 12:00:00.000');
 INSERT INTO [dbo].[Batches] ([BatchId], [ProductId], [FarmId], [BatchCode], [HarvestDate], [ReceivedDate], [ExpiryDate], [InitialQuantity], [Unit], [Status], [CreatedAt]) VALUES (2, 1, 1, N'CT-260817-001', '2026-09-06 07:00:00.000', '2026-09-07 13:00:00.000', '2026-12-19 23:59:59.000', 80.00, N'kg', N'Active', '2026-08-17 12:00:00.000');
 INSERT INTO [dbo].[Batches] ([BatchId], [ProductId], [FarmId], [BatchCode], [HarvestDate], [ReceivedDate], [ExpiryDate], [InitialQuantity], [Unit], [Status], [CreatedAt]) VALUES (3, 2, 1, N'XL-260821-001', '2026-09-09 07:00:00.000', '2026-09-14 12:00:00.000', '2026-11-18 23:59:59.000', 100.00, N'kg', N'Active', '2026-08-21 11:00:00.000');
 INSERT INTO [dbo].[Batches] ([BatchId], [ProductId], [FarmId], [BatchCode], [HarvestDate], [ReceivedDate], [ExpiryDate], [InitialQuantity], [Unit], [Status], [CreatedAt]) VALUES (4, 3, 1, N'NÐG-260819-001', '2026-09-14 06:00:00.000', '2026-09-12 14:00:00.000', '2027-01-10 23:59:59.000', 60.00, N'hộp', N'Active', '2026-08-19 11:00:00.000');
@@ -2343,18 +2337,12 @@ INSERT INTO [dbo].[Batches] ([BatchId], [ProductId], [FarmId], [BatchCode], [Har
 INSERT INTO [dbo].[Batches] ([BatchId], [ProductId], [FarmId], [BatchCode], [HarvestDate], [ReceivedDate], [ExpiryDate], [InitialQuantity], [Unit], [Status], [CreatedAt]) VALUES (126, 124, 1, N'LOT-260910-124', '2026-09-01 07:00:00.000', '2026-09-10 11:00:00.000', '2026-11-27 23:59:59.000', 160.00, N'kg', N'Active', '2026-09-10 16:05:55.716');
 INSERT INTO [dbo].[Batches] ([BatchId], [ProductId], [FarmId], [BatchCode], [HarvestDate], [ReceivedDate], [ExpiryDate], [InitialQuantity], [Unit], [Status], [CreatedAt]) VALUES (127, 125, 2, N'LOT-260910-125', '2026-09-01 08:00:00.000', '2026-09-11 13:00:00.000', '2026-10-15 23:59:59.000', 110.00, N'kg', N'Active', '2026-09-10 16:05:55.716');
 INSERT INTO [dbo].[Batches] ([BatchId], [ProductId], [FarmId], [BatchCode], [HarvestDate], [ReceivedDate], [ExpiryDate], [InitialQuantity], [Unit], [Status], [CreatedAt]) VALUES (128, 126, 5, N'LOT-260910-126', '2026-09-16 06:00:00.000', '2026-09-16 13:00:00.000', '2026-12-08 23:59:59.000', 120.00, N'hộp', N'Active', '2026-09-10 16:05:55.716');
-INSERT INTO [dbo].[Batches] ([BatchId], [ProductId], [FarmId], [BatchCode], [HarvestDate], [ReceivedDate], [ExpiryDate], [InitialQuantity], [Unit], [Status], [CreatedAt]) VALUES (129, 127, 4, N'LOT-260910-127', '2026-09-10 08:00:00.000', '2026-09-13 12:00:00.000', '2026-11-13 23:59:59.000', 100.00, N'gói', N'Active', '2026-09-10 16:05:55.716');
-INSERT INTO [dbo].[Batches] ([BatchId], [ProductId], [FarmId], [BatchCode], [HarvestDate], [ReceivedDate], [ExpiryDate], [InitialQuantity], [Unit], [Status], [CreatedAt]) VALUES (130, 128, 1, N'LOT-260910-128', '2026-09-11 08:00:00.000', '2026-09-07 12:00:00.000', '2026-12-11 23:59:59.000', 140.00, N'kg', N'Active', '2026-09-10 16:05:55.716');
-INSERT INTO [dbo].[Batches] ([BatchId], [ProductId], [FarmId], [BatchCode], [HarvestDate], [ReceivedDate], [ExpiryDate], [InitialQuantity], [Unit], [Status], [CreatedAt]) VALUES (131, 129, 4, N'LOT-260910-129', '2026-09-16 09:00:00.000', '2026-09-04 13:00:00.000', '2026-11-09 23:59:59.000', 130.00, N'kg', N'Active', '2026-09-10 16:05:55.716');
-INSERT INTO [dbo].[Batches] ([BatchId], [ProductId], [FarmId], [BatchCode], [HarvestDate], [ReceivedDate], [ExpiryDate], [InitialQuantity], [Unit], [Status], [CreatedAt]) VALUES (134, 132, 1, N'LOT-260910-132', '2026-09-07 07:00:00.000', '2026-09-09 11:00:00.000', '2026-10-11 23:59:59.000', 160.00, N'bắp', N'Active', '2026-09-10 16:05:55.720');
+INSERT INTO [dbo].[Batches] ([BatchId], [ProductId], [FarmId], [BatchCode], [HarvestDate], [ReceivedDate], [ExpiryDate], [InitialQuantity], [Unit], [Status], [CreatedAt]) VALUES (129, 127, 4, N'LOT-260910-127', '2026-09-10 08:00:00.000', '2026-09-13 12:00:00.000', '2026-11-13 23:59:59.000', 98.00, N'gói', N'Active', '2026-09-10 16:05:55.716');
+INSERT INTO [dbo].[Batches] ([BatchId], [ProductId], [FarmId], [BatchCode], [HarvestDate], [ReceivedDate], [ExpiryDate], [InitialQuantity], [Unit], [Status], [CreatedAt]) VALUES (130, 128, 1, N'LOT-260910-128', '2026-09-11 08:00:00.000', '2026-09-07 12:00:00.000', '2026-12-11 23:59:59.000', 139.00, N'kg', N'Active', '2026-09-10 16:05:55.716');
+INSERT INTO [dbo].[Batches] ([BatchId], [ProductId], [FarmId], [BatchCode], [HarvestDate], [ReceivedDate], [ExpiryDate], [InitialQuantity], [Unit], [Status], [CreatedAt]) VALUES (131, 129, 4, N'LOT-260910-129', '2026-09-16 09:00:00.000', '2026-09-04 13:00:00.000', '2026-11-09 23:59:59.000', 129.00, N'kg', N'Active', '2026-09-10 16:05:55.716');
+INSERT INTO [dbo].[Batches] ([BatchId], [ProductId], [FarmId], [BatchCode], [HarvestDate], [ReceivedDate], [ExpiryDate], [InitialQuantity], [Unit], [Status], [CreatedAt]) VALUES (134, 132, 1, N'LOT-260910-132', '2026-09-07 07:00:00.000', '2026-09-09 11:00:00.000', '2026-10-11 23:59:59.000', 159.00, N'bắp', N'Active', '2026-09-10 16:05:55.720');
 INSERT INTO [dbo].[Batches] ([BatchId], [ProductId], [FarmId], [BatchCode], [HarvestDate], [ReceivedDate], [ExpiryDate], [InitialQuantity], [Unit], [Status], [CreatedAt]) VALUES (135, 133, 3, N'LOT-260910-133', '2026-09-13 08:00:00.000', '2026-09-07 14:00:00.000', '2026-11-18 23:59:59.000', 180.00, N'bắp', N'Active', '2026-09-10 16:05:55.720');
 INSERT INTO [dbo].[Batches] ([BatchId], [ProductId], [FarmId], [BatchCode], [HarvestDate], [ReceivedDate], [ExpiryDate], [InitialQuantity], [Unit], [Status], [CreatedAt]) VALUES (136, 134, 2, N'LOT-260910-134', '2026-09-04 08:00:00.000', '2026-09-12 12:00:00.000', '2026-10-18 23:59:59.000', 140.00, N'gói', N'Active', '2026-09-10 16:05:55.720');
-INSERT INTO [dbo].[Batches] ([BatchId], [ProductId], [FarmId], [BatchCode], [HarvestDate], [ReceivedDate], [ExpiryDate], [InitialQuantity], [Unit], [Status], [CreatedAt]) VALUES (143, 901, 1, N'LOT-CB-901', '2026-09-10 00:00:00.000', '2026-09-11 00:00:00.000', '2026-12-30 00:00:00.000', 500.00, N'gói', N'Active', '2026-09-16 15:06:48.413');
-INSERT INTO [dbo].[Batches] ([BatchId], [ProductId], [FarmId], [BatchCode], [HarvestDate], [ReceivedDate], [ExpiryDate], [InitialQuantity], [Unit], [Status], [CreatedAt]) VALUES (144, 902, 1, N'LOT-CB-902', '2026-09-10 00:00:00.000', '2026-09-11 00:00:00.000', '2026-12-30 00:00:00.000', 500.00, N'gói', N'Active', '2026-09-16 15:06:48.413');
-INSERT INTO [dbo].[Batches] ([BatchId], [ProductId], [FarmId], [BatchCode], [HarvestDate], [ReceivedDate], [ExpiryDate], [InitialQuantity], [Unit], [Status], [CreatedAt]) VALUES (145, 903, 1, N'LOT-CB-903', '2026-09-10 00:00:00.000', '2026-09-11 00:00:00.000', '2026-12-30 00:00:00.000', 500.00, N'gói', N'Active', '2026-09-16 15:06:48.413');
-INSERT INTO [dbo].[Batches] ([BatchId], [ProductId], [FarmId], [BatchCode], [HarvestDate], [ReceivedDate], [ExpiryDate], [InitialQuantity], [Unit], [Status], [CreatedAt]) VALUES (146, 904, 1, N'LOT-CB-904', '2026-09-10 00:00:00.000', '2026-09-11 00:00:00.000', '2026-12-30 00:00:00.000', 500.00, N'gói', N'Active', '2026-09-16 15:06:48.413');
-INSERT INTO [dbo].[Batches] ([BatchId], [ProductId], [FarmId], [BatchCode], [HarvestDate], [ReceivedDate], [ExpiryDate], [InitialQuantity], [Unit], [Status], [CreatedAt]) VALUES (147, 905, 1, N'LOT-CB-905', '2026-09-10 00:00:00.000', '2026-09-11 00:00:00.000', '2026-12-30 00:00:00.000', 500.00, N'gói', N'Active', '2026-09-16 15:06:48.413');
-INSERT INTO [dbo].[Batches] ([BatchId], [ProductId], [FarmId], [BatchCode], [HarvestDate], [ReceivedDate], [ExpiryDate], [InitialQuantity], [Unit], [Status], [CreatedAt]) VALUES (148, 906, 1, N'LOT-CB-906', '2026-09-10 00:00:00.000', '2026-09-11 00:00:00.000', '2026-12-30 00:00:00.000', 500.00, N'gói', N'Active', '2026-09-16 15:06:48.413');
 SET IDENTITY_INSERT [dbo].[Batches] OFF;
 GO
 
@@ -2510,12 +2498,13 @@ SET IDENTITY_INSERT [dbo].[MembershipTiers] OFF;
 GO
 
 -- -------------------------------------------------------------
--- Data for: [dbo].[UserLoyalties] (3 rows)
+-- Data for: [dbo].[UserLoyalties] (4 rows)
 -- -------------------------------------------------------------
 SET IDENTITY_INSERT [dbo].[UserLoyalties] ON;
 INSERT INTO [dbo].[UserLoyalties] ([LoyaltyId], [UserId], [CurrentPoints], [TotalSpentYear], [TierId], [UpdatedAt]) VALUES (1, 1, 12450, 8450000.00, 3, '2026-09-10 21:48:08.157');
 INSERT INTO [dbo].[UserLoyalties] ([LoyaltyId], [UserId], [CurrentPoints], [TotalSpentYear], [TierId], [UpdatedAt]) VALUES (3, 11, 0, 0.00, 1, '2026-09-10 21:58:40.343');
 INSERT INTO [dbo].[UserLoyalties] ([LoyaltyId], [UserId], [CurrentPoints], [TotalSpentYear], [TierId], [UpdatedAt]) VALUES (4, 5, 12450, 8450000.00, 3, '2026-09-10 21:58:49.853');
+INSERT INTO [dbo].[UserLoyalties] ([LoyaltyId], [UserId], [CurrentPoints], [TotalSpentYear], [TierId], [UpdatedAt]) VALUES (5, 20, 0, 0.00, 1, '2026-09-17 18:16:12.542');
 SET IDENTITY_INSERT [dbo].[UserLoyalties] OFF;
 GO
 
@@ -2570,7 +2559,7 @@ INSERT INTO [dbo].[PromotionProducts] ([PromotionId], [ProductId]) VALUES (4, 10
 GO
 
 -- -------------------------------------------------------------
--- Data for: [dbo].[UserVouchers] (9 rows)
+-- Data for: [dbo].[UserVouchers] (10 rows)
 -- -------------------------------------------------------------
 SET IDENTITY_INSERT [dbo].[UserVouchers] ON;
 INSERT INTO [dbo].[UserVouchers] ([VoucherId], [UserId], [Code], [Title], [VoucherType], [DiscountValue], [MinOrderAmount], [ExpiryDate], [IsUsed], [UsedAt], [CreatedAt]) VALUES (1, 1, N'LANHFRESH20', N'Giảm 20.000đ Đơn Nông Sản', N'cash', 20000.00, 150000.00, '2026-12-10 21:48:08.316', 0, NULL, '2026-09-10 21:48:08.316');
@@ -2582,11 +2571,33 @@ INSERT INTO [dbo].[UserVouchers] ([VoucherId], [UserId], [Code], [Title], [Vouch
 INSERT INTO [dbo].[UserVouchers] ([VoucherId], [UserId], [Code], [Title], [VoucherType], [DiscountValue], [MinOrderAmount], [ExpiryDate], [IsUsed], [UsedAt], [CreatedAt]) VALUES (13, 5, N'FREESHIP50', N'Miễn Phí Vận Chuyển Hạng Vàng', N'ship', 30000.00, 200000.00, '2026-10-10 21:58:49.882', 0, NULL, '2026-09-10 21:58:49.882');
 INSERT INTO [dbo].[UserVouchers] ([VoucherId], [UserId], [Code], [Title], [VoucherType], [DiscountValue], [MinOrderAmount], [ExpiryDate], [IsUsed], [UsedAt], [CreatedAt]) VALUES (14, 5, N'VIETGAP10', N'Giảm 10% Rau Hữu Cơ VietGAP', N'discount', 15000.00, 100000.00, '2026-11-10 21:58:49.882', 0, NULL, '2026-09-10 21:58:49.882');
 INSERT INTO [dbo].[UserVouchers] ([VoucherId], [UserId], [Code], [Title], [VoucherType], [DiscountValue], [MinOrderAmount], [ExpiryDate], [IsUsed], [UsedAt], [CreatedAt]) VALUES (15, 5, N'WELCOME50', N'Voucher Chào Mừng Thành Viên Mới', N'cash', 50000.00, 250000.00, '2026-08-10 21:58:49.882', NULL, NULL, '2026-09-10 21:58:49.882');
+INSERT INTO [dbo].[UserVouchers] ([VoucherId], [UserId], [Code], [Title], [VoucherType], [DiscountValue], [MinOrderAmount], [ExpiryDate], [IsUsed], [UsedAt], [CreatedAt]) VALUES (16, 20, N'WELCOME50', N'Voucher Chào Mừng Thành Viên Mới', N'cash', 50000.00, 200000.00, '2026-10-17 18:16:12.602', 0, NULL, '2026-09-17 18:16:12.601');
 SET IDENTITY_INSERT [dbo].[UserVouchers] OFF;
 GO
 
 -- -------------------------------------------------------------
--- Data for: [dbo].[Orders] (33 rows)
+-- Data for: [dbo].[Addresses] (14 rows)
+-- -------------------------------------------------------------
+SET IDENTITY_INSERT [dbo].[Addresses] ON;
+INSERT INTO [dbo].[Addresses] ([AddressId], [UserId], [ReceiverName], [Phone], [Province], [District], [Ward], [AddressDetail], [Latitude], [Longitude], [IsDefault], [AddressType]) VALUES (1, 5, N'Nguyễn Minh Anh', N'0911000001', N'TP.HCM', N'Quận 1', N'Bến Nghé', N'25 Nguyễn Huệ', 10.77584360, 106.70098190, NULL, NULL);
+INSERT INTO [dbo].[Addresses] ([AddressId], [UserId], [ReceiverName], [Phone], [Province], [District], [Ward], [AddressDetail], [Latitude], [Longitude], [IsDefault], [AddressType]) VALUES (2, 5, N'Nguyễn Minh Anh', N'0911000001', N'TP.HCM', N'Thành phố Thủ Đức', N'Thảo Điền', N'18 Xuân Thủy', 10.80502660, 106.73970980, 0, NULL);
+INSERT INTO [dbo].[Addresses] ([AddressId], [UserId], [ReceiverName], [Phone], [Province], [District], [Ward], [AddressDetail], [Latitude], [Longitude], [IsDefault], [AddressType]) VALUES (3, 6, N'Trần Gia Hân', N'0911000002', N'TP.HCM', N'Quận 3', N'Võ Thị Sáu', N'115 Võ Thị Sáu', 10.78401420, 106.68413200, NULL, NULL);
+INSERT INTO [dbo].[Addresses] ([AddressId], [UserId], [ReceiverName], [Phone], [Province], [District], [Ward], [AddressDetail], [Latitude], [Longitude], [IsDefault], [AddressType]) VALUES (4, 7, N'Lê Hoàng Nam', N'0911000003', N'TP.HCM', N'Quận 7', N'Tân Phong', N'42 Nguyễn Hữu Thọ', 10.73191200, 106.70541900, NULL, NULL);
+INSERT INTO [dbo].[Addresses] ([AddressId], [UserId], [ReceiverName], [Phone], [Province], [District], [Ward], [AddressDetail], [Latitude], [Longitude], [IsDefault], [AddressType]) VALUES (5, 8, N'Phạm Ngọc Mai', N'0911000004', N'TP.HCM', N'Bình Thạnh', N'25 Điện Biên Phủ', N'25 Điện Biên Phủ', 10.79987940, 106.71003040, NULL, NULL);
+INSERT INTO [dbo].[Addresses] ([AddressId], [UserId], [ReceiverName], [Phone], [Province], [District], [Ward], [AddressDetail], [Latitude], [Longitude], [IsDefault], [AddressType]) VALUES (6, 9, N'Võ Đức Minh', N'0911000005', N'TP.HCM', N'Tân Bình', N'Ward 4', N'120 Cộng Hòa', 10.80055000, 106.65049000, NULL, NULL);
+INSERT INTO [dbo].[Addresses] ([AddressId], [UserId], [ReceiverName], [Phone], [Province], [District], [Ward], [AddressDetail], [Latitude], [Longitude], [IsDefault], [AddressType]) VALUES (7, 10, N'Nguyễn Thảo Vy', N'0911000006', N'TP.HCM', N'Gò Vấp', N'Phường 10', N'88 Quang Trung', 10.83416600, 106.67018000, NULL, NULL);
+INSERT INTO [dbo].[Addresses] ([AddressId], [UserId], [ReceiverName], [Phone], [Province], [District], [Ward], [AddressDetail], [Latitude], [Longitude], [IsDefault], [AddressType]) VALUES (8, 11, N'Hung Quoc', N'0942367010', N'Tỉnh Hải Dương', N'Thành phố Hải Dương', N'Xã Quyết Thắng', N'aaa', NULL, NULL, NULL, N'Nhà ở');
+INSERT INTO [dbo].[Addresses] ([AddressId], [UserId], [ReceiverName], [Phone], [Province], [District], [Ward], [AddressDetail], [Latitude], [Longitude], [IsDefault], [AddressType]) VALUES (9, 1, N'Test Khach', N'0901234567', N'TP. Hồ Chí Minh', N'Quận 1', N'Phường Bến Nghé', N'123 Lê Lợi', NULL, NULL, NULL, N'Nhà ở');
+INSERT INTO [dbo].[Addresses] ([AddressId], [UserId], [ReceiverName], [Phone], [Province], [District], [Ward], [AddressDetail], [Latitude], [Longitude], [IsDefault], [AddressType]) VALUES (10, 1, N'Test Khach', N'0901234567', N'TP. Hồ Chí Minh', N'Quận 1', N'Phường Bến Nghé', N'123 Lê Lợi', NULL, NULL, 0, N'Nhà ở');
+INSERT INTO [dbo].[Addresses] ([AddressId], [UserId], [ReceiverName], [Phone], [Province], [District], [Ward], [AddressDetail], [Latitude], [Longitude], [IsDefault], [AddressType]) VALUES (11, 1, N'Hacker Giá Rẻ', N'0901234567', N'TP. Hồ Chí Minh', N'Quận 1', N'Phường Bến Nghé', N'123 Lê Lợi', NULL, NULL, 0, N'Nhà ở');
+INSERT INTO [dbo].[Addresses] ([AddressId], [UserId], [ReceiverName], [Phone], [Province], [District], [Ward], [AddressDetail], [Latitude], [Longitude], [IsDefault], [AddressType]) VALUES (12, 20, N'Nguyen Phat Huy', N'0342595813', N'TP. Hồ Chí Minh', N'Quận 1', N'Phường Bến Nghé', N'123 Lê Lợi', NULL, NULL, NULL, N'Nhà ở');
+INSERT INTO [dbo].[Addresses] ([AddressId], [UserId], [ReceiverName], [Phone], [Province], [District], [Ward], [AddressDetail], [Latitude], [Longitude], [IsDefault], [AddressType]) VALUES (16, 20, N'Khách hàng', N'0901234567', NULL, NULL, NULL, NULL, NULL, NULL, 0, N'Nhà ở');
+INSERT INTO [dbo].[Addresses] ([AddressId], [UserId], [ReceiverName], [Phone], [Province], [District], [Ward], [AddressDetail], [Latitude], [Longitude], [IsDefault], [AddressType]) VALUES (19, 20, N'Khách hàng', N'0901234567', NULL, NULL, NULL, NULL, NULL, NULL, 0, N'Nhà ở');
+SET IDENTITY_INSERT [dbo].[Addresses] OFF;
+GO
+
+-- -------------------------------------------------------------
+-- Data for: [dbo].[Orders] (35 rows)
 -- -------------------------------------------------------------
 SET IDENTITY_INSERT [dbo].[Orders] ON;
 INSERT INTO [dbo].[Orders] ([OrderId], [CustomerId], [OrderCode], [AddressId], [Subtotal], [DiscountAmount], [ShippingFee], [TotalAmount], [PaymentMethod], [PaymentStatus], [OrderStatus], [CreatedAt], [UpdatedAt]) VALUES (1, 5, N'ORD-260815-0001', 1, 246000.00, 20000.00, 20000.00, 246000.00, N'COD', N'Paid', N'Completed', '2026-08-15 09:00:00.000', '2026-08-17 16:00:00.000');
@@ -2620,13 +2631,15 @@ INSERT INTO [dbo].[Orders] ([OrderId], [CustomerId], [OrderCode], [AddressId], [
 INSERT INTO [dbo].[Orders] ([OrderId], [CustomerId], [OrderCode], [AddressId], [Subtotal], [DiscountAmount], [ShippingFee], [TotalAmount], [PaymentMethod], [PaymentStatus], [OrderStatus], [CreatedAt], [UpdatedAt]) VALUES (29, 11, N'DH-20260911-9367', 8, 1299000.00, 0.00, 30000.00, 1329000.00, N'BANK', N'Pending', N'Cancelled', '2026-09-11 09:02:07.685', '2026-09-11 09:03:15.887');
 INSERT INTO [dbo].[Orders] ([OrderId], [CustomerId], [OrderCode], [AddressId], [Subtotal], [DiscountAmount], [ShippingFee], [TotalAmount], [PaymentMethod], [PaymentStatus], [OrderStatus], [CreatedAt], [UpdatedAt]) VALUES (30, 11, N'DH-20260911-6836', 8, 1374000.00, 0.00, 30000.00, 1404000.00, N'BANK', N'Pending', N'Cancelled', '2026-09-11 09:18:08.718', '2026-09-11 09:18:39.820');
 INSERT INTO [dbo].[Orders] ([OrderId], [CustomerId], [OrderCode], [AddressId], [Subtotal], [DiscountAmount], [ShippingFee], [TotalAmount], [PaymentMethod], [PaymentStatus], [OrderStatus], [CreatedAt], [UpdatedAt]) VALUES (31, 11, N'DH-20260911-6654', 8, 1374000.00, 0.00, 30000.00, 1404000.00, N'BANK', N'Pending', N'Cancelled', '2026-09-11 10:01:18.177', '2026-09-11 10:01:43.633');
-INSERT INTO [dbo].[Orders] ([OrderId], [CustomerId], [OrderCode], [AddressId], [Subtotal], [DiscountAmount], [ShippingFee], [TotalAmount], [PaymentMethod], [PaymentStatus], [OrderStatus], [CreatedAt], [UpdatedAt]) VALUES (36, 20, N'DH-20260916-5555', 16, 272000.00, 40000.00, 30000.00, 262000.00, N'COD', N'Pending', N'Pending', '2026-09-16 15:20:24.104', '2026-09-16 15:20:24.105');
+INSERT INTO [dbo].[Orders] ([OrderId], [CustomerId], [OrderCode], [AddressId], [Subtotal], [DiscountAmount], [ShippingFee], [TotalAmount], [PaymentMethod], [PaymentStatus], [OrderStatus], [CreatedAt], [UpdatedAt]) VALUES (36, 20, N'DH-20260916-5555', 16, 272000.00, 40000.00, 30000.00, 262000.00, N'COD', N'Refunded', N'Returned', '2026-09-16 15:20:24.104', '2026-09-23 09:40:36.147');
 INSERT INTO [dbo].[Orders] ([OrderId], [CustomerId], [OrderCode], [AddressId], [Subtotal], [DiscountAmount], [ShippingFee], [TotalAmount], [PaymentMethod], [PaymentStatus], [OrderStatus], [CreatedAt], [UpdatedAt]) VALUES (37, 20, N'DH-20260916-4480', 19, 272000.00, 40000.00, 30000.00, 262000.00, N'COD', N'Pending', N'Cancelled', '2026-09-16 15:21:33.279', '2026-09-16 15:21:33.599');
+INSERT INTO [dbo].[Orders] ([OrderId], [CustomerId], [OrderCode], [AddressId], [Subtotal], [DiscountAmount], [ShippingFee], [TotalAmount], [PaymentMethod], [PaymentStatus], [OrderStatus], [CreatedAt], [UpdatedAt]) VALUES (38, 20, N'DH-20260918-3846', 12, 76000.00, 0.00, 30000.00, 106000.00, N'COD', N'Pending', N'Cancelled', '2026-09-18 01:16:11.441', '2026-09-23 09:40:16.020');
+INSERT INTO [dbo].[Orders] ([OrderId], [CustomerId], [OrderCode], [AddressId], [Subtotal], [DiscountAmount], [ShippingFee], [TotalAmount], [PaymentMethod], [PaymentStatus], [OrderStatus], [CreatedAt], [UpdatedAt]) VALUES (39, 20, N'DH-20260923-8931', 12, 670000.00, 0.00, 30000.00, 700000.00, N'COD', N'Pending', N'Pending', '2026-09-23 13:37:17.337', '2026-09-23 13:37:17.337');
 SET IDENTITY_INSERT [dbo].[Orders] OFF;
 GO
 
 -- -------------------------------------------------------------
--- Data for: [dbo].[OrderItems] (70 rows)
+-- Data for: [dbo].[OrderItems] (75 rows)
 -- -------------------------------------------------------------
 SET IDENTITY_INSERT [dbo].[OrderItems] ON;
 INSERT INTO [dbo].[OrderItems] ([OrderItemId], [OrderId], [ProductId], [BatchId], [Quantity], [UnitPrice], [DiscountAmount], [TotalAmount]) VALUES (1, 1, 1, 2, 2.00, 68000.00, 0.00, 136000.00);
@@ -2699,6 +2712,11 @@ INSERT INTO [dbo].[OrderItems] ([OrderItemId], [OrderId], [ProductId], [BatchId]
 INSERT INTO [dbo].[OrderItems] ([OrderItemId], [OrderId], [ProductId], [BatchId], [Quantity], [UnitPrice], [DiscountAmount], [TotalAmount]) VALUES (68, 31, 12, 13, 8.00, 48000.00, 0.00, 384000.00);
 INSERT INTO [dbo].[OrderItems] ([OrderItemId], [OrderId], [ProductId], [BatchId], [Quantity], [UnitPrice], [DiscountAmount], [TotalAmount]) VALUES (73, 36, 1, 1, 4.00, 68000.00, 0.00, 272000.00);
 INSERT INTO [dbo].[OrderItems] ([OrderItemId], [OrderId], [ProductId], [BatchId], [Quantity], [UnitPrice], [DiscountAmount], [TotalAmount]) VALUES (74, 37, 1, 1, 4.00, 68000.00, 0.00, 272000.00);
+INSERT INTO [dbo].[OrderItems] ([OrderItemId], [OrderId], [ProductId], [BatchId], [Quantity], [UnitPrice], [DiscountAmount], [TotalAmount]) VALUES (75, 38, 107, 109, 2.00, 38000.00, 0.00, 76000.00);
+INSERT INTO [dbo].[OrderItems] ([OrderItemId], [OrderId], [ProductId], [BatchId], [Quantity], [UnitPrice], [DiscountAmount], [TotalAmount]) VALUES (76, 39, 128, 130, 1.00, 120000.00, 0.00, 120000.00);
+INSERT INTO [dbo].[OrderItems] ([OrderItemId], [OrderId], [ProductId], [BatchId], [Quantity], [UnitPrice], [DiscountAmount], [TotalAmount]) VALUES (77, 39, 127, 129, 2.00, 220000.00, 0.00, 440000.00);
+INSERT INTO [dbo].[OrderItems] ([OrderItemId], [OrderId], [ProductId], [BatchId], [Quantity], [UnitPrice], [DiscountAmount], [TotalAmount]) VALUES (78, 39, 132, 134, 1.00, 25000.00, 0.00, 25000.00);
+INSERT INTO [dbo].[OrderItems] ([OrderItemId], [OrderId], [ProductId], [BatchId], [Quantity], [UnitPrice], [DiscountAmount], [TotalAmount]) VALUES (79, 39, 129, 131, 1.00, 85000.00, 0.00, 85000.00);
 SET IDENTITY_INSERT [dbo].[OrderItems] OFF;
 GO
 
@@ -2719,6 +2737,37 @@ INSERT INTO [dbo].[Payments] ([PaymentId], [OrderId], [PaymentMethod], [Amount],
 INSERT INTO [dbo].[Payments] ([PaymentId], [OrderId], [PaymentMethod], [Amount], [TransactionCode], [Status], [PaidAt]) VALUES (11, 11, N'COD', 90000.00, N'COD-ORD11', N'Success', '2026-08-23 10:00:00.000');
 INSERT INTO [dbo].[Payments] ([PaymentId], [OrderId], [PaymentMethod], [Amount], [TransactionCode], [Status], [PaidAt]) VALUES (12, 12, N'MOMO', 165000.00, N'MOMO-DEMO-012', N'Success', '2026-08-23 18:00:00.000');
 SET IDENTITY_INSERT [dbo].[Payments] OFF;
+GO
+
+-- -------------------------------------------------------------
+-- Data for: [dbo].[Carts] (6 rows)
+-- -------------------------------------------------------------
+SET IDENTITY_INSERT [dbo].[Carts] ON;
+INSERT INTO [dbo].[Carts] ([CartId], [CustomerId], [CreatedAt], [UpdatedAt]) VALUES (1, 5, '2026-08-23 17:00:00.000', '2026-08-23 18:10:00.000');
+INSERT INTO [dbo].[Carts] ([CartId], [CustomerId], [CreatedAt], [UpdatedAt]) VALUES (2, 6, '2026-08-23 16:00:00.000', '2026-08-23 18:20:00.000');
+INSERT INTO [dbo].[Carts] ([CartId], [CustomerId], [CreatedAt], [UpdatedAt]) VALUES (3, 7, '2026-08-22 15:00:00.000', '2026-08-23 17:40:00.000');
+INSERT INTO [dbo].[Carts] ([CartId], [CustomerId], [CreatedAt], [UpdatedAt]) VALUES (4, 8, '2026-08-21 10:00:00.000', '2026-08-22 19:00:00.000');
+INSERT INTO [dbo].[Carts] ([CartId], [CustomerId], [CreatedAt], [UpdatedAt]) VALUES (5, 9, '2026-08-20 09:00:00.000', '2026-08-20 20:00:00.000');
+INSERT INTO [dbo].[Carts] ([CartId], [CustomerId], [CreatedAt], [UpdatedAt]) VALUES (6, 10, '2026-08-20 11:00:00.000', '2026-08-21 20:00:00.000');
+SET IDENTITY_INSERT [dbo].[Carts] OFF;
+GO
+
+-- -------------------------------------------------------------
+-- Data for: [dbo].[CartItems] (11 rows)
+-- -------------------------------------------------------------
+SET IDENTITY_INSERT [dbo].[CartItems] ON;
+INSERT INTO [dbo].[CartItems] ([CartItemId], [CartId], [ProductId], [Quantity]) VALUES (1, 1, 1, 2.00);
+INSERT INTO [dbo].[CartItems] ([CartItemId], [CartId], [ProductId], [Quantity]) VALUES (2, 1, 2, 1.00);
+INSERT INTO [dbo].[CartItems] ([CartItemId], [CartId], [ProductId], [Quantity]) VALUES (3, 1, 10, 2.00);
+INSERT INTO [dbo].[CartItems] ([CartItemId], [CartId], [ProductId], [Quantity]) VALUES (4, 2, 5, 2.00);
+INSERT INTO [dbo].[CartItems] ([CartItemId], [CartId], [ProductId], [Quantity]) VALUES (5, 2, 9, 1.00);
+INSERT INTO [dbo].[CartItems] ([CartItemId], [CartId], [ProductId], [Quantity]) VALUES (6, 3, 4, 1.00);
+INSERT INTO [dbo].[CartItems] ([CartItemId], [CartId], [ProductId], [Quantity]) VALUES (7, 3, 11, 2.00);
+INSERT INTO [dbo].[CartItems] ([CartItemId], [CartId], [ProductId], [Quantity]) VALUES (8, 4, 6, 1.00);
+INSERT INTO [dbo].[CartItems] ([CartItemId], [CartId], [ProductId], [Quantity]) VALUES (9, 4, 8, 2.00);
+INSERT INTO [dbo].[CartItems] ([CartItemId], [CartId], [ProductId], [Quantity]) VALUES (10, 5, 3, 1.00);
+INSERT INTO [dbo].[CartItems] ([CartItemId], [CartId], [ProductId], [Quantity]) VALUES (11, 6, 12, 2.00);
+SET IDENTITY_INSERT [dbo].[CartItems] OFF;
 GO
 
 -- -------------------------------------------------------------
@@ -3000,39 +3049,6 @@ SET IDENTITY_INSERT [dbo].[ReviewImages] OFF;
 GO
 
 -- -------------------------------------------------------------
--- Data for: [dbo].[ReviewHelpfulVotes] (0 rows)
--- -------------------------------------------------------------
--- (Table is empty)
-
--- -------------------------------------------------------------
--- Data for: [dbo].[Addresses] (21 rows)
--- -------------------------------------------------------------
-SET IDENTITY_INSERT [dbo].[Addresses] ON;
-INSERT INTO [dbo].[Addresses] ([AddressId], [UserId], [ReceiverName], [Phone], [Province], [District], [Ward], [AddressDetail], [Latitude], [Longitude], [IsDefault], [AddressType]) VALUES (1, 5, N'Nguyễn Minh Anh', N'0911000001', N'TP.HCM', N'Quận 1', N'Bến Nghé', N'25 Nguyễn Huệ', 10.77584360, 106.70098190, NULL, NULL);
-INSERT INTO [dbo].[Addresses] ([AddressId], [UserId], [ReceiverName], [Phone], [Province], [District], [Ward], [AddressDetail], [Latitude], [Longitude], [IsDefault], [AddressType]) VALUES (2, 5, N'Nguyễn Minh Anh', N'0911000001', N'TP.HCM', N'Thành phố Thủ Đức', N'Thảo Điền', N'18 Xuân Thủy', 10.80502660, 106.73970980, 0, NULL);
-INSERT INTO [dbo].[Addresses] ([AddressId], [UserId], [ReceiverName], [Phone], [Province], [District], [Ward], [AddressDetail], [Latitude], [Longitude], [IsDefault], [AddressType]) VALUES (3, 6, N'Trần Gia Hân', N'0911000002', N'TP.HCM', N'Quận 3', N'Võ Thị Sáu', N'115 Võ Thị Sáu', 10.78401420, 106.68413200, NULL, NULL);
-INSERT INTO [dbo].[Addresses] ([AddressId], [UserId], [ReceiverName], [Phone], [Province], [District], [Ward], [AddressDetail], [Latitude], [Longitude], [IsDefault], [AddressType]) VALUES (4, 7, N'Lê Hoàng Nam', N'0911000003', N'TP.HCM', N'Quận 7', N'Tân Phong', N'42 Nguyễn Hữu Thọ', 10.73191200, 106.70541900, NULL, NULL);
-INSERT INTO [dbo].[Addresses] ([AddressId], [UserId], [ReceiverName], [Phone], [Province], [District], [Ward], [AddressDetail], [Latitude], [Longitude], [IsDefault], [AddressType]) VALUES (5, 8, N'Phạm Ngọc Mai', N'0911000004', N'TP.HCM', N'Bình Thạnh', N'25 Điện Biên Phủ', N'25 Điện Biên Phủ', 10.79987940, 106.71003040, NULL, NULL);
-INSERT INTO [dbo].[Addresses] ([AddressId], [UserId], [ReceiverName], [Phone], [Province], [District], [Ward], [AddressDetail], [Latitude], [Longitude], [IsDefault], [AddressType]) VALUES (6, 9, N'Võ Đức Minh', N'0911000005', N'TP.HCM', N'Tân Bình', N'Ward 4', N'120 Cộng Hòa', 10.80055000, 106.65049000, NULL, NULL);
-INSERT INTO [dbo].[Addresses] ([AddressId], [UserId], [ReceiverName], [Phone], [Province], [District], [Ward], [AddressDetail], [Latitude], [Longitude], [IsDefault], [AddressType]) VALUES (7, 10, N'Nguyễn Thảo Vy', N'0911000006', N'TP.HCM', N'Gò Vấp', N'Phường 10', N'88 Quang Trung', 10.83416600, 106.67018000, NULL, NULL);
-INSERT INTO [dbo].[Addresses] ([AddressId], [UserId], [ReceiverName], [Phone], [Province], [District], [Ward], [AddressDetail], [Latitude], [Longitude], [IsDefault], [AddressType]) VALUES (8, 11, N'Hung Quoc', N'0942367010', N'Tỉnh Hải Dương', N'Thành phố Hải Dương', N'Xã Quyết Thắng', N'aaa', NULL, NULL, NULL, N'Nhà ở');
-INSERT INTO [dbo].[Addresses] ([AddressId], [UserId], [ReceiverName], [Phone], [Province], [District], [Ward], [AddressDetail], [Latitude], [Longitude], [IsDefault], [AddressType]) VALUES (9, 1, N'Test Khach', N'0901234567', N'TP. Hồ Chí Minh', N'Quận 1', N'Phường Bến Nghé', N'123 Lê Lợi', NULL, NULL, NULL, N'Nhà ở');
-INSERT INTO [dbo].[Addresses] ([AddressId], [UserId], [ReceiverName], [Phone], [Province], [District], [Ward], [AddressDetail], [Latitude], [Longitude], [IsDefault], [AddressType]) VALUES (10, 1, N'Test Khach', N'0901234567', N'TP. Hồ Chí Minh', N'Quận 1', N'Phường Bến Nghé', N'123 Lê Lợi', NULL, NULL, 0, N'Nhà ở');
-INSERT INTO [dbo].[Addresses] ([AddressId], [UserId], [ReceiverName], [Phone], [Province], [District], [Ward], [AddressDetail], [Latitude], [Longitude], [IsDefault], [AddressType]) VALUES (11, 1, N'Hacker Giá Rẻ', N'0901234567', N'TP. Hồ Chí Minh', N'Quận 1', N'Phường Bến Nghé', N'123 Lê Lợi', NULL, NULL, 0, N'Nhà ở');
-INSERT INTO [dbo].[Addresses] ([AddressId], [UserId], [ReceiverName], [Phone], [Province], [District], [Ward], [AddressDetail], [Latitude], [Longitude], [IsDefault], [AddressType]) VALUES (12, 20, N'Nguyen Phat Huy', N'0342595813', N'TP. Hồ Chí Minh', N'Quận 1', N'Phường Bến Nghé', N'123 Lê Lợi', NULL, NULL, NULL, N'Nhà ở');
-INSERT INTO [dbo].[Addresses] ([AddressId], [UserId], [ReceiverName], [Phone], [Province], [District], [Ward], [AddressDetail], [Latitude], [Longitude], [IsDefault], [AddressType]) VALUES (13, 20, N'Nguyen Phat Huy', N'0342595813', N'TP. Hồ Chí Minh', N'Quận 1', N'Phường Bến Nghé', N'123 Lê Lợi', NULL, NULL, 0, N'Nhà ở');
-INSERT INTO [dbo].[Addresses] ([AddressId], [UserId], [ReceiverName], [Phone], [Province], [District], [Ward], [AddressDetail], [Latitude], [Longitude], [IsDefault], [AddressType]) VALUES (14, 20, N'Khách hàng', N'0901234567', NULL, NULL, NULL, NULL, NULL, NULL, 0, N'Nhà ở');
-INSERT INTO [dbo].[Addresses] ([AddressId], [UserId], [ReceiverName], [Phone], [Province], [District], [Ward], [AddressDetail], [Latitude], [Longitude], [IsDefault], [AddressType]) VALUES (15, 20, N'Khách hàng', N'0901234567', NULL, NULL, NULL, NULL, NULL, NULL, 0, N'Nhà ở');
-INSERT INTO [dbo].[Addresses] ([AddressId], [UserId], [ReceiverName], [Phone], [Province], [District], [Ward], [AddressDetail], [Latitude], [Longitude], [IsDefault], [AddressType]) VALUES (16, 20, N'Khách hàng', N'0901234567', NULL, NULL, NULL, NULL, NULL, NULL, 0, N'Nhà ở');
-INSERT INTO [dbo].[Addresses] ([AddressId], [UserId], [ReceiverName], [Phone], [Province], [District], [Ward], [AddressDetail], [Latitude], [Longitude], [IsDefault], [AddressType]) VALUES (17, 20, N'Khách hàng', N'0901234567', NULL, NULL, NULL, NULL, NULL, NULL, 0, N'Nhà ở');
-INSERT INTO [dbo].[Addresses] ([AddressId], [UserId], [ReceiverName], [Phone], [Province], [District], [Ward], [AddressDetail], [Latitude], [Longitude], [IsDefault], [AddressType]) VALUES (18, 20, N'Khách hàng', N'0901234567', NULL, NULL, NULL, NULL, NULL, NULL, 0, N'Nhà ở');
-INSERT INTO [dbo].[Addresses] ([AddressId], [UserId], [ReceiverName], [Phone], [Province], [District], [Ward], [AddressDetail], [Latitude], [Longitude], [IsDefault], [AddressType]) VALUES (19, 20, N'Khách hàng', N'0901234567', NULL, NULL, NULL, NULL, NULL, NULL, 0, N'Nhà ở');
-INSERT INTO [dbo].[Addresses] ([AddressId], [UserId], [ReceiverName], [Phone], [Province], [District], [Ward], [AddressDetail], [Latitude], [Longitude], [IsDefault], [AddressType]) VALUES (20, 20, N'Nguyen Van Hop Le', N'0912345678', N'Ho Chi Minh', N'Quan 1', N'Ben Nghe', N'123 Le Loi', NULL, NULL, 0, N'Nha o');
-INSERT INTO [dbo].[Addresses] ([AddressId], [UserId], [ReceiverName], [Phone], [Province], [District], [Ward], [AddressDetail], [Latitude], [Longitude], [IsDefault], [AddressType]) VALUES (21, 20, N'Nguyen Van Hop Le', N'0912345678', N'Ho Chi Minh', N'Quan 1', N'Ben Nghe', N'123 Le Loi', NULL, NULL, 0, N'Nha o');
-SET IDENTITY_INSERT [dbo].[Addresses] OFF;
-GO
-
--- -------------------------------------------------------------
 -- Data for: [dbo].[Notifications] (10 rows)
 -- -------------------------------------------------------------
 SET IDENTITY_INSERT [dbo].[Notifications] ON;
@@ -3050,38 +3066,7 @@ SET IDENTITY_INSERT [dbo].[Notifications] OFF;
 GO
 
 -- -------------------------------------------------------------
--- Data for: [dbo].[Carts] (6 rows)
--- -------------------------------------------------------------
-SET IDENTITY_INSERT [dbo].[Carts] ON;
-INSERT INTO [dbo].[Carts] ([CartId], [CustomerId], [CreatedAt], [UpdatedAt]) VALUES (1, 5, '2026-08-23 17:00:00.000', '2026-08-23 18:10:00.000');
-INSERT INTO [dbo].[Carts] ([CartId], [CustomerId], [CreatedAt], [UpdatedAt]) VALUES (2, 6, '2026-08-23 16:00:00.000', '2026-08-23 18:20:00.000');
-INSERT INTO [dbo].[Carts] ([CartId], [CustomerId], [CreatedAt], [UpdatedAt]) VALUES (3, 7, '2026-08-22 15:00:00.000', '2026-08-23 17:40:00.000');
-INSERT INTO [dbo].[Carts] ([CartId], [CustomerId], [CreatedAt], [UpdatedAt]) VALUES (4, 8, '2026-08-21 10:00:00.000', '2026-08-22 19:00:00.000');
-INSERT INTO [dbo].[Carts] ([CartId], [CustomerId], [CreatedAt], [UpdatedAt]) VALUES (5, 9, '2026-08-20 09:00:00.000', '2026-08-20 20:00:00.000');
-INSERT INTO [dbo].[Carts] ([CartId], [CustomerId], [CreatedAt], [UpdatedAt]) VALUES (6, 10, '2026-08-20 11:00:00.000', '2026-08-21 20:00:00.000');
-SET IDENTITY_INSERT [dbo].[Carts] OFF;
-GO
-
--- -------------------------------------------------------------
--- Data for: [dbo].[CartItems] (11 rows)
--- -------------------------------------------------------------
-SET IDENTITY_INSERT [dbo].[CartItems] ON;
-INSERT INTO [dbo].[CartItems] ([CartItemId], [CartId], [ProductId], [Quantity]) VALUES (1, 1, 1, 2.00);
-INSERT INTO [dbo].[CartItems] ([CartItemId], [CartId], [ProductId], [Quantity]) VALUES (2, 1, 2, 1.00);
-INSERT INTO [dbo].[CartItems] ([CartItemId], [CartId], [ProductId], [Quantity]) VALUES (3, 1, 10, 2.00);
-INSERT INTO [dbo].[CartItems] ([CartItemId], [CartId], [ProductId], [Quantity]) VALUES (4, 2, 5, 2.00);
-INSERT INTO [dbo].[CartItems] ([CartItemId], [CartId], [ProductId], [Quantity]) VALUES (5, 2, 9, 1.00);
-INSERT INTO [dbo].[CartItems] ([CartItemId], [CartId], [ProductId], [Quantity]) VALUES (6, 3, 4, 1.00);
-INSERT INTO [dbo].[CartItems] ([CartItemId], [CartId], [ProductId], [Quantity]) VALUES (7, 3, 11, 2.00);
-INSERT INTO [dbo].[CartItems] ([CartItemId], [CartId], [ProductId], [Quantity]) VALUES (8, 4, 6, 1.00);
-INSERT INTO [dbo].[CartItems] ([CartItemId], [CartId], [ProductId], [Quantity]) VALUES (9, 4, 8, 2.00);
-INSERT INTO [dbo].[CartItems] ([CartItemId], [CartId], [ProductId], [Quantity]) VALUES (10, 5, 3, 1.00);
-INSERT INTO [dbo].[CartItems] ([CartItemId], [CartId], [ProductId], [Quantity]) VALUES (11, 6, 12, 2.00);
-SET IDENTITY_INSERT [dbo].[CartItems] OFF;
-GO
-
--- -------------------------------------------------------------
--- Data for: [dbo].[UserBehaviors] (39 rows)
+-- Data for: [dbo].[UserBehaviors] (51 rows)
 -- -------------------------------------------------------------
 SET IDENTITY_INSERT [dbo].[UserBehaviors] ON;
 INSERT INTO [dbo].[UserBehaviors] ([BehaviorId], [UserId], [ProductId], [ActionType], [SearchKeyword], [SessionId], [CreatedAt]) VALUES (1, 5, 1, N'VIEW', NULL, N'S001', '2026-08-20 08:00:00.000');
@@ -3123,11 +3108,23 @@ INSERT INTO [dbo].[UserBehaviors] ([BehaviorId], [UserId], [ProductId], [ActionT
 INSERT INTO [dbo].[UserBehaviors] ([BehaviorId], [UserId], [ProductId], [ActionType], [SearchKeyword], [SessionId], [CreatedAt]) VALUES (37, 13, 133, N'QUICK_VIEW', NULL, N'SES-9f60b091', '2026-09-16 05:50:16.151');
 INSERT INTO [dbo].[UserBehaviors] ([BehaviorId], [UserId], [ProductId], [ActionType], [SearchKeyword], [SessionId], [CreatedAt]) VALUES (38, 13, 127, N'QUICK_VIEW', NULL, N'SES-1c5c2b87', '2026-09-16 05:50:31.411');
 INSERT INTO [dbo].[UserBehaviors] ([BehaviorId], [UserId], [ProductId], [ActionType], [SearchKeyword], [SessionId], [CreatedAt]) VALUES (39, NULL, 126, N'QUICK_VIEW', NULL, N'SES-35a51e93', '2026-09-16 07:55:23.951');
+INSERT INTO [dbo].[UserBehaviors] ([BehaviorId], [UserId], [ProductId], [ActionType], [SearchKeyword], [SessionId], [CreatedAt]) VALUES (40, NULL, 134, N'QUICK_VIEW', NULL, N'SES-7584803f', '2026-09-17 16:36:28.626');
+INSERT INTO [dbo].[UserBehaviors] ([BehaviorId], [UserId], [ProductId], [ActionType], [SearchKeyword], [SessionId], [CreatedAt]) VALUES (41, 20, 107, N'QUICK_VIEW', NULL, N'SES-6fb4d30f', '2026-09-17 18:14:15.390');
+INSERT INTO [dbo].[UserBehaviors] ([BehaviorId], [UserId], [ProductId], [ActionType], [SearchKeyword], [SessionId], [CreatedAt]) VALUES (42, 20, 127, N'QUICK_VIEW', NULL, N'SES-3b6f6c80', '2026-09-17 18:21:08.845');
+INSERT INTO [dbo].[UserBehaviors] ([BehaviorId], [UserId], [ProductId], [ActionType], [SearchKeyword], [SessionId], [CreatedAt]) VALUES (43, 20, 134, N'QUICK_VIEW', NULL, N'SES-71f4c434', '2026-09-23 05:37:38.113');
+INSERT INTO [dbo].[UserBehaviors] ([BehaviorId], [UserId], [ProductId], [ActionType], [SearchKeyword], [SessionId], [CreatedAt]) VALUES (44, 20, 71, N'QUICK_VIEW', NULL, N'SES-9bc05807', '2026-09-23 06:33:51.053');
+INSERT INTO [dbo].[UserBehaviors] ([BehaviorId], [UserId], [ProductId], [ActionType], [SearchKeyword], [SessionId], [CreatedAt]) VALUES (45, 20, 65, N'QUICK_VIEW', NULL, N'SES-e9c5300e', '2026-09-23 06:34:00.577');
+INSERT INTO [dbo].[UserBehaviors] ([BehaviorId], [UserId], [ProductId], [ActionType], [SearchKeyword], [SessionId], [CreatedAt]) VALUES (46, 20, 75, N'QUICK_VIEW', NULL, N'SES-5b093e19', '2026-09-23 06:35:20.611');
+INSERT INTO [dbo].[UserBehaviors] ([BehaviorId], [UserId], [ProductId], [ActionType], [SearchKeyword], [SessionId], [CreatedAt]) VALUES (47, 20, 67, N'QUICK_VIEW', NULL, N'SES-32ede237', '2026-09-23 06:35:25.605');
+INSERT INTO [dbo].[UserBehaviors] ([BehaviorId], [UserId], [ProductId], [ActionType], [SearchKeyword], [SessionId], [CreatedAt]) VALUES (48, 20, 85, N'QUICK_VIEW', NULL, N'SES-d76b02f9', '2026-09-23 06:39:13.138');
+INSERT INTO [dbo].[UserBehaviors] ([BehaviorId], [UserId], [ProductId], [ActionType], [SearchKeyword], [SessionId], [CreatedAt]) VALUES (49, 20, 86, N'QUICK_VIEW', NULL, N'SES-73625762', '2026-09-23 06:39:17.507');
+INSERT INTO [dbo].[UserBehaviors] ([BehaviorId], [UserId], [ProductId], [ActionType], [SearchKeyword], [SessionId], [CreatedAt]) VALUES (50, 1, 1, N'RECOMMENDATION_CLICK', NULL, N'SES-35ab27bc', '2026-09-23 06:42:26.770');
+INSERT INTO [dbo].[UserBehaviors] ([BehaviorId], [UserId], [ProductId], [ActionType], [SearchKeyword], [SessionId], [CreatedAt]) VALUES (51, 20, 133, N'QUICK_VIEW', NULL, N'SES-8df3fd75', '2026-09-23 06:55:23.293');
 SET IDENTITY_INSERT [dbo].[UserBehaviors] OFF;
 GO
 
 -- -------------------------------------------------------------
--- Data for: [dbo].[RecommendationLogs] (30 rows)
+-- Data for: [dbo].[RecommendationLogs] (61 rows)
 -- -------------------------------------------------------------
 SET IDENTITY_INSERT [dbo].[RecommendationLogs] ON;
 INSERT INTO [dbo].[RecommendationLogs] ([RecommendationLogId], [UserId], [ProductId], [RecommendationType], [Score], [Position], [ShownAt], [Clicked], [AddedToCart], [Purchased]) VALUES (1, 5, 1, N'FOR_YOU', 0.95, 1, '2026-08-23 08:00:00.000', NULL, NULL, NULL);
@@ -3160,50 +3157,40 @@ INSERT INTO [dbo].[RecommendationLogs] ([RecommendationLogId], [UserId], [Produc
 INSERT INTO [dbo].[RecommendationLogs] ([RecommendationLogId], [UserId], [ProductId], [RecommendationType], [Score], [Position], [ShownAt], [Clicked], [AddedToCart], [Purchased]) VALUES (28, NULL, 12, N'FREQUENTLY_BOUGHT_TOGETHER', 0.92, 1, '2026-09-16 07:55:24.164', 0, 0, 0);
 INSERT INTO [dbo].[RecommendationLogs] ([RecommendationLogId], [UserId], [ProductId], [RecommendationType], [Score], [Position], [ShownAt], [Clicked], [AddedToCart], [Purchased]) VALUES (29, NULL, 11, N'FREQUENTLY_BOUGHT_TOGETHER', 0.92, 1, '2026-09-16 07:55:24.199', 0, 0, 0);
 INSERT INTO [dbo].[RecommendationLogs] ([RecommendationLogId], [UserId], [ProductId], [RecommendationType], [Score], [Position], [ShownAt], [Clicked], [AddedToCart], [Purchased]) VALUES (30, NULL, 10, N'FREQUENTLY_BOUGHT_TOGETHER', 0.92, 1, '2026-09-16 07:55:24.199', 0, 0, 0);
+INSERT INTO [dbo].[RecommendationLogs] ([RecommendationLogId], [UserId], [ProductId], [RecommendationType], [Score], [Position], [ShownAt], [Clicked], [AddedToCart], [Purchased]) VALUES (34, NULL, 12, N'FREQUENTLY_BOUGHT_TOGETHER', 0.92, 1, '2026-09-17 18:14:15.460', 0, 0, 0);
+INSERT INTO [dbo].[RecommendationLogs] ([RecommendationLogId], [UserId], [ProductId], [RecommendationType], [Score], [Position], [ShownAt], [Clicked], [AddedToCart], [Purchased]) VALUES (35, NULL, 11, N'FREQUENTLY_BOUGHT_TOGETHER', 0.92, 1, '2026-09-17 18:14:15.460', 0, 0, 0);
+INSERT INTO [dbo].[RecommendationLogs] ([RecommendationLogId], [UserId], [ProductId], [RecommendationType], [Score], [Position], [ShownAt], [Clicked], [AddedToCart], [Purchased]) VALUES (36, NULL, 10, N'FREQUENTLY_BOUGHT_TOGETHER', 0.92, 1, '2026-09-17 18:14:15.460', 0, 0, 0);
+INSERT INTO [dbo].[RecommendationLogs] ([RecommendationLogId], [UserId], [ProductId], [RecommendationType], [Score], [Position], [ShownAt], [Clicked], [AddedToCart], [Purchased]) VALUES (37, NULL, 12, N'FREQUENTLY_BOUGHT_TOGETHER', 0.92, 1, '2026-09-17 18:21:08.897', 0, 0, 0);
+INSERT INTO [dbo].[RecommendationLogs] ([RecommendationLogId], [UserId], [ProductId], [RecommendationType], [Score], [Position], [ShownAt], [Clicked], [AddedToCart], [Purchased]) VALUES (38, NULL, 11, N'FREQUENTLY_BOUGHT_TOGETHER', 0.92, 1, '2026-09-17 18:21:08.897', 0, 0, 0);
+INSERT INTO [dbo].[RecommendationLogs] ([RecommendationLogId], [UserId], [ProductId], [RecommendationType], [Score], [Position], [ShownAt], [Clicked], [AddedToCart], [Purchased]) VALUES (39, NULL, 10, N'FREQUENTLY_BOUGHT_TOGETHER', 0.92, 1, '2026-09-17 18:21:08.897', 0, 0, 0);
+INSERT INTO [dbo].[RecommendationLogs] ([RecommendationLogId], [UserId], [ProductId], [RecommendationType], [Score], [Position], [ShownAt], [Clicked], [AddedToCart], [Purchased]) VALUES (40, NULL, 12, N'FREQUENTLY_BOUGHT_TOGETHER', 0.92, 1, '2026-09-23 05:37:38.279', 0, 0, 0);
+INSERT INTO [dbo].[RecommendationLogs] ([RecommendationLogId], [UserId], [ProductId], [RecommendationType], [Score], [Position], [ShownAt], [Clicked], [AddedToCart], [Purchased]) VALUES (41, NULL, 11, N'FREQUENTLY_BOUGHT_TOGETHER', 0.92, 1, '2026-09-23 05:37:38.319', 0, 0, 0);
+INSERT INTO [dbo].[RecommendationLogs] ([RecommendationLogId], [UserId], [ProductId], [RecommendationType], [Score], [Position], [ShownAt], [Clicked], [AddedToCart], [Purchased]) VALUES (42, NULL, 10, N'FREQUENTLY_BOUGHT_TOGETHER', 0.92, 1, '2026-09-23 05:37:38.320', 0, 0, 0);
+INSERT INTO [dbo].[RecommendationLogs] ([RecommendationLogId], [UserId], [ProductId], [RecommendationType], [Score], [Position], [ShownAt], [Clicked], [AddedToCart], [Purchased]) VALUES (43, NULL, 12, N'FREQUENTLY_BOUGHT_TOGETHER', 0.92, 1, '2026-09-23 06:33:51.157', 0, 0, 0);
+INSERT INTO [dbo].[RecommendationLogs] ([RecommendationLogId], [UserId], [ProductId], [RecommendationType], [Score], [Position], [ShownAt], [Clicked], [AddedToCart], [Purchased]) VALUES (44, NULL, 11, N'FREQUENTLY_BOUGHT_TOGETHER', 0.92, 1, '2026-09-23 06:33:51.157', 0, 0, 0);
+INSERT INTO [dbo].[RecommendationLogs] ([RecommendationLogId], [UserId], [ProductId], [RecommendationType], [Score], [Position], [ShownAt], [Clicked], [AddedToCart], [Purchased]) VALUES (45, NULL, 10, N'FREQUENTLY_BOUGHT_TOGETHER', 0.92, 1, '2026-09-23 06:33:51.157', 0, 0, 0);
+INSERT INTO [dbo].[RecommendationLogs] ([RecommendationLogId], [UserId], [ProductId], [RecommendationType], [Score], [Position], [ShownAt], [Clicked], [AddedToCart], [Purchased]) VALUES (46, NULL, 12, N'FREQUENTLY_BOUGHT_TOGETHER', 0.92, 1, '2026-09-23 06:34:00.799', 0, 0, 0);
+INSERT INTO [dbo].[RecommendationLogs] ([RecommendationLogId], [UserId], [ProductId], [RecommendationType], [Score], [Position], [ShownAt], [Clicked], [AddedToCart], [Purchased]) VALUES (47, NULL, 11, N'FREQUENTLY_BOUGHT_TOGETHER', 0.92, 1, '2026-09-23 06:34:00.802', 0, 0, 0);
+INSERT INTO [dbo].[RecommendationLogs] ([RecommendationLogId], [UserId], [ProductId], [RecommendationType], [Score], [Position], [ShownAt], [Clicked], [AddedToCart], [Purchased]) VALUES (48, NULL, 10, N'FREQUENTLY_BOUGHT_TOGETHER', 0.92, 1, '2026-09-23 06:34:00.802', 0, 0, 0);
+INSERT INTO [dbo].[RecommendationLogs] ([RecommendationLogId], [UserId], [ProductId], [RecommendationType], [Score], [Position], [ShownAt], [Clicked], [AddedToCart], [Purchased]) VALUES (49, NULL, 12, N'FREQUENTLY_BOUGHT_TOGETHER', 0.92, 1, '2026-09-23 06:35:20.754', 0, 0, 0);
+INSERT INTO [dbo].[RecommendationLogs] ([RecommendationLogId], [UserId], [ProductId], [RecommendationType], [Score], [Position], [ShownAt], [Clicked], [AddedToCart], [Purchased]) VALUES (50, NULL, 11, N'FREQUENTLY_BOUGHT_TOGETHER', 0.92, 1, '2026-09-23 06:35:20.755', 0, 0, 0);
+INSERT INTO [dbo].[RecommendationLogs] ([RecommendationLogId], [UserId], [ProductId], [RecommendationType], [Score], [Position], [ShownAt], [Clicked], [AddedToCart], [Purchased]) VALUES (51, NULL, 10, N'FREQUENTLY_BOUGHT_TOGETHER', 0.92, 1, '2026-09-23 06:35:20.755', 0, 0, 0);
+INSERT INTO [dbo].[RecommendationLogs] ([RecommendationLogId], [UserId], [ProductId], [RecommendationType], [Score], [Position], [ShownAt], [Clicked], [AddedToCart], [Purchased]) VALUES (52, NULL, 12, N'FREQUENTLY_BOUGHT_TOGETHER', 0.92, 1, '2026-09-23 06:35:25.649', 0, 0, 0);
+INSERT INTO [dbo].[RecommendationLogs] ([RecommendationLogId], [UserId], [ProductId], [RecommendationType], [Score], [Position], [ShownAt], [Clicked], [AddedToCart], [Purchased]) VALUES (53, NULL, 11, N'FREQUENTLY_BOUGHT_TOGETHER', 0.92, 1, '2026-09-23 06:35:25.649', 0, 0, 0);
+INSERT INTO [dbo].[RecommendationLogs] ([RecommendationLogId], [UserId], [ProductId], [RecommendationType], [Score], [Position], [ShownAt], [Clicked], [AddedToCart], [Purchased]) VALUES (54, NULL, 10, N'FREQUENTLY_BOUGHT_TOGETHER', 0.92, 1, '2026-09-23 06:35:25.649', 0, 0, 0);
+INSERT INTO [dbo].[RecommendationLogs] ([RecommendationLogId], [UserId], [ProductId], [RecommendationType], [Score], [Position], [ShownAt], [Clicked], [AddedToCart], [Purchased]) VALUES (55, NULL, 12, N'FREQUENTLY_BOUGHT_TOGETHER', 0.92, 1, '2026-09-23 06:39:13.270', 0, 0, 0);
+INSERT INTO [dbo].[RecommendationLogs] ([RecommendationLogId], [UserId], [ProductId], [RecommendationType], [Score], [Position], [ShownAt], [Clicked], [AddedToCart], [Purchased]) VALUES (56, NULL, 11, N'FREQUENTLY_BOUGHT_TOGETHER', 0.92, 1, '2026-09-23 06:39:13.271', 0, 0, 0);
+INSERT INTO [dbo].[RecommendationLogs] ([RecommendationLogId], [UserId], [ProductId], [RecommendationType], [Score], [Position], [ShownAt], [Clicked], [AddedToCart], [Purchased]) VALUES (57, NULL, 10, N'FREQUENTLY_BOUGHT_TOGETHER', 0.92, 1, '2026-09-23 06:39:13.271', 0, 0, 0);
+INSERT INTO [dbo].[RecommendationLogs] ([RecommendationLogId], [UserId], [ProductId], [RecommendationType], [Score], [Position], [ShownAt], [Clicked], [AddedToCart], [Purchased]) VALUES (58, NULL, 12, N'FREQUENTLY_BOUGHT_TOGETHER', 0.92, 1, '2026-09-23 06:39:17.529', 0, 0, 0);
+INSERT INTO [dbo].[RecommendationLogs] ([RecommendationLogId], [UserId], [ProductId], [RecommendationType], [Score], [Position], [ShownAt], [Clicked], [AddedToCart], [Purchased]) VALUES (59, NULL, 11, N'FREQUENTLY_BOUGHT_TOGETHER', 0.92, 1, '2026-09-23 06:39:17.529', 0, 0, 0);
+INSERT INTO [dbo].[RecommendationLogs] ([RecommendationLogId], [UserId], [ProductId], [RecommendationType], [Score], [Position], [ShownAt], [Clicked], [AddedToCart], [Purchased]) VALUES (60, NULL, 10, N'FREQUENTLY_BOUGHT_TOGETHER', 0.92, 1, '2026-09-23 06:39:17.529', 0, 0, 0);
+INSERT INTO [dbo].[RecommendationLogs] ([RecommendationLogId], [UserId], [ProductId], [RecommendationType], [Score], [Position], [ShownAt], [Clicked], [AddedToCart], [Purchased]) VALUES (61, 1, 1, N'FREQUENTLY_BOUGHT_TOGETHER', 0.95, 1, '2026-09-23 06:42:26.771', NULL, 0, 0);
+INSERT INTO [dbo].[RecommendationLogs] ([RecommendationLogId], [UserId], [ProductId], [RecommendationType], [Score], [Position], [ShownAt], [Clicked], [AddedToCart], [Purchased]) VALUES (62, NULL, 12, N'FREQUENTLY_BOUGHT_TOGETHER', 0.92, 1, '2026-09-23 06:55:23.337', 0, 0, 0);
+INSERT INTO [dbo].[RecommendationLogs] ([RecommendationLogId], [UserId], [ProductId], [RecommendationType], [Score], [Position], [ShownAt], [Clicked], [AddedToCart], [Purchased]) VALUES (63, NULL, 11, N'FREQUENTLY_BOUGHT_TOGETHER', 0.92, 1, '2026-09-23 06:55:23.338', 0, 0, 0);
+INSERT INTO [dbo].[RecommendationLogs] ([RecommendationLogId], [UserId], [ProductId], [RecommendationType], [Score], [Position], [ShownAt], [Clicked], [AddedToCart], [Purchased]) VALUES (64, NULL, 10, N'FREQUENTLY_BOUGHT_TOGETHER', 0.92, 1, '2026-09-23 06:55:23.338', 0, 0, 0);
 SET IDENTITY_INSERT [dbo].[RecommendationLogs] OFF;
 GO
 
--- -------------------------------------------------------------
--- Data for: [dbo].[AuditLogs] (0 rows)
--- -------------------------------------------------------------
--- (Table is empty)
-
--- -------------------------------------------------------------
--- Data for: [dbo].[RefreshTokens] (0 rows)
--- -------------------------------------------------------------
--- (Table is empty)
-
--- ==============================================================================
--- 3. RE-ENABLE CONSTRAINTS & TRIGGERS
--- ==============================================================================
+-- Bat lai toan bo rang buoc khoa ngoai
 EXEC sp_MSforeachtable 'ALTER TABLE ? WITH CHECK CHECK CONSTRAINT all';
-GO
-PRINT N'Hoan tat phuc hoi co so du lieu QL_WebMuaBanNongSan day du Schema & Data!';
-GO
-
--- =============================================================================
--- DATABASE TRIGGERS
--- =============================================================================
-IF OBJECT_ID('[dbo].[trg_CheckBatchSupplier]', 'TR') IS NOT NULL
-    DROP TRIGGER [dbo].[trg_CheckBatchSupplier];
-GO
-
-CREATE TRIGGER [dbo].[trg_CheckBatchSupplier]
-ON [dbo].[Batches]
-AFTER INSERT, UPDATE
-AS
-BEGIN
-    SET NOCOUNT ON;
-    IF EXISTS (
-        SELECT 1 
-        FROM inserted i
-        JOIN Products p ON i.ProductId = p.ProductId
-        JOIN Farms f ON i.FarmId = f.FarmId
-        WHERE p.SupplierId <> f.SupplierId
-    )
-    BEGIN
-        RAISERROR (N'Loi he thong: San pham va Nong trai thu hoach cua lo hang phai thuoc ve cung mot Nha cung cap!', 16, 1);
-        ROLLBACK TRANSACTION;
-    END
-END;
 GO
