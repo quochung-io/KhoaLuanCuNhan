@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { ProductQuickViewModal, QuickViewProductData } from '@/components/product/ProductQuickViewModal';
 
 interface OrderItem {
   orderItemId: number;
@@ -73,6 +74,24 @@ export default function CustomerOrdersPage() {
   const [payQrSecondsLeft, setPayQrSecondsLeft] = useState<number>(600);
   const [isPayQrExpired, setIsPayQrExpired] = useState<boolean>(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [quickViewProduct, setQuickViewProduct] = useState<{ id: number; data?: QuickViewProductData } | null>(null);
+
+  const openProductQuickView = (productId: number, item?: any) => {
+    if (!productId) return;
+    setQuickViewProduct({
+      id: productId,
+      data: {
+        productId,
+        productName: item?.product?.productName || item?.productName || 'Nông sản LÀNH',
+        price: item?.unitPrice || item?.product?.price || 0,
+        unit: item?.product?.unit || 'kg',
+        imageUrl: getProductImage(item),
+        categoryName: item?.product?.category?.categoryName,
+        description: item?.product?.description,
+        lotCode: item?.lotCode
+      }
+    });
+  };
 
   // Quy ước duy nhất 1 trạng thái đơn hàng xuyên suốt toàn hệ thống
   const getOrderUnifiedStatus = (order: Order) => {
@@ -1220,19 +1239,46 @@ export default function CustomerOrdersPage() {
                           flexWrap: 'wrap'
                         }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                            <img 
-                              src={getProductImage(item)} 
-                              alt={item.product?.productName} 
-                              style={{
-                                width: '54px',
-                                height: '54px',
-                                borderRadius: '8px',
-                                objectFit: 'cover',
-                                border: '1px solid var(--line)'
-                              }}
-                            />
+                            <div
+                              onClick={() => openProductQuickView(item.productId, item)}
+                              style={{ cursor: 'pointer', position: 'relative', flexShrink: 0 }}
+                              title="Nhấp để xem thông tin chi tiết sản phẩm"
+                            >
+                              <img 
+                                src={getProductImage(item)} 
+                                alt={item.product?.productName} 
+                                style={{
+                                  width: '54px',
+                                  height: '54px',
+                                  borderRadius: '8px',
+                                  objectFit: 'cover',
+                                  border: '1px solid var(--line)',
+                                  transition: 'transform 0.15s ease, box-shadow 0.15s ease'
+                                }}
+                                onMouseOver={e => {
+                                  e.currentTarget.style.transform = 'scale(1.08)';
+                                  e.currentTarget.style.boxShadow = '0 4px 10px rgba(0,0,0,0.15)';
+                                }}
+                                onMouseOut={e => {
+                                  e.currentTarget.style.transform = 'scale(1)';
+                                  e.currentTarget.style.boxShadow = 'none';
+                                }}
+                              />
+                            </div>
                             <div>
-                              <strong style={{ color: 'var(--ink)', fontSize: '14px', display: 'block' }}>
+                              <strong 
+                                onClick={() => openProductQuickView(item.productId, item)}
+                                style={{
+                                  color: 'var(--ink)',
+                                  fontSize: '14px',
+                                  display: 'block',
+                                  cursor: 'pointer',
+                                  transition: 'color 0.15s ease'
+                                }}
+                                title="Nhấp để xem thông tin chi tiết sản phẩm"
+                                onMouseOver={e => (e.currentTarget.style.color = '#15803d')}
+                                onMouseOut={e => (e.currentTarget.style.color = 'var(--ink)')}
+                              >
                                 {item.product?.productName || 'Nông sản LÀNH Farm'}
                               </strong>
                               <div style={{ color: 'var(--ink-soft)', fontSize: '12.5px', marginTop: '3px' }}>
@@ -1886,13 +1932,46 @@ export default function CustomerOrdersPage() {
                     backgroundColor: '#ffffff'
                   }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <img
-                        src={getProductImage(item)}
-                        alt={item.product?.productName}
-                        style={{ width: '46px', height: '46px', borderRadius: '6px', objectFit: 'cover', border: '1px solid var(--line)' }}
-                      />
+                      <div
+                        onClick={() => openProductQuickView(item.productId, item)}
+                        style={{ cursor: 'pointer', position: 'relative', flexShrink: 0 }}
+                        title="Nhấp để xem thông tin chi tiết sản phẩm"
+                      >
+                        <img
+                          src={getProductImage(item)}
+                          alt={item.product?.productName}
+                          style={{
+                            width: '48px',
+                            height: '48px',
+                            borderRadius: '8px',
+                            objectFit: 'cover',
+                            border: '1px solid var(--line)',
+                            transition: 'transform 0.15s ease, box-shadow 0.15s ease'
+                          }}
+                          onMouseOver={e => {
+                            e.currentTarget.style.transform = 'scale(1.08)';
+                            e.currentTarget.style.boxShadow = '0 4px 10px rgba(0,0,0,0.15)';
+                          }}
+                          onMouseOut={e => {
+                            e.currentTarget.style.transform = 'scale(1)';
+                            e.currentTarget.style.boxShadow = 'none';
+                          }}
+                        />
+                      </div>
                       <div>
-                        <div style={{ fontWeight: '600', fontSize: '13.5px', color: 'var(--ink)' }}>
+                        <div
+                          onClick={() => openProductQuickView(item.productId, item)}
+                          style={{
+                            fontWeight: '600',
+                            fontSize: '13.5px',
+                            color: 'var(--ink)',
+                            cursor: 'pointer',
+                            transition: 'color 0.15s ease'
+                          }}
+                          title="Nhấp để xem thông tin chi tiết sản phẩm"
+                          onMouseOver={e => (e.currentTarget.style.color = '#15803d')}
+                          onMouseOut={e => (e.currentTarget.style.color = 'var(--ink)')}
+                        >
                           {item.product?.productName || 'Nông sản LÀNH'}
                         </div>
                         <div style={{ fontSize: '12px', color: 'var(--ink-soft)', marginTop: '2px' }}>
@@ -2124,6 +2203,48 @@ export default function CustomerOrdersPage() {
           </aside>
         </>
       )}
+
+      {/* Modal xem chi tiết sản phẩm nhanh (Quick View) */}
+      <ProductQuickViewModal
+        isOpen={!!quickViewProduct}
+        productId={quickViewProduct?.id || null}
+        initialData={quickViewProduct?.data}
+        onClose={() => setQuickViewProduct(null)}
+        toVND={toVND}
+        onAddToCart={(p) => {
+          let currentCart: any[] = [];
+          const stored = localStorage.getItem('cart');
+          if (stored) {
+            try { currentCart = JSON.parse(stored); } catch {}
+          }
+          const existing = currentCart.find(c => c.product.id === p.id);
+          if (existing) {
+            existing.qty += 1;
+          } else {
+            currentCart.push({
+              product: {
+                id: p.id,
+                name: p.name,
+                price: p.price,
+                unit: p.unit,
+                imageUrl: p.imageUrl,
+                category: p.category,
+                cert: p.cert,
+                region: p.region,
+                rating: p.rating,
+                reviews: p.reviews,
+                lot: p.lot
+              },
+              qty: 1
+            });
+          }
+          setCart([...currentCart]);
+          localStorage.setItem('cart', JSON.stringify(currentCart));
+          setIsDrawerOpen(true);
+          showToast(`Đã thêm "${p.name}" vào giỏ hàng!`, 'success');
+          setQuickViewProduct(null);
+        }}
+      />
     </>
   );
 }

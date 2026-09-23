@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { VIETNAM_PROVINCES, fetchWithTimeout } from '@/constants/vietnamProvinces';
+import { ProductQuickViewModal, QuickViewProductData } from '@/components/product/ProductQuickViewModal';
 
 type CustomerAddress = {
   addressId: number;
@@ -68,6 +69,24 @@ export default function ProfilePage() {
   const [searchOrderQuery, setSearchOrderQuery] = useState('');
   const [selectedOrderDetails, setSelectedOrderDetails] = useState<any | null>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [quickViewProduct, setQuickViewProduct] = useState<{ id: number; data?: QuickViewProductData } | null>(null);
+
+  const openProductQuickView = (productId: number, item?: any) => {
+    if (!productId) return;
+    setQuickViewProduct({
+      id: productId,
+      data: {
+        productId,
+        productName: item?.product?.productName || item?.productName || 'Nông sản LÀNH',
+        price: item?.unitPrice || item?.product?.price || 0,
+        unit: item?.product?.unit || 'kg',
+        imageUrl: item?.product?.productImages?.[0]?.imageUrl,
+        categoryName: item?.product?.category?.categoryName,
+        description: item?.product?.description,
+        lotCode: item?.lotCode
+      }
+    });
+  };
 
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
     setToast({ message, type });
@@ -2181,13 +2200,46 @@ export default function ProfilePage() {
                                 return (
                                   <div key={item.orderItemId || idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '13px' }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                      <img 
-                                        src={imgUrl} 
-                                        alt={item.product?.productName || 'Nông sản'} 
-                                        style={{ width: '42px', height: '42px', objectFit: 'cover', borderRadius: '6px', border: '1px solid var(--line)' }}
-                                      />
+                                      <div
+                                        onClick={() => openProductQuickView(item.productId, item)}
+                                        style={{ cursor: 'pointer', position: 'relative', flexShrink: 0 }}
+                                        title="Nhấp để xem thông tin chi tiết sản phẩm"
+                                      >
+                                        <img 
+                                          src={imgUrl} 
+                                          alt={item.product?.productName || 'Nông sản'} 
+                                          style={{
+                                            width: '44px',
+                                            height: '44px',
+                                            objectFit: 'cover',
+                                            borderRadius: '8px',
+                                            border: '1px solid var(--line)',
+                                            transition: 'transform 0.15s ease, box-shadow 0.15s ease'
+                                          }}
+                                          onMouseOver={e => {
+                                            e.currentTarget.style.transform = 'scale(1.08)';
+                                            e.currentTarget.style.boxShadow = '0 4px 10px rgba(0,0,0,0.15)';
+                                          }}
+                                          onMouseOut={e => {
+                                            e.currentTarget.style.transform = 'scale(1)';
+                                            e.currentTarget.style.boxShadow = 'none';
+                                          }}
+                                        />
+                                      </div>
                                       <div>
-                                        <div style={{ fontWeight: '600', color: 'var(--ink)', fontSize: '13.5px' }}>
+                                        <div
+                                          onClick={() => openProductQuickView(item.productId, item)}
+                                          style={{
+                                            fontWeight: '600',
+                                            color: 'var(--ink)',
+                                            fontSize: '13.5px',
+                                            cursor: 'pointer',
+                                            transition: 'color 0.15s ease'
+                                          }}
+                                          title="Nhấp để xem thông tin chi tiết sản phẩm"
+                                          onMouseOver={e => (e.currentTarget.style.color = '#15803d')}
+                                          onMouseOut={e => (e.currentTarget.style.color = 'var(--ink)')}
+                                        >
                                           {item.product?.productName || 'Nông sản LÀNH'}
                                         </div>
                                         <div style={{ color: 'var(--ink-soft)', fontSize: '12px', marginTop: '2px' }}>
@@ -2831,13 +2883,46 @@ export default function ProfilePage() {
                       backgroundColor: '#ffffff'
                     }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <img
-                          src={imgUrl}
-                          alt={item.product?.productName}
-                          style={{ width: '46px', height: '46px', borderRadius: '6px', objectFit: 'cover', border: '1px solid var(--line)' }}
-                        />
+                        <div
+                          onClick={() => openProductQuickView(item.productId, item)}
+                          style={{ cursor: 'pointer', position: 'relative', flexShrink: 0 }}
+                          title="Nhấp để xem thông tin chi tiết sản phẩm"
+                        >
+                          <img
+                            src={imgUrl}
+                            alt={item.product?.productName}
+                            style={{
+                              width: '48px',
+                              height: '48px',
+                              borderRadius: '8px',
+                              objectFit: 'cover',
+                              border: '1px solid var(--line)',
+                              transition: 'transform 0.15s ease, box-shadow 0.15s ease'
+                            }}
+                            onMouseOver={e => {
+                              e.currentTarget.style.transform = 'scale(1.08)';
+                              e.currentTarget.style.boxShadow = '0 4px 10px rgba(0,0,0,0.15)';
+                            }}
+                            onMouseOut={e => {
+                              e.currentTarget.style.transform = 'scale(1)';
+                              e.currentTarget.style.boxShadow = 'none';
+                            }}
+                          />
+                        </div>
                         <div>
-                          <div style={{ fontWeight: '600', fontSize: '13.5px', color: 'var(--ink)' }}>
+                          <div
+                            onClick={() => openProductQuickView(item.productId, item)}
+                            style={{
+                              fontWeight: '600',
+                              fontSize: '13.5px',
+                              color: 'var(--ink)',
+                              cursor: 'pointer',
+                              transition: 'color 0.15s ease'
+                            }}
+                            title="Nhấp để xem thông tin chi tiết sản phẩm"
+                            onMouseOver={e => (e.currentTarget.style.color = '#15803d')}
+                            onMouseOut={e => (e.currentTarget.style.color = 'var(--ink)')}
+                          >
                             {item.product?.productName || 'Nông sản LÀNH'}
                           </div>
                           <div style={{ fontSize: '12px', color: 'var(--ink-soft)', marginTop: '2px' }}>
@@ -2969,6 +3054,36 @@ export default function ProfilePage() {
           {toast.type === 'success' ? '✓' : '⚠️'} {toast.message}
         </div>
       )}
+
+      {/* ── 7. MODAL XEM CHI TIẾT SẢN PHẨM NHANH (QUICK VIEW) ── */}
+      <ProductQuickViewModal
+        isOpen={!!quickViewProduct}
+        productId={quickViewProduct?.id || null}
+        initialData={quickViewProduct?.data}
+        onClose={() => setQuickViewProduct(null)}
+        toVND={toVND}
+        onAddToCart={(p) => {
+          let currentCart: CartItem[] = [];
+          const stored = localStorage.getItem('cart');
+          if (stored) {
+            try { currentCart = JSON.parse(stored); } catch {}
+          }
+          const existing = currentCart.find(c => c.product.id === p.id);
+          if (existing) {
+            existing.qty += 1;
+          } else {
+            currentCart.push({
+              product: p,
+              qty: 1
+            });
+          }
+          setCart([...currentCart]);
+          localStorage.setItem('cart', JSON.stringify(currentCart));
+          setIsDrawerOpen(true);
+          showToast(`Đã thêm "${p.name}" vào giỏ hàng!`, 'success');
+          setQuickViewProduct(null);
+        }}
+      />
     </>
   );
 }
