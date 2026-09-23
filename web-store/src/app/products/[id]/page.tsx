@@ -594,6 +594,12 @@ export default function ProductDetailPage() {
   const [relatedProducts, setRelatedProducts] = useState<any[]>([]);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
+  // Top-K Sản phẩm Thường mua kèm (Frequently Bought Together)
+  const [boughtTogether, setBoughtTogether] = useState<any[]>([]);
+  const [selectedTopKIds, setSelectedTopKIds] = useState<number[]>([]);
+  const [loadingRecommendations, setLoadingRecommendations] = useState(false);
+  const recCarouselRef = React.useRef<HTMLDivElement>(null);
+
   // Giỏ hàng
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -700,7 +706,41 @@ export default function ProductDetailPage() {
         }
       })
       .catch(() => {});
+
+    // 3. Fetch gợi ý sản phẩm thường mua kèm (Top-6 MBA với Category Diversity)
+    setLoadingRecommendations(true);
+    fetch(`http://localhost:5023/api/recommendations/frequently-bought-together/${productId}?limit=6`)
+      .then(res => res.json())
+      .then(recList => {
+        if (Array.isArray(recList)) {
+          setBoughtTogether(recList);
+          // Mặc định chỉ chọn các món CÒN HÀNG đầu tiên (tối đa 2 món) để tạo combo mua kèm
+          const inStockRecs = recList.filter((item: any) => !item.isOutOfStock);
+          setSelectedTopKIds(inStockRecs.slice(0, 2).map((item: any) => item.productId));
+        } else {
+          setBoughtTogether([]);
+          setSelectedTopKIds([]);
+        }
+      })
+      .catch(err => {
+        console.error('Lỗi fetch sản phẩm thường mua kèm:', err);
+        setBoughtTogether([]);
+        setSelectedTopKIds([]);
+      })
+      .finally(() => {
+        setLoadingRecommendations(false);
+      });
   }, [productId]);
+
+  // Tính tổng tồn kho khả dụng từ các lô hàng còn hạn của món chính
+  const activeBatches = batches.filter(b => {
+    const notExpired = !b.expiryDate || new Date(b.expiryDate) >= new Date();
+    const hasQty = (b.initialQuantity || 0) > 0;
+    const isActive = b.status === 'Active' || !b.status;
+    return notExpired && hasQty && isActive;
+  });
+  const totalAvailableStock = activeBatches.reduce((sum, b) => sum + (b.initialQuantity || 0), 0);
+  const isOutOfStock = batches.length > 0 && totalAvailableStock <= 0;
 
   // Thêm vào giỏ hàng
   const handleAddToCart = (redirectCheckout = false) => {
@@ -755,6 +795,145 @@ export default function ProductDetailPage() {
       setAddedToast(true);
       setTimeout(() => setAddedToast(false), 2500);
     }
+  };
+
+  // Toggle chọn sản phẩm vào combo
+  const toggleTopKSelection = (itemId: number) => {
+    const item = boughtTogether.find(x => x.productId === itemId);
+    if (item?.isOutOfStock) {
+      alert('Sản phẩm này hiện đang tạm hết hàng, không thể thêm vào combo.');
+      return;
+    }
+    setSelectedTopKIds(prev => 
+      prev.includes(itemId) ? prev.filter(id => id !== itemId) : [...prev, itemId]
+    );
+  };
+
+  // Thêm riêng 1 món trong phần gợi ý vào giỏ hàng
+  const handleAddRecommendedToCart = (item: any) => {
+    if (item.isOutOfStock) {
+      alert(`Sản phẩm "${item.productName}" hiện đang tạm hết hàng, không thể thêm vào giỏ.`);
+      return;
+    }
+    const itemToAdd = {
+      id: item.productId,
+      name: item.productName,
+      price: (item.price || 0).toLocaleString('vi-VN') + '₫',
+      unit: item.unit ? ` / ${item.unit}` : ' / kg',
+      category: item.categoryName || 'Nông sản sạch',
+      cert: 'VietGAP',
+      region: getRegionByName(item.productName),
+      rating: 5.0,
+      reviews: 45,
+      icon: 'leaf',
+      lot: `LOT#VN-${String(item.productId).padStart(4, '0')}`,
+      imageUrl: item.imageUrl
+    };
+
+    const existingIndex = cart.findIndex(x => x.product.id === item.productId);
+    let updatedCart: CartItem[];
+    if (existingIndex > -1) {
+      updatedCart = cart.map((ci, index) => 
+        index === existingIndex ? { ...ci, qty: ci.qty + 1 } : ci
+      );
+    } else {
+      updatedCart = [...cart, { product: itemToAdd, qty: 1 }];
+    }
+
+    saveCart(updatedCart);
+    setCartBounce(true);
+    setTimeout(() => setCartBounce(false), 800);
+    setAddedToast(true);
+    setTimeout(() => setAddedToast(false), 2500);
+  };
+
+  // Thêm trọn bộ combo (Món chính + các món gợi ý đã chọn) - Áp dụng giảm 5% khi combo có >= 2 món
+  const handleAddAllComboToCart = () => {
+    if (!product) return;
+    if (isOutOfStock) {
+      alert('Sản phẩm chính hiện đang tạm hết hàng, không thể mua trọn bộ combo này.');
+      return;
+    }
+
+    const selectedRecItems = boughtTogether.filter((item: any) => selectedTopKIds.includes(item.productId) && !item.isOutOfStock);
+    const totalItemsInCombo = 1 + selectedRecItems.length;
+    const isComboDiscountEligible = totalItemsInCombo >= 2;
+
+    const mainImg = product.productImages && product.productImages.length > 0
+      ? (product.productImages.find(i => i.isPrimary)?.imageUrl || product.productImages[0].imageUrl)
+      : undefined;
+
+    const discountedMainPrice = isComboDiscountEligible 
+      ? Math.round(product.price * 0.95) 
+      : product.price;
+
+    const mainCartItem = {
+      id: product.productId,
+      name: product.productName,
+      price: discountedMainPrice.toLocaleString('vi-VN') + '₫',
+      unit: ' / ' + product.unit,
+      category: product.category?.categoryName || 'Nông sản',
+      cert: 'VietGAP',
+      region: getRegionByName(product.productName),
+      rating: 5.0,
+      reviews: 120,
+      icon: 'leaf',
+      lot: batches.length > 0 ? batches[0].batchCode : `LOT#VN-${String(product.productId).padStart(4, '0')}`,
+      imageUrl: mainImg
+    };
+
+    let newCart = [...cart];
+
+    // Thêm món chính
+    const existingMainIdx = newCart.findIndex(x => x.product.id === product.productId);
+    if (existingMainIdx > -1) {
+      newCart[existingMainIdx] = {
+        ...newCart[existingMainIdx],
+        product: { ...newCart[existingMainIdx].product, price: discountedMainPrice.toLocaleString('vi-VN') + '₫' },
+        qty: newCart[existingMainIdx].qty + quantity
+      };
+    } else {
+      newCart.push({ product: mainCartItem, qty: quantity });
+    }
+
+    // Thêm các món phụ trong combo
+    selectedRecItems.forEach((item: any) => {
+      const discountedItemPrice = isComboDiscountEligible 
+        ? Math.round((item.price || 0) * 0.95) 
+        : (item.price || 0);
+
+      const cartItem = {
+        id: item.productId,
+        name: item.productName,
+        price: discountedItemPrice.toLocaleString('vi-VN') + '₫',
+        unit: item.unit ? ` / ${item.unit}` : ' / kg',
+        category: item.categoryName || 'Nông sản sạch',
+        cert: 'VietGAP',
+        region: getRegionByName(item.productName),
+        rating: 5.0,
+        reviews: 45,
+        icon: 'leaf',
+        lot: `LOT#VN-${String(item.productId).padStart(4, '0')}`,
+        imageUrl: item.imageUrl
+      };
+
+      const existingIdx = newCart.findIndex(x => x.product.id === item.productId);
+      if (existingIdx > -1) {
+        newCart[existingIdx] = {
+          ...newCart[existingIdx],
+          product: { ...newCart[existingIdx].product, price: discountedItemPrice.toLocaleString('vi-VN') + '₫' },
+          qty: newCart[existingIdx].qty + 1
+        };
+      } else {
+        newCart.push({ product: cartItem, qty: 1 });
+      }
+    });
+
+    saveCart(newCart);
+    setCartBounce(true);
+    setTimeout(() => setCartBounce(false), 800);
+    setAddedToast(true);
+    setTimeout(() => setAddedToast(false), 2500);
   };
 
   const updateCartQty = (id: number, delta: number) => {
@@ -833,15 +1012,6 @@ export default function ProductDetailPage() {
     ? new Date(primaryBatch.expiryDate).toLocaleDateString('vi-VN') 
     : 'Khuyên dùng trong 7 ngày';
 
-  // Tính tổng tồn kho khả dụng từ các lô hàng còn hạn
-  const activeBatches = batches.filter(b => {
-    const notExpired = !b.expiryDate || new Date(b.expiryDate) >= new Date();
-    const hasQty = (b.initialQuantity || 0) > 0;
-    const isActive = b.status === 'Active' || !b.status;
-    return notExpired && hasQty && isActive;
-  });
-  const totalAvailableStock = activeBatches.reduce((sum, b) => sum + (b.initialQuantity || 0), 0);
-  const isOutOfStock = batches.length > 0 && totalAvailableStock <= 0;
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--ink)' }}>
@@ -1468,6 +1638,356 @@ export default function ProductDetailPage() {
             </div>
           </div>
         </div>
+
+        {/* ── KHỐI 1: THƯỜNG MUA KÈM (CAROUSEL TOP-6 + HỘP COMBO -5%) ── */}
+        {boughtTogether.length > 0 && (
+          <section style={{
+            marginBottom: '36px',
+            backgroundColor: 'var(--surface)',
+            border: '1px solid var(--line)',
+            borderRadius: '20px',
+            padding: '22px 24px',
+            boxShadow: '0 4px 16px rgba(0,0,0,0.02)'
+          }}>
+            {/* Header: Tiêu đề + Ưu đãi + Nút cuộn Carousel */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '800', color: 'var(--ink)' }}>
+                  Thường mua kèm
+                </h3>
+                <span style={{ fontSize: '13px', color: '#15803D', fontWeight: '700', backgroundColor: '#DCFCE7', padding: '2px 8px', borderRadius: '6px' }}>
+                  Tiết kiệm thêm 5% khi mua trọn combo
+                </span>
+                <span style={{ fontSize: '12.5px', color: 'var(--ink-soft)' }}>
+                  • Bấm vào món để xem chi tiết
+                </span>
+              </div>
+
+              {/* Nút điều hướng Carousel < và > */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <button
+                  type="button"
+                  onClick={() => recCarouselRef.current?.scrollBy({ left: -260, behavior: 'smooth' })}
+                  title="Cuộn sang trái"
+                  style={{
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '50%',
+                    border: '1px solid var(--line)',
+                    backgroundColor: '#FFFFFF',
+                    color: 'var(--ink)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    fontSize: '15px',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.06)'
+                  }}
+                >
+                  ‹
+                </button>
+                <button
+                  type="button"
+                  onClick={() => recCarouselRef.current?.scrollBy({ left: 260, behavior: 'smooth' })}
+                  title="Cuộn sang phải"
+                  style={{
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '50%',
+                    border: '1px solid var(--line)',
+                    backgroundColor: '#FFFFFF',
+                    color: 'var(--ink)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    fontSize: '15px',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.06)'
+                  }}
+                >
+                  ›
+                </button>
+              </div>
+            </div>
+
+            {/* Bố cục 2 cột: Carousel danh sách sản phẩm (Trái) & Hộp Combo Cố Định (Phải) */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'minmax(0, 1fr) 260px',
+              gap: '18px',
+              alignItems: 'center'
+            }}>
+              {/* Cột Trái: Dải trượt ngang mượt mà */}
+              <div
+                ref={recCarouselRef}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  overflowX: 'auto',
+                  paddingBottom: '6px',
+                  scrollBehavior: 'smooth'
+                }}
+              >
+                {/* Món 1: Món chính hiện tại */}
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  padding: '10px 14px',
+                  borderRadius: '12px',
+                  backgroundColor: isOutOfStock ? '#FEF2F2' : '#FFFFFF',
+                  border: isOutOfStock ? '1.5px solid #F87171' : '1.5px solid var(--green-700)',
+                  opacity: isOutOfStock ? 0.8 : 1,
+                  minWidth: '220px',
+                  flexShrink: 0
+                }}>
+                  <div style={{
+                    width: '20px',
+                    height: '20px',
+                    borderRadius: '50%',
+                    backgroundColor: isOutOfStock ? '#EF4444' : 'var(--green-700)',
+                    color: '#FFFFFF',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '11px',
+                    fontWeight: '900',
+                    flexShrink: 0
+                  }}>
+                    {isOutOfStock ? '✕' : '✓'}
+                  </div>
+                  <img
+                    src={selectedImage || (product.productImages && product.productImages[0]?.imageUrl) || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=100'}
+                    alt={product.productName}
+                    style={{ width: '48px', height: '48px', borderRadius: '8px', objectFit: 'cover', border: '1px solid #E2E8F0', flexShrink: 0 }}
+                  />
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ fontSize: '10.5px', color: '#64748B', fontWeight: '700' }}>
+                        Món đang xem
+                      </span>
+                      {isOutOfStock && (
+                        <span style={{ fontSize: '10px', color: '#DC2626', backgroundColor: '#FEE2E2', padding: '1px 5px', borderRadius: '4px', fontWeight: '800' }}>
+                          Tạm hết hàng
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ fontSize: '13.5px', fontWeight: '700', color: 'var(--ink)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={product.productName}>
+                      {product.productName}
+                    </div>
+                    <div style={{ fontSize: '13px', fontWeight: '800', color: isOutOfStock ? '#94A3B8' : 'var(--green-700)' }}>
+                      {product.price.toLocaleString('vi-VN')}₫
+                    </div>
+                  </div>
+                </div>
+
+                {/* Dấu cộng + */}
+                <div style={{ color: '#94A3B8', fontSize: '16px', fontWeight: '800', flexShrink: 0 }}>
+                  +
+                </div>
+
+                {/* Các món gợi ý Top-6 */}
+                {boughtTogether.map((item: any, idx: number) => {
+                  const isItemOutOfStock = !!item.isOutOfStock;
+                  const isSelected = selectedTopKIds.includes(item.productId);
+                  return (
+                    <React.Fragment key={item.productId}>
+                      <div
+                        onClick={() => {
+                          if (!isItemOutOfStock) router.push(`/products/${item.productId}`);
+                        }}
+                        title={isItemOutOfStock ? 'Sản phẩm tạm hết hàng' : 'Bấm để xem chi tiết sản phẩm này'}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '10px',
+                          padding: '10px 14px',
+                          borderRadius: '12px',
+                          backgroundColor: isItemOutOfStock ? '#F8FAFC' : '#FFFFFF',
+                          border: isItemOutOfStock ? '1px dashed #CBD5E1' : (isSelected ? '1.5px solid var(--green-700)' : '1px solid var(--line)'),
+                          cursor: isItemOutOfStock ? 'not-allowed' : 'pointer',
+                          opacity: isItemOutOfStock ? 0.6 : 1,
+                          transition: 'all 0.15s',
+                          minWidth: '220px',
+                          flexShrink: 0,
+                          position: 'relative'
+                        }}
+                      >
+                        {/* Checkbox chọn vào combo */}
+                        <div
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (!isItemOutOfStock) toggleTopKSelection(item.productId);
+                          }}
+                          title={isItemOutOfStock ? 'Sản phẩm hết hàng, không thể chọn vào combo' : (isSelected ? 'Bỏ chọn khỏi combo' : 'Chọn vào combo')}
+                          style={{
+                            width: '20px',
+                            height: '20px',
+                            borderRadius: '4px',
+                            border: isItemOutOfStock ? '1px solid #CBD5E1' : (isSelected ? 'none' : '1.5px solid #CBD5E1'),
+                            backgroundColor: isItemOutOfStock ? '#E2E8F0' : (isSelected ? 'var(--green-700)' : '#FFFFFF'),
+                            color: isItemOutOfStock ? '#94A3B8' : '#FFFFFF',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '11px',
+                            fontWeight: '900',
+                            flexShrink: 0,
+                            cursor: isItemOutOfStock ? 'not-allowed' : 'pointer'
+                          }}
+                        >
+                          {isItemOutOfStock ? '✕' : (isSelected && '✓')}
+                        </div>
+
+                        <img
+                          src={item.imageUrl || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=100'}
+                          alt={item.productName}
+                          style={{ width: '48px', height: '48px', borderRadius: '8px', objectFit: 'cover', border: '1px solid #E2E8F0', flexShrink: 0 }}
+                        />
+
+                        <div style={{ minWidth: 0, flex: 1 }}>
+                          {isItemOutOfStock ? (
+                            <span style={{ fontSize: '9.5px', color: '#DC2626', fontWeight: '800', backgroundColor: '#FEE2E2', padding: '1px 5px', borderRadius: '4px' }}>
+                              Tạm hết hàng
+                            </span>
+                          ) : (
+                            <span style={{ fontSize: '10px', color: '#15803D', fontWeight: '700' }}>
+                              {item.recommendationReason || item.categoryName || 'Món bổ trợ'}
+                            </span>
+                          )}
+                          <div style={{ fontSize: '13px', fontWeight: '700', color: isItemOutOfStock ? '#94A3B8' : 'var(--ink)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={item.productName}>
+                            {item.productName}
+                          </div>
+                          <div style={{ fontSize: '12.5px', fontWeight: '800', color: isItemOutOfStock ? '#94A3B8' : 'var(--green-700)' }}>
+                            {item.formattedPrice}
+                          </div>
+                        </div>
+
+                        {/* Nút thêm lẻ */}
+                        <button
+                          type="button"
+                          disabled={isItemOutOfStock}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (!isItemOutOfStock) handleAddRecommendedToCart(item);
+                          }}
+                          title={isItemOutOfStock ? 'Sản phẩm tạm hết hàng' : 'Thêm riêng món này vào giỏ hàng'}
+                          style={{
+                            padding: '4px 8px',
+                            borderRadius: '6px',
+                            backgroundColor: isItemOutOfStock ? '#F1F5F9' : '#F8FAFC',
+                            color: isItemOutOfStock ? '#94A3B8' : 'var(--green-700)',
+                            border: isItemOutOfStock ? '1px solid #E2E8F0' : '1px solid #CBD5E1',
+                            fontSize: '11px',
+                            fontWeight: '700',
+                            cursor: isItemOutOfStock ? 'not-allowed' : 'pointer',
+                            flexShrink: 0
+                          }}
+                        >
+                          + Lẻ
+                        </button>
+                      </div>
+
+                      {idx < boughtTogether.length - 1 && (
+                        <div style={{ color: '#94A3B8', fontSize: '16px', fontWeight: '800', flexShrink: 0 }}>
+                          +
+                        </div>
+                      )}
+                    </React.Fragment>
+                  );
+                })}
+              </div>
+
+              {/* Cột Phải: Hộp Cố Định Tổng Tiền Combo & Ưu Đãi 5% */}
+              {(() => {
+                const mainRawPrice = isOutOfStock ? 0 : (product.price || 0);
+                const selectedRecItems = boughtTogether.filter((item: any) => selectedTopKIds.includes(item.productId) && !item.isOutOfStock);
+                const rawTotal = (mainRawPrice * quantity) + selectedRecItems.reduce((sum: number, item: any) => sum + (item.price || 0), 0);
+                const selectedCount = (isOutOfStock ? 0 : 1) + selectedRecItems.length;
+                const hasDiscount = !isOutOfStock && selectedCount >= 2;
+                const discountAmount = hasDiscount ? Math.round(rawTotal * 0.05) : 0;
+                const finalComboTotal = rawTotal - discountAmount;
+
+                return (
+                  <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px',
+                    padding: '14px 18px',
+                    borderRadius: '14px',
+                    backgroundColor: isOutOfStock ? '#FEF2F2' : '#FFFFFF',
+                    border: isOutOfStock ? '1.5px solid #FCA5A5' : '1.5px solid #86EFAC',
+                    boxShadow: '0 2px 10px rgba(0,0,0,0.04)',
+                    flexShrink: 0
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '12px', color: isOutOfStock ? '#DC2626' : '#64748B', fontWeight: '600' }}>
+                        {isOutOfStock ? 'Combo tạm khóa:' : `Combo (${selectedCount} món):`}
+                      </span>
+                      {hasDiscount ? (
+                        <span style={{ fontSize: '11px', fontWeight: '800', color: '#15803D', backgroundColor: '#DCFCE7', padding: '2px 6px', borderRadius: '4px' }}>
+                          -5% Giảm
+                        </span>
+                      ) : isOutOfStock && (
+                        <span style={{ fontSize: '10.5px', fontWeight: '800', color: '#DC2626', backgroundColor: '#FEE2E2', padding: '1px 6px', borderRadius: '4px' }}>
+                          Món chính hết hàng
+                        </span>
+                      )}
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                      {hasDiscount && (
+                        <span style={{ fontSize: '13px', color: '#94A3B8', textDecoration: 'line-through' }}>
+                          {rawTotal.toLocaleString('vi-VN')}₫
+                        </span>
+                      )}
+                      <span style={{ fontSize: '18px', fontWeight: '900', color: isOutOfStock ? '#DC2626' : 'var(--green-700)' }}>
+                        {isOutOfStock ? 'Không khả dụng' : `${finalComboTotal.toLocaleString('vi-VN')} ₫`}
+                      </span>
+                    </div>
+
+                    <button
+                      type="button"
+                      disabled={isOutOfStock}
+                      onClick={handleAddAllComboToCart}
+                      style={{
+                        width: '100%',
+                        padding: '10px 12px',
+                        borderRadius: '8px',
+                        backgroundColor: isOutOfStock ? '#CBD5E1' : 'var(--green-700)',
+                        color: isOutOfStock ? '#64748B' : '#FFFFFF',
+                        border: 'none',
+                        fontSize: '13px',
+                        fontWeight: '800',
+                        cursor: isOutOfStock ? 'not-allowed' : 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
+                        boxShadow: isOutOfStock ? 'none' : '0 2px 6px rgba(46,125,50,0.2)'
+                      }}
+                    >
+                      {isOutOfStock ? (
+                        <>⚠️ Món chính đang hết hàng</>
+                      ) : (
+                        <>
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+                          Thêm cả combo vào giỏ
+                        </>
+                      )}
+                    </button>
+                    {isOutOfStock && (
+                      <div style={{ fontSize: '11px', color: '#DC2626', textAlign: 'center', lineHeight: '1.4', fontWeight: '600' }}>
+                        Không thể đặt trọn bộ combo khi món chính đã hết hàng. Bạn có thể bấm [+ Lẻ] ở các món kèm để mua riêng!
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+            </div>
+          </section>
+        )}
 
         {/* 4 KHỐI THÔNG TIN BẮT BUỘC THEO YÊU CẦU: TABS ĐIỀU HƯỚNG */}
         <div style={{ marginBottom: '40px' }}>
@@ -2772,8 +3292,8 @@ export default function ProductDetailPage() {
           <section style={{ marginTop: '60px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '24px' }}>
               <div>
-                <span className="eyebrow">Gợi ý nông sản</span>
-                <h2 style={{ fontSize: '24px', color: 'var(--green-900)', marginTop: '6px' }}>Sản phẩm cùng danh mục {categoryName}</h2>
+                <span className="eyebrow">Khám phá thêm</span>
+                <h2 style={{ fontSize: '24px', color: 'var(--green-900)', marginTop: '6px' }}>Nông sản cùng loại có thể bạn thích ({categoryName})</h2>
               </div>
               <Link href="/" style={{ fontSize: '13.5px', color: 'var(--green-700)', fontWeight: 600, textDecoration: 'none' }}>
                 Xem tất cả →

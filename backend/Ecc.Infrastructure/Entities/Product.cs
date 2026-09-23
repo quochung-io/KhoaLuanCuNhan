@@ -33,4 +33,6 @@ public class Product
 
     public double? AverageRating { get; set; }
     public int? ReviewsCount { get; set; }
+    public bool? IsOutOfStock { get; set; }
+    public decimal? AvailableStock { get; set; }
 }

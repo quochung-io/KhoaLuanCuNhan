@@ -99,6 +99,8 @@ public class AppDbContext : DbContext
 
             e.Ignore(p => p.AverageRating);
             e.Ignore(p => p.ReviewsCount);
+            e.Ignore(p => p.IsOutOfStock);
+            e.Ignore(p => p.AvailableStock);
 
             e.HasOne(p => p.Category)
              .WithMany(c => c.Products)

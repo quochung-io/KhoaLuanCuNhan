@@ -25,6 +25,7 @@ public class ProductsController : ControllerBase
             var query = _context.Products
                 .Include(p => p.Category)
                 .Include(p => p.ProductImages)
+                .Include(p => p.ProductBatches)
                 .AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(search))
@@ -48,6 +49,7 @@ public class ProductsController : ControllerBase
                 .OrderByDescending(p => p.ProductId)
                 .ToListAsync();
 
+            var now = DateTime.UtcNow;
             foreach (var prod in products)
             {
                 var approvedReviews = prod.Reviews.Where(r => r.Status == "Approved" || string.IsNullOrEmpty(r.Status)).ToList();
@@ -55,6 +57,16 @@ public class ProductsController : ControllerBase
                 prod.AverageRating = approvedReviews.Count > 0 
                     ? Math.Round(approvedReviews.Average(r => r.Rating), 1) 
                     : 0.0;
+
+                var validBatches = prod.ProductBatches
+                    .Where(b => (b.Status == "Active" || string.IsNullOrEmpty(b.Status)) &&
+                                b.InitialQuantity > 0 &&
+                                (b.ExpiryDate >= now || b.ExpiryDate == default))
+                    .ToList();
+
+                decimal availableStock = validBatches.Sum(b => b.InitialQuantity);
+                prod.AvailableStock = availableStock;
+                prod.IsOutOfStock = prod.ProductBatches.Any() && availableStock <= 0;
             }
 
             return Ok(products);
@@ -124,6 +136,17 @@ public class ProductsController : ControllerBase
             product.AverageRating = approvedReviews.Count > 0 
                 ? Math.Round(approvedReviews.Average(r => r.Rating), 1) 
                 : 0.0;
+
+            var now = DateTime.UtcNow;
+            var validBatches = product.ProductBatches
+                .Where(b => (b.Status == "Active" || string.IsNullOrEmpty(b.Status)) &&
+                            b.InitialQuantity > 0 &&
+                            (b.ExpiryDate >= now || b.ExpiryDate == default))
+                .ToList();
+
+            decimal availableStock = validBatches.Sum(b => b.InitialQuantity);
+            product.AvailableStock = availableStock;
+            product.IsOutOfStock = product.ProductBatches.Any() && availableStock <= 0;
 
             return Ok(product);
         }

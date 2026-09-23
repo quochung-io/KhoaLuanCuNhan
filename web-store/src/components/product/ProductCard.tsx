@@ -53,9 +53,35 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           )}
         </div>
         <div className="price-row">
-          <span className="price">{product.price}<span>{product.unit}</span></span>
-          <button className={`add-btn ${addedItem === product.id ? 'added' : ''}`} onClick={() => onAddToCart(product)} aria-label="Thêm vào giỏ">
-            {addedItem === product.id ? ICONS.check : <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M12 5v14M5 12h14"/></svg>}
+          <span className="price" style={{ color: (product as any).isOutOfStock ? '#DC2626' : undefined }}>
+            {(product as any).isOutOfStock ? 'Hết hàng' : product.price}<span>{(product as any).isOutOfStock ? '' : product.unit}</span>
+          </span>
+          <button 
+            disabled={(product as any).isOutOfStock}
+            className={`add-btn ${addedItem === product.id ? 'added' : ''}`} 
+            style={(product as any).isOutOfStock ? {
+              backgroundColor: '#E2E8F0',
+              color: '#94A3B8',
+              borderColor: '#CBD5E1',
+              cursor: 'not-allowed',
+              boxShadow: 'none'
+            } : undefined}
+            onClick={() => {
+              if ((product as any).isOutOfStock) {
+                alert(`Sản phẩm "${product.name}" hiện đang tạm hết hàng hoặc hết hạn sử dụng, không thể thêm vào giỏ.`);
+                return;
+              }
+              onAddToCart(product);
+            }} 
+            aria-label={(product as any).isOutOfStock ? 'Hết hàng' : 'Thêm vào giỏ'}
+          >
+            {(product as any).isOutOfStock ? (
+              <span style={{ fontSize: '13px', fontWeight: 'bold' }}>✕</span>
+            ) : addedItem === product.id ? (
+              ICONS.check
+            ) : (
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M12 5v14M5 12h14"/></svg>
+            )}
           </button>
         </div>
       </div>
