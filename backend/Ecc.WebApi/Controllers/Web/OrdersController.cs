@@ -441,165 +441,245 @@ public class OrdersController : ControllerBase
         return CreatedAtAction(nameof(GetOrder), new { id = order.OrderId }, order);
     }
 
-    // ── 6. Hủy đơn hàng trong vòng 30 phút kể từ lúc đặt ──
+    // ── 6. Hủy đơn hàng trong vòng 30 phút kể từ lúc đặt (Khách hàng) ──
     [HttpPost("{id}/cancel")]
     [HttpPut("{id}/cancel")]
     public async Task<IActionResult> CancelOrder(long id, [FromQuery] long? customerId = null)
     {
-        var order = await _context.Orders
-            .Include(o => o.Customer)
-            .Include(o => o.OrderItems)
-            .FirstOrDefaultAsync(o => o.OrderId == id);
-
-        if (order == null)
+        using var transaction = await _context.Database.BeginTransactionAsync();
+        try
         {
-            return NotFound(new { message = "Không tìm thấy đơn hàng cần hủy." });
-        }
+            var order = await _context.Orders
+                .Include(o => o.Customer)
+                .Include(o => o.OrderItems)
+                .FirstOrDefaultAsync(o => o.OrderId == id);
 
-        // Kiểm tra quyền sở hữu đơn hàng (Chống lỗ hổng IDOR)
-        if (customerId.HasValue && customerId.Value > 0 && order.CustomerId != customerId.Value)
-        {
-            return StatusCode(403, new { message = "Bạn không có quyền hủy đơn hàng của khách hàng khác!" });
-        }
-
-        if (order.OrderStatus?.ToLower() == "cancelled")
-        {
-            return BadRequest(new { message = "Đơn hàng này đã được hủy trước đó." });
-        }
-
-        if (order.OrderStatus?.ToLower() == "delivered" || order.OrderStatus?.ToLower() == "shipping")
-        {
-            return BadRequest(new { message = "Đơn hàng đang giao hoặc đã hoàn thành, không thể hủy tự động." });
-        }
-
-        // Kiểm tra điều kiện thời gian: Trong vòng 30 phút kể từ lúc đặt hàng
-        if (order.CreatedAt.HasValue)
-        {
-            var diffLocal = Math.Abs((DateTime.Now - order.CreatedAt.Value).TotalMinutes);
-            var diffUtc = Math.Abs((DateTime.UtcNow - order.CreatedAt.Value).TotalMinutes);
-            // Lấy độ lệch nhỏ nhất giữa Local và Utc để tránh lệch 7 tiếng
-            var actualMinutes = Math.Min(diffLocal, diffUtc);
-
-            if (actualMinutes > 30)
+            if (order == null)
             {
-                return BadRequest(new { 
-                    message = $"Đã quá thời hạn hủy đơn hàng ({Math.Round(actualMinutes)} phút > 30 phút). Vui lòng liên hệ Hotline 1900 8899 để được hỗ trợ hủy thủ công." 
-                });
+                return NotFound(new { message = "Không tìm thấy đơn hàng cần hủy." });
             }
-        }
 
-        // Hoàn trả số lượng tồn kho cho các lô hàng tương ứng
-        if (order.OrderItems != null)
-        {
-            foreach (var item in order.OrderItems)
+            // Kiểm tra quyền sở hữu đơn hàng (Chống lỗ hổng IDOR)
+            if (customerId.HasValue && customerId.Value > 0 && order.CustomerId != customerId.Value)
             {
-                if (item.BatchId > 0)
+                return StatusCode(403, new { message = "Bạn không có quyền hủy đơn hàng của khách hàng khác!" });
+            }
+
+            if (order.OrderStatus?.ToLower() == "cancelled" || order.OrderStatus?.ToLower() == "returned")
+            {
+                return BadRequest(new { message = "Đơn hàng này đã được hủy hoặc hoàn trả trước đó." });
+            }
+
+            if (order.OrderStatus?.ToLower() == "delivered" || order.OrderStatus?.ToLower() == "shipping" || order.OrderStatus?.ToLower() == "completed")
+            {
+                return BadRequest(new { message = "Đơn hàng đang giao hoặc đã hoàn thành, không thể hủy tự động." });
+            }
+
+            // Kiểm tra điều kiện thời gian: Trong vòng 30 phút kể từ lúc đặt hàng
+            if (order.CreatedAt.HasValue)
+            {
+                var diffLocal = Math.Abs((DateTime.Now - order.CreatedAt.Value).TotalMinutes);
+                var diffUtc = Math.Abs((DateTime.UtcNow - order.CreatedAt.Value).TotalMinutes);
+                var actualMinutes = Math.Min(diffLocal, diffUtc);
+
+                if (actualMinutes > 30)
                 {
-                    var batch = await _context.ProductBatches.FindAsync(item.BatchId);
-                    if (batch != null)
+                    return BadRequest(new { 
+                        message = $"Đã quá thời hạn hủy đơn hàng ({Math.Round(actualMinutes)} phút > 30 phút). Vui lòng liên hệ Hotline 1900 8899 để được hỗ trợ hủy thủ công." 
+                    });
+                }
+            }
+
+            // Hoàn trả số lượng tồn kho cho các lô hàng tương ứng (Inventory Rollback)
+            if (order.OrderItems != null)
+            {
+                foreach (var item in order.OrderItems)
+                {
+                    if (item.BatchId > 0)
                     {
-                        batch.InitialQuantity += item.Quantity;
-                        if (batch.Status == "OutOfStock") batch.Status = "Active";
+                        var batch = await _context.ProductBatches.FindAsync(item.BatchId);
+                        if (batch != null)
+                        {
+                            batch.InitialQuantity += item.Quantity;
+                            if (batch.Status == "OutOfStock") batch.Status = "Active";
+                        }
+                    }
+                    else
+                    {
+                        var batch = await _context.ProductBatches
+                            .Where(b => b.ProductId == item.ProductId)
+                            .OrderByDescending(b => b.ExpiryDate)
+                            .FirstOrDefaultAsync();
+                        if (batch != null)
+                        {
+                            batch.InitialQuantity += item.Quantity;
+                            if (batch.Status == "OutOfStock") batch.Status = "Active";
+                        }
                     }
                 }
             }
+
+            order.OrderStatus = "Cancelled";
+            order.UpdatedAt = DateTime.Now;
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            _logger.LogInformation($"[HỦY ĐƠN HÀNG - ACID] Đơn #{order.OrderCode} đã được hủy thành công và hoàn tồn kho.");
+
+            return Ok(new { message = "Hủy đơn hàng thành công, đã hoàn trả số lượng vào kho!", orderCode = order.OrderCode, orderStatus = "Cancelled" });
         }
-
-        order.OrderStatus = "Cancelled";
-        order.UpdatedAt = DateTime.Now;
-        await _context.SaveChangesAsync();
-
-        _logger.LogInformation($"[HỦY ĐƠN HÀNG] Đơn #{order.OrderCode} đã được khách hàng hủy thành công và hoàn tồn kho.");
-
-        return Ok(new { message = "Hủy đơn hàng thành công!", orderCode = order.OrderCode, orderStatus = "Cancelled" });
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            _logger.LogError($"[LỖI HỦY ĐƠN HÀNG] {ex.Message}");
+            return StatusCode(500, new { message = $"Lỗi khi hủy đơn hàng: {ex.Message}" });
+        }
     }
 
-    // ── 7. Cập nhật trạng thái đơn hàng tuân thủ quy chuẩn State Machine ──
+    // ── 7. Cập nhật trạng thái đơn hàng tuân thủ quy chuẩn State Machine & Inventory Rollback ──
     [HttpPut("{id}/status")]
     public async Task<IActionResult> UpdateOrderStatus(long id, [FromBody] UpdateOrderStatusDto dto)
     {
-        var order = await _context.Orders.FindAsync(id);
-        if (order == null)
+        using var transaction = await _context.Database.BeginTransactionAsync();
+        try
         {
-            return NotFound(new { message = "Không tìm thấy đơn hàng cần cập nhật." });
-        }
+            var order = await _context.Orders
+                .Include(o => o.OrderItems)
+                .FirstOrDefaultAsync(o => o.OrderId == id);
 
-        var currentStatus = order.OrderStatus ?? "Pending";
-        var requestedStatus = dto.OrderStatus?.Trim();
-        if (string.IsNullOrWhiteSpace(requestedStatus))
-        {
-            return BadRequest(new { message = "Trạng thái mới không được để trống." });
-        }
+            if (order == null)
+            {
+                return NotFound(new { message = "Không tìm thấy đơn hàng cần cập nhật." });
+            }
 
-        // Chuẩn hóa tên trạng thái về PascalCase
-        string normalizedStatus = requestedStatus.ToLower() switch
-        {
-            "pending" => "Pending",
-            "confirmed" => "Confirmed",
-            "shipping" => "Shipping",
-            "completed" => "Completed",
-            "cancelled" => "Cancelled",
-            _ => requestedStatus
-        };
+            var currentStatus = order.OrderStatus ?? "Pending";
+            var requestedStatus = dto.OrderStatus?.Trim();
+            if (string.IsNullOrWhiteSpace(requestedStatus))
+            {
+                return BadRequest(new { message = "Trạng thái mới không được để trống." });
+            }
 
-        // Nếu trạng thái mới giống trạng thái hiện tại
-        if (string.Equals(currentStatus, normalizedStatus, StringComparison.OrdinalIgnoreCase))
-        {
-            return Ok(new { message = "Trạng thái đơn hàng không thay đổi.", orderId = order.OrderId, orderStatus = order.OrderStatus, paymentStatus = order.PaymentStatus });
-        }
+            // Chuẩn hóa tên trạng thái về PascalCase
+            string normalizedStatus = requestedStatus.ToLower() switch
+            {
+                "pending" => "Pending",
+                "confirmed" => "Confirmed",
+                "shipping" => "Shipping",
+                "completed" => "Completed",
+                "cancelled" => "Cancelled",
+                "returned" => "Returned",
+                _ => requestedStatus
+            };
 
-        // Kiểm tra State Machine: Nếu đơn hàng đã kết thúc (Terminal states)
-        if (string.Equals(currentStatus, "Completed", StringComparison.OrdinalIgnoreCase))
-        {
-            return BadRequest(new { message = "Đơn hàng đã hoàn thành (Completed), không thể thay đổi trạng thái nữa." });
-        }
-        if (string.Equals(currentStatus, "Cancelled", StringComparison.OrdinalIgnoreCase))
-        {
-            return BadRequest(new { message = "Đơn hàng đã bị hủy (Cancelled), không thể kích hoạt lại." });
-        }
+            // Nếu trạng thái mới giống trạng thái hiện tại
+            if (string.Equals(currentStatus, normalizedStatus, StringComparison.OrdinalIgnoreCase))
+            {
+                return Ok(new { message = "Trạng thái đơn hàng không thay đổi.", orderId = order.OrderId, orderStatus = order.OrderStatus, paymentStatus = order.PaymentStatus });
+            }
 
-        // Kiểm tra các bước chuyển tiếp hợp lệ (Valid Transitions)
-        bool isValidTransition = (currentStatus.ToLower(), normalizedStatus.ToLower()) switch
-        {
-            ("pending", "confirmed") => true,
-            ("pending", "cancelled") => true,
-            ("confirmed", "shipping") => true,
-            ("confirmed", "cancelled") => true,
-            ("shipping", "completed") => true,
-            ("shipping", "cancelled") => true,
-            _ => false
-        };
+            // Kiểm tra State Machine: Nếu đơn hàng đã kết thúc
+            if (string.Equals(currentStatus, "Cancelled", StringComparison.OrdinalIgnoreCase))
+            {
+                return BadRequest(new { message = "Đơn hàng đã bị hủy (Cancelled), không thể kích hoạt lại." });
+            }
+            if (string.Equals(currentStatus, "Returned", StringComparison.OrdinalIgnoreCase))
+            {
+                return BadRequest(new { message = "Đơn hàng đã hoàn tất trả hàng / hoàn tiền (Returned), không thể đổi trạng thái nữa." });
+            }
 
-        if (!isValidTransition)
-        {
-            return BadRequest(new { 
-                message = $"Chuyển trạng thái bất hợp lệ: Không thể chuyển từ '{currentStatus}' sang '{normalizedStatus}'. Các trạng thái hợp lệ tiếp theo: {(currentStatus.ToLower() switch { "pending" => "Confirmed, Cancelled", "confirmed" => "Shipping, Cancelled", "shipping" => "Completed, Cancelled", _ => "Không còn trạng thái chuyển tiếp" })}." 
+            // Kiểm tra các bước chuyển tiếp hợp lệ (Valid Transitions)
+            bool isValidTransition = (currentStatus.ToLower(), normalizedStatus.ToLower()) switch
+            {
+                ("pending", "confirmed") => true,
+                ("pending", "cancelled") => true,
+                ("confirmed", "shipping") => true,
+                ("confirmed", "cancelled") => true,
+                ("shipping", "completed") => true,
+                ("shipping", "cancelled") => true,
+                ("shipping", "returned") => true,
+                ("completed", "returned") => true,
+                _ => false
+            };
+
+            if (!isValidTransition)
+            {
+                return BadRequest(new { 
+                    message = $"Chuyển trạng thái bất hợp lệ: Không thể chuyển từ '{currentStatus}' sang '{normalizedStatus}'. Các trạng thái hợp lệ tiếp theo: {(currentStatus.ToLower() switch { "pending" => "Confirmed, Cancelled", "confirmed" => "Shipping, Cancelled", "shipping" => "Completed, Cancelled, Returned", "completed" => "Returned (Trả hàng / Hoàn tiền)", _ => "Không còn trạng thái chuyển tiếp" })}." 
+                });
+            }
+
+            // Tự động Hoàn kho (Inventory Rollback & Returns) khi đơn hàng bị Hủy hoặc Trả hàng
+            if (normalizedStatus == "Cancelled" || normalizedStatus == "Returned")
+            {
+                if (order.OrderItems != null && order.OrderItems.Any())
+                {
+                    foreach (var item in order.OrderItems)
+                    {
+                        if (item.BatchId > 0)
+                        {
+                            var batch = await _context.ProductBatches.FindAsync(item.BatchId);
+                            if (batch != null)
+                            {
+                                batch.InitialQuantity += item.Quantity;
+                                if (batch.Status == "OutOfStock") batch.Status = "Active";
+                            }
+                        }
+                        else
+                        {
+                            var batch = await _context.ProductBatches
+                                .Where(b => b.ProductId == item.ProductId)
+                                .OrderByDescending(b => b.ExpiryDate)
+                                .FirstOrDefaultAsync();
+                            if (batch != null)
+                            {
+                                batch.InitialQuantity += item.Quantity;
+                                if (batch.Status == "OutOfStock") batch.Status = "Active";
+                            }
+                        }
+                    }
+                }
+
+                if (normalizedStatus == "Returned")
+                {
+                    order.PaymentStatus = "Refunded";
+                }
+            }
+            else if (normalizedStatus == "Completed" && (order.PaymentStatus == "Pending" || order.PaymentStatus == "Unpaid" || string.IsNullOrEmpty(order.PaymentStatus)))
+            {
+                order.PaymentStatus = "Paid";
+            }
+            else if (!string.IsNullOrWhiteSpace(dto.PaymentStatus))
+            {
+                order.PaymentStatus = dto.PaymentStatus;
+            }
+
+            order.OrderStatus = normalizedStatus;
+            order.UpdatedAt = DateTime.Now;
+
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            _logger.LogInformation($"[STATE MACHINE & ACID] Đơn #{order.OrderCode ?? order.OrderId.ToString()} chuyển từ '{currentStatus}' -> '{normalizedStatus}', đã cập nhật kho hàng và thanh toán đồng bộ.");
+
+            return Ok(new
+            {
+                message = normalizedStatus switch
+                {
+                    "Cancelled" => "Hủy đơn hàng thành công! Đã tự động hoàn trả số lượng vào kho.",
+                    "Returned" => "Xác nhận trả hàng & hoàn tiền thành công! Đã tự động hoàn trả số lượng vào kho.",
+                    _ => "Cập nhật trạng thái đơn hàng thành công!"
+                },
+                orderId = order.OrderId,
+                orderStatus = order.OrderStatus,
+                paymentStatus = order.PaymentStatus
             });
         }
-
-        order.OrderStatus = normalizedStatus;
-        order.UpdatedAt = DateTime.Now;
-
-        // Tự động cập nhật thanh toán nếu hoàn tất đơn hàng giao tận nơi (COD)
-        if (normalizedStatus == "Completed" && (order.PaymentStatus == "Pending" || order.PaymentStatus == "Unpaid" || string.IsNullOrEmpty(order.PaymentStatus)))
+        catch (Exception ex)
         {
-            order.PaymentStatus = "Paid";
+            await transaction.RollbackAsync();
+            _logger.LogError($"[LỖI CẬP NHẬT TRẠNG THÁI] {ex.Message}");
+            return StatusCode(500, new { message = $"Lỗi cập nhật trạng thái đơn hàng: {ex.Message}" });
         }
-        else if (!string.IsNullOrWhiteSpace(dto.PaymentStatus))
-        {
-            order.PaymentStatus = dto.PaymentStatus;
-        }
-
-        await _context.SaveChangesAsync();
-        _logger.LogInformation($"[STATE MACHINE] Đơn #{order.OrderCode ?? order.OrderId.ToString()} chuyển từ '{currentStatus}' -> '{normalizedStatus}'");
-
-        return Ok(new
-        {
-            message = "Cập nhật trạng thái đơn hàng thành công!",
-            orderId = order.OrderId,
-            orderStatus = order.OrderStatus,
-            paymentStatus = order.PaymentStatus
-        });
     }
 
     [HttpPut("{id}")]

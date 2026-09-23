@@ -11,6 +11,7 @@ import {
   LogoutOutlined,
   DownOutlined,
   ThunderboltOutlined,
+  BarChartOutlined,
 } from '@ant-design/icons';
 
 // Import Pages
@@ -21,6 +22,7 @@ import { Orders } from './pages/Orders';
 import { Batches } from './pages/Batches';
 import { PromotionsReviews } from './pages/PromotionsReviews';
 import { RecommendationAnalytics } from './pages/RecommendationAnalytics';
+import { ProductReports } from './pages/ProductReports';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 
@@ -107,6 +109,11 @@ const AppContent: React.FC = () => {
       label: <Link to="/orders">Đơn Hàng & Vận Hành</Link>,
     },
     {
+      key: '/product-reports',
+      icon: <BarChartOutlined style={{ color: '#1890ff' }} />,
+      label: <Link to="/product-reports">Báo Cáo & Tồn Kho</Link>,
+    },
+    {
       key: '/promotions',
       icon: <PercentageOutlined />,
       label: <Link to="/promotions">Khuyến Mãi & Đánh Giá</Link>,
@@ -188,6 +195,7 @@ const AppContent: React.FC = () => {
               <Route path="/products" element={<Products />} />
               <Route path="/batches" element={<Batches />} />
               <Route path="/orders" element={<Orders />} />
+              <Route path="/product-reports" element={<ProductReports />} />
               <Route path="/promotions" element={<PromotionsReviews />} />
               <Route path="/recommendations" element={<RecommendationAnalytics />} />
             </Routes>
