@@ -17,6 +17,7 @@ type Product = {
   id: number;
   name: string;
   price: string;
+  rawPrice?: number;
   unit: string;
   category: string;
   cert: string;
