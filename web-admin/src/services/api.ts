@@ -83,3 +83,30 @@ export const recommendationService = {
   getNearDelivery: (limit = 4) =>
     api.get(`/recommendations/near-delivery?limit=${limit}`),
 };
+
+export const reportService = {
+  getProductReports: (params?: {
+    timeRange?: string;
+    startDate?: string;
+    endDate?: string;
+    categoryId?: number;
+    status?: string;
+    search?: string;
+    page?: number;
+    pageSize?: number;
+    sortBy?: string;
+    sortOrder?: string;
+  }) => api.get('/reports/products', { params }),
+  exportProductReports: (params?: {
+    timeRange?: string;
+    startDate?: string;
+    endDate?: string;
+    categoryId?: number;
+    status?: string;
+    search?: string;
+  }) => api.get('/reports/products/export', { params, responseType: 'blob' }),
+  getRevenueDrilldown: (params?: any) => api.get('/reports/products/drilldown/revenue', { params }),
+  getSoldDrilldown: (params?: any) => api.get('/reports/products/drilldown/sold', { params }),
+  getInventoryDrilldown: () => api.get('/reports/products/drilldown/inventory'),
+  getReturnsDrilldown: (params?: any) => api.get('/reports/products/drilldown/returns', { params }),
+};
