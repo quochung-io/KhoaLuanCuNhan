@@ -1128,6 +1128,9 @@ export default function ProductDetailPage() {
                 src={currentMainImage} 
                 alt={product.productName}
                 style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'all 0.35s ease' }}
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=800&auto=format&fit=crop&q=80';
+                }}
               />
               <div style={{ position: 'absolute', top: '16px', left: '16px', display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
                 <span style={{ background: 'var(--green-700)', color: '#fff', fontSize: '12px', fontWeight: 700, padding: '5px 12px', borderRadius: '20px', letterSpacing: '0.3px' }}>

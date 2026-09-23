@@ -340,7 +340,8 @@ export default function LanhLandingPage() {
       .then(res => res.json())
       .then((data: any[]) => {
         if (data && Array.isArray(data)) {
-          const mapped = data.map((item: any) => {
+          const nonCombos = data.filter((item: any) => !(item.productName || '').toLowerCase().includes('combo'));
+          const mapped = nonCombos.map((item: any) => {
             let icon = 'leaf';
             const nameLower = (item.productName || '').toLowerCase();
             if (nameLower.includes('cà rốt') || nameLower.includes('củ')) icon = 'carrot';
@@ -1023,7 +1024,14 @@ export default function LanhLandingPage() {
                   <div className="prod-media" style={{ background: 'var(--green-100)', position: 'relative' }}>
                     <div style={{ display: 'block', width: '100%', height: '100%' }}>
                       {p.imageUrl ? (
-                        <img src={p.imageUrl} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <img 
+                          src={p.imageUrl} 
+                          alt={p.name} 
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600&auto=format&fit=crop&q=80';
+                          }}
+                        />
                       ) : (
                         ICONS[p.icon] || ICONS['leaf']
                       )}
@@ -2054,6 +2062,9 @@ export default function LanhLandingPage() {
                   src={quickViewProduct.imageUrl}
                   alt={quickViewProduct.name}
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600&auto=format&fit=crop&q=80';
+                  }}
                 />
               ) : (
                 <div style={{ width: '120px', height: '120px' }}>
