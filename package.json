@@ -10,8 +10,13 @@
   ],
   "scripts": {
     "generate:contracts": "node generate_contracts.js",
+    "dev": "npm run dev:all",
+    "dev:all": "concurrently -n \"admin,supplier,store\" -c \"blue,green,magenta\" \"npm run web-admin:dev\" \"npm run web-supplier:dev\" \"npm run web-store:dev\"",
     "web-admin:dev": "npm run dev --workspace=web-admin",
     "web-supplier:dev": "npm run dev --workspace=web-supplier",
     "web-store:dev": "npm run dev --workspace=web-store"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.5"
   }
 }

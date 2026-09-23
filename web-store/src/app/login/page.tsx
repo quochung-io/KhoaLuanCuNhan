@@ -28,6 +28,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -82,6 +83,7 @@ export default function LoginPage() {
 
   const handleCustomerLogout = () => {
     localStorage.removeItem('customer_user');
+    localStorage.removeItem('auth_token');
     setCurrentUser(null);
     setShowUserDropdown(false);
   };
@@ -137,12 +139,13 @@ export default function LoginPage() {
   const totalItemsCount = cart.reduce((s, i) => s + i.qty, 0);
   const toVND = (n: number) => n.toLocaleString('vi-VN') + '₫';
 
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     
     if (!email.trim() || !password) {
-      setError('Vui lòng điền đầy đủ email/họ tên và mật khẩu.');
+      setError('Vui lòng điền đầy đủ email/tên đăng nhập và mật khẩu.');
       return;
     }
 
@@ -298,20 +301,18 @@ export default function LoginPage() {
             <div style={{ position: 'relative' }} ref={dropdownRef}>
               <button 
                 className="header-action-item" 
-                onClick={() => setShowUserDropdown(!showUserDropdown)} 
-                style={{ border: 'none', background: 'none', cursor: 'pointer' }}
+                onClick={() => setShowUserDropdown(!showUserDropdown)}
+                title="Tài khoản cá nhân"
+                style={{ background: 'none', border: 'none', cursor: 'pointer' }}
               >
-                <span className="header-action-icon">
-                  {currentUser && currentUser.avatarUrl ? (
-                    <img 
-                      src={currentUser.avatarUrl} 
-                      alt="Avatar" 
-                      style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--green-700)' }} 
-                    />
-                  ) : ''}
-                </span>
+                <div className="header-action-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                  </svg>
+                </div>
                 <div className="header-action-text">
-                  <span className="header-action-label">{currentUser ? 'Xin chào,' : 'Tài khoản'}</span>
+                  <span className="header-action-label">Tài khoản</span>
                   <span className="header-action-value" style={{ maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {currentUser ? currentUser.fullName : 'Đăng nhập'}
                   </span>
@@ -423,7 +424,9 @@ export default function LoginPage() {
               onClick={() => setIsDrawerOpen(true)}
               title="Xem giỏ hàng"
             >
-              <div className="header-action-icon" style={{ display: 'flex', alignItems: 'center' }}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg><span className="badge">{totalItemsCount}</span>
+              <div className="header-action-icon" style={{ display: 'flex', alignItems: 'center' }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+                <span className="badge">{totalItemsCount}</span>
               </div>
               <div className="header-action-text">
                 <span className="header-action-label">Giỏ hàng</span>
@@ -448,143 +451,509 @@ export default function LoginPage() {
         </div>
       </header>
 
-      {/* ── NỘI DUNG FORM ĐĂNG NHẬP (GIAO DIỆN TỐI GIẢN, TINH TẾ) ── */}
-      <main id="main" style={{ minHeight: 'calc(100vh - 400px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '48px 16px', backgroundColor: '#f8fafc' }}>
+      {/* ── BREADCRUMB NHẸ NHÀNG ── */}
+      <div style={{ backgroundColor: 'var(--bg)', borderBottom: '1px solid var(--line)' }}>
+        <div className="wrap" style={{ padding: '12px 24px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12.5px', color: 'var(--ink-soft)' }}>
+            <Link href="/" style={{ color: 'var(--green-700)', fontWeight: '600', textDecoration: 'none' }}>
+              Trang chủ
+            </Link>
+            <span>/</span>
+            <span style={{ color: 'var(--ink)', fontWeight: '500' }}>Đăng nhập tài khoản</span>
+          </div>
+        </div>
+      </div>
+
+      {/* ── NỘI DUNG CHÍNH: SPLIT-SCREEN FARM SHOWCASE ĐỒNG BỘ TRANG CHỦ ── */}
+      <main id="main" style={{ 
+        minHeight: 'calc(100vh - 420px)', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        padding: '48px 20px', 
+        background: 'linear-gradient(180deg, var(--bg) 0%, rgba(227, 241, 227, 0.45) 100%)' 
+      }}>
         <div style={{
-          backgroundColor: '#ffffff',
-          border: '1px solid #e2e8f0',
-          borderRadius: '12px',
-          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.03)',
+          backgroundColor: 'var(--surface)',
+          borderRadius: '24px',
+          boxShadow: '0 20px 50px rgba(22, 36, 26, 0.08), 0 1px 3px rgba(22, 36, 26, 0.05)',
+          border: '1px solid var(--line)',
           width: '100%',
-          maxWidth: '420px',
-          padding: '32px 28px'
+          maxWidth: '1040px',
+          overflow: 'hidden',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))'
         }}>
-          <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-            <h1 style={{ fontSize: '22px', fontWeight: '700', color: '#0f172a', margin: '0 0 6px 0' }}>
-              Đăng nhập tài khoản
-            </h1>
-            <p style={{ fontSize: '13.5px', color: '#64748b', margin: 0 }}>
-              Tiếp tục chọn mua nông sản sạch và theo dõi đơn hàng
-            </p>
+          {/* CỘT TRÁI: HERO SHOWCASE NÔNG TRẠI LÀNH FARM */}
+          <div style={{
+            position: 'relative',
+            background: `linear-gradient(180deg, rgba(27, 58, 32, 0.84) 0%, rgba(15, 36, 18, 0.94) 100%), url('/banners/farm_hero_banner_1789080079371.jpg') center/cover no-repeat`,
+            color: '#ffffff',
+            padding: '44px 38px',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            minHeight: '560px'
+          }}>
+            {/* Phần trên: Badge & Tiêu đề thương hiệu */}
+            <div>
+              <div style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '6px 14px',
+                borderRadius: '999px',
+                backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                backdropFilter: 'blur(8px)',
+                border: '1px solid rgba(255, 255, 255, 0.25)',
+                fontSize: '12px',
+                fontWeight: '600',
+                letterSpacing: '0.04em',
+                marginBottom: '22px'
+              }}>
+                <span style={{ fontSize: '14px' }}>🌿</span>
+                <span>NÔNG SẢN SẠCH CHUẨN VIETGAP &amp; HỮU CƠ</span>
+              </div>
+
+              <h2 style={{
+                fontFamily: 'var(--font-display)',
+                fontSize: 'clamp(28px, 3.2vw, 36px)',
+                fontWeight: '700',
+                lineHeight: '1.2',
+                margin: '0 0 16px 0',
+                color: '#ffffff',
+                textShadow: '0 2px 10px rgba(0,0,0,0.25)'
+              }}>
+                Nông Sản Tươi LÀNH,<br />
+                <span style={{ color: '#86efac' }}>Chuẩn Vị Từ Đất Mẹ.</span>
+              </h2>
+
+              <p style={{
+                fontSize: '14.5px',
+                lineHeight: '1.65',
+                color: 'rgba(255, 255, 255, 0.88)',
+                margin: '0 0 28px 0',
+                maxWidth: '420px'
+              }}>
+                Kết nối trực tiếp hơn 120 nông trại hữu cơ Đà Lạt &amp; Mộc Châu. 
+                Đăng nhập để nhận ưu đãi tích điểm và theo dõi đơn hàng tươi sạch tận nhà.
+              </p>
+
+              {/* 3 Cam kết vàng của LÀNH Farm */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '10px',
+                    backgroundColor: 'rgba(255, 255, 255, 0.18)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '16px',
+                    flexShrink: 0
+                  }}>
+                    🚚
+                  </div>
+                  <div>
+                    <strong style={{ fontSize: '13.5px', display: 'block', color: '#ffffff' }}>Giao xe lạnh 2H</strong>
+                    <span style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.75)' }}>Giữ nguyên độ tươi sương sớm mỗi ngày</span>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '10px',
+                    backgroundColor: 'rgba(255, 255, 255, 0.18)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '16px',
+                    flexShrink: 0
+                  }}>
+                    🛡️
+                  </div>
+                  <div>
+                    <strong style={{ fontSize: '13.5px', display: 'block', color: '#ffffff' }}>Bảo hành 1 đổi 1</strong>
+                    <span style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.75)' }}>Hoàn tiền 100% nếu nông sản dập úng</span>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '10px',
+                    backgroundColor: 'rgba(255, 255, 255, 0.18)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '16px',
+                    flexShrink: 0
+                  }}>
+                    🎁
+                  </div>
+                  <div>
+                    <strong style={{ fontSize: '13.5px', display: 'block', color: '#ffffff' }}>Đặc quyền LÀNH Rewards</strong>
+                    <span style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.75)' }}>Tích điểm hoàn tiền 5% cho từng đơn hàng</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Phần dưới: Customer Testimonial Card thu nhỏ */}
+            <div style={{
+              marginTop: '32px',
+              padding: '16px 18px',
+              borderRadius: '16px',
+              backgroundColor: 'rgba(255, 255, 255, 0.12)',
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(255, 255, 255, 0.2)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                <div style={{ color: '#facc15', fontSize: '13px', letterSpacing: '2px' }}>★★★★★</div>
+                <span style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.7)', fontWeight: '600' }}>15.000+ KH tin dùng</span>
+              </div>
+              <p style={{ fontSize: '12.5px', fontStyle: 'italic', margin: 0, color: 'rgba(255, 255, 255, 0.95)', lineHeight: '1.5' }}>
+                &ldquo;Rau quả tại LÀNH Farm rất ngọt và tươi, củ quả nguyên cuống lá xanh mướt. Mình rất yên tâm nấu cho các bé.&rdquo;
+              </p>
+              <div style={{ marginTop: '8px', fontSize: '11.5px', color: '#86efac', fontWeight: '600' }}>
+                Nguyễn Minh Anh • Khách hàng thân thiết
+              </div>
+            </div>
           </div>
 
-          {error && (
-            <div style={{
-              backgroundColor: '#fef2f2',
-              border: '1px solid #fecaca',
-              color: '#991b1b',
-              padding: '10px 14px',
-              borderRadius: '6px',
-              marginBottom: '18px',
-              fontSize: '13px'
-            }}>
-              {error}
-            </div>
-          )}
+          {/* CỘT PHẢI: FORM ĐĂNG NHẬP SANG TRỌNG & THÂN THIỆN */}
+          <div style={{
+            padding: '44px 38px',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            backgroundColor: 'var(--surface)'
+          }}>
+            {/* Header Form */}
+            <div style={{ marginBottom: '24px' }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                <svg width="24" height="24" viewBox="0 0 40 40" fill="none">
+                  <circle cx="20" cy="20" r="20" fill="var(--green-700)"/>
+                  <path d="M20 30C20 30 12 26 12 18C12 13 16 10 20 10C24 10 28 13 28 18C28 26 20 30 20 30Z" fill="var(--green-500)"/>
+                  <path d="M20 30V16" stroke="var(--green-900)" strokeWidth="1.4" strokeLinecap="round"/>
+                </svg>
+                <span style={{ fontFamily: 'var(--font-display)', fontWeight: '700', fontSize: '16px', color: 'var(--green-900)', letterSpacing: '0.5px' }}>
+                  LÀNH FARM
+                </span>
+              </div>
 
-          <form onSubmit={handleLogin}>
-            <div style={{ marginBottom: '16px' }}>
-              <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: '600', color: '#334155' }}>
-                Email hoặc Tên đăng nhập
-              </label>
-              <input
-                type="text"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Nhập email hoặc tên đăng nhập"
+              <h1 style={{
+                fontFamily: 'var(--font-display)',
+                fontSize: '26px',
+                fontWeight: '700',
+                color: 'var(--ink)',
+                margin: '0 0 8px 0'
+              }}>
+                Chào mừng bạn trở lại!
+              </h1>
+              <p style={{ fontSize: '13.5px', color: 'var(--ink-soft)', margin: 0, lineHeight: '1.5' }}>
+                Đăng nhập tài khoản để tiếp tục mua sắm &amp; tích lũy điểm thưởng.
+              </p>
+            </div>
+
+            {/* Thông báo lỗi nếu có */}
+            {error && (
+              <div style={{
+                backgroundColor: '#fef2f2',
+                border: '1px solid #fecaca',
+                color: '#991b1b',
+                padding: '12px 16px',
+                borderRadius: '10px',
+                marginBottom: '20px',
+                fontSize: '13px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px'
+              }}>
+                <span style={{ fontSize: '16px' }}>⚠️</span>
+                <span>{error}</span>
+              </div>
+            )}
+
+            {/* Form */}
+            <form onSubmit={handleLogin}>
+              {/* Field 1: Email hoặc Tên đăng nhập */}
+              <div style={{ marginBottom: '18px' }}>
+                <label style={{ 
+                  display: 'block', 
+                  marginBottom: '6px', 
+                  fontSize: '13px', 
+                  fontWeight: '600', 
+                  color: 'var(--ink)' 
+                }}>
+                  Email hoặc Tên đăng nhập
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <div style={{
+                    position: 'absolute',
+                    left: '12px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    color: 'var(--ink-soft)',
+                    display: 'flex',
+                    alignItems: 'center'
+                  }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                      <polyline points="22,6 12,13 2,6"/>
+                    </svg>
+                  </div>
+                  <input
+                    type="text"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Ví dụ: minhanh@gmail.com"
+                    style={{
+                      width: '100%',
+                      padding: '11px 14px 11px 40px',
+                      borderRadius: '10px',
+                      border: '1.5px solid var(--line)',
+                      backgroundColor: 'var(--surface)',
+                      color: 'var(--ink)',
+                      fontSize: '14px',
+                      outline: 'none',
+                      transition: 'border-color 0.2s, box-shadow 0.2s',
+                      boxSizing: 'border-box'
+                    }}
+                    onFocus={(e) => {
+                      e.target.style.borderColor = 'var(--green-700)';
+                      e.target.style.boxShadow = '0 0 0 3px rgba(46, 125, 50, 0.15)';
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.borderColor = 'var(--line)';
+                      e.target.style.boxShadow = 'none';
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Field 2: Mật khẩu */}
+              <div style={{ marginBottom: '18px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                  <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--ink)' }}>
+                    Mật khẩu
+                  </label>
+                  <Link 
+                    href="/forgot-password" 
+                    style={{ 
+                      fontSize: '12.5px', 
+                      color: 'var(--green-700)', 
+                      fontWeight: '600', 
+                      textDecoration: 'none' 
+                    }}
+                  >
+                    Quên mật khẩu?
+                  </Link>
+                </div>
+                <div style={{ position: 'relative' }}>
+                  <div style={{
+                    position: 'absolute',
+                    left: '12px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    color: 'var(--ink-soft)',
+                    display: 'flex',
+                    alignItems: 'center'
+                  }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                    </svg>
+                  </div>
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    style={{
+                      width: '100%',
+                      padding: '11px 40px 11px 40px',
+                      borderRadius: '10px',
+                      border: '1.5px solid var(--line)',
+                      backgroundColor: 'var(--surface)',
+                      color: 'var(--ink)',
+                      fontSize: '14px',
+                      outline: 'none',
+                      transition: 'border-color 0.2s, box-shadow 0.2s',
+                      boxSizing: 'border-box'
+                    }}
+                    onFocus={(e) => {
+                      e.target.style.borderColor = 'var(--green-700)';
+                      e.target.style.boxShadow = '0 0 0 3px rgba(46, 125, 50, 0.15)';
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.borderColor = 'var(--line)';
+                      e.target.style.boxShadow = 'none';
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    style={{ 
+                      position: 'absolute', 
+                      right: '12px', 
+                      top: '50%', 
+                      transform: 'translateY(-50%)', 
+                      color: 'var(--ink-soft)', 
+                      background: 'none', 
+                      border: 'none', 
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      padding: '4px'
+                    }}
+                    aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                  >
+                    {showPassword ? (
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                    ) : (
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Tùy chọn: Ghi nhớ đăng nhập */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '22px' }}>
+                <input
+                  type="checkbox"
+                  id="rememberMe"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  style={{ width: '16px', height: '16px', accentColor: 'var(--green-700)', cursor: 'pointer' }}
+                />
+                <label htmlFor="rememberMe" style={{ fontSize: '13px', color: 'var(--ink-soft)', cursor: 'pointer', userSelect: 'none' }}>
+                  Ghi nhớ đăng nhập trên thiết bị này
+                </label>
+              </div>
+
+              {/* Nút Đăng nhập chính */}
+              <button
+                type="submit"
+                disabled={loading}
                 style={{
                   width: '100%',
-                  padding: '10px 12px',
-                  borderRadius: '6px',
-                  border: '1px solid #cbd5e1',
-                  backgroundColor: '#ffffff',
-                  color: '#0f172a',
-                  fontSize: '13.5px',
-                  outline: 'none',
-                  boxSizing: 'border-box'
+                  padding: '13px',
+                  backgroundColor: 'var(--green-700)',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '10px',
+                  fontSize: '15px',
+                  fontWeight: '700',
+                  cursor: loading ? 'not-allowed' : 'pointer',
+                  opacity: loading ? 0.75 : 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  boxShadow: '0 6px 18px rgba(46, 125, 50, 0.28)',
+                  transition: 'all 0.2s ease'
                 }}
-              />
+                onMouseEnter={(e) => {
+                  if (!loading) {
+                    (e.target as HTMLElement).style.backgroundColor = 'var(--green-900)';
+                    (e.target as HTMLElement).style.transform = 'translateY(-1px)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!loading) {
+                    (e.target as HTMLElement).style.backgroundColor = 'var(--green-700)';
+                    (e.target as HTMLElement).style.transform = 'translateY(0)';
+                  }
+                }}
+              >
+                {loading ? (
+                  <>
+                    <svg className="animate-spin" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <circle cx="12" cy="12" r="10" strokeOpacity="0.25"/>
+                      <path d="M12 2a10 10 0 0 1 10 10" strokeLinecap="round"/>
+                    </svg>
+                    <span>Đang đăng nhập...</span>
+                  </>
+                ) : (
+                  <span>Đăng nhập</span>
+                )}
+              </button>
+            </form>
+
+            {/* Phân cách */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              margin: '24px 0',
+              color: 'var(--ink-soft)'
+            }}>
+              <div style={{ flex: 1, height: '1px', backgroundColor: 'var(--line)' }}></div>
+              <span style={{ padding: '0 12px', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                HOẶC
+              </span>
+              <div style={{ flex: 1, height: '1px', backgroundColor: 'var(--line)' }}></div>
             </div>
 
-            <div style={{ marginBottom: '20px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                <label style={{ fontSize: '13px', fontWeight: '600', color: '#334155' }}>
-                  Mật khẩu
-                </label>
-                <Link href="/forgot-password" style={{ fontSize: '12.5px', color: '#15803d', fontWeight: '600', textDecoration: 'none' }}>
-                  Quên mật khẩu?
-                </Link>
-              </div>
-              <div style={{ position: 'relative' }}>
-                <input
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    paddingRight: '38px',
-                    borderRadius: '6px',
-                    border: '1px solid #cbd5e1',
-                    backgroundColor: '#ffffff',
-                    color: '#0f172a',
-                    fontSize: '13.5px',
-                    outline: 'none',
-                    boxSizing: 'border-box'
-                  }}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  style={{ position: 'absolute', right: '10px', top: '10px', color: '#94a3b8', background: 'none', border: 'none', cursor: 'pointer' }}
-                  aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-                >
-                  {showPassword ? (
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-                  ) : (
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                  )}
-                </button>
-              </div>
+            {/* Khối chuyển sang Đăng ký */}
+            <div style={{
+              padding: '16px',
+              borderRadius: '12px',
+              backgroundColor: 'var(--bg)',
+              border: '1px solid var(--line)',
+              textAlign: 'center'
+            }}>
+              <span style={{ fontSize: '13.5px', color: 'var(--ink-soft)', display: 'block', marginBottom: '6px' }}>
+                Bạn chưa có tài khoản thành viên?
+              </span>
+              <Link
+                href="/register"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  color: 'var(--green-700)',
+                  fontWeight: '700',
+                  fontSize: '14px',
+                  textDecoration: 'none'
+                }}
+              >
+                <span>Đăng ký thành viên ngay</span>
+                <span>→</span>
+              </Link>
             </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              style={{
-                width: '100%',
-                padding: '12px',
-                backgroundColor: '#15803d',
-                color: '#ffffff',
-                border: 'none',
-                borderRadius: '6px',
-                fontSize: '14.5px',
-                fontWeight: '600',
-                cursor: loading ? 'not-allowed' : 'pointer',
-                opacity: loading ? 0.7 : 1,
-                transition: 'background-color 0.15s'
-              }}
-            >
-              {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
-            </button>
-          </form>
-
-          <div style={{ marginTop: '20px', textAlign: 'center', fontSize: '13px', color: '#64748b' }}>
-            Chưa có tài khoản?{' '}
-            <Link href="/register" style={{ color: '#15803d', fontWeight: '600', textDecoration: 'none' }}>
-              Đăng ký ngay
-            </Link>
+            {/* Cam kết bảo mật ở đáy form */}
+            <div style={{
+              marginTop: '20px',
+              textAlign: 'center',
+              fontSize: '11.5px',
+              color: 'var(--ink-soft)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px'
+            }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+              <span>Thông tin được bảo mật 100% theo tiêu chuẩn chứng chỉ SSL</span>
+            </div>
           </div>
         </div>
       </main>
 
-      {/* ── FOOTER CHUẨN ĐỒNG BỘ 4 CỘT ── */}
-            <footer>
+      {/* ── FOOTER CHUẨN ĐỒNG BỘ 4 CỘT TRANG CHỦ ── */}
+      <footer>
         <div className="wrap">
           <div className="foot-grid">
             <div>
-              <div className="logo">LÀNH</div>
+              <div className="logo" style={{ color: 'var(--green-900)' }}>LÀNH</div>
               <p>Nền tảng nông sản hữu cơ minh bạch — kết nối trực tiếp nông trại Việt Nam đến bữa ăn của bạn.</p>
               <div className="cert-row">
                 <span className="cert-pill">VietGAP</span>
@@ -595,7 +964,7 @@ export default function LoginPage() {
             <div>
               <h5>Liên hệ</h5>
               <ul>
-                <li>1900 6868 (7:00–21:00)</li>
+                <li>1900 8899 (7:00–21:00)</li>
                 <li>hello@lanh.vn</li>
                 <li>92 Nguyễn Huệ, Q.1, TP.HCM</li>
               </ul>
@@ -617,8 +986,8 @@ export default function LoginPage() {
             </div>
           </div>
           <div className="foot-bottom">
-            <span>© 2026 LÀNH — Đồ án tốt nghiệp UI/UX, Đại học ABC.</span>
-            <span>Thiết kế minh họa cho mục đích học thuật.</span>
+            <span>© 2026 LÀNH Farm — Hệ Thống Mua Bán Nông Sản &amp; Truy Xuất Nguồn Gốc.</span>
+            <span>Chuẩn VietGAP &amp; Hữu Cơ Từ Vườn Đến Bàn Ăn.</span>
           </div>
         </div>
       </footer>
