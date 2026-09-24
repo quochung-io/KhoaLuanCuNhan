@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Card, 
   Form, 
@@ -6,7 +6,6 @@ import {
   Button, 
   Steps, 
   Select, 
-  AutoComplete,
   InputNumber, 
   Typography, 
   Alert, 
@@ -25,7 +24,14 @@ import {
 } from '@ant-design/icons';
 import { useNavigate, Link } from 'react-router-dom';
 import axiosClient from '../config/axiosClient';
-import { GROUPED_PROVINCES, removeVietnameseTones } from '../constants/vietnamProvinces';
+import { 
+  FALLBACK_PROVINCES, 
+  FALLBACK_DISTRICTS, 
+  QUICK_PROVINCE_TAGS, 
+  fetchWithTimeout, 
+  removeVietnameseTones 
+} from '../constants/vietnamProvinces';
+import type { ProvinceItem, DistrictItem } from '../constants/vietnamProvinces';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -35,8 +41,41 @@ export const Register: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
   const [registeredData, setRegisteredData] = useState<any>(null);
+
+  // States tích hợp Province Open API
+  const [provincesList, setProvincesList] = useState<ProvinceItem[]>(FALLBACK_PROVINCES);
+  const [loadingProvinces, setLoadingProvinces] = useState<boolean>(false);
+  const [districtsList, setDistrictsList] = useState<DistrictItem[]>(FALLBACK_DISTRICTS[68] || []);
+  const [loadingDistricts, setLoadingDistricts] = useState<boolean>(false);
+
   const [form] = Form.useForm();
   const navigate = useNavigate();
+
+  // Tự động gọi Province Open API tải danh sách 63 tỉnh/thành phố khi component mount
+  useEffect(() => {
+    let isMounted = true;
+    const fetchProvinces = async () => {
+      setLoadingProvinces(true);
+      try {
+        const res = await fetchWithTimeout('https://provinces.open-api.vn/api/p/', 4000);
+        if (res.ok) {
+          const data: ProvinceItem[] = await res.json();
+          if (isMounted && Array.isArray(data) && data.length > 0) {
+            setProvincesList(data);
+          }
+        }
+      } catch (err) {
+        console.warn('Province Open API không khả dụng, sử dụng danh mục 63 tỉnh thành cục bộ:', err);
+      } finally {
+        if (isMounted) setLoadingProvinces(false);
+      }
+    };
+
+    fetchProvinces();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const passwordValue = Form.useWatch('password', form) || '';
   const hasMinLength = passwordValue.length >= 8;
@@ -47,18 +86,49 @@ export const Register: React.FC = () => {
 
   const selectedProvince = Form.useWatch('province', form) || '';
 
-  const getDistrictPlaceholder = (prov: string) => {
-    if (!prov) return 'Ví dụ: TP. Đà Lạt, Đơn Dương, Lạc Dương...';
-    if (prov.includes('Lâm Đồng')) return 'Ví dụ: TP. Đà Lạt, TP. Bảo Lộc, Đơn Dương, Đức Trọng, Lạc Dương...';
-    if (prov.includes('Hồ Chí Minh') || prov.includes('HCM')) return 'Ví dụ: Quận 1, TP. Thủ Đức, Bình Chánh, Củ Chi, Hóc Môn...';
-    if (prov.includes('Hà Nội')) return 'Ví dụ: Hoàn Kiếm, Ba Đình, Cầu Giấy, Đông Anh, Gia Lâm...';
-    if (prov.includes('Đà Nẵng')) return 'Ví dụ: Hải Châu, Sơn Trà, Ngũ Hành Sơn, Hòa Vang...';
-    if (prov.includes('Cần Thơ')) return 'Ví dụ: Ninh Kiều, Cái Răng, Bình Thủy, Phong Điền...';
-    if (prov.includes('Hải Phòng')) return 'Ví dụ: Hồng Bàng, Ngô Quyền, Lê Chân, Thủy Nguyên...';
-    if (prov.includes('Đồng Nai')) return 'Ví dụ: TP. Biên Hòa, Long Khánh, Trảng Bom, Long Thành...';
-    if (prov.includes('Đắk Lắk')) return 'Ví dụ: TP. Buôn Ma Thuột, Krông Pắk, Cư M\'gar, Buôn Đôn...';
-    if (prov.includes('Đồng Tháp')) return 'Ví dụ: TP. Cao Lãnh, TP. Sa Đéc, Lai Vung, Châu Thành...';
-    return 'Ví dụ: Thành phố / Thị xã / Quận / Huyện...';
+  // Xử lý khi người dùng chọn Tỉnh / Thành phố
+  const handleProvinceChange = async (provinceName: string) => {
+    form.setFieldsValue({ province: provinceName, district: undefined });
+
+    // Tìm province trong danh sách để lấy mã code
+    const found = provincesList.find(p => p.name === provinceName) 
+      || FALLBACK_PROVINCES.find(p => p.name === provinceName || provinceName.includes(p.name) || p.name.includes(provinceName));
+
+    if (found) {
+      setLoadingDistricts(true);
+      try {
+        const res = await fetchWithTimeout(`https://provinces.open-api.vn/api/p/${found.code}?depth=2`, 4000);
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data.districts) && data.districts.length > 0) {
+            setDistrictsList(data.districts);
+            return;
+          }
+        }
+      } catch (err) {
+        console.warn(`Lỗi nạp quận huyện từ Province Open API cho ${provinceName}:`, err);
+      } finally {
+        setLoadingDistricts(false);
+      }
+
+      // Fallback nếu API có sự cố
+      if (FALLBACK_DISTRICTS[found.code]) {
+        setDistrictsList(FALLBACK_DISTRICTS[found.code]);
+      } else {
+        setDistrictsList([]);
+      }
+    } else {
+      setDistrictsList([]);
+    }
+  };
+
+  // Xử lý khi nhấn thẻ chọn nhanh Tỉnh / Thành phố
+  const handleQuickTagClick = (tag: { name: string; fullName: string }) => {
+    const matched = provincesList.find(p => p.name === tag.fullName || p.name.includes(tag.name))
+      || FALLBACK_PROVINCES.find(p => p.name === tag.fullName || p.name.includes(tag.name));
+
+    const targetName = matched ? matched.name : tag.fullName;
+    handleProvinceChange(targetName);
   };
 
   const handleNext = async () => {
@@ -117,8 +187,8 @@ export const Register: React.FC = () => {
         phone: values.phone?.trim().replace(/\s+/g, ''),
         farmName: values.farmName.trim(),
         address: values.address.trim(),
-        province: values.province || 'Lâm Đồng',
-        district: values.district || 'Đà Lạt',
+        province: values.province || 'Tỉnh Lâm Đồng',
+        district: values.district || 'Thành phố Đà Lạt',
         area: values.area || 2.5,
         cropType: values.cropType || 'Rau củ quả sạch',
         productionStandard: values.productionStandard || 'VietGAP',
@@ -245,8 +315,8 @@ export const Register: React.FC = () => {
           form={form}
           layout="vertical"
           initialValues={{
-            province: 'Lâm Đồng',
-            district: 'Đà Lạt',
+            province: 'Tỉnh Lâm Đồng',
+            district: 'Thành phố Đà Lạt',
             area: 3.5,
             cropType: 'Rau ăn lá & Củ quả hữu cơ',
             productionStandard: 'VietGAP'
@@ -463,60 +533,82 @@ export const Register: React.FC = () => {
                 <Form.Item 
                   name="province" 
                   label="Tỉnh / Thành phố" 
-                  rules={[{ required: true, message: 'Vui lòng chọn hoặc nhập Tỉnh/Thành phố!' }]}
-                  tooltip="Hệ thống hỗ trợ toàn bộ 63 Tỉnh/Thành phố mới nhất của Việt Nam. Bạn có thể chọn nhanh từ danh mục hoặc gõ tìm kiếm trực tiếp."
+                  rules={[{ required: true, message: 'Vui lòng chọn Tỉnh/Thành phố!' }]}
+                  tooltip="Dữ liệu danh mục Tỉnh/Thành phố được kết nối trực tiếp từ Province Open API Quốc Gia (hỗ trợ đầy đủ 63 tỉnh thành mới nhất)."
                 >
-                  <AutoComplete
-                    options={GROUPED_PROVINCES}
-                    placeholder="Gõ tìm hoặc chọn Tỉnh/Thành (đầy đủ 63 tỉnh thành)"
-                    filterOption={(inputValue, option: any) => {
-                      if (!inputValue) return true;
-                      const input = removeVietnameseTones(inputValue.trim().toLowerCase());
-                      const val = removeVietnameseTones(String(option?.value || '').toLowerCase());
-                      const label = removeVietnameseTones(String(option?.label || '').toLowerCase());
-                      return val.includes(input) || label.includes(input);
-                    }}
+                  <Select
+                    showSearch
+                    loading={loadingProvinces}
+                    placeholder="Tìm hoặc chọn Tỉnh / Thành phố..."
+                    onChange={handleProvinceChange}
                     allowClear
+                    filterOption={(input, option) => {
+                      if (!input) return true;
+                      const cleanInput = removeVietnameseTones(input.trim().toLowerCase());
+                      const label = removeVietnameseTones(String(option?.children || option?.label || option?.value || '').toLowerCase());
+                      return label.includes(cleanInput);
+                    }}
+                    style={{ width: '100%' }}
                   >
-                    <Input prefix={<EnvironmentOutlined style={{ color: '#52c41a' }} />} />
-                  </AutoComplete>
+                    {provincesList.map(prov => (
+                      <Select.Option key={prov.code} value={prov.name} label={prov.name}>
+                        {prov.name}
+                      </Select.Option>
+                    ))}
+                  </Select>
                 </Form.Item>
 
                 <Form.Item 
                   name="district" 
                   label="Quận / Huyện" 
-                  rules={[{ required: true, message: 'Vui lòng nhập Quận/Huyện!' }]}
+                  rules={[{ required: true, message: 'Vui lòng chọn hoặc nhập Quận/Huyện!' }]}
+                  tooltip="Danh sách Quận/Huyện được tự động tải từ Province Open API theo Tỉnh/Thành phố đã chọn."
                 >
-                  <Input 
-                    placeholder={getDistrictPlaceholder(selectedProvince)} 
-                  />
+                  {districtsList.length > 0 ? (
+                    <Select
+                      showSearch
+                      loading={loadingDistricts}
+                      placeholder={loadingDistricts ? "Đang tải dữ liệu quận huyện..." : "Chọn Quận / Huyện..."}
+                      allowClear
+                      filterOption={(input, option) => {
+                        if (!input) return true;
+                        const cleanInput = removeVietnameseTones(input.trim().toLowerCase());
+                        const label = removeVietnameseTones(String(option?.children || option?.label || option?.value || '').toLowerCase());
+                        return label.includes(cleanInput);
+                      }}
+                      style={{ width: '100%' }}
+                    >
+                      {districtsList.map(dist => (
+                        <Select.Option key={dist.code} value={dist.name} label={dist.name}>
+                          {dist.name}
+                        </Select.Option>
+                      ))}
+                    </Select>
+                  ) : (
+                    <Input 
+                      placeholder={loadingDistricts ? "Đang tải dữ liệu quận huyện..." : "Nhập Quận / Huyện / Thành phố trực thuộc..."}
+                      disabled={loadingDistricts}
+                    />
+                  )}
                 </Form.Item>
               </div>
 
               {/* Gợi ý chọn nhanh các trung tâm nông sản & vùng trọng điểm */}
               <div style={{ marginTop: -8, marginBottom: 14 }}>
                 <span style={{ fontSize: 12, color: '#64748b', marginRight: 6 }}>📍 Chọn nhanh:</span>
-                {[
-                  'Lâm Đồng',
-                  'TP. Hồ Chí Minh',
-                  'Hà Nội',
-                  'Đắk Lắk',
-                  'Đồng Nai',
-                  'Đồng Tháp',
-                  'Bình Dương',
-                  'Cần Thơ',
-                  'Hải Phòng',
-                  'Đà Nẵng'
-                ].map((prov) => (
-                  <Tag 
-                    key={prov} 
-                    color={selectedProvince === prov ? 'green' : 'default'}
-                    style={{ cursor: 'pointer', marginBottom: 4 }}
-                    onClick={() => form.setFieldsValue({ province: prov })}
-                  >
-                    {prov}
-                  </Tag>
-                ))}
+                {QUICK_PROVINCE_TAGS.map((tag) => {
+                  const isSelected = selectedProvince === tag.fullName || selectedProvince.includes(tag.name);
+                  return (
+                    <Tag 
+                      key={tag.name} 
+                      color={isSelected ? 'green' : 'default'}
+                      style={{ cursor: 'pointer', marginBottom: 4 }}
+                      onClick={() => handleQuickTagClick(tag)}
+                    >
+                      {tag.name}
+                    </Tag>
+                  );
+                })}
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
