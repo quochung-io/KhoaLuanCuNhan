@@ -37,7 +37,8 @@ public class UsersController : ControllerBase
     {
         var cleanFullName = dto.Username?.Trim();
         var cleanEmail = dto.Email?.Trim().ToLower();
-        var cleanPhone = dto.Phone?.Trim();
+        var cleanPhone = dto.Phone?.Trim().Replace(" ", "").Replace("-", "");
+        if (cleanPhone != null && cleanPhone.StartsWith("+84")) cleanPhone = "0" + cleanPhone.Substring(3);
 
         if (string.IsNullOrWhiteSpace(cleanFullName))
             return BadRequest(new { message = "Vui lòng nhập tên người dùng!" });
@@ -45,17 +46,47 @@ public class UsersController : ControllerBase
         if (string.IsNullOrWhiteSpace(cleanEmail))
             return BadRequest(new { message = "Vui lòng nhập địa chỉ email!" });
 
+        var emailRegex = new System.Text.RegularExpressions.Regex(@"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$");
+        if (!emailRegex.IsMatch(cleanEmail))
+            return BadRequest(new { message = "Định dạng email không hợp lệ (ví dụ: contact@dalatgap.com)!" });
+
+        if (!string.IsNullOrWhiteSpace(cleanPhone))
+        {
+            var phoneRegex = new System.Text.RegularExpressions.Regex(@"^0\d{9}$");
+            if (!phoneRegex.IsMatch(cleanPhone))
+                return BadRequest(new { message = "Số điện thoại phải gồm 10 chữ số và bắt đầu bằng số 0 (ví dụ: 0912345678)!" });
+        }
+
+        // Ràng buộc mật khẩu: tối thiểu 8 ký tự, có 1 ký tự đặc biệt, có chữ hoa, chữ thường và số
+        if (string.IsNullOrWhiteSpace(dto.Password))
+            return BadRequest(new { message = "Vui lòng nhập mật khẩu!" });
+
+        if (dto.Password.Length < 8)
+            return BadRequest(new { message = "Mật khẩu phải có tối thiểu 8 ký tự!" });
+
+        if (!dto.Password.Any(char.IsUpper))
+            return BadRequest(new { message = "Mật khẩu phải chứa ít nhất 1 chữ cái in hoa (A-Z)!" });
+
+        if (!dto.Password.Any(char.IsLower))
+            return BadRequest(new { message = "Mật khẩu phải chứa ít nhất 1 chữ cái thường (a-z)!" });
+
+        if (!dto.Password.Any(char.IsDigit))
+            return BadRequest(new { message = "Mật khẩu phải chứa ít nhất 1 chữ số (0-9)!" });
+
+        if (!dto.Password.Any(ch => !char.IsLetterOrDigit(ch)))
+            return BadRequest(new { message = "Mật khẩu phải chứa ít nhất 1 ký tự đặc biệt (!@#$%^&*...)!" });
+
         // 1. Kiểm tra Tên người dùng (FullName)
         if (await _context.Users.AnyAsync(u => u.FullName.ToLower() == cleanFullName.ToLower()))
             return BadRequest(new { message = $"Tên người dùng '{cleanFullName}' đã tồn tại trên hệ thống! Vui lòng chọn tên người dùng khác." });
 
         // 2. Kiểm tra Email
         if (await _context.Users.AnyAsync(u => u.Email.ToLower() == cleanEmail))
-            return BadRequest(new { message = $"Email '{cleanEmail}' đã được đăng ký tài khoản! Vui lòng nhập email khác." });
+            return BadRequest(new { message = $"Email '{cleanEmail}' đã tồn tại trong hệ thống! Mỗi email chỉ được đăng ký 1 tài khoản." });
 
         // 3. Kiểm tra Số điện thoại
         if (!string.IsNullOrWhiteSpace(cleanPhone) && await _context.Users.AnyAsync(u => u.Phone == cleanPhone))
-            return BadRequest(new { message = $"Số điện thoại '{cleanPhone}' đã được đăng ký cho một tài khoản khác! Vui lòng sử dụng số điện thoại khác." });
+            return BadRequest(new { message = $"Số điện thoại '{cleanPhone}' đã tồn tại trong hệ thống! Mỗi số điện thoại chỉ được đăng ký 1 tài khoản." });
 
         // Quyết định RoleId dựa theo Role string
         int roleId = (dto.Role ?? "customer").ToLower() switch
@@ -230,7 +261,8 @@ public class UsersController : ControllerBase
     {
         var cleanFullName = dto.FullName?.Trim() ?? dto.StoreName?.Trim();
         var cleanEmail = dto.Email?.Trim().ToLower();
-        var cleanPhone = dto.Phone?.Trim();
+        var cleanPhone = dto.Phone?.Trim().Replace(" ", "").Replace("-", "");
+        if (cleanPhone != null && cleanPhone.StartsWith("+84")) cleanPhone = "0" + cleanPhone.Substring(3);
 
         if (string.IsNullOrWhiteSpace(cleanFullName))
             return BadRequest(new { message = "Vui lòng nhập tên nhà cung cấp / hợp tác xã!" });
@@ -238,72 +270,111 @@ public class UsersController : ControllerBase
         if (string.IsNullOrWhiteSpace(cleanEmail))
             return BadRequest(new { message = "Vui lòng nhập địa chỉ email!" });
 
-        if (string.IsNullOrWhiteSpace(dto.Password) || dto.Password.Length < 6)
-            return BadRequest(new { message = "Mật khẩu phải có tối thiểu 6 ký tự!" });
+        var emailRegex = new System.Text.RegularExpressions.Regex(@"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$");
+        if (!emailRegex.IsMatch(cleanEmail))
+            return BadRequest(new { message = "Định dạng email không hợp lệ (ví dụ: contact@dalatgap.com)!" });
 
+        if (string.IsNullOrWhiteSpace(cleanPhone))
+            return BadRequest(new { message = "Vui lòng nhập số điện thoại liên hệ!" });
+
+        var phoneRegex = new System.Text.RegularExpressions.Regex(@"^0\d{9}$");
+        if (!phoneRegex.IsMatch(cleanPhone))
+            return BadRequest(new { message = "Số điện thoại không hợp lệ! Vui lòng nhập đúng 10 chữ số và bắt đầu bằng số 0 (ví dụ: 0912345678)." });
+
+        // Ràng buộc mật khẩu: tối thiểu 8 ký tự, có 1 ký tự đặc biệt, có chữ hoa, chữ thường và số
+        if (string.IsNullOrWhiteSpace(dto.Password))
+            return BadRequest(new { message = "Vui lòng nhập mật khẩu!" });
+
+        if (dto.Password.Length < 8)
+            return BadRequest(new { message = "Mật khẩu phải có tối thiểu 8 ký tự!" });
+
+        if (!dto.Password.Any(char.IsUpper))
+            return BadRequest(new { message = "Mật khẩu phải chứa ít nhất 1 chữ cái in hoa (A-Z)!" });
+
+        if (!dto.Password.Any(char.IsLower))
+            return BadRequest(new { message = "Mật khẩu phải chứa ít nhất 1 chữ cái thường (a-z)!" });
+
+        if (!dto.Password.Any(char.IsDigit))
+            return BadRequest(new { message = "Mật khẩu phải chứa ít nhất 1 chữ số (0-9)!" });
+
+        if (!dto.Password.Any(ch => !char.IsLetterOrDigit(ch)))
+            return BadRequest(new { message = "Mật khẩu phải chứa ít nhất 1 ký tự đặc biệt (!@#$%^&*...)!" });
+
+        // Ràng buộc tính duy nhất trong database
         if (await _context.Users.AnyAsync(u => u.FullName.ToLower() == cleanFullName.ToLower()))
-            return BadRequest(new { message = $"Tên đơn vị '{cleanFullName}' đã tồn tại trên hệ thống!" });
+            return BadRequest(new { message = $"Tên đơn vị '{cleanFullName}' đã tồn tại trên hệ thống! Vui lòng chọn tên khác." });
 
         if (await _context.Users.AnyAsync(u => u.Email.ToLower() == cleanEmail))
-            return BadRequest(new { message = $"Email '{cleanEmail}' đã được đăng ký tài khoản!" });
+            return BadRequest(new { message = $"Email '{cleanEmail}' đã tồn tại trong hệ thống! Mỗi email chỉ được đăng ký 1 tài khoản." });
 
-        if (!string.IsNullOrWhiteSpace(cleanPhone) && await _context.Users.AnyAsync(u => u.Phone == cleanPhone))
-            return BadRequest(new { message = $"Số điện thoại '{cleanPhone}' đã được đăng ký cho tài khoản khác!" });
+        if (await _context.Users.AnyAsync(u => u.Phone == cleanPhone))
+            return BadRequest(new { message = $"Số điện thoại '{cleanPhone}' đã tồn tại trong hệ thống! Mỗi số điện thoại chỉ được đăng ký 1 tài khoản." });
 
-        // 1. Tạo tài khoản User (Role = 2 SUPPLIER, Status = "Pending")
-        var user = new User
+        try
         {
-            FullName = cleanFullName,
-            Email = cleanEmail,
-            Phone = cleanPhone,
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
-            RoleId = 2,
-            Status = "Pending",
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
-        _context.Users.Add(user);
-        await _context.SaveChangesAsync();
+            // 1. Tạo tài khoản User (Role = 2 SUPPLIER, Status = "Pending")
+            var user = new User
+            {
+                FullName = cleanFullName,
+                Email = cleanEmail,
+                Phone = cleanPhone,
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
+                RoleId = 2,
+                Status = "Pending",
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
 
-        // 2. Tạo bản ghi Supplier trong bảng Suppliers (bảng có sẵn trong CSDL)
-        var supplier = new Supplier
-        {
-            UserId = user.UserId,
-            SupplierName = cleanFullName,
-            Representative = !string.IsNullOrWhiteSpace(dto.FullName) ? dto.FullName.Trim() : cleanFullName,
-            BusinessLicense = dto.BusinessLicense ?? dto.IdentityCard ?? $"BL-{DateTime.UtcNow:yyyyMMdd}-{user.UserId}",
-            Address = dto.Address ?? "Đang cập nhật",
-            Province = dto.Province ?? "Lâm Đồng",
-            Description = $"Chuyên nông sản sạch, đạt chuẩn {dto.ProductionStandard ?? "VietGAP"}",
-            ApprovalStatus = "Pending",
-            CreatedAt = DateTime.UtcNow
-        };
-        _context.Suppliers.Add(supplier);
-        await _context.SaveChangesAsync();
+            // 2. Tạo bản ghi Supplier trong bảng Suppliers (bảng có sẵn trong CSDL)
+            var supplier = new Supplier
+            {
+                UserId = user.UserId,
+                SupplierName = cleanFullName,
+                Representative = !string.IsNullOrWhiteSpace(dto.FullName) ? dto.FullName.Trim() : cleanFullName,
+                BusinessLicense = dto.BusinessLicense ?? dto.IdentityCard ?? $"BL-{DateTime.UtcNow:yyyyMMdd}-{user.UserId}",
+                Address = dto.Address ?? "Đang cập nhật",
+                Province = dto.Province ?? "Lâm Đồng",
+                Description = $"Chuyên nông sản sạch, đạt chuẩn {dto.ProductionStandard ?? "VietGAP"}",
+                ApprovalStatus = "Pending",
+                CreatedAt = DateTime.UtcNow
+            };
+            _context.Suppliers.Add(supplier);
+            await _context.SaveChangesAsync();
 
-        // 3. Tạo thông tin vùng trồng / trang trại tương ứng trong bảng Farms
-        var farm = new Farm
-        {
-            SupplierId = supplier.SupplierId,
-            FarmName = !string.IsNullOrWhiteSpace(dto.FarmName) ? dto.FarmName.Trim() : $"{cleanFullName} Farm",
-            Address = dto.Address ?? "Đang cập nhật",
-            Province = dto.Province ?? "Lâm Đồng",
-            District = dto.District ?? "Đà Lạt",
-            Area = dto.Area.HasValue && dto.Area > 0 ? dto.Area.Value : 2.5m,
-            CropType = dto.CropType ?? "Rau củ quả sạch",
-            ProductionStandard = dto.ProductionStandard ?? "VietGAP",
-            Status = "Pending"
-        };
-        _context.Farms.Add(farm);
-        await _context.SaveChangesAsync();
+            // 3. Tạo thông tin vùng trồng / trang trại tương ứng trong bảng Farms
+            var farm = new Farm
+            {
+                SupplierId = supplier.SupplierId,
+                FarmName = !string.IsNullOrWhiteSpace(dto.FarmName) ? dto.FarmName.Trim() : $"{cleanFullName} Farm",
+                Address = dto.Address ?? "Đang cập nhật",
+                Province = dto.Province ?? "Lâm Đồng",
+                District = dto.District ?? "Đà Lạt",
+                Area = dto.Area.HasValue && dto.Area > 0 ? dto.Area.Value : 2.5m,
+                CropType = dto.CropType ?? "Rau củ quả sạch",
+                ProductionStandard = dto.ProductionStandard ?? "VietGAP",
+                Status = "Pending"
+            };
+            _context.Farms.Add(farm);
+            await _context.SaveChangesAsync();
 
-        return Ok(new
+            return Ok(new
+            {
+                message = "Đăng ký hồ sơ đối tác thành công! Hồ sơ của bạn đã được tiếp nhận và đang chờ Admin kiểm duyệt (thường trong vòng 24h).",
+                userId = user.UserId,
+                supplierId = supplier.SupplierId,
+                status = "Pending"
+            });
+        }
+        catch (DbUpdateException)
         {
-            message = "Đăng ký hồ sơ đối tác thành công! Hồ sơ của bạn đã được tiếp nhận và đang chờ Admin kiểm duyệt (thường trong vòng 24h).",
-            userId = user.UserId,
-            supplierId = supplier.SupplierId,
-            status = "Pending"
-        });
+            return BadRequest(new { message = "Thông tin đăng ký (Tên đơn vị, Email hoặc Số điện thoại) đã tồn tại trên hệ thống. Mỗi email và số điện thoại chỉ được đăng ký 1 tài khoản!" });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = $"Lỗi khi đăng ký đối tác: {ex.Message}" });
+        }
     }
 
     // Phê duyệt tài khoản Nhà cung cấp (Supplier/HTX)

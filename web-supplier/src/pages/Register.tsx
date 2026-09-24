@@ -36,10 +36,41 @@ export const Register: React.FC = () => {
   const [form] = Form.useForm();
   const navigate = useNavigate();
 
+  const passwordValue = Form.useWatch('password', form) || '';
+  const hasMinLength = passwordValue.length >= 8;
+  const hasUppercase = /[A-Z]/.test(passwordValue);
+  const hasLowercase = /[a-z]/.test(passwordValue);
+  const hasNumber = /[0-9]/.test(passwordValue);
+  const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]/.test(passwordValue);
+
   const handleNext = async () => {
     try {
       if (currentStep === 0) {
+        setErrorMessage(null);
         await form.validateFields(['storeName', 'fullName', 'email', 'phone', 'password', 'confirmPassword']);
+
+        const email = form.getFieldValue('email')?.trim().toLowerCase();
+        const phone = form.getFieldValue('phone')?.trim().replace(/\s+/g, '');
+        const storeName = form.getFieldValue('storeName')?.trim();
+
+        // Kiểm tra tính duy nhất trên backend trước khi chuyển bước
+        setLoading(true);
+        try {
+          await axiosClient.post('/auth/check-unique', { email, phone, fullName: storeName });
+        } catch (checkErr: any) {
+          const msg = checkErr.response?.data?.message || 'Thông tin tài khoản đã tồn tại trên hệ thống!';
+          setErrorMessage(msg);
+          if (msg.includes('Email') || msg.toLowerCase().includes('email')) {
+            form.setFields([{ name: 'email', errors: [msg] }]);
+          } else if (msg.includes('thoại') || msg.toLowerCase().includes('phone')) {
+            form.setFields([{ name: 'phone', errors: [msg] }]);
+          } else if (msg.includes('đơn vị') || msg.includes('người dùng')) {
+            form.setFields([{ name: 'storeName', errors: [msg] }]);
+          }
+          setLoading(false);
+          return;
+        }
+        setLoading(false);
         setCurrentStep(1);
       } else if (currentStep === 1) {
         await form.validateFields(['farmName', 'address', 'province', 'district', 'area', 'cropType']);
@@ -63,9 +94,9 @@ export const Register: React.FC = () => {
       const payload = {
         fullName: values.fullName.trim(),
         storeName: values.storeName.trim(),
-        email: values.email.trim(),
+        email: values.email.trim().toLowerCase(),
         password: values.password,
-        phone: values.phone?.trim(),
+        phone: values.phone?.trim().replace(/\s+/g, ''),
         farmName: values.farmName.trim(),
         address: values.address.trim(),
         province: values.province || 'Lâm Đồng',
@@ -83,6 +114,20 @@ export const Register: React.FC = () => {
     } catch (err: any) {
       const msg = err.response?.data?.message || 'Đăng ký hồ sơ thất bại. Vui lòng kiểm tra lại thông tin!';
       setErrorMessage(msg);
+      // Nếu lỗi liên quan đến email, số điện thoại, mật khẩu hoặc tên đơn vị, lùi về bước 1 để hiển thị lỗi
+      if (
+        msg.includes('Email') || 
+        msg.includes('thoại') || 
+        msg.includes('Mật khẩu') || 
+        msg.includes('đơn vị') || 
+        msg.includes('người dùng')
+      ) {
+        setCurrentStep(0);
+        if (msg.includes('Email')) form.setFields([{ name: 'email', errors: [msg] }]);
+        if (msg.includes('thoại')) form.setFields([{ name: 'phone', errors: [msg] }]);
+        if (msg.includes('Mật khẩu')) form.setFields([{ name: 'password', errors: [msg] }]);
+        if (msg.includes('đơn vị')) form.setFields([{ name: 'storeName', errors: [msg] }]);
+      }
     } finally {
       setLoading(false);
     }
@@ -204,7 +249,23 @@ export const Register: React.FC = () => {
                 label="Tên Cửa hàng / Hợp tác xã / Trang trại"
                 rules={[{ required: true, message: 'Vui lòng nhập tên đơn vị kinh doanh!' }]}
               >
-                <Input prefix={<ShopOutlined />} placeholder="Ví dụ: Hợp Tác Xã Rau Sạch Đà Lạt Green" />
+                <Input 
+                  prefix={<ShopOutlined />} 
+                  placeholder="Ví dụ: Hợp Tác Xã Rau Sạch Đà Lạt Green" 
+                  onBlur={async (e) => {
+                    const val = e.target.value?.trim();
+                    if (val) {
+                      try {
+                        await axiosClient.post('/auth/check-unique', { fullName: val });
+                      } catch (err: any) {
+                        const msg = err.response?.data?.message || 'Tên đơn vị này đã tồn tại trên hệ thống!';
+                        if (msg.includes('đơn vị') || msg.includes('người dùng') || msg.includes('tồn tại')) {
+                          form.setFields([{ name: 'storeName', errors: [msg] }]);
+                        }
+                      }
+                    }
+                  }}
+                />
               </Form.Item>
 
               <Form.Item
@@ -219,23 +280,60 @@ export const Register: React.FC = () => {
                 <Form.Item
                   name="email"
                   label="Email liên hệ & đăng nhập"
+                  validateTrigger={['onChange', 'onBlur']}
                   rules={[
-                    { required: true, message: 'Vui lòng nhập email!' },
-                    { type: 'email', message: 'Email không đúng định dạng!' }
+                    { required: true, message: 'Vui lòng nhập địa chỉ email!' },
+                    {
+                      pattern: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+                      message: 'Định dạng email không hợp lệ (ví dụ: contact@dalatgap.com)!'
+                    }
                   ]}
                 >
-                  <Input prefix={<MailOutlined />} placeholder="email@gmail.com" />
+                  <Input 
+                    prefix={<MailOutlined />} 
+                    placeholder="email@gmail.com" 
+                    onBlur={async (e) => {
+                      const email = e.target.value?.trim().toLowerCase();
+                      if (email && /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)) {
+                        try {
+                          await axiosClient.post('/auth/check-unique', { email });
+                        } catch (err: any) {
+                          const msg = err.response?.data?.message || 'Email này đã tồn tại trong hệ thống!';
+                          form.setFields([{ name: 'email', errors: [msg] }]);
+                        }
+                      }
+                    }}
+                  />
                 </Form.Item>
 
                 <Form.Item
                   name="phone"
                   label="Số điện thoại di động"
+                  validateTrigger={['onChange', 'onBlur']}
                   rules={[
                     { required: true, message: 'Vui lòng nhập số điện thoại!' },
-                    { pattern: /^0\d{9}$/, message: 'SĐT gồm 10 số bắt đầu bằng 0!' }
+                    { 
+                      pattern: /^0\d{9}$/, 
+                      message: 'Số điện thoại phải gồm đúng 10 chữ số bắt đầu bằng số 0!' 
+                    }
                   ]}
                 >
-                  <Input prefix={<PhoneOutlined />} placeholder="09xxxxxxxx" maxLength={10} />
+                  <Input 
+                    prefix={<PhoneOutlined />} 
+                    placeholder="09xxxxxxxx" 
+                    maxLength={10} 
+                    onBlur={async (e) => {
+                      const phone = e.target.value?.trim().replace(/\s+/g, '');
+                      if (phone && /^0\d{9}$/.test(phone)) {
+                        try {
+                          await axiosClient.post('/auth/check-unique', { phone });
+                        } catch (err: any) {
+                          const msg = err.response?.data?.message || 'Số điện thoại này đã tồn tại trong hệ thống!';
+                          form.setFields([{ name: 'phone', errors: [msg] }]);
+                        }
+                      }
+                    }}
+                  />
                 </Form.Item>
               </div>
 
@@ -243,12 +341,25 @@ export const Register: React.FC = () => {
                 <Form.Item
                   name="password"
                   label="Mật khẩu"
+                  validateTrigger={['onChange', 'onBlur']}
                   rules={[
                     { required: true, message: 'Vui lòng nhập mật khẩu!' },
-                    { min: 6, message: 'Mật khẩu tối thiểu 6 ký tự!' }
+                    () => ({
+                      validator(_, value) {
+                        if (!value) return Promise.reject(new Error('Vui lòng nhập mật khẩu!'));
+                        if (value.length < 8) return Promise.reject(new Error('Mật khẩu phải có tối thiểu 8 ký tự!'));
+                        if (!/[A-Z]/.test(value)) return Promise.reject(new Error('Mật khẩu phải chứa ít nhất 1 chữ cái in hoa (A-Z)!'));
+                        if (!/[a-z]/.test(value)) return Promise.reject(new Error('Mật khẩu phải chứa ít nhất 1 chữ cái thường (a-z)!'));
+                        if (!/[0-9]/.test(value)) return Promise.reject(new Error('Mật khẩu phải chứa ít nhất 1 chữ số (0-9)!'));
+                        if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]/.test(value)) {
+                          return Promise.reject(new Error('Mật khẩu phải chứa ít nhất 1 ký tự đặc biệt (!@#$%^&*...)!'));
+                        }
+                        return Promise.resolve();
+                      },
+                    }),
                   ]}
                 >
-                  <Input.Password prefix={<LockOutlined />} placeholder="Tối thiểu 6 ký tự" />
+                  <Input.Password prefix={<LockOutlined />} placeholder="Tối thiểu 8 ký tự (hoa, thường, số, đặc biệt)" />
                 </Form.Item>
 
                 <Form.Item
@@ -269,6 +380,37 @@ export const Register: React.FC = () => {
                 >
                   <Input.Password prefix={<LockOutlined />} placeholder="Nhập lại mật khẩu" />
                 </Form.Item>
+              </div>
+
+              {/* Bảng checklist kiểm tra điều kiện mật khẩu trực quan */}
+              <div style={{
+                marginBottom: 16,
+                padding: '10px 14px',
+                background: '#f8fafc',
+                borderRadius: 8,
+                border: '1px solid #e2e8f0',
+                fontSize: 12
+              }}>
+                <div style={{ fontWeight: 600, color: '#334155', marginBottom: 6 }}>
+                  Quy chuẩn bảo mật mật khẩu bắt buộc:
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: '4px 12px' }}>
+                  <span style={{ color: hasMinLength ? '#16a34a' : '#94a3b8', fontWeight: hasMinLength ? 600 : 400 }}>
+                    {hasMinLength ? '✓' : '○'} Tối thiểu 8 ký tự
+                  </span>
+                  <span style={{ color: hasUppercase ? '#16a34a' : '#94a3b8', fontWeight: hasUppercase ? 600 : 400 }}>
+                    {hasUppercase ? '✓' : '○'} Chứa ít nhất 1 chữ hoa (A-Z)
+                  </span>
+                  <span style={{ color: hasLowercase ? '#16a34a' : '#94a3b8', fontWeight: hasLowercase ? 600 : 400 }}>
+                    {hasLowercase ? '✓' : '○'} Chứa ít nhất 1 chữ thường (a-z)
+                  </span>
+                  <span style={{ color: hasNumber ? '#16a34a' : '#94a3b8', fontWeight: hasNumber ? 600 : 400 }}>
+                    {hasNumber ? '✓' : '○'} Chứa ít nhất 1 chữ số (0-9)
+                  </span>
+                  <span style={{ color: hasSpecial ? '#16a34a' : '#94a3b8', fontWeight: hasSpecial ? 600 : 400, gridColumn: 'span 2' }}>
+                    {hasSpecial ? '✓' : '○'} Chứa ít nhất 1 ký tự đặc biệt (!@#$%^&*...)
+                  </span>
+                </div>
               </div>
             </div>
           )}
