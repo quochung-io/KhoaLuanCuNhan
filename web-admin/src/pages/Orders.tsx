@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Button, Space, Modal, Form, Select, Tag, message, Card, Tooltip } from 'antd';
+import { Table, Button, Space, Modal, Form, Select, Tag, message, Card, Tooltip, Steps } from 'antd';
 import { EditOutlined, EyeOutlined } from '@ant-design/icons';
 import { orderService } from '../services/api';
 
@@ -182,6 +182,18 @@ export const Orders: React.FC = () => {
     }
   };
 
+  const getStatusLabel = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case 'pending': return 'Chờ xác nhận';
+      case 'confirmed': return 'Đã xác nhận';
+      case 'shipping': return 'Đang giao hàng';
+      case 'completed': return 'Giao thành công';
+      case 'cancelled': return 'Đã hủy';
+      case 'returned': return 'Trả hàng / Hoàn tiền';
+      default: return status || 'Chờ xử lý';
+    }
+  };
+
   const columns = [
     { title: 'Mã Đơn', dataIndex: 'orderId', key: 'orderId', width: 90 },
     { 
@@ -219,24 +231,54 @@ export const Orders: React.FC = () => {
       render: (val: number) => <strong>{val.toLocaleString('vi-VN')} VNĐ</strong>
     },
     { 
-      title: 'Trạng thái', 
+      title: 'Trạng thái đơn hàng', 
       dataIndex: 'orderStatus', 
       key: 'orderStatus',
+      filters: [
+        { text: 'Chờ xác nhận (Pending)', value: 'Pending' },
+        { text: 'Đã xác nhận (Confirmed)', value: 'Confirmed' },
+        { text: 'Đang giao hàng (Shipping)', value: 'Shipping' },
+        { text: 'Giao thành công (Completed)', value: 'Completed' },
+        { text: 'Đã hủy (Cancelled)', value: 'Cancelled' },
+        { text: 'Trả hàng / Hoàn tiền (Returned)', value: 'Returned' },
+      ],
+      onFilter: (value: any, record: Order) => record.orderStatus?.toLowerCase() === String(value).toLowerCase(),
       render: (status: string) => (
-        <Tag color={getStatusTagColor(status)}>{(status || 'PENDING').toUpperCase()}</Tag>
+        <Tag color={getStatusTagColor(status)} style={{ fontWeight: 600 }}>
+          {getStatusLabel(status)} ({status?.toUpperCase() || 'PENDING'})
+        </Tag>
       )
     },
     { 
       title: 'Thanh toán', 
       dataIndex: 'paymentStatus', 
       key: 'paymentStatus',
-      render: (text: string) => <Tag color={text?.toLowerCase() === 'paid' ? 'green' : 'orange'}>{text || 'UNPAID'}</Tag>
+      filters: [
+        { text: 'Đã thanh toán (Paid)', value: 'Paid' },
+        { text: 'Chưa thanh toán (Pending/Unpaid)', value: 'Pending' },
+        { text: 'Đã hoàn tiền (Refunded)', value: 'Refunded' },
+      ],
+      onFilter: (value: any, record: Order) => {
+        const p = record.paymentStatus?.toLowerCase();
+        if (value === 'Paid') return p === 'paid';
+        if (value === 'Refunded') return p === 'refunded';
+        return p !== 'paid' && p !== 'refunded';
+      },
+      render: (text: string) => {
+        const isPaid = text?.toLowerCase() === 'paid';
+        const isRefunded = text?.toLowerCase() === 'refunded';
+        return (
+          <Tag color={isPaid ? 'green' : isRefunded ? 'purple' : 'orange'} style={{ fontWeight: 600 }}>
+            {isPaid ? 'ĐÃ THANH TOÁN' : isRefunded ? 'ĐÃ HOÀN TIỀN' : 'CHƯA THANH TOÁN'}
+          </Tag>
+        );
+      }
     },
     { 
       title: 'Tác vụ', 
       key: 'actions',
       render: (_: any, record: Order) => {
-        const isTerminal = ['completed', 'cancelled'].includes(record.orderStatus?.toLowerCase());
+        const isTerminal = ['cancelled', 'returned'].includes(record.orderStatus?.toLowerCase());
         return (
           <Space size="middle">
             <Button icon={<EyeOutlined />} onClick={() => handleOpenView(record)}>Chi tiết</Button>
@@ -321,10 +363,40 @@ export const Orders: React.FC = () => {
       >
         {selectedOrder && (
           <div style={{ marginTop: 15 }}>
+            {/* Tiến trình đơn hàng đồng bộ */}
+            <div style={{ margin: '10px 0 18px 0', padding: '12px 16px', background: '#F8FAFC', borderRadius: 8, border: '1px solid #E2E8F0' }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', marginBottom: 10 }}>
+                Tiến trình đơn hàng đồng bộ
+              </div>
+              <Steps
+                size="small"
+                current={
+                  selectedOrder.orderStatus?.toLowerCase() === 'confirmed' ? 1 :
+                  selectedOrder.orderStatus?.toLowerCase() === 'shipping' ? 2 :
+                  (selectedOrder.orderStatus?.toLowerCase() === 'completed' || selectedOrder.orderStatus?.toLowerCase() === 'delivered') ? 3 : 0
+                }
+                status={
+                  selectedOrder.orderStatus?.toLowerCase() === 'cancelled' ? 'error' :
+                  selectedOrder.orderStatus?.toLowerCase() === 'returned' ? 'error' : 'process'
+                }
+                items={[
+                  { title: 'Đặt hàng' },
+                  { title: 'Đã xác nhận' },
+                  { title: 'Đang giao' },
+                  { title: selectedOrder.orderStatus?.toLowerCase() === 'cancelled' ? 'Đã hủy' : selectedOrder.orderStatus?.toLowerCase() === 'returned' ? 'Trả hàng' : 'Hoàn tất' }
+                ]}
+              />
+            </div>
+
             <p><strong>Khách hàng:</strong> {selectedOrder.customer?.fullName || `ID: ${selectedOrder.customerId}`}</p>
             <p><strong>Email:</strong> {selectedOrder.customer?.email || 'N/A'}</p>
             <p><strong>Ngày đặt hàng:</strong> {selectedOrder.createdAt ? new Date(selectedOrder.createdAt).toLocaleString('vi-VN') : 'N/A'}</p>
-            <p><strong>Trạng thái đơn:</strong> <Tag color={getStatusTagColor(selectedOrder.orderStatus)}>{(selectedOrder.orderStatus || 'PENDING').toUpperCase()}</Tag></p>
+            <p>
+              <strong>Trạng thái đơn:</strong>{' '}
+              <Tag color={getStatusTagColor(selectedOrder.orderStatus)} style={{ fontWeight: 600 }}>
+                {getStatusLabel(selectedOrder.orderStatus)} ({selectedOrder.orderStatus?.toUpperCase() || 'PENDING'})
+              </Tag>
+            </p>
 
             {/* Thông tin địa chỉ nhận hàng */}
             {selectedOrder.address && (

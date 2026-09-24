@@ -123,9 +123,10 @@ export const Register: React.FC = () => {
           <Form.Item
             name="email"
             label="Email"
+            normalize={(value) => value ? value.trim().toLowerCase() : ''}
             rules={[
               { required: true, message: 'Vui lòng nhập Email!' },
-              { pattern: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/, message: 'Email không đúng định dạng!' }
+              { pattern: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/, message: 'Email không đúng định dạng (ví dụ: admin@dalatgap.com)!' }
             ]}
           >
             <Input prefix={<MailOutlined />} placeholder="example@gmail.com" size="large" />
@@ -134,9 +135,10 @@ export const Register: React.FC = () => {
           <Form.Item
             name="phone"
             label="Số điện thoại"
+            normalize={(value) => value ? value.trim().replace(/\s+/g, '') : ''}
             rules={[
               { required: true, message: 'Vui lòng nhập số điện thoại!' },
-              { pattern: /^(03|05|07|08|09)\d{8}$/, message: 'Số điện thoại VN phải đủ 10 số (đầu 03, 05, 07, 08, 09)!' }
+              { pattern: /^0\d{9}$/, message: 'Số điện thoại phải gồm đúng 10 chữ số bắt đầu bằng số 0!' }
             ]}
           >
             <Input prefix={<PhoneOutlined />} placeholder="09xxxxxxxx" size="large" maxLength={10} />
@@ -147,11 +149,22 @@ export const Register: React.FC = () => {
             label="Mật khẩu"
             rules={[
               { required: true, message: 'Vui lòng nhập mật khẩu!' },
-              { min: 6, message: 'Mật khẩu tối thiểu 6 ký tự!' },
-              { pattern: /^(?=.*[a-zA-Z])(?=.*[0-9])/, message: 'Mật khẩu phải chứa cả chữ cái và chữ số!' }
+              () => ({
+                validator(_, value) {
+                  if (!value) return Promise.reject(new Error('Vui lòng nhập mật khẩu!'));
+                  if (value.length < 8) return Promise.reject(new Error('Mật khẩu phải có tối thiểu 8 ký tự!'));
+                  if (!/[A-Z]/.test(value)) return Promise.reject(new Error('Mật khẩu phải chứa ít nhất 1 chữ cái in hoa (A-Z)!'));
+                  if (!/[a-z]/.test(value)) return Promise.reject(new Error('Mật khẩu phải chứa ít nhất 1 chữ cái thường (a-z)!'));
+                  if (!/[0-9]/.test(value)) return Promise.reject(new Error('Mật khẩu phải chứa ít nhất 1 chữ số (0-9)!'));
+                  if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]/.test(value)) {
+                    return Promise.reject(new Error('Mật khẩu phải chứa ít nhất 1 ký tự đặc biệt (!@#$%^&*...)!'));
+                  }
+                  return Promise.resolve();
+                },
+              }),
             ]}
           >
-            <Input.Password prefix={<LockOutlined />} placeholder="Tối thiểu 6 ký tự gồm chữ và số" size="large" />
+            <Input.Password prefix={<LockOutlined />} placeholder="Tối thiểu 8 ký tự (hoa, thường, số, đặc biệt)" size="large" />
           </Form.Item>
 
           <Form.Item

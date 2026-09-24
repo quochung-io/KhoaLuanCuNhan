@@ -50,6 +50,9 @@ app.MapGet("/swagger", () => Results.Redirect("/"));
 // Sử dụng CORS
 app.UseCors("AllowAll");
 
+// Cho phép truy cập thư mục static files (ảnh uploads)
+app.UseStaticFiles();
+
 app.UseAuthorization();
 
 // Map controllers

@@ -1977,9 +1977,11 @@ export default function ProfilePage() {
                       {[
                         { key: 'all', label: 'Tất cả' },
                         { key: 'pending', label: 'Chờ duyệt' },
+                        { key: 'confirmed', label: 'Đã xác nhận' },
                         { key: 'shipping', label: 'Đang giao' },
                         { key: 'delivered', label: 'Hoàn thành' },
-                        { key: 'cancelled', label: 'Đã hủy' }
+                        { key: 'cancelled', label: 'Đã hủy' },
+                        { key: 'returned', label: 'Trả hàng' }
                       ].map(f => (
                         <button
                           key={f.key}
@@ -2009,9 +2011,11 @@ export default function ProfilePage() {
                           const oStatus = order.orderStatus?.toLowerCase() || 'pending';
                           let matchesTab = true;
                           if (orderFilterStatus === 'pending') matchesTab = oStatus === 'pending';
+                          else if (orderFilterStatus === 'confirmed') matchesTab = oStatus === 'confirmed';
                           else if (orderFilterStatus === 'shipping') matchesTab = oStatus === 'shipping';
                           else if (orderFilterStatus === 'delivered') matchesTab = oStatus === 'delivered' || oStatus === 'completed';
                           else if (orderFilterStatus === 'cancelled') matchesTab = oStatus === 'cancelled';
+                          else if (orderFilterStatus === 'returned') matchesTab = oStatus === 'returned';
                           if (!matchesTab) return false;
                           if (!searchOrderQuery.trim()) return true;
                           const q = searchOrderQuery.toLowerCase().trim();
@@ -2066,9 +2070,11 @@ export default function ProfilePage() {
                         const oStatus = order.orderStatus?.toLowerCase() || 'pending';
                         let matchesTab = true;
                         if (orderFilterStatus === 'pending') matchesTab = oStatus === 'pending';
+                        else if (orderFilterStatus === 'confirmed') matchesTab = oStatus === 'confirmed';
                         else if (orderFilterStatus === 'shipping') matchesTab = oStatus === 'shipping';
                         else if (orderFilterStatus === 'delivered') matchesTab = oStatus === 'delivered' || oStatus === 'completed';
                         else if (orderFilterStatus === 'cancelled') matchesTab = oStatus === 'cancelled';
+                        else if (orderFilterStatus === 'returned') matchesTab = oStatus === 'returned';
                         if (!matchesTab) return false;
                         if (!searchOrderQuery.trim()) return true;
                         const q = searchOrderQuery.toLowerCase().trim();
@@ -2077,10 +2083,12 @@ export default function ProfilePage() {
                       .map(order => {
                         const oStatus = order.orderStatus?.toLowerCase() || 'pending';
                         const statusColor = 
-                          (oStatus === 'delivered' || oStatus === 'completed') ? { bg: 'var(--green-100)', color: 'var(--green-700)', text: 'Đã hoàn tất' } :
-                          oStatus === 'shipping' ? { bg: '#E3F2FD', color: '#0D47A1', text: 'Đang giao hàng' } :
+                          (oStatus === 'delivered' || oStatus === 'completed') ? { bg: 'var(--green-100)', color: 'var(--green-700)', text: 'Hoàn tất' } :
+                          oStatus === 'shipping' ? { bg: '#E0F2FE', color: '#0284C7', text: 'Đang giao hàng' } :
+                          oStatus === 'confirmed' ? { bg: '#F3E8FF', color: '#7E22CE', text: 'Đã xác nhận' } :
+                          oStatus === 'returned' ? { bg: '#FFEDD5', color: '#C2410C', text: 'Trả hàng / Hoàn tiền' } :
                           oStatus === 'cancelled' ? { bg: '#FFEBEE', color: '#C62828', text: 'Đã hủy' } :
-                          { bg: '#FFF3E0', color: '#E65100', text: 'Chờ xác nhận' };
+                          { bg: '#FEF9C3', color: '#854D0E', text: 'Chờ xác nhận' };
 
                         return (
                           <div

@@ -193,8 +193,14 @@ export default function RegisterPage() {
       return;
     }
 
-    if (password.length < 6 || !/[a-zA-Z]/.test(password) || !/[0-9]/.test(password)) {
-      setError('Mật khẩu phải tối thiểu 6 ký tự, bao gồm cả chữ cái và chữ số.');
+    if (
+      password.length < 8 ||
+      !/[A-Z]/.test(password) ||
+      !/[a-z]/.test(password) ||
+      !/[0-9]/.test(password) ||
+      !/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]/.test(password)
+    ) {
+      setError('Mật khẩu phải tối thiểu 8 ký tự, bao gồm ít nhất 1 chữ hoa, 1 chữ thường, 1 chữ số và 1 ký tự đặc biệt (!@#$%^&*...).');
       return;
     }
 

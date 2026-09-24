@@ -72,3 +72,7 @@ Thumbs.db
 *.bak
 *.tmp
 *.log
+
+# Uploaded files
+backend/Ecc.WebApi/wwwroot/uploads/*
+!backend/Ecc.WebApi/wwwroot/uploads/.gitkeep

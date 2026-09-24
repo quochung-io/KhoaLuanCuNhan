@@ -164,32 +164,45 @@ public class AuthController : ControllerBase
     {
         var cleanFullName = request.FullName?.Trim();
         var cleanEmail = request.Email?.Trim().ToLower();
-        var cleanPhone = request.Phone?.Trim();
-
-        if (!string.IsNullOrWhiteSpace(cleanFullName))
-        {
-            var isFullNameTaken = await _context.Users.AnyAsync(u => u.FullName.ToLower() == cleanFullName.ToLower());
-            if (isFullNameTaken)
-            {
-                return BadRequest(new { message = $"Tên người dùng '{cleanFullName}' đã tồn tại trên hệ thống! Vui lòng chọn tên người dùng khác." });
-            }
-        }
+        var cleanPhone = request.Phone?.Trim().Replace(" ", "").Replace("-", "");
+        if (cleanPhone != null && cleanPhone.StartsWith("+84")) cleanPhone = "0" + cleanPhone.Substring(3);
 
         if (!string.IsNullOrWhiteSpace(cleanEmail))
         {
+            var emailRegex = new System.Text.RegularExpressions.Regex(@"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$");
+            if (!emailRegex.IsMatch(cleanEmail))
+            {
+                return BadRequest(new { message = "Định dạng email không hợp lệ (ví dụ: contact@dalatgap.com)!" });
+            }
+
             var isEmailTaken = await _context.Users.AnyAsync(u => u.Email.ToLower() == cleanEmail);
             if (isEmailTaken)
             {
-                return BadRequest(new { message = $"Email '{cleanEmail}' đã được đăng ký tài khoản! Vui lòng nhập email khác." });
+                return BadRequest(new { message = $"Email '{cleanEmail}' đã tồn tại trong hệ thống! Mỗi email chỉ được đăng ký 1 tài khoản." });
             }
         }
 
         if (!string.IsNullOrWhiteSpace(cleanPhone))
         {
+            var phoneRegex = new System.Text.RegularExpressions.Regex(@"^0\d{9}$");
+            if (!phoneRegex.IsMatch(cleanPhone))
+            {
+                return BadRequest(new { message = "Số điện thoại phải gồm 10 chữ số và bắt đầu bằng số 0 (ví dụ: 0912345678)!" });
+            }
+
             var isPhoneTaken = await _context.Users.AnyAsync(u => u.Phone == cleanPhone);
             if (isPhoneTaken)
             {
-                return BadRequest(new { message = $"Số điện thoại '{cleanPhone}' đã được đăng ký cho một tài khoản khác! Vui lòng sử dụng số điện thoại khác." });
+                return BadRequest(new { message = $"Số điện thoại '{cleanPhone}' đã tồn tại trong hệ thống! Mỗi số điện thoại chỉ được đăng ký 1 tài khoản." });
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(cleanFullName))
+        {
+            var isSupplierNameTaken = await _context.Suppliers.AnyAsync(s => s.SupplierName.ToLower() == cleanFullName.ToLower());
+            if (isSupplierNameTaken)
+            {
+                return BadRequest(new { message = $"Tên đơn vị / Hợp tác xã '{cleanFullName}' đã tồn tại trên hệ thống! Vui lòng chọn tên khác." });
             }
         }
 
@@ -208,7 +221,35 @@ public class AuthController : ControllerBase
 
             var cleanFullName = request.FullName.Trim();
             var cleanEmail = request.Email.Trim().ToLower();
-            var cleanPhone = request.Phone?.Trim();
+            var cleanPhone = request.Phone?.Trim().Replace(" ", "").Replace("-", "");
+            if (cleanPhone != null && cleanPhone.StartsWith("+84")) cleanPhone = "0" + cleanPhone.Substring(3);
+
+            var emailRegex = new System.Text.RegularExpressions.Regex(@"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$");
+            if (!emailRegex.IsMatch(cleanEmail))
+                return BadRequest(new { message = "Định dạng email không hợp lệ (ví dụ: contact@dalatgap.com)!" });
+
+            if (!string.IsNullOrWhiteSpace(cleanPhone))
+            {
+                var phoneRegex = new System.Text.RegularExpressions.Regex(@"^0\d{9}$");
+                if (!phoneRegex.IsMatch(cleanPhone))
+                    return BadRequest(new { message = "Số điện thoại phải gồm 10 chữ số và bắt đầu bằng số 0 (ví dụ: 0912345678)!" });
+            }
+
+            // Ràng buộc mật khẩu: tối thiểu 8 ký tự, có 1 ký tự đặc biệt, có chữ hoa, chữ thường và số
+            if (request.Password.Length < 8)
+                return BadRequest(new { message = "Mật khẩu phải có tối thiểu 8 ký tự!" });
+
+            if (!request.Password.Any(char.IsUpper))
+                return BadRequest(new { message = "Mật khẩu phải chứa ít nhất 1 chữ cái in hoa (A-Z)!" });
+
+            if (!request.Password.Any(char.IsLower))
+                return BadRequest(new { message = "Mật khẩu phải chứa ít nhất 1 chữ cái thường (a-z)!" });
+
+            if (!request.Password.Any(char.IsDigit))
+                return BadRequest(new { message = "Mật khẩu phải chứa ít nhất 1 chữ số (0-9)!" });
+
+            if (!request.Password.Any(ch => !char.IsLetterOrDigit(ch)))
+                return BadRequest(new { message = "Mật khẩu phải chứa ít nhất 1 ký tự đặc biệt (!@#$%^&*...)!" });
 
             // 1. Kiểm tra ràng buộc: Tên người dùng chỉ được tồn tại 1 lần
             var isFullNameTaken = await _context.Users.AnyAsync(u => u.FullName.ToLower() == cleanFullName.ToLower());
@@ -221,7 +262,7 @@ public class AuthController : ControllerBase
             var isEmailTaken = await _context.Users.AnyAsync(u => u.Email.ToLower() == cleanEmail);
             if (isEmailTaken)
             {
-                return BadRequest(new { message = $"Email '{cleanEmail}' đã được đăng ký tài khoản! Vui lòng nhập email khác." });
+                return BadRequest(new { message = $"Email '{cleanEmail}' đã tồn tại trong hệ thống! Mỗi email chỉ được đăng ký 1 tài khoản." });
             }
 
             // 3. Kiểm tra ràng buộc: Số điện thoại chỉ được tồn tại 1 lần
@@ -230,7 +271,7 @@ public class AuthController : ControllerBase
                 var isPhoneTaken = await _context.Users.AnyAsync(u => u.Phone == cleanPhone);
                 if (isPhoneTaken)
                 {
-                    return BadRequest(new { message = $"Số điện thoại '{cleanPhone}' đã được đăng ký cho một tài khoản khác! Vui lòng sử dụng số điện thoại khác." });
+                    return BadRequest(new { message = $"Số điện thoại '{cleanPhone}' đã tồn tại trong hệ thống! Mỗi số điện thoại chỉ được đăng ký 1 tài khoản." });
                 }
             }
 
