@@ -33,10 +33,12 @@ import {
   AppstoreAddOutlined,
   FolderOutlined,
   CheckCircleOutlined,
-  InfoCircleOutlined
+  InfoCircleOutlined,
+  SafetyCertificateOutlined,
+  CheckOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
-import { productService, categoryService, productImageService, userService } from '../services/api';
+import { productService, categoryService, productImageService, userService, productBatchService } from '../services/api';
 
 const SAMPLE_SUB_IMAGES: Record<string, string[]> = {
   'Trái cây': [
@@ -108,6 +110,7 @@ interface Product {
   programLimit?: number;
   soldQuantity?: number;
   maxSlots?: number;
+  productBatches?: any[];
 }
 
 export const Products: React.FC = () => {
@@ -122,6 +125,20 @@ export const Products: React.FC = () => {
   const [isComboModalOpen, setIsComboModalOpen] = useState(false);
   const [isCatModalOpen, setIsCatModalOpen] = useState(false);
   const [isImgModalOpen, setIsImgModalOpen] = useState(false);
+
+  // States cho Khai báo & Chỉnh sửa Lô hàng / Truy xuất nguồn gốc
+  const [isTraceModalOpen, setIsTraceModalOpen] = useState(false);
+  const [traceProduct, setTraceProduct] = useState<Product | null>(null);
+  const [traceBatch, setTraceBatch] = useState<any | null>(null);
+  const [traceLoading, setTraceLoading] = useState(false);
+  const [traceForm] = Form.useForm();
+
+  // States cho Phê duyệt sản phẩm & Phân loại danh mục (Admin)
+  const [isApproveModalOpen, setIsApproveModalOpen] = useState(false);
+  const [approvingProd, setApprovingProd] = useState<Product | null>(null);
+  const [approveBatch, setApproveBatch] = useState<any | null>(null);
+  const [approveLoading, setApproveLoading] = useState(false);
+  const [approveForm] = Form.useForm();
 
   const [editingProd, setEditingProd] = useState<Product | null>(null);
   const [editingCombo, setEditingCombo] = useState<Product | null>(null);
@@ -140,13 +157,20 @@ export const Products: React.FC = () => {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [catRes, prodRes, supRes] = await Promise.all([
+      const [catRes, prodRes, supRes, batchRes] = await Promise.all([
         categoryService.getAll(),
         productService.getAll(),
-        userService.getSuppliers().catch(() => ({ data: [] }))
+        userService.getSuppliers().catch(() => ({ data: [] })),
+        productBatchService.getAll().catch(() => ({ data: [] }))
       ]);
       setCategories(catRes.data || []);
-      setProducts(prodRes.data || []);
+      
+      const allBatches = batchRes.data || [];
+      const prodsWithBatches = (prodRes.data || []).map((p: any) => ({
+        ...p,
+        productBatches: allBatches.filter((b: any) => b.productId === p.productId)
+      }));
+      setProducts(prodsWithBatches);
       
       const supList = supRes.data || [];
       setSuppliers(supList.length > 0 ? supList : [
@@ -285,17 +309,17 @@ export const Products: React.FC = () => {
     }
   };
 
-  // --- Single Product CRUD ---
+  // --- Single Product CRUD (Dành riêng cho Admin) ---
   const handleOpenAddProd = () => {
     setEditingProd(null);
     prodForm.resetFields();
-    if (suppliers.length > 0) {
-      prodForm.setFieldsValue({ 
-        supplierId: suppliers[0].userId || suppliers[0].supplierId || 2,
-        status: 'Active',
-        unit: 'kg'
-      });
-    }
+    prodForm.setFieldsValue({ 
+      categoryId: categories.find(c => c.categoryId !== 5)?.categoryId || 1,
+      supplierId: suppliers[0]?.supplierId || suppliers[0]?.userId || 1,
+      price: 35000,
+      unit: 'kg',
+      status: 'Active'
+    });
     setIsProdModalOpen(true);
   };
 
@@ -316,22 +340,175 @@ export const Products: React.FC = () => {
   const handleSaveProd = async () => {
     try {
       const values = await prodForm.validateFields();
-      const payload = {
-        ...values,
-        supplierId: values.supplierId || 2
-      };
-
+      
       if (editingProd) {
-        await productService.update(editingProd.productId, { ...editingProd, ...payload });
-        message.success('Cập nhật nông sản thành công.');
+        const payload = {
+          ...editingProd,
+          productName: values.productName,
+          supplierId: values.supplierId || editingProd.supplierId,
+          price: values.price,
+          unit: values.unit,
+          description: values.description,
+          status: values.status || editingProd.status || 'Active',
+          categoryId: values.categoryId || editingProd.categoryId || 1
+        };
+        await productService.update(editingProd.productId, payload);
+        message.success('Cập nhật thông tin nông sản thành công.');
+        setIsProdModalOpen(false);
+        loadData();
       } else {
-        await productService.create(payload);
-        message.success('Tạo nông sản mới thành công.');
+        // Admin tạo nông sản kèm quy trình 2 bước:
+        const payload = {
+          productName: values.productName,
+          supplierId: values.supplierId || 1,
+          categoryId: values.categoryId || 1,
+          price: values.price,
+          unit: values.unit,
+          description: values.description,
+          status: values.status || 'Active'
+        };
+        const res = await productService.create(payload);
+        const created = res.data;
+        message.success(`Đã lưu thông tin nông sản "${values.productName}"! Tiếp tục Bước 2: Khai báo Lô hàng & Truy xuất nguồn gốc.`);
+        setIsProdModalOpen(false);
+        await loadData();
+
+        // Tự động chuyển sang Bước 2: Khai báo Lô hàng & Truy xuất nguồn gốc
+        handleOpenTraceModal(created);
       }
-      setIsProdModalOpen(false);
-      loadData();
     } catch (error) {
       message.error('Lưu thông tin sản phẩm thất bại.');
+    }
+  };
+
+  // --- Khai báo & Chỉnh sửa Lô hàng / Truy xuất nguồn gốc ---
+  const handleOpenTraceModal = (prod: Product, batchToEdit?: any) => {
+    setTraceProduct(prod);
+    const existing = batchToEdit || (prod.productBatches && prod.productBatches[0]) || null;
+    setTraceBatch(existing);
+
+    // Tìm thông tin trang trại trực thuộc của nhà cung cấp này
+    const sup = suppliers.find(s => s.supplierId === prod.supplierId || s.userId === prod.supplierId);
+    const defaultFarmId = sup?.farm?.farmId || 1;
+
+    if (existing) {
+      traceForm.setFieldsValue({
+        batchCode: existing.batchCode,
+        farmId: existing.farmId || defaultFarmId,
+        initialQuantity: existing.initialQuantity || 100,
+        unit: existing.unit || prod.unit || 'kg',
+        harvestDate: dayjs(existing.harvestDate),
+        expiryDate: dayjs(existing.expiryDate),
+        status: existing.status || 'Active'
+      });
+    } else {
+      traceForm.resetFields();
+      traceForm.setFieldsValue({
+        batchCode: 'LHN-' + dayjs().format('YYYYMMDD') + '-' + Math.floor(1000 + Math.random() * 9000),
+        farmId: defaultFarmId,
+        initialQuantity: 150,
+        unit: prod.unit || 'kg',
+        harvestDate: dayjs(),
+        expiryDate: dayjs().add(10, 'day'),
+        status: 'Active'
+      });
+    }
+    setIsTraceModalOpen(true);
+  };
+
+  const handleSaveTrace = async () => {
+    if (!traceProduct) return;
+    try {
+      const values = await traceForm.validateFields();
+      if (values.expiryDate.isBefore(values.harvestDate) || values.expiryDate.isSame(values.harvestDate, 'day')) {
+        message.error('Hạn sử dụng phải sau ngày thu hoạch ít nhất 1 ngày!');
+        return;
+      }
+
+      setTraceLoading(true);
+      const payload = {
+        productId: traceProduct.productId,
+        farmId: values.farmId || 1,
+        batchCode: values.batchCode,
+        initialQuantity: values.initialQuantity,
+        unit: values.unit,
+        harvestDate: values.harvestDate.toISOString(),
+        expiryDate: values.expiryDate.toISOString(),
+        status: values.status || 'Active'
+      };
+
+      if (traceBatch && traceBatch.batchId) {
+        await productBatchService.update(traceBatch.batchId, { ...traceBatch, ...payload });
+        message.success(`Đã cập nhật hồ sơ truy xuất Lô hàng "${values.batchCode}" thành công!`);
+      } else {
+        await productBatchService.create(payload);
+        message.success(`Khai báo Lô hàng & Truy xuất nguồn gốc thành công! Hồ sơ đã được chuyển tới Admin để phê duyệt.`);
+      }
+
+      setIsTraceModalOpen(false);
+      loadData();
+    } catch (error: any) {
+      if (error.errorFields) return;
+      message.error(error.response?.data?.message || 'Lưu thông tin truy xuất thất bại.');
+    } finally {
+      setTraceLoading(false);
+    }
+  };
+
+  // --- Admin Phê Duyệt Sản Phẩm & Phân Loại Danh Mục ---
+  const suggestCategory = (prodName: string): number => {
+    const n = (prodName || '').toLowerCase();
+    if (n.includes('mít') || n.includes('bưởi') || n.includes('cam') || n.includes('xoài') || n.includes('mận') || n.includes('sầu riêng') || n.includes('chuối') || n.includes('ổi') || n.includes('táo') || n.includes('chôm chôm') || n.includes('nhãn') || n.includes('dâu') || n.includes('quýt') || n.includes('thanh long') || n.includes('chanh')) {
+      const fruitCat = categories.find(c => c.categoryName.toLowerCase().includes('trái cây') || c.categoryName.toLowerCase().includes('hoa quả'));
+      if (fruitCat) return fruitCat.categoryId;
+    }
+    if (n.includes('nấm')) {
+      const mushroomCat = categories.find(c => c.categoryName.toLowerCase().includes('nấm'));
+      if (mushroomCat) return mushroomCat.categoryId;
+    }
+    if (n.includes('ngò') || n.includes('hành') || n.includes('thì là') || n.includes('húng') || n.includes('quế') || n.includes('răm') || n.includes('ớt')) {
+      const herbCat = categories.find(c => c.categoryName.toLowerCase().includes('thơm') || c.categoryName.toLowerCase().includes('gia vị'));
+      if (herbCat) return herbCat.categoryId;
+    }
+    const vegCat = categories.find(c => c.categoryName.toLowerCase().includes('rau'));
+    return vegCat ? vegCat.categoryId : (categories[0]?.categoryId || 1);
+  };
+
+  const handleOpenApproveModal = (prod: Product) => {
+    setApprovingProd(prod);
+    const batch = prod.productBatches?.[0] || null;
+    setApproveBatch(batch);
+
+    const suggested = suggestCategory(prod.productName);
+    approveForm.setFieldsValue({
+      categoryId: (prod.categoryId && prod.categoryId !== 1) ? prod.categoryId : suggested
+    });
+    setIsApproveModalOpen(true);
+  };
+
+  const handleSaveApprove = async () => {
+    if (!approvingProd) return;
+    try {
+      const values = await approveForm.validateFields();
+      setApproveLoading(true);
+
+      const targetCat = categories.find(c => c.categoryId === values.categoryId);
+      const catName = targetCat ? targetCat.categoryName : 'Danh mục đã chọn';
+
+      await productService.update(approvingProd.productId, {
+        ...approvingProd,
+        categoryId: values.categoryId,
+        status: 'Active',
+        approvedAt: new Date().toISOString()
+      });
+
+      message.success(`🎉 Đã phân loại vào danh mục "${catName}" và phê duyệt nông sản "${approvingProd.productName}" lên sàn mua sắm!`);
+      setIsApproveModalOpen(false);
+      loadData();
+    } catch (error) {
+      message.error('Phê duyệt sản phẩm thất bại.');
+    } finally {
+      setApproveLoading(false);
     }
   };
 
@@ -524,7 +701,7 @@ export const Products: React.FC = () => {
 
   // --- Columns Config: Sản Phẩm Lẻ ---
   const singleProdColumns = [
-    { title: 'ID', dataIndex: 'productId', key: 'productId', width: 70 },
+    { title: 'ID', dataIndex: 'productId', key: 'productId', width: 65 },
     { 
       title: 'Tên nông sản', 
       dataIndex: 'productName', 
@@ -535,7 +712,37 @@ export const Products: React.FC = () => {
       title: 'Danh mục', 
       dataIndex: ['category', 'categoryName'], 
       key: 'categoryName', 
-      render: (text: string) => <Tag color="blue">{text || 'Nông sản lẻ'}</Tag> 
+      render: (text: string, r: Product) => {
+        if (r.status === 'Pending') {
+          return <Tag color="gold" icon={<InfoCircleOutlined />}>Chờ Admin phân loại</Tag>;
+        }
+        return <Tag color="blue">{text || 'Nông sản lẻ'}</Tag>;
+      }
+    },
+    {
+      title: 'Hồ sơ Lô hàng & Truy xuất',
+      key: 'traceBatch',
+      width: 190,
+      render: (_: any, r: Product) => {
+        const batch = r.productBatches && r.productBatches.length > 0 ? r.productBatches[0] : null;
+        if (!batch) {
+          return (
+            <Tooltip title="Nhà cung cấp chưa khai báo Lô hàng. Bấm nút 'Truy xuất' để khai báo.">
+              <Tag color="volcano" icon={<InfoCircleOutlined />}>Chưa có Lô hàng</Tag>
+            </Tooltip>
+          );
+        }
+        return (
+          <div>
+            <Tag color="cyan" icon={<SafetyCertificateOutlined />} style={{ fontWeight: 600 }}>
+              {batch.batchCode}
+            </Tag>
+            <div style={{ fontSize: '11px', color: '#15803d', marginTop: '2px' }}>
+              Hái: <b>{dayjs(batch.harvestDate).format('DD/MM/YYYY')}</b>
+            </div>
+          </div>
+        );
+      }
     },
     {
       title: 'Nhà cung cấp / HTX',
@@ -553,31 +760,56 @@ export const Products: React.FC = () => {
       key: 'price', 
       render: (val: number) => <span style={{ color: '#d32f2f', fontWeight: 700 }}>{val.toLocaleString('vi-VN')} đ</span> 
     },
-    { title: 'ĐVT', dataIndex: 'unit', key: 'unit', width: 80 },
+    { title: 'ĐVT', dataIndex: 'unit', key: 'unit', width: 70 },
     { 
       title: 'Trạng thái', 
       dataIndex: 'status', 
       key: 'status', 
-      width: 100, 
-      render: (st: string) => <Tag color={st === 'Active' ? 'green' : 'default'}>{st || 'Active'}</Tag> 
-    },
-    { 
-      title: 'Ngày cập nhật', 
-      dataIndex: 'updatedAt', 
-      key: 'updatedAt',
-      width: 140,
-      render: (d?: string) => d ? dayjs(d).format('DD/MM/YYYY HH:mm') : '-'
+      width: 110, 
+      render: (st: string) => {
+        if (st === 'Pending') return <Tag color="gold" icon={<InfoCircleOutlined />}>Chờ duyệt</Tag>;
+        if (st === 'Active') return <Tag color="green" icon={<CheckOutlined />}>Đang bán</Tag>;
+        return <Tag color="default">{st || 'Active'}</Tag>;
+      }
     },
     { 
       title: 'Tác vụ', 
       key: 'actions',
-      render: (_: any, record: Product) => (
-        <Space size="small">
-          <Button size="small" icon={<PictureOutlined />} style={{ color: '#1890ff', borderColor: '#1890ff' }} onClick={() => handleOpenImages(record)}>Ảnh</Button>
-          <Button size="small" icon={<EditOutlined />} onClick={() => handleOpenEditProd(record)}>Sửa</Button>
-          <Button size="small" icon={<DeleteOutlined />} danger onClick={() => handleDeleteProductOrCombo(record.productId, false)}>Xóa</Button>
-        </Space>
-      )
+      render: (_: any, record: Product) => {
+        const isPending = record.status === 'Pending';
+        const hasBatch = record.productBatches && record.productBatches.length > 0;
+        return (
+          <Space size="small" wrap>
+            {isPending && (
+              <Tooltip title={!hasBatch ? 'Cần khai báo Lô hàng trước khi phê duyệt' : 'Phân loại danh mục & Phê duyệt sản phẩm lên sàn'}>
+                <Button 
+                  size="small" 
+                  type="primary" 
+                  style={{ backgroundColor: hasBatch ? '#52c41a' : '#d9d9d9', borderColor: hasBatch ? '#52c41a' : '#d9d9d9' }}
+                  icon={<CheckCircleOutlined />} 
+                  disabled={!hasBatch}
+                  onClick={() => handleOpenApproveModal(record)}
+                >
+                  Duyệt & Phân loại
+                </Button>
+              </Tooltip>
+            )}
+            <Tooltip title="Khai báo hoặc chỉnh sửa Lô hàng & Nhật ký canh tác">
+              <Button 
+                size="small" 
+                icon={<SafetyCertificateOutlined />} 
+                style={{ color: '#2e7d32', borderColor: '#2e7d32' }} 
+                onClick={() => handleOpenTraceModal(record)}
+              >
+                Truy xuất
+              </Button>
+            </Tooltip>
+            <Button size="small" icon={<PictureOutlined />} style={{ color: '#1890ff', borderColor: '#1890ff' }} onClick={() => handleOpenImages(record)}>Ảnh</Button>
+            <Button size="small" icon={<EditOutlined />} onClick={() => handleOpenEditProd(record)}>Sửa</Button>
+            <Button size="small" icon={<DeleteOutlined />} danger onClick={() => handleDeleteProductOrCombo(record.productId, false)}>Xóa</Button>
+          </Space>
+        );
+      }
     }
   ];
 
@@ -850,26 +1082,39 @@ export const Products: React.FC = () => {
         />
       </Card>
 
-      {/* Single Product Modal */}
+      {/* Single Product Modal (Dành cho Admin) */}
       <Modal
-        title={editingProd ? 'Cập Nhật Nông Sản Lẻ' : 'Thêm Nông Sản Lẻ Mới'}
+        title={editingProd ? 'Cập Nhật Nông Sản Lẻ' : 'Thêm Nông Sản Mới (Bước 1/2: Thông tin cơ bản)'}
         open={isProdModalOpen}
         onOk={handleSaveProd}
         onCancel={() => setIsProdModalOpen(false)}
-        okText="Lưu"
+        okText={editingProd ? "Lưu Cập Nhật" : "Tiếp tục: Khai Báo Lô Hàng & Truy Xuất (Bước 2/2) ➔"}
         cancelText="Hủy"
+        width={580}
       >
         <Form form={prodForm} layout="vertical" style={{ marginTop: 15 }}>
-          <Form.Item name="productName" label="Tên nông sản" rules={[{ required: true, message: 'Nhập tên nông sản' }]}>
-            <Input placeholder="Ví dụ: Cải bó xôi hữu cơ, Cà rốt baby..." />
-          </Form.Item>
-          <Form.Item name="categoryId" label="Danh mục nông sản" rules={[{ required: true, message: 'Chọn danh mục sản phẩm' }]}>
+          {!editingProd && (
+            <Alert 
+              type="info" 
+              showIcon 
+              message="Quy trình 2 bước tạo nông sản kèm hồ sơ Lô hàng & Truy xuất" 
+              description="Bước 1: Chọn Danh mục, Nhà cung cấp sở hữu và thông tin giá bán. Bước 2: Khai báo Lô hàng thu hoạch & Nhật ký canh tác để đảm bảo sản phẩm luôn có đầy đủ dữ liệu truy xuất minh bạch." 
+              style={{ marginBottom: 16 }}
+            />
+          )}
+
+          <Form.Item name="categoryId" label="Danh mục nông sản (Admin chọn trực tiếp)" rules={[{ required: true, message: 'Vui lòng chọn danh mục' }]}>
             <Select placeholder="Chọn danh mục">
               {categories.filter(c => c.categoryId !== 5).map(c => (
                 <Select.Option key={c.categoryId} value={c.categoryId}>{c.categoryName}</Select.Option>
               ))}
             </Select>
           </Form.Item>
+
+          <Form.Item name="productName" label="Tên nông sản" rules={[{ required: true, message: 'Nhập tên nông sản' }]}>
+            <Input placeholder="Ví dụ: Mít Thái siêu sớm, Cà chua bi Đà Lạt, Nấm đùi gà..." />
+          </Form.Item>
+
           <Form.Item name="supplierId" label="Nhà cung cấp / Hợp tác xã sở hữu" rules={[{ required: true, message: 'Vui lòng chọn nhà cung cấp / HTX sở hữu' }]}>
             <Select placeholder="Chọn Nhà cung cấp / HTX">
               {suppliers.map(s => {
@@ -894,9 +1139,10 @@ export const Products: React.FC = () => {
               </Form.Item>
             </Col>
           </Row>
-          <Form.Item name="status" label="Trạng thái">
+          <Form.Item name="status" label="Trạng thái" initialValue="Active">
             <Select placeholder="Chọn trạng thái">
               <Select.Option value="Active">Active (Đang bán trên sàn)</Select.Option>
+              <Select.Option value="Pending">Pending (Chờ duyệt)</Select.Option>
               <Select.Option value="Inactive">Inactive (Tạm ngừng bán)</Select.Option>
             </Select>
           </Form.Item>
@@ -904,6 +1150,181 @@ export const Products: React.FC = () => {
             <Input.TextArea rows={3} placeholder="Mô tả tiêu chuẩn VietGAP, độ tươi ngon, vùng trồng..." />
           </Form.Item>
         </Form>
+      </Modal>
+
+      {/* Modal Khai Báo / Chỉnh Sửa Lô Hàng & Truy Xuất Nguồn Gốc */}
+      <Modal
+        title={
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <SafetyCertificateOutlined style={{ color: '#2e7d32', fontSize: '20px' }} />
+            <span>
+              {traceBatch 
+                ? `Chỉnh Sửa Hồ Sơ Lô Hàng: ${traceProduct?.productName}` 
+                : `Bước 2: Khai Báo Lô Hàng & Truy Xuất Cho "${traceProduct?.productName}"`}
+            </span>
+          </div>
+        }
+        open={isTraceModalOpen}
+        onOk={handleSaveTrace}
+        confirmLoading={traceLoading}
+        onCancel={() => setIsTraceModalOpen(false)}
+        okText={traceBatch ? "Lưu Cập Nhật Lô Hàng" : "Lưu Hồ Sơ Lô Hàng & Đưa Lên Sàn"}
+        cancelText="Đóng"
+        width={680}
+      >
+        <Alert 
+          type="success"
+          showIcon
+          message="Hồ sơ truy xuất độc quyền cho từng đợt thu hoạch"
+          description="Mỗi đợt thu hoạch mang một mã lô và nhật ký canh tác riêng biệt. Dữ liệu này sẽ được dùng để tạo mã QR truy xuất nguồn gốc cho người tiêu dùng tra cứu."
+          style={{ marginTop: 12, marginBottom: 16 }}
+        />
+
+        <Form form={traceForm} layout="vertical">
+          <Row gutter={12}>
+            <Col span={14}>
+              <Form.Item name="batchCode" label="Mã lô hàng truy xuất (Duy nhất)" rules={[{ required: true, message: 'Nhập mã lô' }]}>
+                <Input placeholder="VD: LHN-20260925-001" />
+              </Form.Item>
+            </Col>
+            <Col span={10}>
+              <Form.Item name="farmId" label="Nông trại / Vườn thu hoạch" rules={[{ required: true, message: 'Chọn nông trại' }]}>
+                <Select placeholder="Chọn nông trại">
+                  {suppliers.map(s => {
+                    const sid = s.supplierId || s.userId;
+                    const f = s.farm;
+                    return (
+                      <Select.Option key={f?.farmId || sid} value={f?.farmId || sid}>
+                        {f?.farmName || `${s.fullName} Farm`} ({f?.province || 'Đà Lạt'})
+                      </Select.Option>
+                    );
+                  })}
+                </Select>
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={12}>
+            <Col span={12}>
+              <Form.Item name="initialQuantity" label="Sản lượng đợt thu hoạch" rules={[{ required: true, message: 'Nhập sản lượng' }]}>
+                <InputNumber min={1} style={{ width: '100%' }} />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="unit" label="Đơn vị tính" rules={[{ required: true, message: 'Nhập đơn vị' }]}>
+                <Input placeholder="kg, bắp, nải, hộp..." />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={12}>
+            <Col span={12}>
+              <Form.Item name="harvestDate" label="Ngày thu hoạch thực tế" rules={[{ required: true, message: 'Chọn ngày thu hoạch' }]}>
+                <DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" placeholder="Chọn ngày hái" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item 
+                name="expiryDate" 
+                label="Hạn sử dụng tốt nhất"
+                dependencies={['harvestDate']}
+                rules={[
+                  { required: true, message: 'Chọn hạn sử dụng' },
+                  ({ getFieldValue }) => ({
+                    validator(_, value) {
+                      const harvest = getFieldValue('harvestDate');
+                      if (!value || !harvest || value.isAfter(harvest, 'day')) {
+                        return Promise.resolve();
+                      }
+                      return Promise.reject(new Error('Hạn sử dụng phải sau ngày thu hoạch!'));
+                    },
+                  }),
+                ]}
+              >
+                <DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" placeholder="Chọn hạn dùng" />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Form.Item name="status" label="Trạng thái lô hàng">
+            <Select>
+              <Select.Option value="Active">Active (Lưu hành bình thường)</Select.Option>
+              <Select.Option value="Inactive">Inactive (Tạm khóa lô)</Select.Option>
+            </Select>
+          </Form.Item>
+
+          {/* Khối Preview 6 Mốc Tự Động */}
+          <div style={{ backgroundColor: '#f6ffed', border: '1px solid #b7eb8f', borderRadius: '8px', padding: '12px 16px', marginTop: 10 }}>
+            <div style={{ fontWeight: 700, color: '#2e7d32', marginBottom: '6px', fontSize: '13px' }}>
+              🌿 Bản xem trước nhật ký canh tác (Hệ thống tự động đồng bộ theo loại cây):
+            </div>
+            <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '12px', color: '#389e0d', lineHeight: 1.6 }}>
+              <li><b>Mốc 1 (Chọn giống & Thổ nhưỡng):</b> Giống thuần chủng F1, giá thể đất hữu cơ đã khử trùng nhiệt.</li>
+              <li><b>Mốc 2 (Chăm sóc sinh học & IoT):</b> Quản lý tưới theo biểu đồ sinh trưởng, bẫy dính sinh học chống côn trùng.</li>
+              <li><b>Mốc 3 (Thu hái sương sớm):</b> Thu hoạch khung giờ 5:00 - 6:30 sáng, phân loại tiêu chuẩn loại 1.</li>
+              <li><b>Mốc 4 (Kiểm nghiệm an toàn VietGAP):</b> Xét nghiệm 24 hoạt chất bảo vệ thực vật, nitrat & kim loại nặng đạt chuẩn.</li>
+              <li><b>Mốc 5 (Vận chuyển lạnh FreshLock 4°C - 8°C):</b> Xe lạnh chuyên dụng kiểm soát GPS liên tục.</li>
+              <li><b>Mốc 6 (Nhập tổng kho & Giao bếp):</b> Bảo quản tiêu chuẩn FEFO, sẵn sàng giao 2 giờ.</li>
+            </ul>
+          </div>
+        </Form>
+      </Modal>
+
+      {/* Modal Phê Duyệt & Phân Loại Danh Mục (Dành riêng cho Admin) */}
+      <Modal
+        title={
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <CheckCircleOutlined style={{ color: '#52c41a', fontSize: '20px' }} />
+            <span>Phê Duyệt & Phân Loại Danh Mục Sản Phẩm</span>
+          </div>
+        }
+        open={isApproveModalOpen}
+        onOk={handleSaveApprove}
+        confirmLoading={approveLoading}
+        onCancel={() => setIsApproveModalOpen(false)}
+        okText="Phê Duyệt & Đưa Lên Sàn"
+        cancelText="Hủy"
+        width={580}
+      >
+        <div style={{ padding: '8px 0' }}>
+          <Alert 
+            type="info" 
+            showIcon 
+            message="Nhiệm vụ Quản trị viên (Admin)" 
+            description="Kiểm tra thông tin nông sản và hồ sơ truy xuất do Nhà cung cấp gửi lên. Sau đó phân loại sản phẩm vào đúng Danh mục chuẩn trước khi duyệt lên sàn mua sắm." 
+            style={{ marginBottom: 16 }}
+          />
+
+          <div style={{ backgroundColor: '#fafafa', border: '1px solid #f0f0f0', borderRadius: '8px', padding: '14px 16px', marginBottom: 16, fontSize: '13px' }}>
+            <div style={{ marginBottom: 6 }}>Tên nông sản: <b style={{ color: '#2e7d32', fontSize: '15px' }}>{approvingProd?.productName}</b></div>
+            <div style={{ marginBottom: 6 }}>Giá bán đề xuất: <b style={{ color: '#d32f2f' }}>{approvingProd?.price.toLocaleString('vi-VN')} đ / {approvingProd?.unit}</b></div>
+            <div style={{ marginBottom: 6 }}>Nhà cung cấp: <b>{getSupplierName(approvingProd?.supplierId || 0)}</b></div>
+            <div>
+              Hồ sơ Lô hàng: {approveBatch ? (
+                <Tag color="cyan">Mã lô: {approveBatch.batchCode} · Hái ngày: {dayjs(approveBatch.harvestDate).format('DD/MM/YYYY')}</Tag>
+              ) : (
+                <Tag color="error">Chưa có Lô hàng</Tag>
+              )}
+            </div>
+          </div>
+
+          <Form form={approveForm} layout="vertical">
+            <Form.Item 
+              name="categoryId" 
+              label="Phân loại Danh mục cho sản phẩm này (Bắt buộc)" 
+              rules={[{ required: true, message: 'Vui lòng chọn danh mục cho sản phẩm' }]}
+              extra="Hệ thống đã tự động phân tích tên nông sản và gợi ý danh mục phù hợp nhất."
+            >
+              <Select placeholder="Chọn danh mục phân loại">
+                {categories.filter(c => c.categoryId !== 5).map(c => (
+                  <Select.Option key={c.categoryId} value={c.categoryId}>
+                    {c.categoryName} {c.description ? `(${c.description})` : ''}
+                  </Select.Option>
+                ))}
+              </Select>
+            </Form.Item>
+          </Form>
+        </div>
       </Modal>
 
       {/* Combo Modal */}

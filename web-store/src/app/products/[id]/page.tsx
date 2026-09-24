@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import SearchBar from '@/components/layout/SearchBar';
+import { trackBehavior } from '@/lib/recommendationTracker';
 
 interface ProductImage {
   productImageId: number;
@@ -633,6 +634,17 @@ export default function ProductDetailPage() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Tự động chuyển tab Đánh giá và cuộn xuống nếu URL có hash #reviews
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.hash === '#reviews') {
+      setActiveTab('reviews');
+      setTimeout(() => {
+        const el = document.getElementById('reviews-section');
+        if (el) el.scrollIntoView({ behavior: 'smooth' });
+      }, 500);
+    }
+  }, []);
+
   // Đọc user và cart từ localStorage
   useEffect(() => {
     const storedUser = localStorage.getItem('customer_user');
@@ -679,6 +691,9 @@ export default function ProductDetailPage() {
       .then((data: ProductDetail) => {
         setProduct(data);
         setLoading(false);
+
+        // Ghi nhận phản hồi ngầm định (Implicit Feedback): VIEW sản phẩm
+        trackBehavior({ productId: Number(data.productId), actionType: 'VIEW' });
 
         // Fetch sản phẩm liên quan cùng Category
         fetch('http://localhost:5023/api/products')
@@ -789,6 +804,9 @@ export default function ProductDetailPage() {
     saveCart(updatedCart);
     setCartBounce(true);
     setTimeout(() => setCartBounce(false), 800);
+
+    // Ghi nhận phản hồi ngầm định (Implicit Feedback): CART (Trọng số w3 = 3.5)
+    trackBehavior({ productId: Number(product.productId), actionType: 'CART' });
 
     if (redirectCheckout) {
       router.push('/checkout');
@@ -1429,13 +1447,21 @@ export default function ProductDetailPage() {
             {/* Đánh giá sao */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px', fontSize: '13.5px' }}>
               {totalReviewsCount > 0 ? (
-                <>
+                <div
+                  onClick={() => {
+                    setActiveTab('reviews');
+                    const el = document.getElementById('reviews-section');
+                    if (el) el.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  title="Bấm để cuộn xuống xem các nhận xét đánh giá"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}
+                >
                   <div style={{ color: '#FFB800', letterSpacing: '2px' }}>
                     {'★'.repeat(Math.min(5, Math.max(1, Math.round(avgRating))))}{'☆'.repeat(Math.max(0, 5 - Math.round(avgRating)))}
                   </div>
                   <span style={{ fontWeight: 700, color: 'var(--ink)' }}>{avgRating}</span>
-                  <span style={{ color: 'var(--ink-soft)' }}>· {totalReviewsCount} lượt đánh giá</span>
-                </>
+                  <span style={{ color: 'var(--ink-soft)', textDecoration: 'underline' }}>· {totalReviewsCount} lượt đánh giá</span>
+                </div>
               ) : (
                 <>
                   <div style={{ color: '#cbd5e1', letterSpacing: '2px' }}>☆☆☆☆☆</div>
@@ -2325,7 +2351,7 @@ export default function ProductDetailPage() {
 
           {/* TAB CONTENT 5: ĐÁNH GIÁ TỪ KHÁCH MUA */}
           {activeTab === 'reviews' && (
-            <div className="reviews-container" style={{ background: 'var(--surface)', padding: '36px', borderRadius: '24px', marginTop: '24px', border: '1px solid var(--line)', fontFamily: 'var(--font-review)' }}>
+            <div id="reviews-section" className="reviews-container" style={{ background: 'var(--surface)', padding: '36px', borderRadius: '24px', marginTop: '24px', border: '1px solid var(--line)', fontFamily: 'var(--font-review)' }}>
               <div style={{ maxWidth: '900px' }}>
                 
                 {/* 1. KHỐI TỔNG QUAN ĐIỂM TRUNG BÌNH & BIỂU ĐỒ PHÂN BỔ SAO */}

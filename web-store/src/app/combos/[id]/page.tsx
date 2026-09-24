@@ -697,30 +697,6 @@ export default function ComboDetailPage() {
       if (res.ok) {
         const data = await res.json();
         const list = Array.isArray(data) ? data : (data.reviews || []);
-        if (list.length > 0) {
-          const mapped = list.map((r: any) => ({
-            ...r,
-            reviewId: Number(r.reviewId || r.id),
-            customerName: r.customerName || r.name || 'Khách hàng',
-            comment: r.comment || r.text || '',
-            createdAt: r.createdAt || r.date || '',
-            replies: (r.replies || []).map((rep: any) => ({
-              ...rep,
-              reviewId: Number(rep.reviewId || rep.id),
-              customerName: rep.customerName || rep.name || 'Thành viên LÀNH',
-              comment: rep.comment || rep.text || '',
-              createdAt: rep.createdAt || rep.date || ''
-            }))
-          }));
-          setRealReviews(mapped);
-          return;
-        }
-      }
-      // Fallback sang featured reviews nếu chưa có đánh giá riêng
-      const featRes = await fetch('http://localhost:5023/api/reviews/featured');
-      if (featRes.ok) {
-        const featData = await featRes.json();
-        const list = Array.isArray(featData) ? featData : (featData.reviews || []);
         const mapped = list.map((r: any) => ({
           ...r,
           reviewId: Number(r.reviewId || r.id),
@@ -736,13 +712,27 @@ export default function ComboDetailPage() {
           }))
         }));
         setRealReviews(mapped);
+      } else {
+        setRealReviews([]);
       }
     } catch (e) {
       console.error('Error fetching reviews:', e);
+      setRealReviews([]);
     } finally {
       setLoadingReviews(false);
     }
   };
+
+  // Tự động cuộn xuống khu vực đánh giá nếu URL có hash #reviews
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.hash === '#reviews') {
+      setActiveTab('reviews');
+      setTimeout(() => {
+        const el = document.getElementById('reviews-section');
+        if (el) el.scrollIntoView({ behavior: 'smooth' });
+      }, 500);
+    }
+  }, []);
 
   const handleLikeReview = async (reviewId: number) => {
     const uId = currentUser?.id || currentUser?.userId;
@@ -1293,9 +1283,17 @@ export default function ComboDetailPage() {
 
               {/* Đánh giá & Số lượng người dùng */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '20px', fontSize: '13px', paddingBottom: '16px', borderBottom: '1px solid var(--line)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#eab308', fontWeight: '700' }}>
+                <div 
+                  onClick={() => {
+                    setActiveTab('reviews');
+                    const el = document.getElementById('reviews-section');
+                    if (el) el.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  title="Bấm để cuộn xuống xem các đánh giá của gói combo"
+                  style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#eab308', fontWeight: '700', cursor: 'pointer' }}
+                >
                   <span>⭐ {combo.rating}</span>
-                  <span style={{ color: 'var(--ink-soft)', fontWeight: 'normal' }}>({combo.reviewsCount} đánh giá từ các hộ gia đình)</span>
+                  <span style={{ color: 'var(--ink-soft)', fontWeight: 'normal', textDecoration: 'underline' }}>({combo.reviewsCount} đánh giá từ các hộ gia đình)</span>
                 </div>
                 <span style={{ color: 'var(--line)' }}>|</span>
                 <span style={{ color: 'var(--green-700)', fontWeight: '600' }}>Đang phục vụ 350+ hộ gia đình</span>
@@ -1764,7 +1762,9 @@ export default function ComboDetailPage() {
           </div>
 
           {/* ── TABS NỘI DUNG CHI TIẾT (BỎ TAB ITEMS, MẶC ĐỊNH HIỂN THỊ ĐÁNH GIÁ) ── */}
-          <div style={{
+          <div 
+            id="reviews-section"
+            style={{
             backgroundColor: 'var(--surface)',
             borderRadius: '16px',
             border: '1px solid var(--line)',
@@ -1987,10 +1987,36 @@ export default function ComboDetailPage() {
                       Đang tải đánh giá từ máy chủ...
                     </div>
                   ) : realReviews.length === 0 ? (
-                    <div style={{ textAlign: 'center', padding: '40px 20px', backgroundColor: 'var(--bg)', borderRadius: '12px', border: '1px dashed var(--line)' }}>
-                      <div style={{ fontSize: '32px', marginBottom: '8px' }}>📝</div>
-                      <div style={{ fontSize: '14px', fontWeight: '600', color: 'var(--ink)' }}>Chưa có đánh giá nào cho combo này</div>
-                      <div style={{ fontSize: '12.5px', color: 'var(--ink-soft)', marginTop: '4px' }}>Hãy là người đầu tiên trải nghiệm và chia sẻ cảm nhận nhé!</div>
+                    <div style={{ textAlign: 'center', padding: '40px 20px', backgroundColor: 'var(--bg)', borderRadius: '14px', border: '1.5px dashed var(--line)' }}>
+                      <div style={{ fontSize: '36px', marginBottom: '8px' }}>🌱</div>
+                      <div style={{ fontSize: '15px', fontWeight: '700', color: 'var(--green-900)' }}>Chưa có đánh giá nào cho gói combo này</div>
+                      <div style={{ fontSize: '13px', color: 'var(--ink-soft)', marginTop: '4px', marginBottom: '16px' }}>
+                        Hãy là người đầu tiên trải nghiệm gói nông sản tươi này và để lại nhận xét nhé!
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!currentUser) {
+                            alert('Vui lòng đăng nhập tài khoản để viết đánh giá!');
+                            router.push('/login');
+                            return;
+                          }
+                          setShowReviewForm(true);
+                        }}
+                        style={{
+                          padding: '9px 20px',
+                          borderRadius: '8px',
+                          border: 'none',
+                          backgroundColor: 'var(--green-700)',
+                          color: '#ffffff',
+                          fontSize: '13px',
+                          fontWeight: '700',
+                          cursor: 'pointer',
+                          boxShadow: '0 2px 8px rgba(46, 125, 50, 0.2)'
+                        }}
+                      >
+                        ✍️ Viết đánh giá đầu tiên
+                      </button>
                     </div>
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
