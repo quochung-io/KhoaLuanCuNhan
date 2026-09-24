@@ -58,6 +58,19 @@ public class ProductBatchesController : ControllerBase
             }
         }
 
+        if (batch.FarmId > 0)
+        {
+            var farmExists = await _context.Farms.AnyAsync(f => f.FarmId == batch.FarmId);
+            if (!farmExists)
+            {
+                var farmBySup = await _context.Farms.FirstOrDefaultAsync(f => f.SupplierId == batch.FarmId);
+                if (farmBySup != null)
+                {
+                    batch.FarmId = farmBySup.FarmId;
+                }
+            }
+        }
+
         batch.CreatedAt = DateTime.UtcNow;
         if (string.IsNullOrEmpty(batch.Status)) batch.Status = "Active";
 

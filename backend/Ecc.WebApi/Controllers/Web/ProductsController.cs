@@ -36,7 +36,17 @@ public class ProductsController : ControllerBase
 
             if (supplierId.HasValue)
             {
-                query = query.Where(p => p.SupplierId == supplierId.Value);
+                var targetSupplierId = supplierId.Value;
+                var supExists = await _context.Suppliers.AnyAsync(s => s.SupplierId == targetSupplierId);
+                if (!supExists)
+                {
+                    var supByUser = await _context.Suppliers.FirstOrDefaultAsync(s => s.UserId == targetSupplierId);
+                    if (supByUser != null)
+                    {
+                        targetSupplierId = (int)supByUser.SupplierId;
+                    }
+                }
+                query = query.Where(p => p.SupplierId == targetSupplierId);
             }
 
             if (categoryId.HasValue)
@@ -189,6 +199,19 @@ public class ProductsController : ControllerBase
                 return BadRequest(new { message = "Tên sản phẩm không được để trống!" });
             }
 
+            if (product.SupplierId > 0)
+            {
+                var supExists = await _context.Suppliers.AnyAsync(s => s.SupplierId == product.SupplierId);
+                if (!supExists)
+                {
+                    var supByUser = await _context.Suppliers.FirstOrDefaultAsync(s => s.UserId == product.SupplierId);
+                    if (supByUser != null)
+                    {
+                        product.SupplierId = supByUser.SupplierId;
+                    }
+                }
+            }
+
             product.CreatedAt = DateTime.UtcNow;
             product.UpdatedAt = DateTime.UtcNow;
 
@@ -252,16 +275,48 @@ public class ProductsController : ControllerBase
     {
         try
         {
-            var product = await _context.Products.FindAsync(id);
+            var product = await _context.Products
+                .Include(p => p.ProductImages)
+                .Include(p => p.ProductBatches)
+                .Include(p => p.Reviews)
+                .FirstOrDefaultAsync(p => p.ProductId == id);
+
             if (product == null)
             {
                 return NotFound(new { message = "Không tìm thấy sản phẩm để xóa!" });
             }
 
+            // Kiểm tra xem sản phẩm đã có đơn hàng chưa
+            bool hasOrders = await _context.OrderItems.AnyAsync(oi => oi.ProductId == id);
+            if (hasOrders)
+            {
+                // Nếu đã có đơn hàng thực tế, không xóa cứng để bảo toàn dữ liệu lịch sử đơn hàng
+                product.Status = "Inactive";
+                product.UpdatedAt = DateTime.UtcNow;
+                await _context.SaveChangesAsync();
+                return Ok(new { message = "Sản phẩm đã phát sinh đơn hàng, hệ thống đã chuyển sang trạng thái Ngừng kinh doanh (Inactive) thay vì xóa hoàn toàn." });
+            }
+
+            // Nếu chưa có đơn hàng, xóa sạch các dữ liệu liên quan trước khi xóa sản phẩm
+            if (product.ProductBatches != null && product.ProductBatches.Any())
+            {
+                _context.ProductBatches.RemoveRange(product.ProductBatches);
+            }
+
+            if (product.ProductImages != null && product.ProductImages.Any())
+            {
+                _context.ProductImages.RemoveRange(product.ProductImages);
+            }
+
+            if (product.Reviews != null && product.Reviews.Any())
+            {
+                _context.Reviews.RemoveRange(product.Reviews);
+            }
+
             _context.Products.Remove(product);
             await _context.SaveChangesAsync();
 
-            return Ok(new { message = "Đã xóa sản phẩm thành công." });
+            return Ok(new { message = "Đã xóa sản phẩm và toàn bộ dữ liệu lô hàng liên quan thành công." });
         }
         catch (Exception ex)
         {
