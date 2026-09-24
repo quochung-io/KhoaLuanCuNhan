@@ -95,6 +95,19 @@ public class AuthController : ControllerBase
                 _ => "CUSTOMER"
             };
 
+            long? supplierId = null;
+            long? farmId = null;
+            var supplier = await _context.Suppliers.FirstOrDefaultAsync(s => s.UserId == user.UserId);
+            if (supplier != null)
+            {
+                supplierId = supplier.SupplierId;
+                var farm = await _context.Farms.FirstOrDefaultAsync(f => f.SupplierId == supplier.SupplierId);
+                if (farm != null)
+                {
+                    farmId = farm.FarmId;
+                }
+            }
+
             return Ok(new
             {
                 message = "Đăng nhập thành công!",
@@ -102,6 +115,8 @@ public class AuthController : ControllerBase
                 user = new
                 {
                     userId = user.UserId,
+                    supplierId = supplierId,
+                    farmId = farmId,
                     fullName = user.FullName,
                     email = user.Email,
                     phone = user.Phone,

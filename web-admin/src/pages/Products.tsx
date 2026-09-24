@@ -630,11 +630,12 @@ export const Products: React.FC = () => {
       okType: 'danger',
       onOk: async () => {
         try {
-          await productService.delete(id);
-          message.success('Xóa thành công.');
+          const res = await productService.delete(id);
+          message.success(res.data?.message || 'Xóa thành công.');
           loadData();
-        } catch (error) {
-          message.error('Xóa thất bại.');
+        } catch (error: any) {
+          const errMsg = error.response?.data?.message || 'Xóa thất bại.';
+          message.error(errMsg);
         }
       }
     });

@@ -36,7 +36,8 @@ import {
   AppstoreAddOutlined,
   ReloadOutlined,
   SafetyCertificateOutlined,
-  EditOutlined
+  EditOutlined,
+  DeleteOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { useNavigate } from 'react-router-dom';
@@ -141,31 +142,47 @@ export const Dashboard = () => {
   };
 
   // Helper ánh xạ UserId sang SupplierId tương ứng trong CSDL
-  const getActualSupplierId = (user: any) => {
+  const getActualSupplierId = (user: any, supList?: BackendSupplier[]) => {
     if (user?.supplierId) return user.supplierId;
+    const list = supList && supList.length > 0 ? supList : suppliers;
+    const found = list.find(s => s.userId === user?.userId);
+    if (found?.supplierId) return found.supplierId;
     if (user?.userId === 2) return 1; // HTX Nông Sản Đà Lạt: UserId 2 -> SupplierId 1
     if (user?.userId === 3) return 2; // HTX Rau Sạch Miền Tây: UserId 3 -> SupplierId 2
     if (user?.userId === 4) return 3; // HTX Trái Cây Việt: UserId 4 -> SupplierId 3
     if (user?.userId === 23) return 4; // HTX Nông Nghiệp An Phú: UserId 23 -> SupplierId 4
+    if (user?.userId === 29) return 9; // @Password123: UserId 29 -> SupplierId 9
     return user?.userId || 1;
   };
 
   // Tải dữ liệu thực từ API backend đồng bộ với database
   const loadData = async (userObj?: any) => {
     const user = userObj || currentUser;
-    const mySupplierId = getActualSupplierId(user);
     setLoading(true);
     try {
-      const [prodRes, batchRes, supRes] = await Promise.all([
+      // 1. Tải danh sách nhà cung cấp để đồng bộ SupplierId & FarmId
+      const supRes = await axiosClient.get('/users/suppliers').catch(() => ({ data: [] }));
+      const allSups: BackendSupplier[] = supRes.data || [];
+      setSuppliers(allSups);
+
+      // Tra cứu SupplierId và FarmId chính xác từ danh sách đối tác
+      const matchedSup = allSups.find(s => s.userId === user?.userId);
+      const mySupplierId = user?.supplierId || matchedSup?.supplierId || getActualSupplierId(user, allSups);
+      const myFarmId = user?.farmId || matchedSup?.farm?.farmId;
+
+      // Cập nhật lại user trong localStorage và state nếu thiếu thông tin
+      if (user && mySupplierId && (user.supplierId !== mySupplierId || user.farmId !== myFarmId)) {
+        const updatedUser = { ...user, supplierId: mySupplierId, farmId: myFarmId || user.farmId };
+        setCurrentUser(updatedUser);
+        localStorage.setItem('supplier_user', JSON.stringify(updatedUser));
+      }
+
+      const [prodRes, batchRes] = await Promise.all([
         axiosClient.get(`/products?supplierId=${mySupplierId}`),
-        axiosClient.get('/productbatches').catch(() => ({ data: [] })),
-        axiosClient.get('/users/suppliers').catch(() => ({ data: [] }))
+        axiosClient.get('/productbatches').catch(() => ({ data: [] }))
       ]);
       const allList: BackendProduct[] = prodRes.data || [];
       const allBatches: BackendBatch[] = batchRes.data || [];
-      const allSups: BackendSupplier[] = supRes.data || [];
-
-      setSuppliers(allSups);
 
       const supplierProductIds = new Set(allList.map(p => p.productId));
       const myBatches = allBatches.filter(b => supplierProductIds.has(b.productId));
@@ -220,8 +237,8 @@ export const Dashboard = () => {
     setTraceBatch(existing || null);
 
     const mySupplierId = getActualSupplierId(currentUser);
-    const currentSup = suppliers.find(s => (s.supplierId || s.userId) === mySupplierId);
-    const defaultFarmId = currentSup?.farm?.farmId || 1;
+    const currentSup = suppliers.find(s => s.supplierId === mySupplierId || s.userId === currentUser?.userId);
+    const defaultFarmId = currentUser?.farmId || currentSup?.farm?.farmId || 1;
 
     if (existing) {
       traceForm.setFieldsValue({
@@ -315,8 +332,9 @@ export const Dashboard = () => {
 
       const created = res.data;
       handleOpenTraceModal(created);
-    } catch (error) {
-      message.error('Đăng ký nông sản thất bại.');
+    } catch (error: any) {
+      const errMsg = error?.response?.data?.message || 'Đăng ký nông sản thất bại.';
+      message.error(errMsg);
     }
   };
 
@@ -358,9 +376,31 @@ export const Dashboard = () => {
       setIsComboModalOpen(false);
       comboForm.resetFields();
       loadData();
-    } catch (error) {
-      message.error('Đề xuất gói combo thất bại.');
+    } catch (error: any) {
+      const errMsg = error?.response?.data?.message || 'Đề xuất gói combo thất bại.';
+      message.error(errMsg);
     }
+  };
+
+  // Xóa nông sản lẻ hoặc combo do chính nhà cung cấp tạo
+  const handleDeleteProduct = (id: number, name: string) => {
+    Modal.confirm({
+      title: 'Xác nhận xóa nông sản',
+      content: `Bạn có chắc chắn muốn xóa nông sản "${name}" (#${id})? Toàn bộ hồ sơ lô hàng liên quan cũng sẽ được xóa khỏi hệ thống.`,
+      okText: 'Xóa',
+      cancelText: 'Hủy',
+      okType: 'danger',
+      onOk: async () => {
+        try {
+          const res = await axiosClient.delete(`/products/${id}`);
+          message.success(res.data?.message || 'Đã xóa nông sản thành công.');
+          await loadData();
+        } catch (error: any) {
+          const errMsg = error?.response?.data?.message || 'Xóa nông sản thất bại.';
+          message.error(errMsg);
+        }
+      }
+    });
   };
 
   // Cột Sản phẩm lẻ (Đồng bộ với Database)
@@ -421,18 +461,28 @@ export const Dashboard = () => {
     {
       title: 'Thao tác',
       key: 'actions',
-      width: 150,
+      width: 190,
       render: (_: any, r: BackendProduct) => {
         const batch = batches.find(b => b.productId === r.productId);
         return (
-          <Button 
-            size="small"
-            icon={<SafetyCertificateOutlined />}
-            style={{ color: '#2e7d32', borderColor: '#2e7d32' }}
-            onClick={() => handleOpenTraceModal(r)}
-          >
-            {batch ? 'Sửa Lô / Truy xuất' : '+ Khai báo Lô'}
-          </Button>
+          <Space>
+            <Button 
+              size="small"
+              icon={<SafetyCertificateOutlined />}
+              style={{ color: '#2e7d32', borderColor: '#2e7d32' }}
+              onClick={() => handleOpenTraceModal(r)}
+            >
+              {batch ? 'Sửa Lô' : '+ Lô hàng'}
+            </Button>
+            <Button 
+              size="small"
+              danger
+              icon={<DeleteOutlined />}
+              onClick={() => handleDeleteProduct(r.productId, r.productName)}
+            >
+              Xóa
+            </Button>
+          </Space>
         );
       }
     }
@@ -517,6 +567,21 @@ export const Dashboard = () => {
         return <Tag color="default">TẠM DỪNG</Tag>;
       }
     },
+    {
+      title: 'Thao tác',
+      key: 'actions',
+      width: 100,
+      render: (_: any, r: BackendProduct) => (
+        <Button 
+          size="small"
+          danger
+          icon={<DeleteOutlined />}
+          onClick={() => handleDeleteProduct(r.productId, r.productName)}
+        >
+          Xóa
+        </Button>
+      )
+    }
   ];
 
   // Cột Lô hàng (Batches / Traceability từ CSDL thật)
@@ -966,15 +1031,28 @@ export const Dashboard = () => {
             <Col span={10}>
               <Form.Item name="farmId" label="Nông trại / Vườn thu hoạch" rules={[{ required: true, message: 'Chọn nông trại' }]}>
                 <Select placeholder="Chọn nông trại">
-                  {suppliers.map(s => {
-                    const sid = s.supplierId || s.userId;
-                    const f = s.farm;
-                    return (
-                      <Select.Option key={f?.farmId || sid} value={f?.farmId || sid}>
-                        {f?.farmName || `${s.fullName} Farm`} ({f?.province || 'Đà Lạt'})
-                      </Select.Option>
-                    );
-                  })}
+                  {suppliers
+                    .slice()
+                    .sort((a, b) => {
+                      const mySid = getActualSupplierId(currentUser);
+                      const aIsMe = (a.supplierId === mySid) || (a.userId === currentUser?.userId);
+                      const bIsMe = (b.supplierId === mySid) || (b.userId === currentUser?.userId);
+                      if (aIsMe && !bIsMe) return -1;
+                      if (!aIsMe && bIsMe) return 1;
+                      return 0;
+                    })
+                    .map(s => {
+                      const sid = s.supplierId || s.userId;
+                      const f = s.farm;
+                      const farmVal = f?.farmId || sid;
+                      const mySid = getActualSupplierId(currentUser);
+                      const isMine = (s.supplierId === mySid) || (s.userId === currentUser?.userId);
+                      return (
+                        <Select.Option key={farmVal} value={farmVal}>
+                          {f?.farmName || `${s.fullName} Farm`} ({f?.province || 'Đà Lạt'}) {isMine ? '★ [Trang trại của bạn]' : ''}
+                        </Select.Option>
+                      );
+                    })}
                 </Select>
               </Form.Item>
             </Col>
