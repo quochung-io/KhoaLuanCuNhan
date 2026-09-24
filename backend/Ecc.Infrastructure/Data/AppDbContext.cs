@@ -26,6 +26,7 @@ public class AppDbContext : DbContext
     public DbSet<RecommendationLog> RecommendationLogs => Set<RecommendationLog>();
     public DbSet<ProductSeason> ProductSeasons => Set<ProductSeason>();
     public DbSet<Farm> Farms => Set<Farm>();
+    public DbSet<Supplier> Suppliers => Set<Supplier>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -97,8 +98,19 @@ public class AppDbContext : DbContext
             e.Property(p => p.CreatedAt).HasColumnName("CreatedAt");
             e.Property(p => p.UpdatedAt).HasColumnName("UpdatedAt");
 
+            e.Property(p => p.ComboType).HasColumnName("ComboType").HasMaxLength(50);
+            e.Property(p => p.StartDate).HasColumnName("StartDate");
+            e.Property(p => p.EndDate).HasColumnName("EndDate");
+            e.Property(p => p.OriginalPrice).HasColumnName("OriginalPrice").HasColumnType("decimal(18,2)");
+            e.Property(p => p.DiscountPercent).HasColumnName("DiscountPercent");
+            e.Property(p => p.ProgramLimit).HasColumnName("ProgramLimit");
+            e.Property(p => p.SoldQuantity).HasColumnName("SoldQuantity");
+            e.Property(p => p.MaxSlots).HasColumnName("MaxSlots");
+
             e.Ignore(p => p.AverageRating);
             e.Ignore(p => p.ReviewsCount);
+            e.Ignore(p => p.IsOutOfStock);
+            e.Ignore(p => p.AvailableStock);
 
             e.HasOne(p => p.Category)
              .WithMany(c => c.Products)
@@ -299,6 +311,13 @@ public class AppDbContext : DbContext
             e.Property(r => r.CreatedAt).HasColumnName("CreatedAt");
             e.Property(r => r.UpdatedAt).HasColumnName("UpdatedAt");
             e.Property(r => r.Status).HasColumnName("Status").HasMaxLength(20);
+            e.Property(r => r.ParentReviewId).HasColumnName("ParentReviewId");
+
+            e.HasOne(r => r.ParentReview)
+             .WithMany(p => p.Replies)
+             .HasForeignKey(r => r.ParentReviewId)
+             .IsRequired(false)
+             .OnDelete(DeleteBehavior.Restrict);
 
             e.HasOne(r => r.Customer)
              .WithMany()
@@ -440,6 +459,31 @@ public class AppDbContext : DbContext
             e.Property(f => f.CropType).HasColumnName("CropType").HasMaxLength(150);
             e.Property(f => f.ProductionStandard).HasColumnName("ProductionStandard").HasMaxLength(100);
             e.Property(f => f.Status).HasColumnName("Status").HasMaxLength(50);
+        });
+
+        // ── Supplier ──────────────────────────────────
+        modelBuilder.Entity<Supplier>(e =>
+        {
+            e.ToTable("Suppliers");
+            e.HasKey(s => s.SupplierId);
+            e.Property(s => s.SupplierId).HasColumnName("SupplierId");
+            e.Property(s => s.UserId).HasColumnName("UserId").IsRequired();
+            e.Property(s => s.SupplierName).HasColumnName("SupplierName").HasMaxLength(150).IsRequired();
+            e.Property(s => s.Representative).HasColumnName("Representative").HasMaxLength(100);
+            e.Property(s => s.BusinessLicense).HasColumnName("BusinessLicense").HasMaxLength(50);
+            e.Property(s => s.Address).HasColumnName("Address").HasMaxLength(255);
+            e.Property(s => s.Province).HasColumnName("Province").HasMaxLength(100);
+            e.Property(s => s.Description).HasColumnName("Description");
+            e.Property(s => s.ApprovalStatus).HasColumnName("ApprovalStatus").HasMaxLength(20);
+            e.Property(s => s.ApprovedBy).HasColumnName("ApprovedBy");
+            e.Property(s => s.ApprovedAt).HasColumnName("ApprovedAt");
+            e.Property(s => s.RejectReason).HasColumnName("RejectReason").HasMaxLength(255);
+            e.Property(s => s.CreatedAt).HasColumnName("CreatedAt");
+
+            e.HasOne(s => s.User)
+             .WithMany()
+             .HasForeignKey(s => s.UserId)
+             .OnDelete(DeleteBehavior.NoAction);
         });
     }
 }

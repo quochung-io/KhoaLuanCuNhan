@@ -2,6 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import SearchBar from './SearchBar';
 
 type SuggestionItem = {
   productId: number;
@@ -89,6 +90,15 @@ export const Header: React.FC<HeaderProps> = ({
             <span>🚚 Giao nhanh 2H nội thành</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <a 
+              href="http://localhost:5174/register" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              style={{ color: '#A3E635', fontWeight: '600', textDecoration: 'none' }}
+            >
+              🏪 Đăng ký bán hàng
+            </a>
+            <span style={{ opacity: 0.6 }}>|</span>
             <a href="tel:19006868" style={{ color: '#EAF4E9', textDecoration: 'none' }}>📞 Hotline: 1900 6868</a>
             <span style={{ opacity: 0.6 }}>|</span>
             <a href="#trace" style={{ color: 'var(--accent, #FF9800)', fontWeight: 'bold' }}>🔍 Tra cứu nguồn gốc lô hàng</a>
@@ -130,123 +140,28 @@ export const Header: React.FC<HeaderProps> = ({
           <Link href="/orders" style={{ color: 'var(--ink, #16241A)', textDecoration: 'none', transition: 'color 0.2s' }}>
             📋 Đơn hàng
           </Link>
+          <a 
+            href="http://localhost:5174" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            style={{ 
+              color: '#2E7D32', 
+              textDecoration: 'none', 
+              backgroundColor: '#EAF4E9',
+              padding: '4px 10px',
+              borderRadius: '6px',
+              fontSize: '13px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px'
+            }}
+          >
+            🏪 Kênh Người Bán
+          </a>
         </nav>
 
         {/* Search Bar with Autocomplete Suggestions */}
-        <div className="search-shell" style={{
-          flex: 1,
-          display: 'flex',
-          alignItems: 'center',
-          backgroundColor: 'var(--surface, #FFFFFF)',
-          border: '1.5px solid var(--line, #E1EAE0)',
-          borderRadius: '999px',
-          padding: '4px 6px 4px 16px',
-          position: 'relative',
-          boxShadow: 'var(--shadow, 0 2px 8px rgba(0,0,0,0.04))',
-          maxWidth: '520px'
-        }}>
-          <input 
-            type="text" 
-            value={searchQuery}
-            onChange={(e) => onSearchChange && onSearchChange(e.target.value)}
-            onFocus={() => setShowSuggestions && setShowSuggestions(true)}
-            onBlur={() => setTimeout(() => setShowSuggestions && setShowSuggestions(false), 250)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && onSearchSubmit) {
-                onSearchSubmit();
-              }
-            }}
-            placeholder="Tìm cải bó xôi, bơ Đắk Lắk, cam Cao Phong..."
-            style={{
-              border: 'none',
-              outline: 'none',
-              background: 'none',
-              flex: 1,
-              fontSize: '13.5px',
-              color: 'var(--ink, #16241A)',
-              fontFamily: 'var(--font-body, sans-serif)'
-            }}
-          />
-          <button 
-            type="button" 
-            onClick={() => onSearchSubmit && onSearchSubmit()}
-            style={{
-              width: '32px',
-              height: '32px',
-              borderRadius: '50%',
-              backgroundColor: 'var(--green-700, #2E7D32)',
-              color: '#ffffff',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-              cursor: 'pointer',
-              border: 'none'
-            }}
-            aria-label="Tìm kiếm"
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-              <circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>
-            </svg>
-          </button>
-
-          {/* Autocomplete Dropdown */}
-          {showSuggestions && suggestions.length > 0 && (
-            <ul style={{
-              position: 'absolute',
-              top: 'calc(100% + 8px)',
-              left: 0,
-              right: 0,
-              backgroundColor: 'var(--surface, #ffffff)',
-              border: '1px solid var(--line, #E1EAE0)',
-              borderRadius: '16px',
-              listStyle: 'none',
-              padding: '8px 0',
-              margin: 0,
-              zIndex: 9999,
-              boxShadow: '0 12px 30px rgba(0,0,0,0.12)',
-              maxHeight: '340px',
-              overflowY: 'auto'
-            }}>
-              <li style={{ padding: '6px 16px', fontSize: '11px', fontWeight: 'bold', color: 'var(--ink-soft, #888)', textTransform: 'uppercase' }}>
-                Gợi ý sản phẩm
-              </li>
-              {suggestions.map((s, idx) => (
-                <li 
-                  key={idx}
-                  onClick={() => {
-                    if (setShowSuggestions) setShowSuggestions(false);
-                    router.push(`/products/${s.productId}`);
-                  }}
-                  onMouseDown={(e) => e.preventDefault()}
-                  style={{
-                    padding: '8px 16px',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '12px',
-                    transition: 'background-color 0.15s'
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--green-100, #F4F8F4)'}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                >
-                  <img 
-                    src={s.imageUrl || 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=100&auto=format&fit=crop&q=80'} 
-                    alt={s.productName} 
-                    style={{ width: '38px', height: '38px', objectFit: 'cover', borderRadius: '8px', backgroundColor: 'var(--green-100)' }} 
-                  />
-                  <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-                    <span style={{ fontSize: '13.5px', fontWeight: '600', color: 'var(--ink, #16241A)' }}>{s.productName}</span>
-                    <span style={{ fontSize: '12px', color: '#E53E3E', fontWeight: '700' }}>
-                      {s.price.toLocaleString('vi-VN')}₫ <span style={{ color: 'var(--ink-soft, #718096)', fontWeight: 'normal' }}>/ {s.unit}</span>
-                    </span>
-                  </div>
-                  <span style={{ fontSize: '11px', color: 'var(--green-700, #2E7D32)', fontWeight: '600' }}>Xem →</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+        <SearchBar style={{ maxWidth: '520px', flex: 1 }} />
 
         {/* Right Action Icons & User Auth Controls */}
         <div className="nav-icons" style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>

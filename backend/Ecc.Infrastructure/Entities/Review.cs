@@ -16,6 +16,7 @@ public class Review
     public DateTime? CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
     public string? Status { get; set; } = "Approved";
+    public long? ParentReviewId { get; set; }
 
     public User? Customer { get; set; }
     
@@ -24,6 +25,10 @@ public class Review
     
     [JsonIgnore]
     public Order? Order { get; set; }
+
+    [JsonIgnore]
+    public Review? ParentReview { get; set; }
+    public ICollection<Review> Replies { get; set; } = new List<Review>();
 
     public ICollection<ReviewImage> ReviewImages { get; set; } = new List<ReviewImage>();
     public ICollection<ReviewHelpfulVote> HelpfulVotes { get; set; } = new List<ReviewHelpfulVote>();

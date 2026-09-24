@@ -102,7 +102,7 @@ public class RecommendationsController : ControllerBase
 
     // GET: api/recommendations/frequently-bought-together/{productId}
     [HttpGet("frequently-bought-together/{productId}")]
-    public async Task<IActionResult> GetFrequentlyBoughtTogether(long productId, [FromQuery] int limit = 3)
+    public async Task<IActionResult> GetFrequentlyBoughtTogether(long productId, [FromQuery] int limit = 6)
     {
         try
         {
@@ -120,7 +120,7 @@ public class RecommendationsController : ControllerBase
                 .Where(oi => oi.ProductId == productId)
                 .Select(oi => oi.OrderId)
                 .Distinct()
-                .Take(100)
+                .Take(200)
                 .ToListAsync();
 
             var coOccurredProductIds = new List<long>();
@@ -132,19 +132,19 @@ public class RecommendationsController : ControllerBase
                     .GroupBy(oi => oi.ProductId)
                     .OrderByDescending(g => g.Count())
                     .Select(g => g.Key)
-                    .Take(limit * 2)
+                    .Take(limit * 3)
                     .ToListAsync();
             }
 
             // 2. Khai phá từ UserBehaviors (những ai thêm productId vào giỏ thì cũng thêm sản phẩm nào)
-            if (coOccurredProductIds.Count < limit)
+            if (coOccurredProductIds.Count < limit * 2)
             {
                 var sessions = await _context.UserBehaviors
                     .Where(b => b.ProductId == productId && (b.ActionType == "CART" || b.ActionType == "QUICK_VIEW"))
                     .Select(b => b.SessionId)
                     .Where(s => s != null)
                     .Distinct()
-                    .Take(50)
+                    .Take(100)
                     .ToListAsync();
 
                 if (sessions.Count > 0)
@@ -154,40 +154,108 @@ public class RecommendationsController : ControllerBase
                         .GroupBy(b => b.ProductId)
                         .OrderByDescending(g => g.Count())
                         .Select(g => g.Key)
-                        .Take(limit)
+                        .Take(limit * 2)
                         .ToListAsync();
 
                     coOccurredProductIds.AddRange(sessionCoIds.Except(coOccurredProductIds));
                 }
             }
 
-            // 3. Fallback nếu dữ liệu mua chung ít: Chọn sản phẩm cùng/khác category có rating cao
-            if (coOccurredProductIds.Count < limit)
+            // 3. Fallback thông minh: Đảm bảo có sản phẩm bổ trợ khác danh mục
+            if (coOccurredProductIds.Count < limit * 2)
             {
-                var fallbackIds = await _context.Products
-                    .Where(p => p.ProductId != productId && (p.Status == "Active" || string.IsNullOrEmpty(p.Status)))
+                // Ưu tiên sản phẩm khác CategoryId trước để kích thích đa dạng hóa giỏ hàng
+                var diffCategoryFallbacks = await _context.Products
+                    .Where(p => p.ProductId != productId 
+                                && p.CategoryId != targetProduct.CategoryId 
+                                && (p.Status == "Active" || string.IsNullOrEmpty(p.Status)))
                     .OrderByDescending(p => p.ProductId)
                     .Select(p => p.ProductId)
                     .Take(limit * 2)
                     .ToListAsync();
 
-                coOccurredProductIds.AddRange(fallbackIds.Except(coOccurredProductIds));
+                coOccurredProductIds.AddRange(diffCategoryFallbacks.Except(coOccurredProductIds));
+
+                // Bổ sung thêm các sản phẩm đang bán chạy khác
+                var sameCategoryFallbacks = await _context.Products
+                    .Where(p => p.ProductId != productId 
+                                && (p.Status == "Active" || string.IsNullOrEmpty(p.Status)))
+                    .OrderByDescending(p => p.ProductId)
+                    .Select(p => p.ProductId)
+                    .Take(limit)
+                    .ToListAsync();
+
+                coOccurredProductIds.AddRange(sameCategoryFallbacks.Except(coOccurredProductIds));
             }
 
-            var finalIds = coOccurredProductIds.Take(limit).ToList();
-
-            var products = await _context.Products
+            // 4. Lấy đầy đủ thông tin các sản phẩm ứng viên còn hoạt động (Status == Active)
+            var now = DateTime.UtcNow;
+            var allCandidates = await _context.Products
                 .Include(p => p.Category)
                 .Include(p => p.ProductImages)
                 .Include(p => p.ProductBatches)
-                .Where(p => finalIds.Contains(p.ProductId))
+                .Where(p => coOccurredProductIds.Contains(p.ProductId) && (p.Status == "Active" || string.IsNullOrEmpty(p.Status)))
                 .ToListAsync();
 
-            // Sắp xếp theo đúng thứ tự ưu tiên
-            var sorted = finalIds
-                .Select(id => products.FirstOrDefault(p => p.ProductId == id))
-                .Where(p => p != null)
-                .Select(p => MapToRecommendationResult(p!, "FREQUENTLY_BOUGHT_TOGETHER", 0.92, "Thường mua cùng nông sản này"))
+            // Ưu tiên chỉ lấy các sản phẩm CÒN TỒN KHO KHẢ DỤNG (có lô hàng còn hạn và tồn kho > 0)
+            var inStockCandidates = allCandidates
+                .Where(p => !p.ProductBatches.Any() || p.ProductBatches.Any(b =>
+                    (b.Status == "Active" || string.IsNullOrEmpty(b.Status)) &&
+                    b.InitialQuantity > 0 &&
+                    (b.ExpiryDate >= now || b.ExpiryDate == default)))
+                .ToList();
+
+            var candidateProducts = inStockCandidates.Count > 0 ? inStockCandidates : allCandidates;
+
+            // 5. Thuật toán Đa dạng hóa danh mục (Category Diversity Re-ranking):
+            // Phân bổ xen kẽ các sản phẩm bổ trợ khác danh mục (rau, củ, quả, hạt) với sản phẩm cùng danh mục
+            var diffCatItems = candidateProducts
+                .Where(p => p.CategoryId != targetProduct.CategoryId)
+                .OrderBy(p => coOccurredProductIds.IndexOf(p.ProductId))
+                .ToList();
+
+            var sameCatItems = candidateProducts
+                .Where(p => p.CategoryId == targetProduct.CategoryId)
+                .OrderBy(p => coOccurredProductIds.IndexOf(p.ProductId))
+                .ToList();
+
+            var balancedList = new List<Product>();
+            int diffIndex = 0, sameIndex = 0;
+
+            // Xen kẽ ưu tiên: 2 món khác danh mục + 1 món cùng danh mục
+            while (balancedList.Count < limit && (diffIndex < diffCatItems.Count || sameIndex < sameCatItems.Count))
+            {
+                if (diffIndex < diffCatItems.Count)
+                {
+                    balancedList.Add(diffCatItems[diffIndex++]);
+                }
+                if (balancedList.Count < limit && diffIndex < diffCatItems.Count)
+                {
+                    balancedList.Add(diffCatItems[diffIndex++]);
+                }
+                if (balancedList.Count < limit && sameIndex < sameCatItems.Count)
+                {
+                    balancedList.Add(sameCatItems[sameIndex++]);
+                }
+            }
+
+            // Nếu vẫn chưa đủ limit, lấy thêm từ danh sách ứng viên còn lại
+            if (balancedList.Count < limit)
+            {
+                var remaining = candidateProducts
+                    .Where(p => !balancedList.Any(b => b.ProductId == p.ProductId))
+                    .OrderBy(p => coOccurredProductIds.IndexOf(p.ProductId))
+                    .Take(limit - balancedList.Count);
+                balancedList.AddRange(remaining);
+            }
+
+            var sorted = balancedList
+                .Select((p, idx) => MapToRecommendationResult(
+                    p, 
+                    "FREQUENTLY_BOUGHT_TOGETHER", 
+                    Math.Round(0.95 - (idx * 0.04), 2), 
+                    p.CategoryId != targetProduct.CategoryId ? "Món bổ trợ cùng bữa ăn" : "Nông sản thường mua kèm"
+                ))
                 .ToList();
 
             // Log ấn tượng hiển thị gợi ý
@@ -543,6 +611,8 @@ public class RecommendationsController : ControllerBase
         public string HarvestInfo { get; set; } = null!;
         public string ShelfLifeInfo { get; set; } = null!;
         public bool IsFresh { get; set; }
+        public bool IsOutOfStock { get; set; }
+        public decimal AvailableStock { get; set; }
     }
 
     private static RecommendationItemDto MapToRecommendationResult(Product p, string recType, double score, string reason)
@@ -561,6 +631,16 @@ public class RecommendationsController : ControllerBase
             ? $"Hạn dùng đến {latestBatch.ExpiryDate:dd/MM/yyyy}" 
             : "Bảo quản tươi 3-5 ngày ngăn mát";
 
+        var now = DateTime.UtcNow;
+        var validBatches = p.ProductBatches
+            .Where(b => (b.Status == "Active" || string.IsNullOrEmpty(b.Status)) &&
+                        b.InitialQuantity > 0 &&
+                        (b.ExpiryDate >= now || b.ExpiryDate == default))
+            .ToList();
+
+        decimal availableStock = validBatches.Sum(b => b.InitialQuantity);
+        bool isOutOfStock = p.ProductBatches.Any() && availableStock <= 0;
+
         return new RecommendationItemDto
         {
             ProductId = p.ProductId,
@@ -577,7 +657,9 @@ public class RecommendationsController : ControllerBase
             RecommendationReason = reason,
             HarvestInfo = harvestTimeText,
             ShelfLifeInfo = shelfLifeText,
-            IsFresh = true
+            IsFresh = true,
+            IsOutOfStock = isOutOfStock,
+            AvailableStock = availableStock
         };
     }
 }

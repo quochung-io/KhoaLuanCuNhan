@@ -179,6 +179,133 @@ public class UsersController : ControllerBase
         }
     }
 
+    // Danh sách đối tác / Nhà cung cấp (kèm thông tin trang trại và chứng nhận)
+    [HttpGet("suppliers")]
+    public async Task<IActionResult> GetSuppliers()
+    {
+        var suppliers = await _context.Suppliers
+            .Include(s => s.User)
+            .OrderByDescending(s => s.CreatedAt)
+            .ToListAsync();
+
+        var supplierIds = suppliers.Select(s => (long?)s.SupplierId).ToList();
+        var farms = await _context.Farms
+            .Where(f => supplierIds.Contains(f.SupplierId))
+            .ToListAsync();
+
+        var result = suppliers.Select(s => {
+            var farm = farms.FirstOrDefault(f => f.SupplierId == s.SupplierId);
+            return new {
+                supplierId = s.SupplierId,
+                userId = s.UserId,
+                fullName = s.SupplierName,
+                representative = s.Representative ?? s.User?.FullName,
+                businessLicense = s.BusinessLicense,
+                email = s.User?.Email,
+                phone = s.User?.Phone,
+                status = s.ApprovalStatus ?? s.User?.Status ?? "Pending",
+                rejectReason = s.RejectReason,
+                createdAt = s.CreatedAt,
+                approvedAt = s.ApprovedAt,
+                farm = farm == null ? null : new {
+                    farmId = farm.FarmId,
+                    farmName = farm.FarmName,
+                    address = farm.Address,
+                    province = farm.Province,
+                    district = farm.District,
+                    area = farm.Area,
+                    cropType = farm.CropType,
+                    productionStandard = farm.ProductionStandard,
+                    status = farm.Status
+                }
+            };
+        });
+
+        return Ok(result);
+    }
+
+    // Đăng ký tài khoản Nhà cung cấp / Đối tác mới
+    [HttpPost("supplier-register")]
+    public async Task<IActionResult> SupplierRegister([FromBody] SupplierRegisterDto dto)
+    {
+        var cleanFullName = dto.FullName?.Trim() ?? dto.StoreName?.Trim();
+        var cleanEmail = dto.Email?.Trim().ToLower();
+        var cleanPhone = dto.Phone?.Trim();
+
+        if (string.IsNullOrWhiteSpace(cleanFullName))
+            return BadRequest(new { message = "Vui lòng nhập tên nhà cung cấp / hợp tác xã!" });
+
+        if (string.IsNullOrWhiteSpace(cleanEmail))
+            return BadRequest(new { message = "Vui lòng nhập địa chỉ email!" });
+
+        if (string.IsNullOrWhiteSpace(dto.Password) || dto.Password.Length < 6)
+            return BadRequest(new { message = "Mật khẩu phải có tối thiểu 6 ký tự!" });
+
+        if (await _context.Users.AnyAsync(u => u.FullName.ToLower() == cleanFullName.ToLower()))
+            return BadRequest(new { message = $"Tên đơn vị '{cleanFullName}' đã tồn tại trên hệ thống!" });
+
+        if (await _context.Users.AnyAsync(u => u.Email.ToLower() == cleanEmail))
+            return BadRequest(new { message = $"Email '{cleanEmail}' đã được đăng ký tài khoản!" });
+
+        if (!string.IsNullOrWhiteSpace(cleanPhone) && await _context.Users.AnyAsync(u => u.Phone == cleanPhone))
+            return BadRequest(new { message = $"Số điện thoại '{cleanPhone}' đã được đăng ký cho tài khoản khác!" });
+
+        // 1. Tạo tài khoản User (Role = 2 SUPPLIER, Status = "Pending")
+        var user = new User
+        {
+            FullName = cleanFullName,
+            Email = cleanEmail,
+            Phone = cleanPhone,
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
+            RoleId = 2,
+            Status = "Pending",
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+        _context.Users.Add(user);
+        await _context.SaveChangesAsync();
+
+        // 2. Tạo bản ghi Supplier trong bảng Suppliers (bảng có sẵn trong CSDL)
+        var supplier = new Supplier
+        {
+            UserId = user.UserId,
+            SupplierName = cleanFullName,
+            Representative = !string.IsNullOrWhiteSpace(dto.FullName) ? dto.FullName.Trim() : cleanFullName,
+            BusinessLicense = dto.BusinessLicense ?? dto.IdentityCard ?? $"BL-{DateTime.UtcNow:yyyyMMdd}-{user.UserId}",
+            Address = dto.Address ?? "Đang cập nhật",
+            Province = dto.Province ?? "Lâm Đồng",
+            Description = $"Chuyên nông sản sạch, đạt chuẩn {dto.ProductionStandard ?? "VietGAP"}",
+            ApprovalStatus = "Pending",
+            CreatedAt = DateTime.UtcNow
+        };
+        _context.Suppliers.Add(supplier);
+        await _context.SaveChangesAsync();
+
+        // 3. Tạo thông tin vùng trồng / trang trại tương ứng trong bảng Farms
+        var farm = new Farm
+        {
+            SupplierId = supplier.SupplierId,
+            FarmName = !string.IsNullOrWhiteSpace(dto.FarmName) ? dto.FarmName.Trim() : $"{cleanFullName} Farm",
+            Address = dto.Address ?? "Đang cập nhật",
+            Province = dto.Province ?? "Lâm Đồng",
+            District = dto.District ?? "Đà Lạt",
+            Area = dto.Area.HasValue && dto.Area > 0 ? dto.Area.Value : 2.5m,
+            CropType = dto.CropType ?? "Rau củ quả sạch",
+            ProductionStandard = dto.ProductionStandard ?? "VietGAP",
+            Status = "Pending"
+        };
+        _context.Farms.Add(farm);
+        await _context.SaveChangesAsync();
+
+        return Ok(new
+        {
+            message = "Đăng ký hồ sơ đối tác thành công! Hồ sơ của bạn đã được tiếp nhận và đang chờ Admin kiểm duyệt (thường trong vòng 24h).",
+            userId = user.UserId,
+            supplierId = supplier.SupplierId,
+            status = "Pending"
+        });
+    }
+
     // Phê duyệt tài khoản Nhà cung cấp (Supplier/HTX)
     [HttpPut("{id}/approve")]
     public async Task<IActionResult> ApproveSupplier(long id)
@@ -193,9 +320,60 @@ public class UsersController : ControllerBase
 
         user.Status = "Active";
         user.UpdatedAt = DateTime.UtcNow;
+
+        var supplier = await _context.Suppliers.FirstOrDefaultAsync(s => s.UserId == id);
+        if (supplier != null)
+        {
+            supplier.ApprovalStatus = "Approved";
+            supplier.ApprovedBy = 1;
+            supplier.ApprovedAt = DateTime.UtcNow;
+            supplier.RejectReason = null;
+
+            var farms = await _context.Farms.Where(f => f.SupplierId == supplier.SupplierId).ToListAsync();
+            foreach (var f in farms) f.Status = "Active";
+        }
+
         await _context.SaveChangesAsync();
 
         return Ok(new { message = $"Đã phê duyệt tài khoản nhà cung cấp '{user.FullName}' thành công!", status = "Active" });
+    }
+
+    // Từ chối hồ sơ Nhà cung cấp
+    [HttpPut("{id}/reject")]
+    public async Task<IActionResult> RejectSupplier(long id, [FromBody] RejectSupplierDto? dto)
+    {
+        var user = await _context.Users.FindAsync(id);
+        if (user == null) return NotFound(new { message = "Không tìm thấy người dùng." });
+
+        if (user.RoleId != 2)
+        {
+            return BadRequest(new { message = "Chỉ áp dụng từ chối cho tài khoản Nhà cung cấp (Supplier)." });
+        }
+
+        var reason = !string.IsNullOrWhiteSpace(dto?.Reason) 
+            ? dto.Reason 
+            : "Hồ sơ chưa đạt tiêu chuẩn nông sản an toàn hoặc thiếu giấy tờ xác thực.";
+
+        user.Status = "Rejected";
+        user.UpdatedAt = DateTime.UtcNow;
+
+        var supplier = await _context.Suppliers.FirstOrDefaultAsync(s => s.UserId == id);
+        if (supplier != null)
+        {
+            supplier.ApprovalStatus = "Rejected";
+            supplier.RejectReason = reason;
+
+            var farms = await _context.Farms.Where(f => f.SupplierId == supplier.SupplierId).ToListAsync();
+            foreach (var f in farms) f.Status = "Rejected";
+        }
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new { 
+            message = $"Đã từ chối hồ sơ của nhà cung cấp '{user.FullName}'.", 
+            status = "Rejected",
+            reason = reason
+        });
     }
 
     // Khóa / Mở khóa trạng thái tài khoản
@@ -280,5 +458,29 @@ public class UpdateUserDto
     public string? PasswordHash { get; set; }
     public int? RoleId { get; set; }
     public string? Status { get; set; }
+}
+
+public class SupplierRegisterDto
+{
+    public string? FullName { get; set; }
+    public string? StoreName { get; set; }
+    public string Email { get; set; } = null!;
+    public string Password { get; set; } = null!;
+    public string? Phone { get; set; }
+    public string? FarmName { get; set; }
+    public string? Address { get; set; }
+    public string? Province { get; set; }
+    public string? District { get; set; }
+    public decimal? Area { get; set; }
+    public string? CropType { get; set; }
+    public string? ProductionStandard { get; set; }
+    public string? IdentityCard { get; set; }
+    public string? BusinessLicense { get; set; }
+    public string? CertNumber { get; set; }
+}
+
+public class RejectSupplierDto
+{
+    public string? Reason { get; set; }
 }
 

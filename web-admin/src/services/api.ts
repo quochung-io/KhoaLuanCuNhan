@@ -15,11 +15,14 @@ export const authService = {
 
 export const userService = {
   getAll: () => api.get('/users'),
+  getSuppliers: () => api.get('/users/suppliers'),
   getById: (id: number) => api.get(`/users/${id}`),
   register: (data: any) => api.post('/auth/register', data),
+  supplierRegister: (data: any) => api.post('/users/supplier-register', data),
   login: (data: any) => api.post('/auth/login', { email: data.username || data.email, password: data.password }),
   update: (id: number, data: any) => api.put(`/users/${id}`, data),
   approveSupplier: (id: number) => api.put(`/users/${id}/approve`),
+  rejectSupplier: (id: number, reason: string) => api.put(`/users/${id}/reject`, { reason }),
   toggleStatus: (id: number) => api.put(`/users/${id}/toggle-status`),
   delete: (id: number) => api.delete(`/users/${id}`),
 };

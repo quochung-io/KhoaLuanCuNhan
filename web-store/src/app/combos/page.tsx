@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import SearchBar from '@/components/layout/SearchBar';
 
 type CartItem = {
   product: {
@@ -21,121 +22,140 @@ type CartItem = {
   qty: number;
 };
 
-const subPlans: Record<string, Array<{
+export interface ComboPlan {
   id: number;
   name: string;
   desc: string;
   price: string;
   rawPrice: number;
   badge?: string;
+  supplierId: number;
+  supplierName: string;
   features: string[];
   sampleItems: string[];
   imageUrl: string;
-}>> = {
-  week: [
+}
+
+const subPlans: Record<string, ComboPlan[]> = {
+  combotuan: [
     {
       id: 901,
       name: 'Combo Gia Đình Nhỏ (Tuần)',
-      desc: 'Phù hợp gia đình 2–3 người nấu ăn mỗi ngày',
+      desc: 'Phù hợp gia đình 2–3 người nấu ăn mỗi ngày. Nông sản tươi hái sớm trong ngày.',
       price: '189.000₫',
       rawPrice: 189000,
       badge: 'Phổ biến nhất',
+      supplierId: 1,
+      supplierName: 'Hợp tác xã Nông Sản Đà Lạt',
       imageUrl: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600&auto=format&fit=crop&q=80',
       features: [
         '4 loại rau ăn lá & củ quả theo mùa',
         '2 loại trái cây tươi thu hoạch trong ngày',
-        'Giao 1 lần / tuần vào thứ 3 hoặc thứ 6',
-        'Miễn phí đổi món trước 24h'
+        'Giao 1 lần / tuần từ Thứ 2 đến Chủ Nhật',
+        'Khách tự do chọn đổi nông sản cùng HTX'
       ],
       sampleItems: ['Cải bó xôi (300g)', 'Cà rốt baby (500g)', 'Xà lách xoăn (250g)', 'Bí đỏ hồ lô (1 quả)', 'Cam Cao Phong (1kg)', 'Bơ 034 (1kg)']
     },
     {
       id: 902,
       name: 'Combo Gia Đình Lớn (Tuần)',
-      desc: 'Đáp ứng khẩu phần cho gia đình 4–6 thành viên',
+      desc: 'Đáp ứng khẩu phần cho gia đình 4–6 thành viên. Đầy ắp rau xanh và trái cây chín cây.',
       price: '329.000₫',
       rawPrice: 329000,
       badge: 'Tiết kiệm 15%',
+      supplierId: 1,
+      supplierName: 'Hợp tác xã Nông Sản Đà Lạt',
       imageUrl: 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=600&auto=format&fit=crop&q=80',
       features: [
         '7 loại rau xanh hữu cơ đa dạng',
         '3 loại trái cây VietGAP & GlobalGAP',
         'Tặng kèm 1 vỉ trứng gà ta thảo mộc',
-        'Giao định kỳ tận bếp đúng giờ hẹn'
+        'Giao định kỳ tận bếp theo khung giờ hẹn'
       ],
-      sampleItems: ['Cải ngọt hữu cơ (500g)', 'Súp lơ xanh (1 búp)', 'Cà chua bi Cherry (300g)', 'Bắp cải giòn (1 bắp)', 'Khoai lang mật (1kg)', 'Đậu que Nhật (400g)', 'Dưa chuột baby (500g)', 'Dâu tây Mộc Châu (250g)', 'Bưởi da xanh (1 quả)', 'Xoài cát Hòa Lộc (1kg)']
+      sampleItems: ['Cải ngọt hữu cơ (500g)', 'Súp lơ xanh (1 búp)', 'Cà chua bi Cherry (300g)', 'Bắp cải giòn (1 bắp)', 'Khoai lang mật (1kg)', 'Đậu que Nhật (400g)', 'Bơ sáp 034 (1kg)']
     },
     {
       id: 903,
       name: 'Combo Thuần Chay Sạch (Tuần)',
-      desc: 'Giàu đạm thực vật, vitamin & khoáng chất',
+      desc: 'Giàu đạm thực vật, vitamin & khoáng chất dưỡng sinh thanh lọc cơ thể.',
       price: '249.000₫',
       rawPrice: 249000,
+      badge: 'Thuần chay Organic',
+      supplierId: 1,
+      supplierName: 'Hợp tác xã Nông Sản Đà Lạt',
       imageUrl: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=600&auto=format&fit=crop&q=80',
       features: [
         '6 loại rau củ & nấm tươi hữu cơ',
         '2 loại hạt dinh dưỡng / ngũ cốc đặc sản',
-        'Đạt chuẩn hữu cơ 100% không phân hóa học',
+        'Đạt chuẩn hữu cơ 100% không hóa chất',
         'Kèm thực đơn gợi ý món chay ngon mỗi ngày'
       ],
-      sampleItems: ['Nấm đùi gà tươi (200g)', 'Nấm bào ngư xám (250g)', 'Đậu hũ non hữu cơ (2 hộp)', 'Củ dền đỏ (500g)', 'Cải kale xoăn (300g)', 'Hạt sen tươi Huế (250g)', 'Gạo lứt đỏ ST (1kg)', 'Chuối laba Đà Lạt (1 nải)']
+      sampleItems: ['Nấm đùi gà tươi (200g)', 'Nấm bào ngư xám (250g)', 'Đậu hũ non hữu cơ (2 hộp)', 'Củ dền đỏ (500g)', 'Cải kale xoăn (300g)', 'Hạt sen tươi (250g)']
     }
   ],
-  month: [
+  combothang: [
     {
       id: 904,
-      name: 'Combo Gia Đình Nhỏ (Tháng)',
-      desc: 'Giao 4 đợt / tháng — Tươi mới mỗi tuần',
+      name: 'Combo Gia Đình Nhỏ (Gói Tháng)',
+      desc: 'Giao 4 đợt / tháng (mỗi tuần 1 giỏ tươi mới) — Tiết kiệm chi phí và thời gian đi chợ.',
       price: '680.000₫',
       rawPrice: 680000,
       badge: 'Tiết kiệm 10%',
+      supplierId: 1,
+      supplierName: 'Hợp tác xã Nông Sản Đà Lạt',
       imageUrl: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600&auto=format&fit=crop&q=80',
       features: [
-        'Giao 4 lần / tháng (mỗi tuần 1 giỏ tươi)',
+        'Giao 4 lần / tháng (mỗi tuần 1 giỏ tươi ngon)',
         'Tổng cộng 16 phần rau + 8 phần trái cây',
-        'Linh hoạt dời lịch khi bận / đi công tác',
-        'Freeship toàn bộ 4 lượt giao hàng'
+        'Linh hoạt đổi ngày giao khi bận công tác',
+        'Freeship toàn bộ 4 lượt giao tận bếp'
       ],
-      sampleItems: ['Thực đơn xoay vòng 4 tuần không trùng lặp', 'Có thể tùy chỉnh theo sở thích gia đình']
+      sampleItems: ['Thực đơn luân phiên 4 tuần không trùng lặp', 'Tự do chọn các loại rau yêu thích']
     },
     {
       id: 905,
-      name: 'Combo Gia Đình Lớn (Tháng)',
-      desc: 'Chăm sóc sức khỏe cả nhà trọn vẹn cả tháng',
+      name: 'Combo Gia Đình Lớn (Gói Tháng)',
+      desc: 'Chăm sóc sức khỏe cả nhà trọn vẹn cả tháng với nông sản chuẩn xuất khẩu thượng hạng.',
       price: '1.180.000₫',
       rawPrice: 1180000,
       badge: 'Tiết kiệm 18%',
+      supplierId: 1,
+      supplierName: 'Hợp tác xã Nông Sản Đà Lạt',
       imageUrl: 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=600&auto=format&fit=crop&q=80',
       features: [
-        'Giao 4 lần / tháng đầy ắp nông sản thượng hạng',
+        'Giao 4 lần / tháng đầy ắp nông sản cao cấp',
         'Tổng cộng 28 phần rau + 12 phần trái cây + 4 vỉ trứng',
         'Ưu tiên giữ các mặt hàng đặc sản vụ mùa hiếm',
-        'Hỗ trợ đổi rau theo mùa không phụ phí'
+        'Miễn phí 100% chi phí vận chuyển 4 tuần'
       ],
-      sampleItems: ['Giao tận nhà vào khung giờ bạn chọn', 'Quét mã QR truy xuất từng mẻ giao']
+      sampleItems: ['Giao xe lạnh tận cửa vào khung giờ bạn chọn', 'Quét mã QR truy xuất từng mẻ thu hoạch']
     },
     {
       id: 906,
-      name: 'Combo Thuần Chay Sạch (Tháng)',
-      desc: 'Thanh lọc cơ thể, dinh dưỡng bền vững',
+      name: 'Combo Thuần Chay Sạch (Gói Tháng)',
+      desc: 'Thanh lọc cơ thể, dinh dưỡng bền vững với đa dạng nấm hữu cơ và đậu hạt cao cấp.',
       price: '895.000₫',
       rawPrice: 895000,
       badge: 'Tiết kiệm 12%',
+      supplierId: 1,
+      supplierName: 'Hợp tác xã Nông Sản Đà Lạt',
       imageUrl: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=600&auto=format&fit=crop&q=80',
       features: [
         'Giao 4 lần / tháng, rau củ nấm tươi mới hái',
         'Tặng kèm 1 hũ mật ong hoa rừng nguyên chất',
-        'Cung cấp đủ dinh dưỡng cho người ăn chay trường',
-        'Được chuyên gia tư vấn dinh dưỡng trực tiếp'
+        'Cung cấp đủ dưỡng chất cho người ăn thực dưỡng',
+        'Được chuyên gia tư vấn dinh dưỡng định kỳ'
       ],
-      sampleItems: ['Đa dạng các loại nấm sạch và đậu hạt', 'Rau củ giàu sắt và chất xơ hòa tan']
+      sampleItems: ['Đa dạng nấm sạch và đậu đỗ hữu cơ', 'Rau củ giàu sắt và chất xơ hòa tan']
     }
-  ]
+  ],
+  combokhac: []
 };
 
 export default function CombosPage() {
   const router = useRouter();
-  const [subFreq, setSubFreq] = useState<'week' | 'month'>('week');
+  const [subFreq, setSubFreq] = useState<'combotuan' | 'combothang' | 'combokhac'>('combotuan');
+  const [supplierFilter, setSupplierFilter] = useState<string>('all');
   const [theme, setTheme] = useState('light');
   const [lang, setLang] = useState('vi');
 
@@ -154,6 +174,44 @@ export default function CombosPage() {
   }, [theme]);
 
   const toggleTheme = () => setTheme(prev => (prev === 'light' ? 'dark' : 'light'));
+
+  // Dynamic Combos từ Database (hỗ trợ Admin/NCC thêm combo mới)
+  const [dynamicPlans, setDynamicPlans] = useState<typeof subPlans>(subPlans);
+
+  useEffect(() => {
+    fetch('http://localhost:5023/api/products?categoryId=5')
+      .then(res => res.json())
+      .then((products: any[]) => {
+        if (!Array.isArray(products)) return;
+        
+        // 1. Combo theo chương trình ưu đãi (comboType === 'program' & Active/Approved)
+        const programCombos = products.filter(p => p.comboType === 'program' && (p.status === 'Active' || p.status === 'Approved'));
+        const mappedProgramPlans = programCombos.map(p => ({
+          id: p.productId,
+          name: p.productName,
+          desc: p.description?.replace(/\[Tự chọn \d+ loại nông sản\]\s*/, '') || 'Gói combo nông sản ưu đãi chất lượng cao.',
+          price: p.price.toLocaleString('vi-VN') + '₫',
+          rawPrice: p.price,
+          badge: p.discountPercent ? `Ưu đãi -${p.discountPercent}%` : 'Đặc biệt',
+          supplierId: p.supplierId || 1,
+          supplierName: p.supplierId === 2 ? 'Hợp tác xã Rau Sạch Miền Tây' : (p.supplierId === 3 ? 'Hợp tác xã Trái Cây Việt' : (p.supplierId === 4 ? 'HTX Nông Nghiệp An Phú' : 'Hợp tác xã Nông Sản Đà Lạt')),
+          imageUrl: p.productImages?.[0]?.imageUrl || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600&auto=format&fit=crop&q=80',
+          features: [
+            'Nông sản đạt chuẩn VietGAP & Hữu cơ',
+            'Tự chọn các món tươi ngon cùng nhà cung cấp',
+            'Sơ chế và đóng gói khép kín tại trang trại',
+            'Giao xe lạnh tận bàn ăn theo khung giờ hẹn'
+          ],
+          sampleItems: ['Nông sản sạch theo chương trình ưu đãi']
+        }));
+
+        setDynamicPlans(prev => ({
+          ...prev,
+          combokhac: mappedProgramPlans
+        }));
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     const storedUser = localStorage.getItem('customer_user');
@@ -201,7 +259,7 @@ export default function CombosPage() {
       id: plan.id,
       name: plan.name,
       price: plan.price,
-      unit: subFreq === 'week' ? '/ Tuần' : '/ Tháng',
+      unit: subFreq === 'combotuan' ? '/ Tuần' : (subFreq === 'combothang' ? '/ Tháng' : '/ Gói'),
       category: 'Combo',
       cert: 'VietGAP & Hữu cơ',
       region: 'Đà Lạt & Mộc Châu',
@@ -299,22 +357,7 @@ export default function CombosPage() {
           </Link>
 
           {/* Ô tìm kiếm chuyển về trang sản phẩm */}
-          <div className="search-shell">
-            <input 
-              type="text" 
-              placeholder="Tìm kiếm sản phẩm, nông sản tươi..." 
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  const val = (e.target as HTMLInputElement).value;
-                  router.push(`/products?search=${encodeURIComponent(val)}`);
-                }
-              }}
-            />
-            <button className="go" onClick={() => router.push('/products')} aria-label="Tìm kiếm">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-              <span>Tìm</span>
-            </button>
-          </div>
+          <SearchBar />
 
           {/* Nhóm nút tác vụ Header */}
           <div className="header-actions">
@@ -507,7 +550,7 @@ export default function CombosPage() {
               Không còn lo lắng "Hôm nay ăn gì?", LÀNH tự động tuyển chọn rau củ quả tươi nhất từ vườn, đóng gói cẩn thận và giao tận cửa theo đúng lịch hẹn của bạn.
             </p>
 
-            {/* Toggle Chuyển đổi Tuần / Tháng */}
+            {/* Toggle Chuyển đổi 3 Nhóm Combo: Tuần / Tháng / Khác */}
             <div style={{
               display: 'inline-flex',
               backgroundColor: 'rgba(255, 255, 255, 0.15)',
@@ -515,45 +558,109 @@ export default function CombosPage() {
               borderRadius: '999px',
               marginTop: '24px',
               backdropFilter: 'blur(8px)',
-              border: '1px solid rgba(255, 255, 255, 0.2)'
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              flexWrap: 'wrap',
+              justifyContent: 'center',
+              gap: '4px'
             }}>
               <button
-                onClick={() => setSubFreq('week')}
+                onClick={() => setSubFreq('combotuan')}
                 style={{
-                  padding: '8px 24px',
+                  padding: '8px 22px',
                   borderRadius: '999px',
                   border: 'none',
-                  fontSize: '14px',
+                  fontSize: '13.5px',
                   fontWeight: '700',
                   cursor: 'pointer',
                   transition: 'all 0.2s',
-                  backgroundColor: subFreq === 'week' ? '#FFFFFF' : 'transparent',
-                  color: subFreq === 'week' ? 'var(--green-900)' : '#FFFFFF'
+                  backgroundColor: subFreq === 'combotuan' ? '#FFFFFF' : 'transparent',
+                  color: subFreq === 'combotuan' ? 'var(--green-900)' : '#FFFFFF'
                 }}
               >
-                Giao Theo Tuần
+                🥗 Combo Tuần
               </button>
               <button
-                onClick={() => setSubFreq('month')}
+                onClick={() => setSubFreq('combothang')}
                 style={{
-                  padding: '8px 24px',
+                  padding: '8px 22px',
                   borderRadius: '999px',
                   border: 'none',
-                  fontSize: '14px',
+                  fontSize: '13.5px',
                   fontWeight: '700',
                   cursor: 'pointer',
                   transition: 'all 0.2s',
-                  backgroundColor: subFreq === 'month' ? '#FFFFFF' : 'transparent',
-                  color: subFreq === 'month' ? 'var(--green-900)' : '#FFFFFF'
+                  backgroundColor: subFreq === 'combothang' ? '#FFFFFF' : 'transparent',
+                  color: subFreq === 'combothang' ? 'var(--green-900)' : '#FFFFFF'
                 }}
               >
-                Gói Trọn Tháng (Tiết kiệm hơn)
+                📅 Combo Tháng (Tiết kiệm 18%)
+              </button>
+              <button
+                onClick={() => setSubFreq('combokhac')}
+                style={{
+                  padding: '8px 22px',
+                  borderRadius: '999px',
+                  border: 'none',
+                  fontSize: '13.5px',
+                  fontWeight: '700',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  backgroundColor: subFreq === 'combokhac' ? '#FFFFFF' : 'transparent',
+                  color: subFreq === 'combokhac' ? 'var(--green-900)' : '#FFFFFF'
+                }}
+              >
+                ✨ Combo Khác
               </button>
             </div>
           </div>
         </div>
 
         <div className="wrap">
+          {/* ── BỘ LỌC THEO NHÀ CUNG CẤP TÙY SỞ THÍCH KHÁCH HÀNG ── */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '10px',
+            flexWrap: 'wrap',
+            marginBottom: '32px',
+            padding: '14px 20px',
+            backgroundColor: 'var(--surface)',
+            borderRadius: '14px',
+            border: '1px solid var(--line)',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+          }}>
+            <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--ink)' }}>
+              🏢 Chọn Nhà Cung Cấp Yêu Thích:
+            </span>
+            {[
+              { key: 'all', label: 'Tất Cả Đối Tác HTX' },
+              { key: '1', label: 'HTX Nông Sản Đà Lạt' },
+              { key: '2', label: 'HTX Rau Sạch Miền Tây' },
+              { key: '3', label: 'HTX Trái Cây Việt' },
+              { key: '4', label: 'HTX Nông Nghiệp An Phú' }
+            ].map(s => (
+              <button
+                key={s.key}
+                type="button"
+                onClick={() => setSupplierFilter(s.key)}
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: '999px',
+                  border: supplierFilter === s.key ? '1.5px solid var(--green-700)' : '1px solid var(--line)',
+                  backgroundColor: supplierFilter === s.key ? 'var(--green-100)' : '#ffffff',
+                  color: supplierFilter === s.key ? 'var(--green-900)' : 'var(--ink-soft)',
+                  fontSize: '12.5px',
+                  fontWeight: supplierFilter === s.key ? '700' : '500',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}
+              >
+                {s.label}
+              </button>
+            ))}
+          </div>
+
           {/* Lưới các gói Combo */}
           <div style={{
             display: 'grid',
@@ -561,7 +668,34 @@ export default function CombosPage() {
             gap: '28px',
             marginBottom: '48px'
           }}>
-            {subPlans[subFreq].map((plan) => (
+            {(() => {
+              const currentList = (dynamicPlans[subFreq] || []).filter(plan => {
+                if (supplierFilter === 'all') return true;
+                return String(plan.supplierId) === supplierFilter;
+              });
+
+              if (currentList.length === 0) {
+                return (
+                  <div style={{
+                    gridColumn: '1 / -1',
+                    textAlign: 'center',
+                    padding: '64px 20px',
+                    backgroundColor: 'var(--surface)',
+                    borderRadius: '20px',
+                    border: '1.5px dashed var(--line)'
+                  }}>
+                    <div style={{ fontSize: '48px', marginBottom: '12px' }}>🌱</div>
+                    <h3 style={{ fontSize: '18px', fontWeight: '700', color: 'var(--ink)' }}>
+                      Hiện chưa có gói combo nào trong mục này
+                    </h3>
+                    <p style={{ fontSize: '14px', color: 'var(--ink-soft)', maxWidth: '460px', margin: '8px auto 0', lineHeight: '1.6' }}>
+                      Các gói combo ưu đãi mới sẽ sớm được cập nhật. Quý khách vui lòng chọn các gói Combo Tuần hoặc Combo Tháng đang có sẵn!
+                    </p>
+                  </div>
+                );
+              }
+
+              return currentList.map((plan) => (
               <div
                 key={plan.id}
                 style={{
@@ -616,7 +750,26 @@ export default function CombosPage() {
 
                 {/* Nội dung chi tiết */}
                 <div style={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column' }}>
-                  <p style={{ fontSize: '13.5px', color: 'var(--ink-soft)', margin: '0 0 16px 0', minHeight: '38px' }}>
+                  {/* Tag Nhà cung cấp phụ trách */}
+                  <div style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    backgroundColor: '#F0FDF4',
+                    color: '#166534',
+                    fontSize: '12px',
+                    fontWeight: '600',
+                    padding: '4px 10px',
+                    borderRadius: '6px',
+                    marginBottom: '12px',
+                    border: '1px solid #BBF7D0',
+                    alignSelf: 'flex-start'
+                  }}>
+                    <span>🏢</span>
+                    <span>{plan.supplierName}</span>
+                  </div>
+
+                  <p style={{ fontSize: '13.5px', color: 'var(--ink-soft)', margin: '0 0 16px 0', minHeight: '38px', lineHeight: '1.5' }}>
                     {plan.desc}
                   </p>
 
@@ -624,8 +777,8 @@ export default function CombosPage() {
                     <span style={{ fontSize: '28px', fontWeight: '800', color: 'var(--green-900)' }}>
                       {plan.price}
                     </span>
-                    <span style={{ fontSize: '13px', color: 'var(--ink-soft)' }}>
-                      {subFreq === 'week' ? ' / tuần' : ' / tháng (4 lần giao)'}
+                    <span style={{ fontSize: '13px', color: 'var(--ink-soft)', marginLeft: '6px' }}>
+                      {subFreq === 'combotuan' ? '/ tuần (1 lần giao)' : (subFreq === 'combothang' ? '/ tháng (4 lần giao)' : '/ gói chương trình')}
                     </span>
                   </div>
 
@@ -652,61 +805,43 @@ export default function CombosPage() {
                     marginBottom: '20px',
                     fontSize: '12.5px'
                   }}>
-                    <div style={{ fontWeight: '700', color: 'var(--ink)', marginBottom: '6px' }}>Thành phần dự kiến:</div>
+                    <div style={{ fontWeight: '700', color: 'var(--ink)', marginBottom: '6px' }}>Thành phần tiêu biểu:</div>
                     <div style={{ color: 'var(--ink-soft)', lineHeight: '1.5' }}>
                       {plan.sampleItems.join(' · ')}
                     </div>
                   </div>
 
-                  {/* Nhóm nút tác vụ: Xem chi tiết & Đặt gói */}
-                  <div style={{ display: 'flex', gap: '10px' }}>
+                  {/* Nút tác vụ: Chỉ 1 nút duy nhất Đặt Combo Này (chuyển thẳng vào trang chi tiết để chọn NCC & nông sản) */}
+                  <div>
                     <Link
                       href={`/combos/${plan.id}`}
                       style={{
-                        flex: 1,
+                        width: '100%',
                         display: 'inline-flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        padding: '11px 14px',
-                        borderRadius: '8px',
-                        border: '1.5px solid var(--green-700)',
-                        backgroundColor: '#ffffff',
-                        color: 'var(--green-700)',
-                        fontWeight: '700',
-                        fontSize: '13px',
-                        textDecoration: 'none',
-                        transition: 'all 0.2s'
-                      }}
-                    >
-                      Xem chi tiết
-                    </Link>
-
-                    <button
-                      onClick={() => handleAddComboToCart(plan)}
-                      style={{
-                        flex: 1.2,
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        padding: '11px 16px',
-                        borderRadius: '8px',
+                        gap: '8px',
+                        padding: '13px 20px',
+                        borderRadius: '10px',
                         border: 'none',
                         backgroundColor: 'var(--green-700)',
                         color: '#ffffff',
                         fontWeight: '700',
-                        fontSize: '13px',
+                        fontSize: '14px',
+                        textDecoration: 'none',
                         cursor: 'pointer',
-                        boxShadow: '0 2px 8px rgba(46,125,50,0.2)',
-                        transition: 'all 0.2s'
+                        transition: 'all 0.2s',
+                        boxShadow: '0 4px 12px rgba(46, 125, 50, 0.2)'
                       }}
                     >
-                      Đặt combo
-                    </button>
+                      <span>Chọn Nông Sản &amp; Đặt Combo &rarr;</span>
+                    </Link>
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
+            ));
+          })()}
+        </div>
 
           {/* Phần Cam kết & Câu hỏi thường gặp */}
           <div style={{

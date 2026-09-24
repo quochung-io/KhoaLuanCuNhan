@@ -16,7 +16,7 @@ public class ReviewsController : ControllerBase
         _context = context;
     }
 
-    // DTO cho yêu cầu tạo đánh giá mới
+    // DTO cho yêu cầu tạo đánh giá mới hoặc trả lời đánh giá
     public class CreateReviewRequest
     {
         public long ProductId { get; set; }
@@ -27,6 +27,15 @@ public class ReviewsController : ControllerBase
         public int Rating { get; set; } = 5;
         public string? Comment { get; set; }
         public List<string>? ImageUrls { get; set; }
+        public long? ParentReviewId { get; set; } // Nếu có thì đây là câu trả lời (Reply)
+    }
+
+    // DTO cho yêu cầu trả lời đánh giá
+    public class ReplyReviewRequest
+    {
+        public long? CustomerId { get; set; }
+        public string? CustomerName { get; set; }
+        public string Comment { get; set; } = null!;
     }
 
     // DTO cho yêu cầu chỉnh sửa đánh giá
@@ -62,11 +71,13 @@ public class ReviewsController : ControllerBase
                 return NotFound(new { message = $"Không tìm thấy sản phẩm có ID = {productId}" });
             }
 
-            // Lấy tất cả đánh giá đã duyệt của sản phẩm này để tính toán tổng quan
+            // Lấy tất cả đánh giá gốc (ParentReviewId == null) đã duyệt của sản phẩm này để tính toán tổng quan
             var allReviewsQuery = _context.Reviews
                 .Include(r => r.Customer)
                 .Include(r => r.ReviewImages)
-                .Where(r => r.ProductId == productId && (r.Status == "Approved" || string.IsNullOrEmpty(r.Status)));
+                .Include(r => r.Replies)
+                    .ThenInclude(rep => rep.Customer)
+                .Where(r => r.ProductId == productId && r.ParentReviewId == null && (r.Status == "Approved" || string.IsNullOrEmpty(r.Status)));
 
             var allReviews = await allReviewsQuery.ToListAsync();
 
@@ -138,6 +149,8 @@ public class ReviewsController : ControllerBase
                     reviewId = r.ReviewId,
                     customerId = r.CustomerId,
                     customerName = r.Customer != null ? r.Customer.FullName : "Khách hàng LÀNH Farm",
+                    userRole = r.Customer != null ? (r.Customer.RoleId == 1 ? "Admin" : (r.Customer.RoleId == 2 ? "Supplier" : "Customer")) : "Customer",
+                    roleLabel = r.Customer != null ? (r.Customer.RoleId == 1 ? "🛡️ Quản trị viên" : (r.Customer.RoleId == 2 ? "🏢 Nhà cung cấp" : "👤 Khách hàng")) : "👤 Khách hàng",
                     rating = r.Rating,
                     comment = r.Comment ?? "",
                     createdAt = r.CreatedAt.HasValue ? r.CreatedAt.Value.ToString("dd/MM/yyyy HH:mm") : "Vừa xong",
@@ -147,7 +160,22 @@ public class ReviewsController : ControllerBase
                     reportCount = r.ReportCount,
                     isPurchased = r.IsPurchased,
                     status = r.Status,
-                    images = r.ReviewImages.Select(img => img.ImageUrl).ToList()
+                    images = r.ReviewImages.Select(img => img.ImageUrl).ToList(),
+                    replies = r.Replies
+                        .Where(rep => rep.Status == "Approved" || string.IsNullOrEmpty(rep.Status))
+                        .OrderBy(rep => rep.CreatedAt)
+                        .Select(rep => new
+                        {
+                            reviewId = rep.ReviewId,
+                            customerId = rep.CustomerId,
+                            customerName = rep.Customer != null ? rep.Customer.FullName : "Thành viên LÀNH",
+                            userRole = rep.Customer != null ? (rep.Customer.RoleId == 1 ? "Admin" : (rep.Customer.RoleId == 2 ? "Supplier" : "Customer")) : "Customer",
+                            roleLabel = rep.Customer != null ? (rep.Customer.RoleId == 1 ? "🛡️ Quản trị viên" : (rep.Customer.RoleId == 2 ? "🏢 Nhà cung cấp" : "👤 Khách hàng")) : "👤 Khách hàng",
+                            comment = rep.Comment ?? "",
+                            createdAt = rep.CreatedAt.HasValue ? rep.CreatedAt.Value.ToString("dd/MM/yyyy HH:mm") : "Vừa xong",
+                            helpfulCount = rep.HelpfulCount,
+                            isHelpfulByMe = userLikedIds.Contains(rep.ReviewId)
+                        }).ToList()
                 })
                 .ToList();
 
@@ -175,7 +203,7 @@ public class ReviewsController : ControllerBase
         }
     }
 
-    // GET: api/reviews/featured (Các đánh giá thực tế cho trang chủ, hỗ trợ limit hoặc lấy full)
+    // GET: api/reviews/featured (Các đánh giá thực tế cho trang chủ, hỗ trợ limit hoặc lấy full kèm replies)
     [HttpGet("featured")]
     public async Task<IActionResult> GetFeaturedReviews([FromQuery] int limit = 0, [FromQuery] long? currentUserId = null)
     {
@@ -195,7 +223,9 @@ public class ReviewsController : ControllerBase
                 .Include(r => r.Customer)
                 .Include(r => r.Product)
                 .Include(r => r.ReviewImages)
-                .Where(r => r.Status == "Approved" || string.IsNullOrEmpty(r.Status))
+                .Include(r => r.Replies)
+                    .ThenInclude(rep => rep.Customer)
+                .Where(r => r.ParentReviewId == null && (r.Status == "Approved" || string.IsNullOrEmpty(r.Status)))
                 .OrderByDescending(r => r.CreatedAt);
 
             var listQuery = limit > 0 ? query.Take(limit) : query;
@@ -205,6 +235,8 @@ public class ReviewsController : ControllerBase
                 {
                     id = r.ReviewId,
                     name = r.Customer != null ? r.Customer.FullName : "Khách hàng LÀNH Farm",
+                    userRole = r.Customer != null ? (r.Customer.RoleId == 1 ? "Admin" : (r.Customer.RoleId == 2 ? "Supplier" : "Customer")) : "Customer",
+                    roleLabel = r.Customer != null ? (r.Customer.RoleId == 1 ? "🛡️ Quản trị viên" : (r.Customer.RoleId == 2 ? "🏢 Nhà cung cấp" : "👤 Khách hàng")) : "👤 Khách hàng",
                     role = r.Product != null ? $"Đã mua {r.Product.ProductName}" : "Khách mua hàng đã xác thực",
                     text = r.Comment ?? "",
                     rating = r.Rating,
@@ -214,7 +246,25 @@ public class ReviewsController : ControllerBase
                     productId = r.ProductId,
                     helpfulCount = r.HelpfulCount,
                     isHelpfulByMe = userLikedIds.Contains(r.ReviewId),
-                    images = r.ReviewImages.Select(img => img.ImageUrl).ToList()
+                    images = r.ReviewImages.Select(img => img.ImageUrl).ToList(),
+                    replies = r.Replies
+                        .Where(rep => rep.Status == "Approved" || string.IsNullOrEmpty(rep.Status))
+                        .OrderBy(rep => rep.CreatedAt)
+                        .Select(rep => new
+                        {
+                            id = rep.ReviewId,
+                            reviewId = rep.ReviewId,
+                            name = rep.Customer != null ? rep.Customer.FullName : "Thành viên LÀNH",
+                            customerName = rep.Customer != null ? rep.Customer.FullName : "Thành viên LÀNH",
+                            userRole = rep.Customer != null ? (rep.Customer.RoleId == 1 ? "Admin" : (rep.Customer.RoleId == 2 ? "Supplier" : "Customer")) : "Customer",
+                            roleLabel = rep.Customer != null ? (rep.Customer.RoleId == 1 ? "🛡️ Quản trị viên" : (rep.Customer.RoleId == 2 ? "🏢 Nhà cung cấp" : "👤 Khách hàng")) : "👤 Khách hàng",
+                            text = rep.Comment ?? "",
+                            comment = rep.Comment ?? "",
+                            date = rep.CreatedAt.HasValue ? rep.CreatedAt.Value.ToString("dd/MM/yyyy HH:mm") : "Vừa xong",
+                            createdAt = rep.CreatedAt.HasValue ? rep.CreatedAt.Value.ToString("dd/MM/yyyy HH:mm") : "Vừa xong",
+                            helpfulCount = rep.HelpfulCount,
+                            isHelpfulByMe = userLikedIds.Contains(rep.ReviewId)
+                        }).ToList()
                 })
                 .ToListAsync();
 
@@ -334,7 +384,8 @@ public class ReviewsController : ControllerBase
                 ReportCount = 0,
                 IsPurchased = isPurchased,
                 Status = "Approved",
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                ParentReviewId = req.ParentReviewId
             };
 
             _context.Reviews.Add(newReview);
@@ -357,16 +408,19 @@ public class ReviewsController : ControllerBase
             var customer = await _context.Users.FindAsync(customerId);
             return Ok(new
             {
-                message = "Đánh giá thành công!",
+                message = req.ParentReviewId.HasValue ? "Phản hồi đánh giá thành công!" : "Đánh giá thành công!",
                 review = new
                 {
                     reviewId = newReview.ReviewId,
                     customerId = newReview.CustomerId,
                     customerName = customer != null ? customer.FullName : (req.CustomerName ?? "Khách hàng"),
+                    userRole = customer != null ? (customer.RoleId == 1 ? "Admin" : (customer.RoleId == 2 ? "Supplier" : "Customer")) : "Customer",
+                    roleLabel = customer != null ? (customer.RoleId == 1 ? "🛡️ Quản trị viên" : (customer.RoleId == 2 ? "🏢 Nhà cung cấp" : "👤 Khách hàng")) : "👤 Khách hàng",
                     rating = newReview.Rating,
                     comment = newReview.Comment,
                     createdAt = DateTime.UtcNow.ToString("dd/MM/yyyy HH:mm"),
                     isPurchased = newReview.IsPurchased,
+                    parentReviewId = newReview.ParentReviewId,
                     helpfulCount = newReview.HelpfulCount,
                     status = newReview.Status,
                     images = req.ImageUrls ?? new List<string>()
@@ -376,6 +430,77 @@ public class ReviewsController : ControllerBase
         catch (Exception ex)
         {
             return StatusCode(500, new { message = $"Lỗi khi lưu đánh giá: {ex.Message}" });
+        }
+    }
+
+    // POST: api/reviews/{id}/reply (Trả lời / Phản hồi 1 đánh giá)
+    [HttpPost("{id}/reply")]
+    public async Task<IActionResult> ReplyToReview(long id, [FromBody] ReplyReviewRequest req)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(req.Comment))
+            {
+                return BadRequest(new { message = "Nội dung phản hồi không được để trống!" });
+            }
+
+            var parentReview = await _context.Reviews.FindAsync(id);
+            if (parentReview == null)
+            {
+                return NotFound(new { message = $"Không tìm thấy đánh giá có ID = {id} để trả lời!" });
+            }
+
+            long customerId = req.CustomerId ?? 0;
+            if (customerId <= 0)
+            {
+                return BadRequest(new { message = "Vui lòng đăng nhập tài khoản để gửi phản hồi!" });
+            }
+
+            var user = await _context.Users.FindAsync(customerId);
+            if (user == null)
+            {
+                return NotFound(new { message = "Tài khoản người dùng không tồn tại!" });
+            }
+
+            var reply = new Review
+            {
+                ProductId = parentReview.ProductId,
+                CustomerId = customerId,
+                ParentReviewId = id,
+                Rating = 5,
+                Comment = req.Comment.Trim(),
+                HelpfulCount = 0,
+                ReportCount = 0,
+                IsPurchased = false,
+                Status = "Approved",
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _context.Reviews.Add(reply);
+            await _context.SaveChangesAsync();
+
+            return Ok(new
+            {
+                message = "Phản hồi đánh giá thành công!",
+                reply = new
+                {
+                    id = reply.ReviewId,
+                    reviewId = reply.ReviewId,
+                    name = user.FullName,
+                    userRole = user.RoleId == 1 ? "Admin" : (user.RoleId == 2 ? "Supplier" : "Customer"),
+                    roleLabel = user.RoleId == 1 ? "🛡️ Quản trị viên" : (user.RoleId == 2 ? "🏢 Nhà cung cấp" : "👤 Khách hàng"),
+                    text = reply.Comment,
+                    comment = reply.Comment,
+                    date = reply.CreatedAt.Value.ToString("dd/MM/yyyy HH:mm"),
+                    createdAt = reply.CreatedAt.Value.ToString("dd/MM/yyyy HH:mm"),
+                    helpfulCount = reply.HelpfulCount,
+                    isHelpfulByMe = false
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = $"Lỗi khi lưu phản hồi: {ex.Message}" });
         }
     }
 
@@ -500,13 +625,14 @@ public class ReviewsController : ControllerBase
             bool liked = false;
             if (existingVote != null)
             {
-                // Đã like -> Thực hiện Unlike (Hủy like)
+                // Đã like -> Thực hiện Unlike (Hủy like, giảm 1 lượt)
                 _context.ReviewHelpfulVotes.Remove(existingVote);
+                review.HelpfulCount = Math.Max(0, review.HelpfulCount - 1);
                 liked = false;
             }
             else
             {
-                // Chưa like -> Thực hiện Like (Thêm vote)
+                // Chưa like -> Thực hiện Like (Thêm vote, tăng 1 lượt)
                 var newVote = new ReviewHelpfulVote
                 {
                     ReviewId = id,
@@ -514,21 +640,17 @@ public class ReviewsController : ControllerBase
                     CreatedAt = DateTime.UtcNow
                 };
                 _context.ReviewHelpfulVotes.Add(newVote);
+                review.HelpfulCount += 1;
                 liked = true;
             }
 
-            await _context.SaveChangesAsync();
-
-            // Tính toán lại chính xác số lượt hữu ích từ cơ sở dữ liệu
-            int actualHelpfulCount = await _context.ReviewHelpfulVotes.CountAsync(v => v.ReviewId == id);
-            review.HelpfulCount = actualHelpfulCount;
             await _context.SaveChangesAsync();
 
             return Ok(new
             {
                 message = liked ? "Cảm ơn bạn đã ghi nhận đánh giá hữu ích!" : "Đã hủy bỏ thích hữu ích.",
                 liked,
-                helpfulCount = actualHelpfulCount
+                helpfulCount = review.HelpfulCount
             });
         }
         catch (Exception ex)
@@ -560,3 +682,4 @@ public class ReviewsController : ControllerBase
         }
     }
 }
+

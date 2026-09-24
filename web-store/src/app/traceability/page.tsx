@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import SearchBar from '@/components/layout/SearchBar';
 
 // Định nghĩa kiểu dữ liệu Lô hàng thật từ Database
 interface DbProduct {
@@ -373,22 +374,7 @@ function TraceabilityInner() {
             </div>
           </Link>
 
-          <div className="search-shell">
-            <input 
-              type="text" 
-              placeholder="Tìm kiếm nông sản, mã lô, tên vườn..." 
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  const val = (e.target as HTMLInputElement).value;
-                  router.push(`/products?search=${encodeURIComponent(val)}`);
-                }
-              }}
-            />
-            <button className="go" onClick={() => router.push('/products')} aria-label="Tìm kiếm">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-              <span>Tìm</span>
-            </button>
-          </div>
+          <SearchBar placeholder="Tìm kiếm nông sản, mã lô, tên vườn..." />
 
           <div className="header-actions">
             {/* Tài khoản */}

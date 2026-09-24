@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import SearchBar from '@/components/layout/SearchBar';
 import { VIETNAM_PROVINCES, fetchWithTimeout, ProvinceItem, DistrictItem, WardItem } from '@/constants/vietnamProvinces';
 
 type Product = {
@@ -654,22 +655,7 @@ export default function CheckoutPage() {
             </div>
           </Link>
 
-          <div className="search-shell">
-            <input 
-              type="text" 
-              placeholder="Tìm kiếm nông sản sạch..." 
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  const val = (e.target as HTMLInputElement).value;
-                  router.push(`/products?search=${encodeURIComponent(val)}`);
-                }
-              }}
-            />
-            <button className="go" onClick={() => router.push('/products')} aria-label="Tìm kiếm">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-              <span>Tìm</span>
-            </button>
-          </div>
+          <SearchBar placeholder="Tìm kiếm nông sản sạch..." />
 
           <div className="header-actions">
             {/* Tài khoản */}

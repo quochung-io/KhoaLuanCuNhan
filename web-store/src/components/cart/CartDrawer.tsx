@@ -104,6 +104,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
               </div>
             ))
           )}
+        </div>
         <div className="drawer-foot">
           <div className="row"><span>Tạm tính</span><span>{toVND(totalCart)}</span></div>
           <button 
