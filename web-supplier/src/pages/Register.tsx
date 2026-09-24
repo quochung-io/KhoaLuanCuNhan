@@ -6,6 +6,7 @@ import {
   Button, 
   Steps, 
   Select, 
+  AutoComplete,
   InputNumber, 
   Typography, 
   Alert, 
@@ -24,6 +25,7 @@ import {
 } from '@ant-design/icons';
 import { useNavigate, Link } from 'react-router-dom';
 import axiosClient from '../config/axiosClient';
+import { GROUPED_PROVINCES, removeVietnameseTones } from '../constants/vietnamProvinces';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -42,6 +44,22 @@ export const Register: React.FC = () => {
   const hasLowercase = /[a-z]/.test(passwordValue);
   const hasNumber = /[0-9]/.test(passwordValue);
   const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]/.test(passwordValue);
+
+  const selectedProvince = Form.useWatch('province', form) || '';
+
+  const getDistrictPlaceholder = (prov: string) => {
+    if (!prov) return 'Ví dụ: TP. Đà Lạt, Đơn Dương, Lạc Dương...';
+    if (prov.includes('Lâm Đồng')) return 'Ví dụ: TP. Đà Lạt, TP. Bảo Lộc, Đơn Dương, Đức Trọng, Lạc Dương...';
+    if (prov.includes('Hồ Chí Minh') || prov.includes('HCM')) return 'Ví dụ: Quận 1, TP. Thủ Đức, Bình Chánh, Củ Chi, Hóc Môn...';
+    if (prov.includes('Hà Nội')) return 'Ví dụ: Hoàn Kiếm, Ba Đình, Cầu Giấy, Đông Anh, Gia Lâm...';
+    if (prov.includes('Đà Nẵng')) return 'Ví dụ: Hải Châu, Sơn Trà, Ngũ Hành Sơn, Hòa Vang...';
+    if (prov.includes('Cần Thơ')) return 'Ví dụ: Ninh Kiều, Cái Răng, Bình Thủy, Phong Điền...';
+    if (prov.includes('Hải Phòng')) return 'Ví dụ: Hồng Bàng, Ngô Quyền, Lê Chân, Thủy Nguyên...';
+    if (prov.includes('Đồng Nai')) return 'Ví dụ: TP. Biên Hòa, Long Khánh, Trảng Bom, Long Thành...';
+    if (prov.includes('Đắk Lắk')) return 'Ví dụ: TP. Buôn Ma Thuột, Krông Pắk, Cư M\'gar, Buôn Đôn...';
+    if (prov.includes('Đồng Tháp')) return 'Ví dụ: TP. Cao Lãnh, TP. Sa Đéc, Lai Vung, Châu Thành...';
+    return 'Ví dụ: Thành phố / Thị xã / Quận / Huyện...';
+  };
 
   const handleNext = async () => {
     try {
@@ -442,19 +460,63 @@ export const Register: React.FC = () => {
               </Form.Item>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <Form.Item name="province" label="Tỉnh / Thành phố" rules={[{ required: true }]}>
-                  <Select placeholder="Chọn Tỉnh/Thành">
-                    <Select.Option value="Lâm Đồng">Lâm Đồng</Select.Option>
-                    <Select.Option value="Đồng Tháp">Đồng Tháp</Select.Option>
-                    <Select.Option value="Đồng Nai">Đồng Nai</Select.Option>
-                    <Select.Option value="TP. Hồ Chí Minh">TP. Hồ Chí Minh</Select.Option>
-                    <Select.Option value="Đắk Lắk">Đắk Lắk</Select.Option>
-                  </Select>
+                <Form.Item 
+                  name="province" 
+                  label="Tỉnh / Thành phố" 
+                  rules={[{ required: true, message: 'Vui lòng chọn hoặc nhập Tỉnh/Thành phố!' }]}
+                  tooltip="Hệ thống hỗ trợ toàn bộ 63 Tỉnh/Thành phố mới nhất của Việt Nam. Bạn có thể chọn nhanh từ danh mục hoặc gõ tìm kiếm trực tiếp."
+                >
+                  <AutoComplete
+                    options={GROUPED_PROVINCES}
+                    placeholder="Gõ tìm hoặc chọn Tỉnh/Thành (đầy đủ 63 tỉnh thành)"
+                    filterOption={(inputValue, option: any) => {
+                      if (!inputValue) return true;
+                      const input = removeVietnameseTones(inputValue.trim().toLowerCase());
+                      const val = removeVietnameseTones(String(option?.value || '').toLowerCase());
+                      const label = removeVietnameseTones(String(option?.label || '').toLowerCase());
+                      return val.includes(input) || label.includes(input);
+                    }}
+                    allowClear
+                  >
+                    <Input prefix={<EnvironmentOutlined style={{ color: '#52c41a' }} />} />
+                  </AutoComplete>
                 </Form.Item>
 
-                <Form.Item name="district" label="Quận / Huyện" rules={[{ required: true }]}>
-                  <Input placeholder="Ví dụ: TP. Đà Lạt, Đơn Dương, Lạc Dương..." />
+                <Form.Item 
+                  name="district" 
+                  label="Quận / Huyện" 
+                  rules={[{ required: true, message: 'Vui lòng nhập Quận/Huyện!' }]}
+                >
+                  <Input 
+                    placeholder={getDistrictPlaceholder(selectedProvince)} 
+                  />
                 </Form.Item>
+              </div>
+
+              {/* Gợi ý chọn nhanh các trung tâm nông sản & vùng trọng điểm */}
+              <div style={{ marginTop: -8, marginBottom: 14 }}>
+                <span style={{ fontSize: 12, color: '#64748b', marginRight: 6 }}>📍 Chọn nhanh:</span>
+                {[
+                  'Lâm Đồng',
+                  'TP. Hồ Chí Minh',
+                  'Hà Nội',
+                  'Đắk Lắk',
+                  'Đồng Nai',
+                  'Đồng Tháp',
+                  'Bình Dương',
+                  'Cần Thơ',
+                  'Hải Phòng',
+                  'Đà Nẵng'
+                ].map((prov) => (
+                  <Tag 
+                    key={prov} 
+                    color={selectedProvince === prov ? 'green' : 'default'}
+                    style={{ cursor: 'pointer', marginBottom: 4 }}
+                    onClick={() => form.setFieldsValue({ province: prov })}
+                  >
+                    {prov}
+                  </Tag>
+                ))}
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
