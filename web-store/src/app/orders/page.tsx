@@ -104,42 +104,58 @@ export default function CustomerOrdersPage() {
       return {
         key: 'cancelled',
         label: 'Đã hủy',
-        bgColor: '#FFEBEE',
-        color: '#C62828'
+        bgColor: '#FEE2E2',
+        color: '#DC2626'
+      };
+    }
+    if (oStatus === 'returned') {
+      return {
+        key: 'returned',
+        label: 'Trả hàng / Hoàn tiền',
+        bgColor: '#FFEDD5',
+        color: '#C2410C'
       };
     }
     if (oStatus === 'delivered' || oStatus === 'completed') {
       return {
         key: 'completed',
         label: 'Hoàn tất',
-        bgColor: '#E8F5E9',
-        color: '#2E7D32'
+        bgColor: '#DCFCE7',
+        color: '#15803D'
       };
     }
     if (oStatus === 'shipping') {
       return {
         key: 'shipping',
         label: 'Đang giao hàng',
-        bgColor: '#E3F2FD',
-        color: '#0D47A1'
+        bgColor: '#E0F2FE',
+        color: '#0284C7'
+      };
+    }
+    if (oStatus === 'confirmed') {
+      return {
+        key: 'confirmed',
+        label: 'Đã xác nhận & Đóng gói',
+        bgColor: '#F3E8FF',
+        color: '#7E22CE'
       };
     }
     // Trạng thái chờ xử lý (pending)
-    if (isOnline && pStatus !== 'paid') {
+    if (isOnline && pStatus !== 'paid' && oStatus === 'pending') {
       const minsLeft = getRemainingMinutes(order.createdAt);
       if (minsLeft <= 0) {
         return {
           key: 'cancelled',
           label: 'Đã hủy (Quá hạn)',
-          bgColor: '#FFEBEE',
-          color: '#C62828'
+          bgColor: '#FEE2E2',
+          color: '#DC2626'
         };
       }
       return {
         key: 'unpaid',
         label: 'Chờ thanh toán',
-        bgColor: '#FFF3E0',
-        color: '#E65100'
+        bgColor: '#FEF3C7',
+        color: '#D97706'
       };
     }
     return {
@@ -148,6 +164,143 @@ export default function CustomerOrdersPage() {
       bgColor: '#FEF9C3',
       color: '#854D0E'
     };
+  };
+
+  // Thanh tiến trình đơn hàng trực quan (Order Stepper Progress Tracker)
+  const renderOrderProgressTracker = (order: Order) => {
+    const oStatus = order.orderStatus?.toLowerCase() || '';
+
+    if (oStatus === 'cancelled') {
+      return (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          padding: '8px 12px',
+          borderRadius: '8px',
+          backgroundColor: '#FEE2E2',
+          color: '#B91C1C',
+          fontSize: '12.5px',
+          fontWeight: '600'
+        }}>
+          <span>❌ Đơn hàng đã bị hủy và hoàn trả số lượng về kho.</span>
+        </div>
+      );
+    }
+
+    if (oStatus === 'returned') {
+      return (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          padding: '8px 12px',
+          borderRadius: '8px',
+          backgroundColor: '#FFEDD5',
+          color: '#C2410C',
+          fontSize: '12.5px',
+          fontWeight: '600'
+        }}>
+          <span>🔄 Đơn hàng đã hoàn tất thủ tục Trả hàng & Hoàn tiền.</span>
+        </div>
+      );
+    }
+
+    // 4 bước chuẩn: 1. Đặt đơn -> 2. Đã xác nhận -> 3. Đang giao hàng -> 4. Hoàn tất
+    let currentStepIndex = 0;
+    if (oStatus === 'confirmed') currentStepIndex = 1;
+    else if (oStatus === 'shipping') currentStepIndex = 2;
+    else if (oStatus === 'completed' || oStatus === 'delivered') currentStepIndex = 3;
+
+    const steps = [
+      { title: 'Đặt hàng', desc: 'Thành công' },
+      { title: 'Xác nhận', desc: 'Đóng gói' },
+      { title: 'Đang giao', desc: 'Vận chuyển' },
+      { title: 'Hoàn tất', desc: 'Đã nhận' },
+    ];
+
+    return (
+      <div style={{ margin: '10px 0 4px 0' }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          position: 'relative'
+        }}>
+          {/* Thanh ray nền */}
+          <div style={{
+            position: 'absolute',
+            top: '14px',
+            left: '20px',
+            right: '20px',
+            height: '3px',
+            backgroundColor: 'var(--line)',
+            zIndex: 1
+          }}>
+            {/* Thanh ray tiến độ màu xanh */}
+            <div style={{
+              height: '100%',
+              backgroundColor: '#16a34a',
+              width: `${(currentStepIndex / (steps.length - 1)) * 100}%`,
+              transition: 'width 0.4s ease'
+            }} />
+          </div>
+
+          {/* Các nút bước */}
+          {steps.map((st, idx) => {
+            const isPassed = idx <= currentStepIndex;
+            const isCurrent = idx === currentStepIndex;
+
+            return (
+              <div key={idx} style={{
+                position: 'relative',
+                zIndex: 2,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                textAlign: 'center',
+                minWidth: '65px'
+              }}>
+                <div style={{
+                  width: '28px',
+                  height: '28px',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '12px',
+                  fontWeight: '700',
+                  backgroundColor: isPassed ? '#16a34a' : 'var(--surface)',
+                  color: isPassed ? '#ffffff' : 'var(--ink-soft)',
+                  border: isPassed ? '2px solid #16a34a' : '2px solid var(--line)',
+                  boxShadow: isCurrent ? '0 0 0 4px rgba(22, 163, 74, 0.2)' : 'none',
+                  transition: 'all 0.2s ease'
+                }}>
+                  {isPassed ? (idx < currentStepIndex ? '✓' : idx + 1) : idx + 1}
+                </div>
+                <div style={{
+                  marginTop: '5px',
+                  fontSize: '12px',
+                  fontWeight: isPassed ? '700' : '500',
+                  color: isPassed ? 'var(--ink)' : 'var(--ink-soft)',
+                  whiteSpace: 'nowrap'
+                }}>
+                  {st.title}
+                </div>
+                <div style={{
+                  fontSize: '10.5px',
+                  color: isCurrent ? '#16a34a' : 'var(--ink-soft)',
+                  fontWeight: isCurrent ? '600' : 'normal',
+                  whiteSpace: 'nowrap'
+                }}>
+                  {st.desc}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
   };
 
   // In / Tải hóa đơn PDF chuẩn A4 (sử dụng hộp thoại in trình duyệt, cho phép Lưu thành PDF)
@@ -649,6 +802,27 @@ export default function CustomerOrdersPage() {
     if (storedCart) {
       setCart(JSON.parse(storedCart));
     }
+
+    // Tự động đồng bộ trạng thái đơn hàng thời gian thực từ Admin (10s/lần)
+    const syncInterval = setInterval(() => {
+      if (parsedUser?.userId) {
+        fetch(`http://localhost:5023/api/orders/customer/${parsedUser.userId}`)
+          .then(res => res.ok ? res.json() : null)
+          .then(data => {
+            if (Array.isArray(data)) {
+              setOrders(data);
+              setSelectedOrderDetails(prev => {
+                if (!prev) return null;
+                const updated = data.find((o: Order) => o.orderId === prev.orderId);
+                return updated || prev;
+              });
+            }
+          })
+          .catch(() => {});
+      }
+    }, 10000);
+
+    return () => clearInterval(syncInterval);
   }, [router]);
 
   const handleCustomerLogout = () => {
@@ -1006,9 +1180,11 @@ export default function CustomerOrdersPage() {
               { key: 'all', label: 'Tất cả đơn', count: orders.length },
               { key: 'unpaid', label: 'Chờ thanh toán', count: orders.filter(o => getOrderUnifiedStatus(o).key === 'unpaid').length },
               { key: 'pending', label: 'Chờ xác nhận', count: orders.filter(o => getOrderUnifiedStatus(o).key === 'pending').length },
+              { key: 'confirmed', label: 'Đã xác nhận', count: orders.filter(o => getOrderUnifiedStatus(o).key === 'confirmed').length },
               { key: 'shipping', label: 'Đang giao hàng', count: orders.filter(o => getOrderUnifiedStatus(o).key === 'shipping').length },
               { key: 'completed', label: 'Hoàn tất', count: orders.filter(o => getOrderUnifiedStatus(o).key === 'completed').length },
-              { key: 'cancelled', label: 'Đã hủy', count: orders.filter(o => getOrderUnifiedStatus(o).key === 'cancelled').length }
+              { key: 'cancelled', label: 'Đã hủy', count: orders.filter(o => getOrderUnifiedStatus(o).key === 'cancelled').length },
+              { key: 'returned', label: 'Trả hàng', count: orders.filter(o => getOrderUnifiedStatus(o).key === 'returned').length }
             ].map(tab => (
               <button
                 key={tab.key}
@@ -1212,6 +1388,11 @@ export default function CustomerOrdersPage() {
                           </span>
                         </div>
                       )}
+
+                      {/* Thanh Tiến Trình Đơn Hàng Đồng Bộ Realtime */}
+                      <div style={{ marginTop: '14px', paddingTop: '12px', borderTop: '1px dashed var(--line)' }}>
+                        {renderOrderProgressTracker(order)}
+                      </div>
                     </div>
 
                     {/* Hàng 3: Danh sách sản phẩm trong đơn */}
@@ -1880,6 +2061,14 @@ export default function CustomerOrdersPage() {
               >
                 ✕
               </button>
+            </div>
+
+            {/* Tiến độ xử lý đơn hàng */}
+            <div style={{ backgroundColor: 'var(--bg)', padding: '14px 18px', borderRadius: '10px', border: '1px solid var(--line)', marginBottom: '18px' }}>
+              <div style={{ fontSize: '12px', fontWeight: '700', color: 'var(--ink-soft)', textTransform: 'uppercase', marginBottom: '8px' }}>
+                Tiến trình xử lý đơn hàng
+              </div>
+              {renderOrderProgressTracker(selectedOrderDetails)}
             </div>
 
             {/* Thông tin nhận hàng & Thanh toán */}
