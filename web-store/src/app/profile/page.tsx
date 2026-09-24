@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { VIETNAM_PROVINCES, fetchWithTimeout } from '@/constants/vietnamProvinces';
 import { ProductQuickViewModal, QuickViewProductData } from '@/components/product/ProductQuickViewModal';
+import SearchBar from '@/components/layout/SearchBar';
 
 type CustomerAddress = {
   addressId: number;
@@ -844,78 +845,7 @@ export default function ProfilePage() {
           </Link>
 
           {/* Thanh tìm kiếm trung tâm */}
-          <div className="search-shell">
-            <input 
-              type="text" 
-              value={searchQuery}
-              onChange={(e) => handleSearchChange(e.target.value)}
-              onFocus={() => setShowSuggestions(true)}
-              onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-              placeholder="Bạn muốn tìm nông sản gì hôm nay? (Rau cải, bơ sáp, dâu tây...)" 
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') handleSearchSubmit();
-              }}
-            />
-            <button className="go" onClick={handleSearchSubmit} aria-label="Tìm kiếm">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-              <span>Tìm</span>
-            </button>
-            
-            {showSuggestions && suggestions.length > 0 && (
-              <ul className="suggestions-list" style={{
-                position: 'absolute',
-                top: 'calc(100% + 6px)',
-                left: 0,
-                right: 0,
-                backgroundColor: 'var(--surface)',
-                border: '1px solid var(--line)',
-                borderRadius: '10px',
-                listStyle: 'none',
-                padding: '6px 0',
-                margin: 0,
-                zIndex: 999,
-                boxShadow: '0 10px 25px rgba(0,0,0,0.12)',
-                textAlign: 'left'
-              }}>
-                <li style={{ padding: '6px 14px', fontSize: '11.5px', color: 'var(--ink-soft)', fontWeight: '700', textTransform: 'uppercase' }}>
-                  Gợi ý sản phẩm phù hợp
-                </li>
-                {suggestions.map((s, idx) => (
-                  <li 
-                    key={idx} 
-                    onClick={() => {
-                      setShowSuggestions(false);
-                      router.push(`/products/${s.productId}`);
-                    }}
-                    style={{
-                      padding: '10px 14px',
-                      cursor: 'pointer',
-                      borderBottom: '1px solid var(--line)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '12px',
-                      transition: 'background .15s'
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--green-100)')}
-                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
-                    onMouseDown={(e) => e.preventDefault()}
-                  >
-                    <img 
-                      src={s.imageUrl || 'https://via.placeholder.com/38'} 
-                      alt={s.productName} 
-                      style={{ width: '38px', height: '38px', objectFit: 'cover', borderRadius: '6px', border: '1px solid var(--line)' }} 
-                    />
-                    <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-                      <strong style={{ fontSize: '13.5px', color: 'var(--ink)' }}>{s.productName}</strong>
-                      <span style={{ fontSize: '12px', color: '#e53e3e', fontWeight: '700' }}>
-                        {s.price.toLocaleString('vi-VN')} đ<span style={{ color: 'var(--ink-soft)', fontWeight: 'normal', fontSize: '11px' }}> / {s.unit}</span>
-                      </span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+          <SearchBar />
 
           {/* Nhóm nút tác vụ Header */}
           <div className="header-actions">

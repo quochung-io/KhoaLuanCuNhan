@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ProductQuickViewModal, QuickViewProductData } from '@/components/product/ProductQuickViewModal';
+import SearchBar from '@/components/layout/SearchBar';
 
 interface OrderItem {
   orderItemId: number;
@@ -764,22 +765,7 @@ export default function CustomerOrdersPage() {
           </Link>
 
           {/* Ô tìm kiếm chuyển về trang sản phẩm */}
-          <div className="search-shell">
-            <input 
-              type="text" 
-              placeholder="Bạn muốn tìm nông sản gì hôm nay? (Rau cải, bơ sáp, dâu tây...)" 
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  const val = (e.target as HTMLInputElement).value;
-                  router.push(`/products?search=${encodeURIComponent(val)}`);
-                }
-              }}
-            />
-            <button className="go" onClick={() => router.push('/products')} aria-label="Tìm kiếm">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-              <span>Tìm</span>
-            </button>
-          </div>
+          <SearchBar />
 
           {/* Nhóm nút tác vụ Header */}
           <div className="header-actions">
@@ -1266,21 +1252,36 @@ export default function CustomerOrdersPage() {
                               />
                             </div>
                             <div>
-                              <strong 
-                                onClick={() => openProductQuickView(item.productId, item)}
-                                style={{
-                                  color: 'var(--ink)',
-                                  fontSize: '14px',
-                                  display: 'block',
-                                  cursor: 'pointer',
-                                  transition: 'color 0.15s ease'
-                                }}
-                                title="Nhấp để xem thông tin chi tiết sản phẩm"
-                                onMouseOver={e => (e.currentTarget.style.color = '#15803d')}
-                                onMouseOut={e => (e.currentTarget.style.color = 'var(--ink)')}
-                              >
-                                {item.product?.productName || 'Nông sản LÀNH Farm'}
-                              </strong>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                                <strong 
+                                  onClick={() => openProductQuickView(item.productId, item)}
+                                  style={{
+                                    color: 'var(--ink)',
+                                    fontSize: '14px',
+                                    display: 'block',
+                                    cursor: 'pointer',
+                                    transition: 'color 0.15s ease'
+                                  }}
+                                  title="Nhấp để xem thông tin chi tiết sản phẩm"
+                                  onMouseOver={e => (e.currentTarget.style.color = '#15803d')}
+                                  onMouseOut={e => (e.currentTarget.style.color = 'var(--ink)')}
+                                >
+                                  {item.product?.productName || 'Nông sản LÀNH Farm'}
+                                </strong>
+                                {(item.productId >= 901 && item.productId <= 906 || item.product?.productName?.toLowerCase().includes('combo')) && (
+                                  <span style={{
+                                    backgroundColor: '#FEF3C7',
+                                    color: '#92400E',
+                                    fontSize: '11px',
+                                    fontWeight: '700',
+                                    padding: '2px 8px',
+                                    borderRadius: '6px',
+                                    border: '1px solid #FDE68A'
+                                  }}>
+                                    📦 Combo Định Kỳ
+                                  </span>
+                                )}
+                              </div>
                               <div style={{ color: 'var(--ink-soft)', fontSize: '12.5px', marginTop: '3px' }}>
                                 Đơn giá: {toVND(item.unitPrice)} <span style={{ color: 'var(--ink-soft)' }}>/ {item.product?.unit || 'kg'}</span> • Số lượng: <strong style={{ color: 'var(--ink)' }}>{item.quantity}</strong>
                               </div>

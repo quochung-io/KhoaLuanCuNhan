@@ -18,6 +18,16 @@ public class Product
     public DateTime? CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
 
+    // Thông tin mở rộng cho Combo Định Kỳ & Combo Theo Chương Trình
+    public string? ComboType { get; set; } // 'periodic' | 'program'
+    public DateTime? StartDate { get; set; }
+    public DateTime? EndDate { get; set; }
+    public decimal? OriginalPrice { get; set; }
+    public int? DiscountPercent { get; set; }
+    public int? ProgramLimit { get; set; }
+    public int? SoldQuantity { get; set; } = 0;
+    public int? MaxSlots { get; set; } // Số lượng món tự chọn (3, 4, 5)
+
     public Category? Category { get; set; }
     
     public ICollection<ProductImage> ProductImages { get; set; } = new List<ProductImage>();

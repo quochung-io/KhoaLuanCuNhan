@@ -16,9 +16,15 @@ public class ProductsController : ControllerBase
         _context = context;
     }
 
-    // GET: api/products?search=...&minPrice=...&maxPrice=...
+    // GET: api/products?search=...&minPrice=...&maxPrice=...&comboType=...
     [HttpGet]
-    public async Task<IActionResult> GetAll([FromQuery] string? search, [FromQuery] decimal? minPrice, [FromQuery] decimal? maxPrice)
+    public async Task<IActionResult> GetAll(
+        [FromQuery] string? search, 
+        [FromQuery] decimal? minPrice, 
+        [FromQuery] decimal? maxPrice,
+        [FromQuery] int? supplierId,
+        [FromQuery] int? categoryId,
+        [FromQuery] string? comboType)
     {
         try
         {
@@ -27,6 +33,22 @@ public class ProductsController : ControllerBase
                 .Include(p => p.ProductImages)
                 .Include(p => p.ProductBatches)
                 .AsQueryable();
+
+            if (supplierId.HasValue)
+            {
+                query = query.Where(p => p.SupplierId == supplierId.Value);
+            }
+
+            if (categoryId.HasValue)
+            {
+                query = query.Where(p => p.CategoryId == categoryId.Value);
+            }
+
+            if (!string.IsNullOrWhiteSpace(comboType))
+            {
+                string ct = comboType.Trim().ToLower();
+                query = query.Where(p => p.ComboType != null && p.ComboType.ToLower() == ct);
+            }
 
             if (!string.IsNullOrWhiteSpace(search))
             {
@@ -205,6 +227,14 @@ public class ProductsController : ControllerBase
             existing.Unit = product.Unit;
             existing.Description = product.Description;
             existing.Status = product.Status;
+            existing.ComboType = product.ComboType;
+            existing.StartDate = product.StartDate;
+            existing.EndDate = product.EndDate;
+            existing.OriginalPrice = product.OriginalPrice;
+            existing.DiscountPercent = product.DiscountPercent;
+            existing.ProgramLimit = product.ProgramLimit;
+            existing.SoldQuantity = product.SoldQuantity;
+            existing.MaxSlots = product.MaxSlots;
             existing.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();

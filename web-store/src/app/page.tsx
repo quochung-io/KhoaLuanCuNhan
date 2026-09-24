@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import SearchBar from '@/components/layout/SearchBar';
 
 const ICONS: Record<string, React.ReactNode> = {
   leaf: <svg viewBox="0 0 24 24" fill="none" stroke="#2E7D32" strokeWidth="1.8"><path d="M12 21c-5-1-8-5-8-10A7 7 0 0112 3a7 7 0 018 8c0 5-3 9-8 10z"/><path d="M12 21V9"/></svg>,
@@ -128,7 +129,7 @@ export default function LanhLandingPage() {
   const [suggestions, setSuggestions] = useState<SuggestionItem[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
-  // Đánh giá khách hàng (hỗ trợ người dùng tự viết đánh giá mới)
+  // Đánh giá khách hàng (hỗ trợ người dùng tự viết đánh giá mới & reply)
   const [reviewsList, setReviewsList] = useState<any[]>([]);
   const [loadingReviews, setLoadingReviews] = useState(true);
   const [reviewPage, setReviewPage] = useState(1);
@@ -142,6 +143,11 @@ export default function LanhLandingPage() {
   const [newReviewText, setNewReviewText] = useState('');
   const [submittingReview, setSubmittingReview] = useState(false);
   const [reviewToast, setReviewToast] = useState<string | null>(null);
+
+  // State cho phản hồi đánh giá (Reply)
+  const [replyingReviewId, setReplyingReviewId] = useState<number | null>(null);
+  const [replyText, setReplyText] = useState('');
+  const [submittingReply, setSubmittingReply] = useState(false);
 
   const reviewsPerPage = 6;
 
@@ -221,6 +227,47 @@ export default function LanhLandingPage() {
       }
     } catch (err) {
       console.error('Lỗi khi bấm hữu ích:', err);
+    }
+  };
+
+  // Nút gửi phản hồi đánh giá (Reply) cho đánh giá trên trang chủ
+  const handleSendReplyHome = async (parentReviewId: number) => {
+    const uId = currentUser?.id || currentUser?.userId;
+    if (!uId) {
+      alert('Vui lòng đăng nhập tài khoản để gửi phản hồi đánh giá!');
+      router.push('/login');
+      return;
+    }
+    if (!replyText.trim()) {
+      alert('Vui lòng nhập nội dung phản hồi!');
+      return;
+    }
+
+    setSubmittingReply(true);
+    try {
+      const res = await fetch(`http://localhost:5023/api/reviews/${parentReviewId}/reply`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customerId: uId,
+          comment: replyText.trim()
+        })
+      });
+      if (res.ok) {
+        setReplyText('');
+        setReplyingReviewId(null);
+        setReviewToast('Đã gửi phản hồi thành công!');
+        fetchFeaturedReviews();
+      } else {
+        const err = await res.json();
+        alert(err.message || 'Gửi phản hồi thất bại.');
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Có lỗi xảy ra khi kết nối máy chủ!');
+    } finally {
+      setSubmittingReply(false);
+      setTimeout(() => setReviewToast(null), 3000);
     }
   };
 
@@ -797,80 +844,7 @@ export default function LanhLandingPage() {
           </Link>
 
           {/* Thanh tìm kiếm trung tâm */}
-          <div className="search-shell">
-            <input 
-              type="text" 
-              value={searchQuery}
-              onChange={(e) => handleSearchChange(e.target.value)}
-              onFocus={() => setShowSuggestions(true)}
-              onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-              placeholder="Bạn muốn tìm nông sản gì hôm nay? (Rau cải, bơ sáp, dâu tây...)" 
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  router.push(`/products?search=${encodeURIComponent(searchQuery)}`);
-                }
-              }}
-            />
-            <button className="go" onClick={() => router.push(`/products?search=${encodeURIComponent(searchQuery)}`)} aria-label="Tìm kiếm">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-              <span>Tìm</span>
-            </button>
-            
-            {showSuggestions && suggestions.length > 0 && (
-              <ul className="suggestions-list" style={{
-                position: 'absolute',
-                top: 'calc(100% + 6px)',
-                left: 0,
-                right: 0,
-                backgroundColor: 'var(--surface)',
-                border: '1px solid var(--line)',
-                borderRadius: '10px',
-                listStyle: 'none',
-                padding: '6px 0',
-                margin: 0,
-                zIndex: 999,
-                boxShadow: '0 10px 25px rgba(0,0,0,0.12)',
-                textAlign: 'left'
-              }}>
-                <li style={{ padding: '6px 14px', fontSize: '11.5px', color: 'var(--ink-soft)', fontWeight: '700', textTransform: 'uppercase' }}>
-                  Gợi ý sản phẩm phù hợp
-                </li>
-                {suggestions.map((s, idx) => (
-                  <li 
-                    key={idx} 
-                    onClick={() => {
-                      setShowSuggestions(false);
-                      router.push(`/products/${s.productId}`);
-                    }}
-                    style={{
-                      padding: '10px 14px',
-                      cursor: 'pointer',
-                      borderBottom: '1px solid var(--line)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '12px',
-                      transition: 'background .15s'
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--green-100)')}
-                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
-                    onMouseDown={(e) => e.preventDefault()}
-                  >
-                    <img 
-                      src={s.imageUrl || 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=100&auto=format&fit=crop&q=80'} 
-                      alt={s.productName} 
-                      style={{ width: '38px', height: '38px', objectFit: 'cover', borderRadius: '6px', border: '1px solid var(--line)' }} 
-                    />
-                    <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-                      <strong style={{ fontSize: '13.5px', color: 'var(--ink)' }}>{s.productName}</strong>
-                      <span style={{ fontSize: '12px', color: '#e53e3e', fontWeight: '700' }}>
-                        {s.price.toLocaleString('vi-VN')} đ<span style={{ color: 'var(--ink-soft)', fontWeight: 'normal', fontSize: '11px' }}> / {s.unit}</span>
-                      </span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+          <SearchBar />
 
           {/* Nhóm nút tác vụ Header */}
           <div className="header-actions">
@@ -1809,30 +1783,173 @@ export default function LanhLandingPage() {
                         </div>
                       </div>
 
-                      {/* Nút bấm thích hữu ích */}
-                      <button
-                        type="button"
-                        onClick={() => handleHelpfulReview(review.id)}
-                        style={{
-                          background: review.isHelpfulByMe ? 'var(--green-100)' : 'none',
-                          border: review.isHelpfulByMe ? '1px solid var(--green-700)' : '1px solid var(--line)',
-                          borderRadius: '999px',
-                          padding: '5px 12px',
-                          fontSize: '12px',
-                          fontWeight: review.isHelpfulByMe ? '700' : '500',
-                          color: review.isHelpfulByMe ? 'var(--green-900)' : 'var(--ink-soft)',
-                          cursor: 'pointer',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '5px',
-                          transition: 'all 0.15s ease'
-                        }}
-                        title={review.isHelpfulByMe ? "Bấm để bỏ thích hữu ích" : "Bấm nếu thấy nhận xét này hữu ích"}
-                      >
-                        <span>👍</span>
-                        <span>{review.isHelpfulByMe ? `Đã thích (${review.helpfulCount || 0})` : `Hữu ích (${review.helpfulCount || 0})`}</span>
-                      </button>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        {/* Nút bấm thích hữu ích */}
+                        <button
+                          type="button"
+                          onClick={() => handleHelpfulReview(review.id)}
+                          style={{
+                            background: review.isHelpfulByMe ? 'var(--green-100)' : 'none',
+                            border: review.isHelpfulByMe ? '1px solid var(--green-700)' : '1px solid var(--line)',
+                            borderRadius: '999px',
+                            padding: '5px 12px',
+                            fontSize: '12px',
+                            fontWeight: review.isHelpfulByMe ? '700' : '500',
+                            color: review.isHelpfulByMe ? 'var(--green-900)' : 'var(--ink-soft)',
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '5px',
+                            transition: 'all 0.15s ease'
+                          }}
+                          title={review.isHelpfulByMe ? "Bấm để bỏ thích hữu ích" : "Bấm nếu thấy nhận xét này hữu ích"}
+                        >
+                          <span>👍</span>
+                          <span>{review.isHelpfulByMe ? `Đã thích (${review.helpfulCount || 0})` : `Hữu ích (${review.helpfulCount || 0})`}</span>
+                        </button>
+
+                        {/* Nút bấm trả lời (Reply) */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!currentUser) {
+                              alert('Vui lòng đăng nhập tài khoản để trả lời đánh giá!');
+                              router.push('/login');
+                              return;
+                            }
+                            setReplyingReviewId(replyingReviewId === review.id ? null : review.id);
+                            setReplyText('');
+                          }}
+                          style={{
+                            background: 'none',
+                            border: '1px solid var(--line)',
+                            borderRadius: '999px',
+                            padding: '5px 12px',
+                            fontSize: '12px',
+                            fontWeight: '600',
+                            color: 'var(--ink-soft)',
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                          }}
+                        >
+                          <span>💬</span>
+                          <span>Trả lời</span>
+                        </button>
+                      </div>
                     </div>
+
+                    {/* KHUNG NHẬP PHẢN HỒI (REPLY) */}
+                    {replyingReviewId === review.id && (
+                      <div style={{
+                        marginTop: '12px',
+                        padding: '12px 14px',
+                        backgroundColor: '#f8fafc',
+                        borderRadius: '8px',
+                        border: '1px solid var(--green-200)'
+                      }}>
+                        <div style={{ fontSize: '12.5px', fontWeight: '600', color: 'var(--green-900)', marginBottom: '6px' }}>
+                          Trả lời nhận xét của {review.name}:
+                        </div>
+                        <textarea
+                          rows={2}
+                          value={replyText}
+                          onChange={e => setReplyText(e.target.value)}
+                          placeholder="Nhập câu trả lời của bạn..."
+                          style={{
+                            width: '100%',
+                            padding: '8px 10px',
+                            borderRadius: '6px',
+                            border: '1px solid var(--line)',
+                            fontSize: '13px',
+                            outline: 'none',
+                            boxSizing: 'border-box',
+                            fontFamily: 'inherit'
+                          }}
+                        />
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '8px' }}>
+                          <button
+                            type="button"
+                            onClick={() => setReplyingReviewId(null)}
+                            style={{
+                              padding: '5px 12px',
+                              borderRadius: '6px',
+                              border: '1px solid var(--line)',
+                              background: '#ffffff',
+                              fontSize: '12px',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            Hủy
+                          </button>
+                          <button
+                            type="button"
+                            disabled={submittingReply}
+                            onClick={() => handleSendReplyHome(review.id)}
+                            style={{
+                              padding: '5px 14px',
+                              borderRadius: '6px',
+                              border: 'none',
+                              background: 'var(--green-700)',
+                              color: '#ffffff',
+                              fontSize: '12px',
+                              fontWeight: '700',
+                              cursor: submittingReply ? 'not-allowed' : 'pointer'
+                            }}
+                          >
+                            {submittingReply ? 'Đang gửi...' : 'Gửi phản hồi'}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* DANH SÁCH CÁC PHẢN HỒI CON (REPLIES LỒNG NHAU) */}
+                    {review.replies && review.replies.length > 0 && (
+                      <div style={{
+                        marginTop: '12px',
+                        paddingLeft: '14px',
+                        borderLeft: '2.5px solid var(--green-700)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '8px'
+                      }}>
+                        {review.replies.map((rep: any, rIdx: number) => (
+                          <div key={rep.id || rep.reviewId || `reply-${rIdx}`} style={{
+                            backgroundColor: '#f8fafc',
+                            padding: '10px 14px',
+                            borderRadius: '8px',
+                            border: '1px solid var(--line)'
+                          }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <strong style={{ fontSize: '13px', color: 'var(--ink)' }}>
+                                  {rep.name || rep.customerName || 'Thành viên LÀNH'}
+                                </strong>
+                                {rep.roleLabel && (
+                                  <span style={{
+                                    fontSize: '10.5px',
+                                    padding: '1px 6px',
+                                    borderRadius: '999px',
+                                    fontWeight: '600',
+                                    backgroundColor: rep.userRole === 'Admin' ? '#FEF3C7' : (rep.userRole === 'Supplier' ? '#E0F2FE' : '#F1F5F9'),
+                                    color: rep.userRole === 'Admin' ? '#B45309' : (rep.userRole === 'Supplier' ? '#0369A1' : '#475569')
+                                  }}>
+                                    {rep.roleLabel}
+                                  </span>
+                                )}
+                              </div>
+                              <span style={{ fontSize: '11px', color: 'var(--ink-soft)' }}>
+                                {rep.date || (rep.createdAt ? new Date(rep.createdAt).toLocaleDateString('vi-VN') : 'Vừa xong')}
+                              </span>
+                            </div>
+                            <p style={{ margin: 0, fontSize: '13px', color: 'var(--ink)', lineHeight: '1.5' }}>
+                              {rep.text || rep.comment}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

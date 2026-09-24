@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
+import SearchBar from '@/components/layout/SearchBar';
 
 interface ComboItemInfo {
   name: string;
@@ -9,6 +10,204 @@ interface ComboItemInfo {
   region: string;
   benefit: string;
   imageUrl: string;
+}
+
+export interface SelectableProduceItem {
+  id: number;
+  name: string;
+  weight: string;
+  region: string;
+  category: string;
+  benefit: string;
+  imageUrl: string;
+}
+
+export const DALAT_PRODUCE_POOL: SelectableProduceItem[] = [
+  {
+    id: 1,
+    name: 'Cải bó xôi hữu cơ (Spinach)',
+    weight: '350g',
+    region: 'HTX Đà Lạt (Lâm Đồng)',
+    category: 'Rau ăn lá',
+    benefit: 'Giàu sắt, acid folic và chất chống oxy hóa tự nhiên',
+    imageUrl: 'https://images.unsplash.com/photo-1576045057995-568f588f82fb?w=300&auto=format&fit=crop&q=80'
+  },
+  {
+    id: 2,
+    name: 'Cà rốt baby giòn ngọt',
+    weight: '500g',
+    region: 'HTX Đà Lạt (Lâm Đồng)',
+    category: 'Củ quả',
+    benefit: 'Hàm lượng Beta-carotene dồi dào, tốt cho thị lực',
+    imageUrl: 'https://images.unsplash.com/photo-1598170845058-32b9d6a5c317?w=300&auto=format&fit=crop&q=80'
+  },
+  {
+    id: 3,
+    name: 'Xà lách xoăn thủy canh Frisee',
+    weight: '300g',
+    region: 'HTX Đà Lạt (Lâm Đồng)',
+    category: 'Rau ăn lá',
+    benefit: 'Tươi giòn mọng nước, lý tưởng cho món salad trộn',
+    imageUrl: 'https://images.unsplash.com/photo-1622206151226-18ca2c9ab4a1?w=300&auto=format&fit=crop&q=80'
+  },
+  {
+    id: 4,
+    name: 'Bí đỏ hồ lô hạt dẻ',
+    weight: '1 quả (~800g)',
+    region: 'HTX Đà Lạt (Lâm Đồng)',
+    category: 'Củ quả',
+    benefit: 'Vị ngọt bùi béo tự nhiên, bổ não và tăng đề kháng',
+    imageUrl: 'https://images.unsplash.com/photo-1570586435880-8031c5107297?w=300&auto=format&fit=crop&q=80'
+  },
+  {
+    id: 5,
+    name: 'Súp lơ xanh bông lớn (Broccoli)',
+    weight: '1 búp (~600g)',
+    region: 'HTX Đà Lạt (Lâm Đồng)',
+    category: 'Rau ăn hoa',
+    benefit: 'Chứa Sulforaphane kháng viêm và thanh lọc tế bào',
+    imageUrl: 'https://images.unsplash.com/photo-1459411621453-7b03977f4bfc?w=300&auto=format&fit=crop&q=80'
+  },
+  {
+    id: 6,
+    name: 'Cà chua bi Cherry đỏ mọng',
+    weight: '400g',
+    region: 'HTX Đà Lạt (Lâm Đồng)',
+    category: 'Trái cây củ quả',
+    benefit: 'Hàm lượng Lycopene cực cao, dưỡng da chống lão hóa',
+    imageUrl: 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=300&auto=format&fit=crop&q=80'
+  },
+  {
+    id: 7,
+    name: 'Bắp non (Ngô bao tử) giòn ngọt',
+    weight: '500g',
+    region: 'HTX Đà Lạt (Lâm Đồng)',
+    category: 'Củ quả',
+    benefit: 'Ngọt bùi giòn xốp, nấu súp hoặc xào thịt thanh mát',
+    imageUrl: 'https://images.unsplash.com/photo-1551754655-cd27e38d2076?w=300&auto=format&fit=crop&q=80'
+  },
+  {
+    id: 8,
+    name: 'Bơ sáp 034 dẻo béo',
+    weight: '1.0 kg',
+    region: 'HTX Đà Lạt (Lâm Đồng)',
+    category: 'Trái cây đặc sản',
+    benefit: 'Chứa acid béo Omega-3 không bão hòa tốt cho tim mạch',
+    imageUrl: 'https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?w=300&auto=format&fit=crop&q=80'
+  },
+  {
+    id: 9,
+    name: 'Cải ngọt hữu cơ cọng giòn',
+    weight: '500g',
+    region: 'HTX Đà Lạt (Lâm Đồng)',
+    category: 'Rau ăn lá',
+    benefit: 'Thanh nhiệt giải độc, nấu canh ngọt dịu tự nhiên',
+    imageUrl: 'https://images.unsplash.com/photo-1576045057995-568f588f82fb?w=300&auto=format&fit=crop&q=80'
+  },
+  {
+    id: 10,
+    name: 'Nấm đùi gà tươi hữu cơ',
+    weight: '300g',
+    region: 'HTX Đà Lạt (Lâm Đồng)',
+    category: 'Nấm sạch',
+    benefit: 'Giòn ngọt thơm lừng, bổ sung protein thực vật lành tính',
+    imageUrl: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=300&auto=format&fit=crop&q=80'
+  },
+  {
+    id: 11,
+    name: 'Dưa leo baby giòn mát',
+    weight: '800g',
+    region: 'HTX Đà Lạt (Lâm Đồng)',
+    category: 'Củ quả',
+    benefit: 'Cung cấp nước và khoáng chất, ăn sống giòn ngọt',
+    imageUrl: 'https://images.unsplash.com/photo-1604977042946-1eecc30f269e?w=300&auto=format&fit=crop&q=80'
+  },
+  {
+    id: 12,
+    name: 'Cải xoăn Kale hữu cơ',
+    weight: '350g',
+    region: 'HTX Đà Lạt (Lâm Đồng)',
+    category: 'Rau ăn lá',
+    benefit: 'Nữ hoàng rau xanh giàu Vitamin K, Canxi và Lutein',
+    imageUrl: 'https://images.unsplash.com/photo-1524179091875-bf99a9a6fa57?w=300&auto=format&fit=crop&q=80'
+  }
+];
+
+export interface SupplierProfile {
+  id: number;
+  name: string;
+  shortName: string;
+  region: string;
+  badge: string;
+  producePool: SelectableProduceItem[];
+}
+
+export const SUPPLIERS_PROFILES: SupplierProfile[] = [
+  {
+    id: 1,
+    name: 'Hợp tác xã Nông Sản Đà Lạt (Lâm Đồng)',
+    shortName: 'HTX Đà Lạt',
+    region: 'Đà Lạt & Lạc Dương (Lâm Đồng)',
+    badge: 'Rau củ ôn đới & quả ngọt mát',
+    producePool: DALAT_PRODUCE_POOL
+  },
+  {
+    id: 2,
+    name: 'Hợp tác xã Rau Sạch Miền Tây (Đồng Tháp)',
+    shortName: 'HTX Rau Miền Tây',
+    region: 'Đồng Tháp & Cần Thơ (ĐBSCL)',
+    badge: 'Rau ruộng phù sa & thủy sinh',
+    producePool: [
+      { id: 201, name: 'Bầu sao non Miền Tây', weight: '1 quả (~700g)', region: 'HTX Rau Miền Tây (Đồng Tháp)', category: 'Củ quả', benefit: 'Thanh nhiệt giải độc, nấu canh tôm ngọt mát', imageUrl: 'https://images.unsplash.com/photo-1598170845058-32b9d6a5c317?w=300&auto=format&fit=crop&q=80' },
+      { id: 202, name: 'Rau dền đỏ hữu cơ phù sa', weight: '500g', region: 'HTX Rau Miền Tây (Đồng Tháp)', category: 'Rau ăn lá', benefit: 'Giàu sắt và vitamin A, nấu canh bổ huyết', imageUrl: 'https://images.unsplash.com/photo-1576045057995-568f588f82fb?w=300&auto=format&fit=crop&q=80' },
+      { id: 203, name: 'Mướp hương quê ngọt lịm', weight: '2 quả (~600g)', region: 'HTX Rau Miền Tây (Đồng Tháp)', category: 'Củ quả', benefit: 'Hương thơm tự nhiên, thanh nhiệt mát gan', imageUrl: 'https://images.unsplash.com/photo-1570586435880-8031c5107297?w=300&auto=format&fit=crop&q=80' },
+      { id: 204, name: 'Đậu bắp baby xanh giòn', weight: '500g', region: 'HTX Rau Miền Tây (Cần Thơ)', category: 'Củ quả', benefit: 'Chất nhầy tự nhiên bảo vệ niêm mạc dạ dày', imageUrl: 'https://images.unsplash.com/photo-1551754655-cd27e38d2076?w=300&auto=format&fit=crop&q=80' },
+      { id: 205, name: 'Dưa leo Nam Bộ cọng giòn', weight: '800g', region: 'HTX Rau Miền Tây (Đồng Tháp)', category: 'Củ quả', benefit: 'Nhiều nước, giải khát và làm đẹp da', imageUrl: 'https://images.unsplash.com/photo-1604977042946-1eecc30f269e?w=300&auto=format&fit=crop&q=80' },
+      { id: 206, name: 'Khổ qua rừng trái nhỏ', weight: '400g', region: 'HTX Rau Miền Tây (An Giang)', category: 'Củ quả', benefit: 'Hạ đường huyết, tăng cường tiêu hóa', imageUrl: 'https://images.unsplash.com/photo-1524179091875-bf99a9a6fa57?w=300&auto=format&fit=crop&q=80' },
+      { id: 207, name: 'Rau mồng tơi vườn nhà', weight: '500g', region: 'HTX Rau Miền Tây (Đồng Tháp)', category: 'Rau ăn lá', benefit: 'Nhuận tràng, giải nhiệt mùa hè rất tốt', imageUrl: 'https://images.unsplash.com/photo-1622206151226-18ca2c9ab4a1?w=300&auto=format&fit=crop&q=80' },
+      { id: 208, name: 'Cải thìa trắng xào tỏi', weight: '500g', region: 'HTX Rau Miền Tây (Cần Thơ)', category: 'Rau ăn lá', benefit: 'Giòn ngọt cọng dày, giàu vitamin C và chất xơ', imageUrl: 'https://images.unsplash.com/photo-1576045057995-568f588f82fb?w=300&auto=format&fit=crop&q=80' },
+      { id: 209, name: 'Bông bí tươi hái sớm', weight: '300g', region: 'HTX Rau Miền Tây (Đồng Tháp)', category: 'Rau ăn hoa', benefit: 'Đặc sản đồng quê xào tỏi giòn bùi bổ dưỡng', imageUrl: 'https://images.unsplash.com/photo-1459411621453-7b03977f4bfc?w=300&auto=format&fit=crop&q=80' }
+    ]
+  },
+  {
+    id: 3,
+    name: 'Hợp tác xã Trái Cây Việt (Đồng Nai & Bến Tre)',
+    shortName: 'HTX Trái Cây Việt',
+    region: 'Đồng Nai & Bến Tre',
+    badge: 'Trái cây đặc sản chín cây',
+    producePool: [
+      { id: 301, name: 'Xoài cát Hòa Lộc chín cây', weight: '1.2 kg', region: 'HTX Trái Cây Việt (Tiền Giang)', category: 'Trái cây đặc sản', benefit: 'Thơm lừng, thịt dẻo ngọt đậm đà trứ danh', imageUrl: 'https://images.unsplash.com/photo-1553279768-865429fa0078?w=300&auto=format&fit=crop&q=80' },
+      { id: 302, name: 'Bưởi da xanh ruột hồng', weight: '1 quả (~1.4kg)', region: 'HTX Trái Cây Việt (Bến Tre)', category: 'Trái cây đặc sản', benefit: 'Tép đỏ giòn mọng, ráo nước không hạt', imageUrl: 'https://images.unsplash.com/photo-1582979512210-99b6a53386f9?w=300&auto=format&fit=crop&q=80' },
+      { id: 303, name: 'Cam sành Bến Tre mọng nước', weight: '1.5 kg', region: 'HTX Trái Cây Việt (Bến Tre)', category: 'Trái cây đặc sản', benefit: 'Giàu vitamin C tự nhiên, vỏ mỏng tép vàng', imageUrl: 'https://images.unsplash.com/photo-1547514701-42782101795e?w=300&auto=format&fit=crop&q=80' },
+      { id: 304, name: 'Chôm chôm nhãn giòn ngọt', weight: '1.0 kg', region: 'HTX Trái Cây Việt (Đồng Nai)', category: 'Trái cây đặc sản', benefit: 'Tróc vỏ, cơm giòn ngọt lịm thơm mát', imageUrl: 'https://images.unsplash.com/photo-1528825871115-3581a5387919?w=300&auto=format&fit=crop&q=80' },
+      { id: 305, name: 'Chuối Laba dẻo thơm', weight: '1 nải (~1.2kg)', region: 'HTX Trái Cây Việt (Lâm Đồng)', category: 'Trái cây đặc sản', benefit: 'Giàu kali, dẻo ngọt tự nhiên tốt tiêu hóa', imageUrl: 'https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?w=300&auto=format&fit=crop&q=80' },
+      { id: 306, name: 'Thanh long ruột đỏ VietGAP', weight: '1.2 kg', region: 'HTX Trái Cây Việt (Bình Thuận)', category: 'Trái cây đặc sản', benefit: 'Chống oxy hóa, màu đỏ tự nhiên ngọt thanh', imageUrl: 'https://images.unsplash.com/photo-1527325678964-54921661f888?w=300&auto=format&fit=crop&q=80' },
+      { id: 307, name: 'Mít Thái giòn bóc múi sẵn', weight: '500g', region: 'HTX Trái Cây Việt (Tiền Giang)', category: 'Trái cây đặc sản', benefit: 'Múi dày vàng óng, giòn rụm ngọt ngào', imageUrl: 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=300&auto=format&fit=crop&q=80' }
+    ]
+  },
+  {
+    id: 4,
+    name: 'HTX Nông Nghiệp An Phú (Đơn Dương - Lâm Đồng)',
+    shortName: 'HTX An Phú',
+    region: 'Đơn Dương (Lâm Đồng)',
+    badge: 'Nông nghiệp công nghệ cao GlobalGAP',
+    producePool: [
+      { id: 401, name: 'Cà chua beef GlobalGAP quả to', weight: '600g', region: 'HTX An Phú (Đơn Dương)', category: 'Củ quả công nghệ cao', benefit: 'Thịt quả dày mọng, chuyên làm sốt và nướng', imageUrl: 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=300&auto=format&fit=crop&q=80' },
+      { id: 402, name: 'Ớt chuông Sweet ba màu', weight: '500g', region: 'HTX An Phú (Đơn Dương)', category: 'Củ quả công nghệ cao', benefit: 'Giàu Vitamin A & C, ăn sống giòn không hăng cay', imageUrl: 'https://images.unsplash.com/photo-1563565375-f3fdfdbefa83?w=300&auto=format&fit=crop&q=80' },
+      { id: 403, name: 'Cà chua bi sô-cô-la ngọt đậm', weight: '400g', region: 'HTX An Phú (Đơn Dương)', category: 'Củ quả công nghệ cao', benefit: 'Vị ngọt đậm đà, màu nâu sô-cô-la giàu dưỡng chất', imageUrl: 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=300&auto=format&fit=crop&q=80' },
+      { id: 404, name: 'Xà lách Romaine hữu cơ nhà màng', weight: '400g', region: 'HTX An Phú (Đơn Dương)', category: 'Rau ăn lá', benefit: 'Thân lá giòn mướt, tuyệt vời làm salad Caesar', imageUrl: 'https://images.unsplash.com/photo-1622206151226-18ca2c9ab4a1?w=300&auto=format&fit=crop&q=80' },
+      { id: 405, name: 'Cần tây hữu cơ giòn ngọt ép nước', weight: '600g', region: 'HTX An Phú (Đơn Dương)', category: 'Rau ăn lá', benefit: 'Thanh lọc cơ thể, hỗ trợ thanh nhiệt và sáng da', imageUrl: 'https://images.unsplash.com/photo-1576045057995-568f588f82fb?w=300&auto=format&fit=crop&q=80' },
+      { id: 406, name: 'Dưa leo Baby snack giòn tan', weight: '500g', region: 'HTX An Phú (Đơn Dương)', category: 'Củ quả', benefit: 'Vỏ mỏng không đắng, ăn trực tiếp giòn rụm', imageUrl: 'https://images.unsplash.com/photo-1604977042946-1eecc30f269e?w=300&auto=format&fit=crop&q=80' },
+      { id: 407, name: 'Củ dền đỏ bổ máu', weight: '600g', region: 'HTX An Phú (Đơn Dương)', category: 'Củ quả', benefit: 'Giàu Folate và Nitrat tự nhiên, tốt cho huyết áp', imageUrl: 'https://images.unsplash.com/photo-1598170845058-32b9d6a5c317?w=300&auto=format&fit=crop&q=80' },
+      { id: 408, name: 'Nấm ngọc châm trắng hữu cơ', weight: '300g', region: 'HTX An Phú (Đơn Dương)', category: 'Nấm sạch', benefit: 'Thân dài giòn thơm, nấu súp hoặc xào nấm tuyệt hảo', imageUrl: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=300&auto=format&fit=crop&q=80' }
+    ]
+  }
+];
+
+function getComboSlotCount(id: number): number {
+  if (id === 902 || id === 905) return 5; // Gia Đình Lớn: 5 món
+  if (id === 903 || id === 906 || id === 908 || id === 909) return 4; // Thuần Chay / Trái Cây / Lẩu: 4 món
+  return 3; // Gia Đình Nhỏ (901, 904) hoặc Ăn Dặm (907) / Salad (910): 3 món
 }
 
 interface ComboDetail {
@@ -208,6 +407,140 @@ const combosDatabase: Record<number, ComboDetail> = {
     customerReviews: [
       { author: 'Chị Diệu Tâm', role: 'Phật tử - Q.10, TP.HCM', date: '05/09/2026', rating: 5, comment: 'Đậu hũ non béo ngậy và thơm lừng mùi đậu nành quê. Nấm tươi sạch không hề có mùi thuốc khử. Rất biết ơn LÀNH đã có gói này.' }
     ]
+  },
+  907: {
+    id: 907,
+    name: 'Combo Ăn Dặm Hữu Cơ Bé Yêu',
+    subtitle: 'Nông sản công nghệ cao GlobalGAP chọn lọc độ tuổi ăn dặm cho bé',
+    desc: 'Thiết kế riêng cho các mẹ chăm bé bắt đầu ăn dặm hoặc ăn thô. Nông sản canh tác nhà màng đạt chuẩn GlobalGAP từ HTX An Phú, không dư lượng thuốc BVTV, giàu khoáng chất tự nhiên.',
+    badge: 'Chương trình HTX',
+    weekPrice: 195000,
+    monthPrice: 720000,
+    rating: 4.9,
+    reviewsCount: 64,
+    servingSize: 'Bé từ 6 - 24 tháng (Chế biến ăn dặm cả tuần)',
+    gallery: [
+      'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=800&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1563565375-f3fdfdbefa83?w=800&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1598170845058-32b9d6a5c317?w=800&auto=format&fit=crop&q=80'
+    ],
+    features: [
+      '100% nông sản canh tác nhà màng không phun thuốc hóa học',
+      'Củ quả ngọt tự nhiên, dễ nghiền mịn và hấp chín',
+      'Chứng nhận GlobalGAP kiểm nghiệm kim loại nặng',
+      'Giao tận nơi định kỳ vào buổi sáng sớm'
+    ],
+    items: [],
+    harvestProcess: [
+      { time: '05:00 Sáng', step: 'Thu hoạch nhà màng', desc: 'Thu hoạch quả củ đúng độ non ngọt tự nhiên cho bé.' },
+      { time: '07:00 Sáng', step: 'Sơ chế & Kiểm định vi sinh', desc: 'Khử khuẩn bằng nước ion kiềm, đóng khay đạt chuẩn.' },
+      { time: '09:00 Sáng', step: 'Giao tận cửa', desc: 'Vận chuyển giữ lạnh giao đến tay mẹ bỉm sữa.' }
+    ],
+    faqs: [
+      { q: 'Sản phẩm có an toàn tuyệt đối cho bé ăn dặm?', a: 'Toàn bộ nông sản được kiểm nghiệm định kỳ chỉ số nitrat và kim loại nặng đạt chuẩn an toàn cho trẻ sơ sinh và trẻ nhỏ.' }
+    ],
+    customerReviews: [
+      { author: 'Mẹ Bắp', role: 'Mẹ bỉm sữa - Bình Thạnh, TP.HCM', date: '12/09/2026', rating: 5, comment: 'Bé nhà mình mới ăn dặm, trộm vía bí đỏ và cà rốt nghiền ngọt lịm bé ăn hết veo. Yên tâm hơn mua ngoài chợ nhiều.' }
+    ]
+  },
+  908: {
+    id: 908,
+    name: 'Combo Trái Cây Miệt Vườn Nam Bộ',
+    subtitle: 'Hương vị trái cây nhiệt đới chín cây thơm ngọt từ HTX Trái Cây Việt',
+    desc: 'Tuyển chọn những loại trái cây đặc sản nổi tiếng Nam Bộ như Xoài cát Hòa Lộc, Bưởi da xanh ruột hồng, Cam sành, Chôm chôm nhãn... Được hái đúng lứa chín cây tự nhiên, không ủ hóa chất ép chín.',
+    badge: 'Đặc sản chín cây',
+    weekPrice: 269000,
+    monthPrice: 980000,
+    rating: 5.0,
+    reviewsCount: 88,
+    servingSize: '3 - 5 người (Trái cây tươi tráng miệng cả tuần)',
+    gallery: [
+      'https://images.unsplash.com/photo-1553279768-865429fa0078?w=800&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1582979512210-99b6a53386f9?w=800&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1528825871115-3581a5387919?w=800&auto=format&fit=crop&q=80'
+    ],
+    features: [
+      'Trái cây hái trực tiếp từ vườn Bến Tre & Tiền Giang',
+      'Độ ngọt tự nhiên (Brix cao), không ngâm thuốc kích chín',
+      'Bảo hiểm tươi ngon dập nát 1 đổi 1 tận nơi'
+    ],
+    items: [],
+    harvestProcess: [
+      { time: '05:30 Sáng', step: 'Hái trái chín cây', desc: 'Chọn những trái đạt độ đường cao nhất trên cây.' },
+      { time: '08:00 Sáng', step: 'Bọc xốp chống dập', desc: 'Đóng thùng chuyên dụng có lỗ thở bảo quản tươi mới.' },
+      { time: '10:00 Sáng', step: 'Giao hàng', desc: 'Chuyển thẳng từ nhà vườn đến bàn ăn.' }
+    ],
+    faqs: [
+      { q: 'Trái cây có bị xanh sượng không?', a: 'Nhà vườn cam kết trái cây chín già tự nhiên, ngọt đậm thơm nức mũi.' }
+    ],
+    customerReviews: [
+      { author: 'Chị Ngọc Mai', role: 'Văn phòng - Q.1, TP.HCM', date: '10/09/2026', rating: 5, comment: 'Bưởi da xanh tép hồng giòn rụm, xoài cát thơm lừng cả phòng. Trái cây chuẩn miệt vườn ăn khác biệt hẳn.' }
+    ]
+  },
+  909: {
+    id: 909,
+    name: 'Combo Rau Đồng Nấu Lẩu Thực Dưỡng',
+    subtitle: 'Bộ sưu tập rau đồng ruộng phù sa dân dã thanh mát từ HTX Rau Sạch Miền Tây',
+    desc: 'Tập hợp các loại rau đồng quê ngọt thanh giải nhiệt: Bầu sao, rau mồng tơi, mướp hương, rau dền đỏ, đậu bắp non, bông bí. Rất thích hợp cho các bữa cơm gia đình đầm ấm hoặc lẩu cá, lẩu cua đồng.',
+    badge: 'Hương vị quê nhà',
+    weekPrice: 175000,
+    monthPrice: 640000,
+    rating: 4.8,
+    reviewsCount: 52,
+    servingSize: '3 - 4 người (Thực đơn cơm canh ngọt mát)',
+    gallery: [
+      'https://images.unsplash.com/photo-1598170845058-32b9d6a5c317?w=800&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1576045057995-568f588f82fb?w=800&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1570586435880-8031c5107297?w=800&auto=format&fit=crop&q=80'
+    ],
+    features: [
+      'Rau đồng phù sa mọc tự nhiên trên đất sông Tiền, sông Hậu',
+      'Hái sương sớm mỗi sáng, tươi non không xơ',
+      'Được nhặt sạch rễ sơ bộ trước khi đóng túi'
+    ],
+    items: [],
+    harvestProcess: [
+      { time: '04:00 Sáng', step: 'Hái rau đồng', desc: 'Bà con nông dân hái rau non trong sương sớm.' },
+      { time: '06:00 Sáng', step: 'Rửa nước giếng khoan', desc: 'Làm sạch bùn phù sa và đóng gói thoáng khí.' }
+    ],
+    faqs: [
+      { q: 'Rau để được bao lâu trong tủ lạnh?', a: 'Rau tươi tự nhiên nên giữ được 5-7 ngày trong ngăn mát túi zip.' }
+    ],
+    customerReviews: [
+      { author: 'Cô Ba Thu', role: 'Nội trợ - Q.5, TP.HCM', date: '07/09/2026', rating: 5, comment: 'Rau dền và mồng tơi nấu canh cua ngọt ngào hương vị quê nhà. Nhớ lại bữa cơm mẹ nấu ngày xưa.' }
+    ]
+  },
+  910: {
+    id: 910,
+    name: 'Combo Salad Eat-Clean Năng Lượng',
+    subtitle: 'Xà lách thủy canh, cải xoăn Kale và củ quả giòn ngọt giữ dáng đẹp da',
+    desc: 'Giải pháp hoàn hảo cho người tập luyện thể thao, theo chế độ Eat-Clean, Keto hoặc giảm cân lành mạnh. Cung cấp nguồn chất xơ, vitamin và khoáng chất dồi dào ít calo.',
+    badge: 'Eat-Clean Healthy',
+    weekPrice: 215000,
+    monthPrice: 790000,
+    rating: 4.9,
+    reviewsCount: 71,
+    servingSize: '1 - 2 người (Ăn kèm salad hoặc ép nước xanh cả tuần)',
+    gallery: [
+      'https://images.unsplash.com/photo-1622206151226-18ca2c9ab4a1?w=800&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1524179091875-bf99a9a6fa57?w=800&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1604977042946-1eecc30f269e?w=800&auto=format&fit=crop&q=80'
+    ],
+    features: [
+      'Xà lách Frisee, Romaine giòn mọng chuẩn nhà kính Đà Lạt',
+      'Cải Kale hữu cơ bổ dưỡng ép nước detox thanh lọc cơ thể',
+      'Cà chua cherry ngọt mọng nước ăn trực tiếp'
+    ],
+    items: [],
+    harvestProcess: [
+      { time: '04:30 Sáng', step: 'Cắt tỉa xà lách thủy canh', desc: 'Giữ nguyên gốc xốp giữ ẩm đến khi giao.' }
+    ],
+    faqs: [
+      { q: 'Rau có rửa ăn liền được không?', a: 'Rau trồng thủy canh nhà kính rất sạch, bạn chỉ cần tráng qua nước lọc là dùng được ngay.' }
+    ],
+    customerReviews: [
+      { author: 'Chị Hà My', role: 'HLV Yoga - Phú Nhuận, TP.HCM', date: '11/09/2026', rating: 5, comment: 'Xà lách giòn rụm và ngọt mát, cải Kale ép nước không hề bị đắng. Mình đã đăng ký gói tháng luôn rồi!' }
+    ]
   }
 };
 
@@ -254,18 +587,64 @@ export default function ComboDetailPage() {
   const comboId = Number(params.id) || 901;
   const combo = getComboData(comboId);
 
-  // Trạng thái chọn tần suất: Tuần hoặc Tháng
-  const [selectedFreq, setSelectedFreq] = useState<'week' | 'month'>(comboId >= 904 ? 'month' : 'week');
-  // Ngày giao ưu tiên
+  // Chu kỳ gói: Tuần (1 lần/tuần), 2 Tuần (2 lần giao), Tháng (4 lần giao)
+  const [selectedFreq, setSelectedFreq] = useState<'week' | 'biweek' | 'month'>(comboId >= 904 ? 'month' : 'week');
+  // Ngày giao ưu tiên: Đủ 7 ngày từ Thứ 2 tới Chủ Nhật
   const [deliveryDay, setDeliveryDay] = useState<string>('Thứ 3');
-  // Khung giờ giao
-  const [deliverySlot, setDeliverySlot] = useState<string>('Sáng (8:00 - 11:30)');
+  // Khung giờ giao: Chỉ hoạt động từ 7h tới 17h
+  const [deliverySlot, setDeliverySlot] = useState<string>('07:00 - 09:30 (Sáng sớm)');
   // Số lượng gói
   const [quantity, setQuantity] = useState<number>(1);
-  // Active Tab
-  const [activeTab, setActiveTab] = useState<'items' | 'process' | 'faqs' | 'reviews'>('items');
+  // Active Tab: Bỏ tab items, mặc định hiển thị reviews
+  const [activeTab, setActiveTab] = useState<'reviews' | 'process' | 'faqs'>('reviews');
   // Selected Image trong gallery
   const [activeImage, setActiveImage] = useState<string>(combo.gallery[0]);
+
+  // Customizable Produce Picker state
+  const maxSlots = getComboSlotCount(combo.id);
+
+  // Xác định Nhà cung cấp ban đầu
+  const getInitialSupplierId = (id: number): number => {
+    if (id === 908) return 3; // HTX Trái Cây Việt
+    if (id === 909) return 2; // HTX Rau Miền Tây
+    if (id === 907) return 4; // HTX An Phú
+    return 1; // HTX Đà Lạt
+  };
+
+  const [selectedSupplierId, setSelectedSupplierId] = useState<number>(() => getInitialSupplierId(combo.id));
+  const activeSupplier = SUPPLIERS_PROFILES.find(s => s.id === selectedSupplierId) || SUPPLIERS_PROFILES[0];
+  const comboSupplier = activeSupplier.name;
+
+  // State lưu danh sách món nông sản do khách hàng tự chọn từ pool của nhà cung cấp hiện tại
+  const [selectedProduce, setSelectedProduce] = useState<SelectableProduceItem[]>(() => {
+    const sup = SUPPLIERS_PROFILES.find(s => s.id === getInitialSupplierId(combo.id)) || SUPPLIERS_PROFILES[0];
+    return sup.producePool.slice(0, maxSlots);
+  });
+
+  // Chuyển đổi Nhà Cung Cấp: Cập nhật pool nông sản tương ứng (100% cùng 1 NCC)
+  const handleSelectSupplier = (supplierId: number) => {
+    setSelectedSupplierId(supplierId);
+    const newSup = SUPPLIERS_PROFILES.find(s => s.id === supplierId) || SUPPLIERS_PROFILES[0];
+    setSelectedProduce(newSup.producePool.slice(0, maxSlots));
+    showNotification(`Đã chuyển sang ${newSup.name}. Danh mục nông sản đã được cập nhật!`);
+  };
+
+  const toggleSelectProduce = (item: SelectableProduceItem) => {
+    const isSelected = selectedProduce.some(x => x.id === item.id);
+    if (isSelected) {
+      if (selectedProduce.length <= 1) {
+        showNotification('Giỏ combo cần có ít nhất 1 món nông sản!');
+        return;
+      }
+      setSelectedProduce(prev => prev.filter(x => x.id !== item.id));
+    } else {
+      if (selectedProduce.length >= maxSlots) {
+        showNotification(`Gói combo này bạn được chọn tối đa ${maxSlots} món. Hãy bấm bỏ bớt 1 món trước khi chọn món mới nhé!`);
+        return;
+      }
+      setSelectedProduce(prev => [...prev, item]);
+    }
+  };
 
   // Theme & User
   const [theme, setTheme] = useState('light');
@@ -274,8 +653,31 @@ export default function ComboDetailPage() {
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Reviews & Viết đánh giá
-  const [reviewsList, setReviewsList] = useState<Array<{ author: string; role: string; date: string; rating: number; comment: string }>>(combo.customerReviews);
+  // Reviews từ Database thật
+  const [realReviews, setRealReviews] = useState<Array<{
+    reviewId: number;
+    productId: number;
+    customerName: string;
+    rating: number;
+    comment: string;
+    createdAt: string;
+    helpfulCount: number;
+    isHelpfulByMe?: boolean;
+    userRole?: string;
+    roleLabel?: string;
+    replies?: Array<{
+      reviewId: number;
+      customerName: string;
+      comment: string;
+      createdAt: string;
+      userRole?: string;
+      roleLabel?: string;
+    }>;
+  }>>([]);
+  const [loadingReviews, setLoadingReviews] = useState(false);
+  const [replyingReviewId, setReplyingReviewId] = useState<number | null>(null);
+  const [replyText, setReplyText] = useState('');
+  const [submittingReply, setSubmittingReply] = useState(false);
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [myRating, setMyRating] = useState(5);
   const [myName, setMyName] = useState('');
@@ -287,6 +689,165 @@ export default function ComboDetailPage() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [cartBounce, setCartBounce] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+
+  const fetchComboReviews = async () => {
+    setLoadingReviews(true);
+    try {
+      const res = await fetch(`http://localhost:5023/api/reviews/product/${comboId}`);
+      if (res.ok) {
+        const data = await res.json();
+        const list = Array.isArray(data) ? data : (data.reviews || []);
+        if (list.length > 0) {
+          const mapped = list.map((r: any) => ({
+            ...r,
+            reviewId: Number(r.reviewId || r.id),
+            customerName: r.customerName || r.name || 'Khách hàng',
+            comment: r.comment || r.text || '',
+            createdAt: r.createdAt || r.date || '',
+            replies: (r.replies || []).map((rep: any) => ({
+              ...rep,
+              reviewId: Number(rep.reviewId || rep.id),
+              customerName: rep.customerName || rep.name || 'Thành viên LÀNH',
+              comment: rep.comment || rep.text || '',
+              createdAt: rep.createdAt || rep.date || ''
+            }))
+          }));
+          setRealReviews(mapped);
+          return;
+        }
+      }
+      // Fallback sang featured reviews nếu chưa có đánh giá riêng
+      const featRes = await fetch('http://localhost:5023/api/reviews/featured');
+      if (featRes.ok) {
+        const featData = await featRes.json();
+        const list = Array.isArray(featData) ? featData : (featData.reviews || []);
+        const mapped = list.map((r: any) => ({
+          ...r,
+          reviewId: Number(r.reviewId || r.id),
+          customerName: r.customerName || r.name || 'Khách hàng',
+          comment: r.comment || r.text || '',
+          createdAt: r.createdAt || r.date || '',
+          replies: (r.replies || []).map((rep: any) => ({
+            ...rep,
+            reviewId: Number(rep.reviewId || rep.id),
+            customerName: rep.customerName || rep.name || 'Thành viên LÀNH',
+            comment: rep.comment || rep.text || '',
+            createdAt: rep.createdAt || rep.date || ''
+          }))
+        }));
+        setRealReviews(mapped);
+      }
+    } catch (e) {
+      console.error('Error fetching reviews:', e);
+    } finally {
+      setLoadingReviews(false);
+    }
+  };
+
+  const handleLikeReview = async (reviewId: number) => {
+    const uId = currentUser?.id || currentUser?.userId;
+    if (!uId) {
+      alert('Vui lòng đăng nhập tài khoản để bấm thích đánh giá!');
+      router.push('/login');
+      return;
+    }
+    try {
+      const res = await fetch(`http://localhost:5023/api/reviews/${reviewId}/helpful?userId=${uId}`, { method: 'POST' });
+      const data = await res.json();
+      if (res.ok) {
+        setRealReviews(prev => prev.map(r => 
+          r.reviewId === reviewId 
+            ? { ...r, helpfulCount: data.helpfulCount, isHelpfulByMe: data.liked } 
+            : r
+        ));
+      } else {
+        alert(data.message || 'Không thể xử lý hữu ích.');
+      }
+    } catch (err) {
+      console.error('Error liking review:', err);
+    }
+  };
+
+  const handleSendReply = async (parentReviewId: number) => {
+    const uId = currentUser?.id || currentUser?.userId;
+    if (!uId) {
+      alert('Vui lòng đăng nhập tài khoản để gửi phản hồi đánh giá!');
+      router.push('/login');
+      return;
+    }
+    if (!replyText.trim()) {
+      alert('Vui lòng nhập nội dung phản hồi!');
+      return;
+    }
+
+    setSubmittingReply(true);
+    try {
+      const res = await fetch(`http://localhost:5023/api/reviews/${parentReviewId}/reply`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customerId: uId,
+          comment: replyText.trim()
+        })
+      });
+      if (res.ok) {
+        showNotification('Đã gửi phản hồi thành công!');
+        setReplyText('');
+        setReplyingReviewId(null);
+        fetchComboReviews();
+      } else {
+        const err = await res.json();
+        alert(err.message || 'Gửi phản hồi thất bại.');
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Có lỗi xảy ra khi kết nối máy chủ!');
+    } finally {
+      setSubmittingReply(false);
+    }
+  };
+
+  const handleCreateReview = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const uId = currentUser?.id || currentUser?.userId;
+    if (!uId) {
+      alert('Vui lòng đăng nhập tài khoản để gửi đánh giá!');
+      router.push('/login');
+      return;
+    }
+    if (!myComment.trim()) {
+      alert('Vui lòng nhập nội dung đánh giá!');
+      return;
+    }
+
+    try {
+      const res = await fetch('http://localhost:5023/api/reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId: comboId,
+          customerId: uId,
+          customerName: currentUser?.fullName || myName.trim() || 'Khách hàng LÀNH',
+          email: currentUser?.email || null,
+          rating: myRating,
+          comment: myComment.trim(),
+          imageUrls: []
+        })
+      });
+      if (res.ok) {
+        showNotification('Cảm ơn bạn! Đánh giá đã được lưu vào hệ thống.');
+        setMyComment('');
+        setShowReviewForm(false);
+        fetchComboReviews();
+      } else {
+        const err = await res.json();
+        alert(err.message || 'Gửi đánh giá thất bại');
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Có lỗi xảy ra khi kết nối máy chủ!');
+    }
+  };
 
   useEffect(() => {
     document.body.setAttribute('data-theme', theme);
@@ -303,7 +864,8 @@ export default function ComboDetailPage() {
     if (storedCart) {
       try { setCart(JSON.parse(storedCart)); } catch (e) {}
     }
-  }, []);
+    fetchComboReviews();
+  }, [comboId]);
 
   useEffect(() => {
     if (cart.length > 0) {
@@ -319,29 +881,58 @@ export default function ComboDetailPage() {
   };
 
   // Tính giá hiện tại theo chu kỳ được chọn
-  const currentPrice = selectedFreq === 'week' ? combo.weekPrice : combo.monthPrice;
+  let currentPrice = combo.weekPrice;
+  let freqLabel = 'Giao theo tuần';
+  let freqUnit = '/ tuần (1 lần giao)';
+  let freqCartUnit = 'Gói/Tuần';
+  if (selectedFreq === 'biweek') {
+    currentPrice = Math.round(combo.weekPrice * 1.9);
+    freqLabel = 'Gói 2 tuần';
+    freqUnit = '/ 2 tuần (2 lần giao)';
+    freqCartUnit = 'Gói/2 tuần';
+  } else if (selectedFreq === 'month') {
+    currentPrice = combo.monthPrice;
+    freqLabel = 'Gói trọn tháng';
+    freqUnit = '/ tháng (4 lần giao)';
+    freqCartUnit = 'Gói/Tháng';
+  }
   const currentPriceFormatted = currentPrice.toLocaleString('vi-VN') + '₫';
 
   const handleAddToCart = () => {
+    if (selectedProduce.length < maxSlots) {
+      showNotification(`Vui lòng chọn đủ ${maxSlots} món nông sản tươi ngon cho gói combo này (Hiện tại bạn mới chọn ${selectedProduce.length}/${maxSlots} món)!`);
+      const el = document.getElementById('custom-picker');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+      return;
+    }
+
+    const finalComboId = selectedFreq === 'month' 
+      ? (combo.id <= 903 ? combo.id + 3 : combo.id) 
+      : (combo.id >= 904 ? combo.id - 3 : combo.id);
+
+    const selectedSummary = selectedProduce.map(p => p.name).join(', ');
+
     const comboCartItem = {
-      id: combo.id + (selectedFreq === 'month' ? 100 : 0),
-      name: `${combo.name} (${selectedFreq === 'week' ? 'Giao theo tuần' : 'Gói trọn tháng'}) - ${deliveryDay}`,
+      id: finalComboId,
+      name: `${combo.name} (${freqLabel} - ${activeSupplier.shortName}) - Giao ${deliveryDay} (${deliverySlot})`,
       price: currentPriceFormatted,
-      unit: selectedFreq === 'week' ? '/ Tuần' : '/ Tháng',
-      category: 'Combo',
+      unit: freqCartUnit,
+      category: 'Combo Tự Chọn',
       cert: 'VietGAP & Hữu cơ',
-      region: 'Đà Lạt & Mộc Châu',
+      region: comboSupplier,
       rating: combo.rating,
       reviews: combo.reviewsCount,
       icon: 'box',
-      lot: 'LOT#VN-COMBO-' + combo.id,
-      imageUrl: activeImage
+      lot: 'LOT#VN-COMBO-' + finalComboId,
+      imageUrl: activeImage,
+      selectedItems: selectedProduce,
+      selectedSummary: selectedSummary
     };
 
     setCart(prev => {
       const existing = prev.find(x => x.product.id === comboCartItem.id);
       if (existing) {
-        return prev.map(x => (x.product.id === comboCartItem.id ? { ...x, qty: x.qty + quantity } : x));
+        return prev.map(x => (x.product.id === comboCartItem.id ? { ...x, qty: x.qty + quantity, product: comboCartItem } : x));
       }
       return [...prev, { product: comboCartItem, qty: quantity }];
     });
@@ -349,7 +940,7 @@ export default function ComboDetailPage() {
     setCartBounce(false);
     setTimeout(() => setCartBounce(true), 10);
     setIsDrawerOpen(true);
-    showNotification(`Đã thêm ${quantity} giỏ ${combo.name} vào giỏ hàng!`);
+    showNotification(`Đã thêm ${quantity} giỏ ${combo.name} [${selectedSummary}] vào giỏ hàng!`);
   };
 
   const handleBuyNow = () => {
@@ -419,22 +1010,7 @@ export default function ComboDetailPage() {
           </Link>
 
           {/* Ô Tìm kiếm */}
-          <div className="search-shell">
-            <input 
-              type="text" 
-              placeholder="Tìm kiếm rau củ quả, combo dinh dưỡng..." 
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  const val = (e.target as HTMLInputElement).value;
-                  router.push(`/products?search=${encodeURIComponent(val)}`);
-                }
-              }}
-            />
-            <button className="go" onClick={() => router.push('/products')} aria-label="Tìm kiếm">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-              <span>Tìm</span>
-            </button>
-          </div>
+          <SearchBar />
 
           {/* Nhóm nút tác vụ Header */}
           <div className="header-actions">
@@ -746,72 +1322,97 @@ export default function ComboDetailPage() {
                 </div>
               </div>
 
-              {/* 1. Chọn Chu kỳ Gói (Tuần / Tháng) */}
+              {/* 1. Chọn Chu kỳ Gói (Tuần / 2 Tuần / Trọn Tháng) */}
               <div style={{ marginBottom: '18px' }}>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: 'var(--ink)', marginBottom: '8px' }}>
-                  1. Chọn chu kỳ gói:
-                </label>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <label style={{ fontSize: '13px', fontWeight: '700', color: 'var(--ink)' }}>
+                    1. Chọn chu kỳ gói:
+                  </label>
+                  <span style={{ fontSize: '11px', color: 'var(--green-700)', fontWeight: '600' }}>
+                    * Có thể thay đổi linh hoạt bất cứ lúc nào
+                  </span>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
                   <button
                     type="button"
                     onClick={() => setSelectedFreq('week')}
                     style={{
-                      padding: '10px 14px',
+                      padding: '9px 10px',
                       borderRadius: '8px',
                       border: selectedFreq === 'week' ? '2px solid var(--green-700)' : '1px solid var(--line)',
                       backgroundColor: selectedFreq === 'week' ? 'var(--green-100)' : '#ffffff',
                       color: selectedFreq === 'week' ? 'var(--green-900)' : 'var(--ink)',
                       fontWeight: selectedFreq === 'week' ? '700' : '500',
-                      fontSize: '13px',
+                      fontSize: '12.5px',
                       cursor: 'pointer',
-                      textAlign: 'left'
+                      textAlign: 'center'
                     }}
                   >
-                    <div>Giao theo từng tuần</div>
-                    <div style={{ fontSize: '11.5px', color: 'var(--ink-soft)', marginTop: '2px' }}>{combo.weekPrice.toLocaleString('vi-VN')}₫ / tuần</div>
+                    <div>Theo tuần</div>
+                    <div style={{ fontSize: '11px', color: 'var(--ink-soft)', marginTop: '2px' }}>1 đợt / tuần</div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setSelectedFreq('biweek')}
+                    style={{
+                      padding: '9px 10px',
+                      borderRadius: '8px',
+                      border: selectedFreq === 'biweek' ? '2px solid var(--green-700)' : '1px solid var(--line)',
+                      backgroundColor: selectedFreq === 'biweek' ? 'var(--green-100)' : '#ffffff',
+                      color: selectedFreq === 'biweek' ? 'var(--green-900)' : 'var(--ink)',
+                      fontWeight: selectedFreq === 'biweek' ? '700' : '500',
+                      fontSize: '12.5px',
+                      cursor: 'pointer',
+                      textAlign: 'center'
+                    }}
+                  >
+                    <div>Gói 2 tuần</div>
+                    <div style={{ fontSize: '11px', color: 'var(--ink-soft)', marginTop: '2px' }}>2 đợt giao</div>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setSelectedFreq('month')}
                     style={{
-                      padding: '10px 14px',
+                      padding: '9px 10px',
                       borderRadius: '8px',
                       border: selectedFreq === 'month' ? '2px solid var(--green-700)' : '1px solid var(--line)',
                       backgroundColor: selectedFreq === 'month' ? 'var(--green-100)' : '#ffffff',
                       color: selectedFreq === 'month' ? 'var(--green-900)' : 'var(--ink)',
                       fontWeight: selectedFreq === 'month' ? '700' : '500',
-                      fontSize: '13px',
+                      fontSize: '12.5px',
                       cursor: 'pointer',
-                      textAlign: 'left'
+                      textAlign: 'center'
                     }}
                   >
-                    <div>Gói trọn tháng (4 tuần)</div>
-                    <div style={{ fontSize: '11.5px', color: '#15803d', fontWeight: '700', marginTop: '2px' }}>{combo.monthPrice.toLocaleString('vi-VN')}₫ (Tiết kiệm)</div>
+                    <div>Trọn tháng</div>
+                    <div style={{ fontSize: '11px', color: '#15803d', fontWeight: '700', marginTop: '2px' }}>4 đợt (Tiết kiệm)</div>
                   </button>
                 </div>
               </div>
 
-              {/* 2. Chọn Ngày Giao Hàng Trong Tuần */}
+              {/* 2. Chọn Ngày Giao Hàng Trong Tuần (Hoạt động từ Thứ 2 tới Chủ Nhật) */}
               <div style={{ marginBottom: '18px' }}>
                 <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: 'var(--ink)', marginBottom: '8px' }}>
-                  2. Chọn ngày nhận hàng trong tuần:
+                  2. Chọn ngày nhận hàng trong tuần (Giao đều đặn cả tuần Thứ 2 - CN):
                 </label>
-                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                  {['Thứ 3', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'].map(day => (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px' }}>
+                  {['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'].map(day => (
                     <button
                       key={day}
                       type="button"
                       onClick={() => setDeliveryDay(day)}
                       style={{
-                        padding: '7px 14px',
+                        padding: '7px 8px',
                         borderRadius: '6px',
                         border: deliveryDay === day ? '1.5px solid var(--green-700)' : '1px solid var(--line)',
                         backgroundColor: deliveryDay === day ? 'var(--green-700)' : '#ffffff',
                         color: deliveryDay === day ? '#ffffff' : 'var(--ink)',
-                        fontSize: '12.5px',
+                        fontSize: '12px',
                         fontWeight: deliveryDay === day ? '700' : '500',
-                        cursor: 'pointer'
+                        cursor: 'pointer',
+                        textAlign: 'center'
                       }}
                     >
                       {day}
@@ -820,27 +1421,37 @@ export default function ComboDetailPage() {
                 </div>
               </div>
 
-              {/* 3. Chọn Khung Giờ Nhận Hàng */}
+              {/* 3. Chọn Khung Giờ Nhận Hàng (Chỉ giao hàng từ 7h tới 17h chiều) */}
               <div style={{ marginBottom: '22px' }}>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: 'var(--ink)', marginBottom: '8px' }}>
-                  3. Khung giờ giao hàng ưu tiên:
-                </label>
-                <div style={{ display: 'flex', gap: '10px' }}>
-                  {['Sáng (8:00 - 11:30)', 'Chiều (14:00 - 17:30)'].map(slot => (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <label style={{ fontSize: '13px', fontWeight: '700', color: 'var(--ink)' }}>
+                    3. Khung giờ giao hàng ưu tiên:
+                  </label>
+                  <span style={{ fontSize: '11px', color: 'var(--ink-soft)' }}>
+                    (Khung giờ từ 7h00 - 17h00 hàng ngày)
+                  </span>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                  {[
+                    '07:00 - 09:30 (Sáng sớm)',
+                    '09:30 - 12:00 (Trưa)',
+                    '13:30 - 15:30 (Đầu giờ chiều)',
+                    '15:30 - 17:00 (Cuối buổi chiều)'
+                  ].map(slot => (
                     <button
                       key={slot}
                       type="button"
                       onClick={() => setDeliverySlot(slot)}
                       style={{
-                        flex: 1,
-                        padding: '8px 12px',
+                        padding: '8px 10px',
                         borderRadius: '6px',
                         border: deliverySlot === slot ? '1.5px solid var(--green-700)' : '1px solid var(--line)',
                         backgroundColor: deliverySlot === slot ? 'var(--green-100)' : '#ffffff',
                         color: deliverySlot === slot ? 'var(--green-900)' : 'var(--ink)',
-                        fontSize: '12.5px',
+                        fontSize: '11.5px',
                         fontWeight: deliverySlot === slot ? '700' : '500',
-                        cursor: 'pointer'
+                        cursor: 'pointer',
+                        textAlign: 'left'
                       }}
                     >
                       {slot}
@@ -963,7 +1574,196 @@ export default function ComboDetailPage() {
           </div>
 
 
-          {/* ── TABS NỘI DUNG CHI TIẾT ── */}
+          {/* ── BƯỚC TỰ CHỌN NÔNG SẢN TƯƠI SẠCH (CUSTOM PRODUCE PICKER) ── */}
+          <div id="custom-picker" style={{
+            backgroundColor: 'var(--surface)',
+            borderRadius: '12px',
+            border: '1px solid var(--line)',
+            padding: '24px',
+            marginBottom: '36px',
+            boxShadow: 'var(--shadow)'
+          }}>
+            {/* Header: Đơn giản, không màu mè */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '16px', paddingBottom: '16px', borderBottom: '1px solid var(--line)' }}>
+              <div>
+                <h2 style={{ fontSize: '18px', fontWeight: '800', color: 'var(--ink)', margin: '0 0 4px 0' }}>
+                  Lựa chọn nông sản cho combo (Tự chọn {maxSlots} món)
+                </h2>
+                <div style={{ fontSize: '13px', color: 'var(--ink-soft)' }}>
+                  Khách hàng tùy ý chọn Nhà cung cấp và nông sản yêu thích. Toàn bộ nông sản trong combo thuộc cùng một nhà cung cấp.
+                </div>
+              </div>
+
+              {/* Tiến độ chọn món gọn gàng */}
+              <div style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '6px 14px',
+                borderRadius: '8px',
+                backgroundColor: selectedProduce.length === maxSlots ? '#DCFCE7' : '#FEF3C7',
+                border: selectedProduce.length === maxSlots ? '1px solid #86EFAC' : '1px solid #FDE68A',
+                fontSize: '12.5px',
+                fontWeight: '700',
+                color: selectedProduce.length === maxSlots ? '#15803D' : '#92400E'
+              }}>
+                <span>Tiến độ:</span>
+                <span style={{ fontSize: '14px' }}>{selectedProduce.length}/{maxSlots} món</span>
+                {selectedProduce.length === maxSlots ? (
+                  <span>(✓ Đủ món)</span>
+                ) : (
+                  <span style={{ fontWeight: 'normal' }}>(Chọn thêm {maxSlots - selectedProduce.length} món)</span>
+                )}
+              </div>
+            </div>
+
+            {/* BỘ CHỌN NHÀ CUNG CẤP YÊU THÍCH (TỐI GIẢN) */}
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', fontSize: '12.5px', fontWeight: '700', color: 'var(--ink)', marginBottom: '8px' }}>
+                🏢 Chọn Nhà Cung Cấp cung ứng gói combo:
+              </label>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '10px' }}>
+                {SUPPLIERS_PROFILES.map(sup => {
+                  const isCurSup = selectedSupplierId === sup.id;
+                  return (
+                    <button
+                      key={sup.id}
+                      type="button"
+                      onClick={() => handleSelectSupplier(sup.id)}
+                      style={{
+                        padding: '10px 12px',
+                        borderRadius: '8px',
+                        border: isCurSup ? '2px solid var(--green-700)' : '1px solid var(--line)',
+                        backgroundColor: isCurSup ? '#F0FDF4' : '#ffffff',
+                        color: isCurSup ? 'var(--green-900)' : 'var(--ink)',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2px' }}>
+                        <strong style={{ fontSize: '13px' }}>{sup.shortName}</strong>
+                        {isCurSup && (
+                          <span style={{ fontSize: '11px', color: 'var(--green-700)', fontWeight: '700' }}>✓ Đang chọn</span>
+                        )}
+                      </div>
+                      <div style={{ fontSize: '11px', color: 'var(--ink-soft)' }}>{sup.region}</div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Thông tin nhà cung cấp hiện tại */}
+            <div style={{
+              fontSize: '12.5px',
+              color: 'var(--ink-soft)',
+              backgroundColor: 'var(--bg)',
+              padding: '8px 12px',
+              borderRadius: '6px',
+              marginBottom: '18px',
+              border: '1px solid var(--line)'
+            }}>
+              Đang xem danh mục của: <strong style={{ color: 'var(--green-900)' }}>{activeSupplier.name}</strong> • {activeSupplier.badge}
+            </div>
+
+            {/* Produce Cards Grid: Thiết kế đơn giản, không màu mè */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
+              gap: '12px'
+            }}>
+              {activeSupplier.producePool.map(item => {
+                const isSelected = selectedProduce.some(x => x.id === item.id);
+                return (
+                  <div
+                    key={item.id}
+                    onClick={() => toggleSelectProduce(item)}
+                    style={{
+                      borderRadius: '8px',
+                      border: isSelected ? '1.5px solid var(--green-700)' : '1px solid var(--line)',
+                      backgroundColor: isSelected ? '#F0FDF4' : '#ffffff',
+                      overflow: 'hidden',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    <div style={{ height: '110px', overflow: 'hidden', position: 'relative', backgroundColor: '#f8fafc' }}>
+                      <img
+                        src={item.imageUrl}
+                        alt={item.name}
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover'
+                        }}
+                      />
+                      <span style={{
+                        position: 'absolute',
+                        top: '6px',
+                        left: '6px',
+                        backgroundColor: 'rgba(0,0,0,0.6)',
+                        color: '#ffffff',
+                        fontSize: '10px',
+                        fontWeight: '600',
+                        padding: '2px 6px',
+                        borderRadius: '4px'
+                      }}>
+                        {item.category}
+                      </span>
+                      {isSelected && (
+                        <span style={{
+                          position: 'absolute',
+                          top: '6px',
+                          right: '6px',
+                          backgroundColor: 'var(--green-700)',
+                          color: '#ffffff',
+                          fontSize: '10.5px',
+                          fontWeight: '700',
+                          padding: '2px 6px',
+                          borderRadius: '4px'
+                        }}>
+                          ✓ Đã chọn
+                        </span>
+                      )}
+                    </div>
+
+                    <div style={{ padding: '10px 12px', display: 'flex', flexDirection: 'column', flex: 1 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '2px' }}>
+                        <strong style={{ fontSize: '13px', color: 'var(--ink)' }}>{item.name}</strong>
+                        <span style={{ fontSize: '11.5px', fontWeight: '700', color: 'var(--green-700)', marginLeft: '4px' }}>{item.weight}</span>
+                      </div>
+                      <div style={{ fontSize: '11px', color: 'var(--ink-soft)', marginBottom: '8px' }}>
+                        {item.region}
+                      </div>
+
+                      <button
+                        type="button"
+                        style={{
+                          marginTop: 'auto',
+                          width: '100%',
+                          padding: '5px 8px',
+                          borderRadius: '5px',
+                          border: isSelected ? '1px solid var(--green-700)' : '1px solid var(--line)',
+                          backgroundColor: isSelected ? 'var(--green-700)' : '#ffffff',
+                          color: isSelected ? '#ffffff' : 'var(--ink)',
+                          fontSize: '11.5px',
+                          fontWeight: '600',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        {isSelected ? '✓ Đã chọn' : '+ Chọn món'}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* ── TABS NỘI DUNG CHI TIẾT (BỎ TAB ITEMS, MẶC ĐỊNH HIỂN THỊ ĐÁNH GIÁ) ── */}
           <div style={{
             backgroundColor: 'var(--surface)',
             borderRadius: '16px',
@@ -980,10 +1780,9 @@ export default function ComboDetailPage() {
               overflowX: 'auto'
             }}>
               {[
-                { key: 'items', label: `Nông sản trong giỏ tuần này (${combo.items.length})` },
+                { key: 'reviews', label: `⭐ Đánh giá từ khách hàng (${realReviews.length})` },
                 { key: 'process', label: 'Quy trình từ vườn đến bàn ăn' },
-                { key: 'faqs', label: 'Câu hỏi thường gặp & Chính sách' },
-                { key: 'reviews', label: `Đánh giá từ khách hàng (${combo.customerReviews.length})` }
+                { key: 'faqs', label: 'Câu hỏi thường gặp & Chính sách' }
               ].map(tab => (
                 <button
                   key={tab.key}
@@ -1008,64 +1807,6 @@ export default function ComboDetailPage() {
 
             {/* Body Tabs */}
             <div style={{ padding: '32px' }}>
-              
-              {/* TAB 1: DANH SÁCH NÔNG SẢN TRONG GIỎ */}
-              {activeTab === 'items' && (
-                <div>
-                  <div style={{ marginBottom: '20px' }}>
-                    <h3 style={{ fontSize: '18px', fontWeight: '800', color: 'var(--ink)', margin: '0 0 6px 0' }}>
-                      Thực đơn dự kiến tuần này
-                    </h3>
-                    <p style={{ fontSize: '13.5px', color: 'var(--ink-soft)', margin: 0 }}>
-                      Mỗi tuần thực đơn được luân phiên thay đổi theo vụ thu hoạch tại các nhà màng hợp tác xã, cam kết đủ 4 nhóm màu sắc rau củ quả.
-                    </p>
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px' }}>
-                    {combo.items.map((item, idx) => (
-                      <div key={idx} style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '14px',
-                        padding: '14px 16px',
-                        borderRadius: '10px',
-                        border: '1px solid var(--line)',
-                        backgroundColor: 'var(--bg)'
-                      }}>
-                        <img
-                          src={item.imageUrl}
-                          alt={item.name}
-                          style={{ width: '60px', height: '60px', borderRadius: '8px', objectFit: 'cover', border: '1px solid var(--line)' }}
-                        />
-                        <div style={{ flex: 1 }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                            <strong style={{ fontSize: '14px', color: 'var(--ink)' }}>{item.name}</strong>
-                            <span style={{ fontSize: '12px', fontWeight: '700', color: 'var(--green-700)' }}>{item.weight}</span>
-                          </div>
-                          <div style={{ fontSize: '12px', color: 'var(--ink-soft)', marginTop: '2px' }}>
-                            Vùng trồng: <strong>{item.region}</strong>
-                          </div>
-                          <div style={{ fontSize: '12px', color: '#4b5563', marginTop: '3px', fontStyle: 'italic' }}>
-                            {item.benefit}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div style={{
-                    marginTop: '24px',
-                    padding: '14px 18px',
-                    borderRadius: '8px',
-                    backgroundColor: '#FEF9C3',
-                    border: '1px solid #FDE047',
-                    fontSize: '13px',
-                    color: '#854D0E'
-                  }}>
-                    <strong>Lưu ý về đổi món:</strong> Bạn có thể nhắn tin cho LÀNH trước 24 giờ ngày giao nếu muốn đổi bất kỳ loại rau củ nào trong danh sách trên sang món khác mà gia đình ưa thích hơn.
-                  </div>
-                </div>
-              )}
 
               {/* TAB 2: QUY TRÌNH TỪ VƯỜN ĐẾN BÀN ĂN */}
               {activeTab === 'process' && (
@@ -1128,22 +1869,29 @@ export default function ComboDetailPage() {
                 </div>
               )}
 
-              {/* TAB 4: ĐÁNH GIÁ CỦA KHÁCH HÀNG */}
+              {/* TAB 4: ĐÁNH GIÁ CỦA KHÁCH HÀNG (DỮ LIỆU THẬT DATABASE, LIKE & REPLY) */}
               {activeTab === 'reviews' && (
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
                     <div>
                       <h3 style={{ fontSize: '18px', fontWeight: '800', color: 'var(--ink)', margin: 0 }}>
-                        Nhận xét thực tế từ khách hàng ({reviewsList.length})
+                        Nhận xét thực tế từ khách hàng ({realReviews.length})
                       </h3>
                       <div style={{ fontSize: '13px', color: 'var(--green-700)', fontWeight: '700', marginTop: '2px' }}>
-                        Điểm trung bình: {combo.rating} / 5.0 ⭐ (100% người dùng hài lòng)
+                        Điểm trung bình: {combo.rating} / 5.0 ⭐ (100% đánh giá thực)
                       </div>
                     </div>
 
                     <button
                       type="button"
-                      onClick={() => setShowReviewForm(!showReviewForm)}
+                      onClick={() => {
+                        if (!currentUser) {
+                          alert('Vui lòng đăng nhập tài khoản để viết đánh giá!');
+                          router.push('/login');
+                          return;
+                        }
+                        setShowReviewForm(!showReviewForm);
+                      }}
                       style={{
                         padding: '8px 18px',
                         borderRadius: '8px',
@@ -1165,24 +1913,7 @@ export default function ComboDetailPage() {
                   {/* FORM GỬI ĐÁNH GIÁ TRỰC TIẾP */}
                   {showReviewForm && (
                     <form
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        if (!myName.trim() || !myComment.trim()) {
-                          alert('Vui lòng nhập họ tên và nhận xét của bạn!');
-                          return;
-                        }
-                        const newRev = {
-                          author: myName.trim(),
-                          role: myRole.trim() || 'Khách hàng LÀNH Farm',
-                          date: new Date().toLocaleDateString('vi-VN'),
-                          rating: myRating,
-                          comment: myComment.trim()
-                        };
-                        setReviewsList([newRev, ...reviewsList]);
-                        setMyComment('');
-                        setShowReviewForm(false);
-                        showNotification('Cảm ơn bạn! Đánh giá của bạn đã được xuất bản.');
-                      }}
+                      onSubmit={handleCreateReview}
                       style={{
                         backgroundColor: 'var(--bg)',
                         padding: '24px',
@@ -1221,30 +1952,6 @@ export default function ComboDetailPage() {
                         </span>
                       </div>
 
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
-                        <div>
-                          <label style={{ display: 'block', fontSize: '12.5px', fontWeight: '600', marginBottom: '4px' }}>Họ và tên *</label>
-                          <input
-                            type="text"
-                            required
-                            value={myName}
-                            onChange={e => setMyName(e.target.value)}
-                            placeholder="Nhập tên của bạn"
-                            style={{ width: '100%', padding: '9px 12px', borderRadius: '6px', border: '1px solid var(--line)', fontSize: '13px', boxSizing: 'border-box' }}
-                          />
-                        </div>
-                        <div>
-                          <label style={{ display: 'block', fontSize: '12.5px', fontWeight: '600', marginBottom: '4px' }}>Khu vực / Nghề nghiệp</label>
-                          <input
-                            type="text"
-                            value={myRole}
-                            onChange={e => setMyRole(e.target.value)}
-                            placeholder="Ví dụ: Mẹ bỉm sữa, Q.2..."
-                            style={{ width: '100%', padding: '9px 12px', borderRadius: '6px', border: '1px solid var(--line)', fontSize: '13px', boxSizing: 'border-box' }}
-                          />
-                        </div>
-                      </div>
-
                       <div style={{ marginBottom: '16px' }}>
                         <label style={{ display: 'block', fontSize: '12.5px', fontWeight: '600', marginBottom: '4px' }}>Nhận xét chi tiết *</label>
                         <textarea
@@ -1275,60 +1982,326 @@ export default function ComboDetailPage() {
                     </form>
                   )}
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    {reviewsList.map((rev, idx) => (
-                      <div key={idx} className="review-item" style={{
-                        padding: '18px 20px',
-                        borderRadius: '12px',
-                        border: '1px solid var(--line)',
-                        backgroundColor: 'var(--bg)',
-                        fontFamily: 'var(--font-review)'
-                      }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                          <div>
-                            <strong className="review-author-name" style={{ fontSize: '14.5px', color: 'var(--ink)', fontFamily: 'var(--font-review)', fontWeight: 600 }}>{rev.author}</strong>
-                            <span className="review-meta-text" style={{ fontSize: '12px', color: 'var(--ink-soft)', marginLeft: '8px', fontFamily: 'var(--font-review)' }}>({rev.role})</span>
+                  {loadingReviews ? (
+                    <div style={{ textAlign: 'center', padding: '30px 0', color: 'var(--ink-soft)' }}>
+                      Đang tải đánh giá từ máy chủ...
+                    </div>
+                  ) : realReviews.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '40px 20px', backgroundColor: 'var(--bg)', borderRadius: '12px', border: '1px dashed var(--line)' }}>
+                      <div style={{ fontSize: '32px', marginBottom: '8px' }}>📝</div>
+                      <div style={{ fontSize: '14px', fontWeight: '600', color: 'var(--ink)' }}>Chưa có đánh giá nào cho combo này</div>
+                      <div style={{ fontSize: '12.5px', color: 'var(--ink-soft)', marginTop: '4px' }}>Hãy là người đầu tiên trải nghiệm và chia sẻ cảm nhận nhé!</div>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                      {realReviews.map((rev, revIdx) => (
+                        <div key={rev.reviewId || (rev as any).id || `rev-${revIdx}`} className="review-item" style={{
+                          padding: '18px 20px',
+                          borderRadius: '12px',
+                          border: '1px solid var(--line)',
+                          backgroundColor: 'var(--bg)',
+                          fontFamily: 'var(--font-review)'
+                        }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <strong className="review-author-name" style={{ fontSize: '14.5px', color: 'var(--ink)', fontWeight: 600 }}>
+                                {rev.customerName || 'Khách hàng'}
+                              </strong>
+                              {rev.roleLabel && (
+                                <span style={{
+                                  fontSize: '11px',
+                                  padding: '2px 8px',
+                                  borderRadius: '999px',
+                                  fontWeight: '600',
+                                  backgroundColor: rev.userRole === 'Admin' ? '#FEF3C7' : (rev.userRole === 'Supplier' ? '#E0F2FE' : '#F1F5F9'),
+                                  color: rev.userRole === 'Admin' ? '#B45309' : (rev.userRole === 'Supplier' ? '#0369A1' : '#475569')
+                                }}>
+                                  {rev.roleLabel}
+                                </span>
+                              )}
+                            </div>
+                            <div style={{ fontSize: '13px', color: '#FFB800', letterSpacing: '1px' }}>
+                              {'★'.repeat(rev.rating || 5)}
+                            </div>
                           </div>
-                          <div style={{ fontSize: '13px', color: '#FFB800', letterSpacing: '1px' }}>
-                            {'★'.repeat(rev.rating)}
+                          
+                          <p 
+                            className="review-content-text"
+                            style={{ 
+                              margin: '0 0 10px 0', 
+                              fontSize: '14.5px', 
+                              color: 'var(--ink)', 
+                              lineHeight: '1.65',
+                              fontFamily: 'var(--font-review)',
+                              fontWeight: 400
+                            }}
+                          >
+                            "{rev.comment}"
+                          </p>
+
+                          {/* Footer của Review: Ngày đăng + Nút Like + Nút Trả lời */}
+                          <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            paddingTop: '10px',
+                            borderTop: '1px dashed var(--line)',
+                            flexWrap: 'wrap',
+                            gap: '8px'
+                          }}>
+                            <div className="review-meta-text" style={{ fontSize: '12px', color: 'var(--ink-soft)' }}>
+                              {rev.createdAt ? new Date(rev.createdAt).toLocaleDateString('vi-VN') : 'Gần đây'} • Đã mua combo
+                            </div>
+
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              {/* Nút Thích */}
+                              <button
+                                type="button"
+                                onClick={() => handleLikeReview(rev.reviewId)}
+                                style={{
+                                  background: rev.isHelpfulByMe ? 'var(--green-100)' : '#ffffff',
+                                  border: rev.isHelpfulByMe ? '1px solid var(--green-700)' : '1px solid var(--line)',
+                                  borderRadius: '999px',
+                                  padding: '4px 10px',
+                                  fontSize: '12px',
+                                  fontWeight: rev.isHelpfulByMe ? '700' : '500',
+                                  color: rev.isHelpfulByMe ? 'var(--green-900)' : 'var(--ink-soft)',
+                                  cursor: 'pointer',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px'
+                                }}
+                              >
+                                <span>👍</span>
+                                <span>{rev.isHelpfulByMe ? `Đã thích (${rev.helpfulCount || 0})` : `Hữu ích (${rev.helpfulCount || 0})`}</span>
+                              </button>
+
+                              {/* Nút Trả lời */}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (!currentUser) {
+                                    alert('Vui lòng đăng nhập tài khoản để trả lời đánh giá!');
+                                    router.push('/login');
+                                    return;
+                                  }
+                                  setReplyingReviewId(replyingReviewId === rev.reviewId ? null : rev.reviewId);
+                                  setReplyText('');
+                                }}
+                                style={{
+                                  background: '#ffffff',
+                                  border: '1px solid var(--line)',
+                                  borderRadius: '999px',
+                                  padding: '4px 10px',
+                                  fontSize: '12px',
+                                  fontWeight: '600',
+                                  color: 'var(--ink-soft)',
+                                  cursor: 'pointer',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px'
+                                }}
+                              >
+                                <span>💬</span>
+                                <span>Trả lời</span>
+                              </button>
+                            </div>
                           </div>
+
+                          {/* KHUNG NHẬP TRẢ LỜI (REPLY) */}
+                          {replyingReviewId === rev.reviewId && (
+                            <div style={{
+                              marginTop: '12px',
+                              padding: '12px 14px',
+                              backgroundColor: '#ffffff',
+                              borderRadius: '8px',
+                              border: '1px solid var(--green-200)'
+                            }}>
+                              <div style={{ fontSize: '12.5px', fontWeight: '600', color: 'var(--green-900)', marginBottom: '6px' }}>
+                                Trả lời nhận xét của {rev.customerName}:
+                              </div>
+                              <textarea
+                                rows={2}
+                                value={replyText}
+                                onChange={e => setReplyText(e.target.value)}
+                                placeholder="Nhập câu trả lời của bạn..."
+                                style={{
+                                  width: '100%',
+                                  padding: '8px 10px',
+                                  borderRadius: '6px',
+                                  border: '1px solid var(--line)',
+                                  fontSize: '13px',
+                                  outline: 'none',
+                                  boxSizing: 'border-box',
+                                  fontFamily: 'inherit'
+                                }}
+                              />
+                              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '8px' }}>
+                                <button
+                                  type="button"
+                                  onClick={() => setReplyingReviewId(null)}
+                                  style={{
+                                    padding: '5px 12px',
+                                    borderRadius: '6px',
+                                    border: '1px solid var(--line)',
+                                    background: '#ffffff',
+                                    fontSize: '12px',
+                                    cursor: 'pointer'
+                                  }}
+                                >
+                                  Hủy
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={submittingReply}
+                                  onClick={() => handleSendReply(rev.reviewId)}
+                                  style={{
+                                    padding: '5px 14px',
+                                    borderRadius: '6px',
+                                    border: 'none',
+                                    background: 'var(--green-700)',
+                                    color: '#ffffff',
+                                    fontSize: '12px',
+                                    fontWeight: '700',
+                                    cursor: submittingReply ? 'not-allowed' : 'pointer'
+                                  }}
+                                >
+                                  {submittingReply ? 'Đang gửi...' : 'Gửi phản hồi'}
+                                </button>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* DANH SÁCH CÁC PHẢN HỒI CON (REPLIES LỒNG NHAU) */}
+                          {rev.replies && rev.replies.length > 0 && (
+                            <div style={{
+                              marginTop: '12px',
+                              paddingLeft: '14px',
+                              borderLeft: '2.5px solid var(--green-700)',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '8px'
+                            }}>
+                              {rev.replies.map((rep, repIdx) => (
+                                <div key={rep.reviewId || (rep as any).id || `rep-${repIdx}`} style={{
+                                  backgroundColor: '#ffffff',
+                                  padding: '10px 14px',
+                                  borderRadius: '8px',
+                                  border: '1px solid var(--line)'
+                                }}>
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                      <strong style={{ fontSize: '13px', color: 'var(--ink)' }}>
+                                        {rep.customerName}
+                                      </strong>
+                                      {rep.roleLabel && (
+                                        <span style={{
+                                          fontSize: '10.5px',
+                                          padding: '1px 6px',
+                                          borderRadius: '999px',
+                                          fontWeight: '600',
+                                          backgroundColor: rep.userRole === 'Admin' ? '#FEF3C7' : (rep.userRole === 'Supplier' ? '#E0F2FE' : '#F1F5F9'),
+                                          color: rep.userRole === 'Admin' ? '#B45309' : (rep.userRole === 'Supplier' ? '#0369A1' : '#475569')
+                                        }}>
+                                          {rep.roleLabel}
+                                        </span>
+                                      )}
+                                    </div>
+                                    <span style={{ fontSize: '11px', color: 'var(--ink-soft)' }}>
+                                      {rep.createdAt ? new Date(rep.createdAt).toLocaleDateString('vi-VN') : ''}
+                                    </span>
+                                  </div>
+                                  <p style={{ margin: 0, fontSize: '13.5px', color: 'var(--ink)', lineHeight: '1.5' }}>
+                                    {rep.comment}
+                                  </p>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
                         </div>
-                        <p 
-                          className="review-content-text"
-                          style={{ 
-                            margin: '0 0 8px 0', 
-                            fontSize: '14.5px', 
-                            color: 'var(--ink)', 
-                            lineHeight: '1.65',
-                            fontFamily: 'var(--font-review)',
-                            fontWeight: 400
-                          }}
-                        >
-                          "{rev.comment}"
-                        </p>
-                        <div className="review-meta-text" style={{ fontSize: '12px', color: 'var(--ink-soft)', fontFamily: 'var(--font-review)' }}>
-                          Ngày đánh giá: {rev.date} • Đã mua combo định kỳ
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
 
             </div>
           </div>
 
-          {/* ── CÁC GÓI COMBO KHÁC ĐƯỢC QUAN TÂM ── */}
-          <div style={{ marginBottom: '20px' }}>
-            <h3 style={{ fontSize: '20px', fontWeight: '800', color: 'var(--green-900)', marginBottom: '16px' }}>
-              Các gói Combo khác của LÀNH Farm
-            </h3>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
+          {/* ── CÁC GÓI COMBO GỢI Ý TỪ CÁC NHÀ CUNG CẤP KHÁC ── */}
+          <div style={{ marginBottom: '30px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '16px', flexWrap: 'wrap', gap: '8px' }}>
+              <div>
+                <h3 style={{ fontSize: '20px', fontWeight: '800', color: 'var(--green-900)', margin: '0 0 4px 0' }}>
+                  📦 Gợi ý các gói Combo từ Nhà Cung Cấp &amp; Đối Tác khác
+                </h3>
+                <p style={{ margin: 0, fontSize: '13px', color: 'var(--ink-soft)' }}>
+                  Khám phá thêm các chương trình và combo định kỳ tươi sạch đa dạng từ các Hợp tác xã uy tín
+                </p>
+              </div>
+              <Link href="/combos" style={{ fontSize: '13px', color: 'var(--green-700)', fontWeight: '700', textDecoration: 'none' }}>
+                Xem tất cả gói combo &rarr;
+              </Link>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '18px' }}>
               {[
-                { id: 901, name: 'Combo Gia Đình Nhỏ', price: '189.000₫ / tuần', img: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=500&auto=format&fit=crop&q=80' },
-                { id: 902, name: 'Combo Gia Đình Lớn', price: '329.000₫ / tuần', img: 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=500&auto=format&fit=crop&q=80' },
-                { id: 903, name: 'Combo Thuần Chay Sạch', price: '249.000₫ / tuần', img: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=500&auto=format&fit=crop&q=80' }
-              ].filter(c => c.id !== combo.id).map(c => (
+                { 
+                  id: 907, 
+                  name: 'Combo Ăn Dặm Hữu Cơ Bé Yêu', 
+                  supplier: 'HTX Nông Nghiệp An Phú', 
+                  region: 'Đơn Dương - Lâm Đồng', 
+                  price: '195.000₫ / tuần', 
+                  img: 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=500&auto=format&fit=crop&q=80',
+                  badge: 'GlobalGAP'
+                },
+                { 
+                  id: 908, 
+                  name: 'Combo Trái Cây Miệt Vườn Nam Bộ', 
+                  supplier: 'HTX Trái Cây Việt', 
+                  region: 'Đồng Nai & Bến Tre', 
+                  price: '269.000₫ / tuần', 
+                  img: 'https://images.unsplash.com/photo-1553279768-865429fa0078?w=500&auto=format&fit=crop&q=80',
+                  badge: 'Đặc sản chín cây'
+                },
+                { 
+                  id: 909, 
+                  name: 'Combo Rau Đồng Nấu Lẩu Thực Dưỡng', 
+                  supplier: 'HTX Rau Sạch Miền Tây', 
+                  region: 'Đồng Tháp', 
+                  price: '175.000₫ / tuần', 
+                  img: 'https://images.unsplash.com/photo-1598170845058-32b9d6a5c317?w=500&auto=format&fit=crop&q=80',
+                  badge: 'Hương vị quê nhà'
+                },
+                { 
+                  id: 910, 
+                  name: 'Combo Salad Eat-Clean Năng Lượng', 
+                  supplier: 'HTX Nông Sản Đà Lạt', 
+                  region: 'Lâm Đồng', 
+                  price: '215.000₫ / tuần', 
+                  img: 'https://images.unsplash.com/photo-1622206151226-18ca2c9ab4a1?w=500&auto=format&fit=crop&q=80',
+                  badge: 'Eat-Clean Healthy'
+                },
+                { 
+                  id: 901, 
+                  name: 'Combo Gia Đình Nhỏ (Tuần)', 
+                  supplier: 'HTX Nông Sản Đà Lạt', 
+                  region: 'Lâm Đồng', 
+                  price: '189.000₫ / tuần', 
+                  img: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=500&auto=format&fit=crop&q=80',
+                  badge: 'Phổ biến nhất'
+                },
+                { 
+                  id: 903, 
+                  name: 'Combo Thuần Chay Sạch (Tuần)', 
+                  supplier: 'HTX Nông Sản Đà Lạt', 
+                  region: 'Lâm Đồng', 
+                  price: '249.000₫ / tuần', 
+                  img: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=500&auto=format&fit=crop&q=80',
+                  badge: 'Thuần chay 100%'
+                }
+              ].filter(c => c.id !== combo.id).slice(0, 4).map(c => (
                 <div key={c.id} style={{
                   backgroundColor: 'var(--surface)',
                   borderRadius: '12px',
@@ -1336,28 +2309,53 @@ export default function ComboDetailPage() {
                   overflow: 'hidden',
                   display: 'flex',
                   flexDirection: 'column',
-                  boxShadow: 'var(--shadow)'
+                  boxShadow: 'var(--shadow)',
+                  position: 'relative'
                 }}>
-                  <img src={c.img} alt={c.name} style={{ width: '100%', height: '140px', objectFit: 'cover' }} />
-                  <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', flex: 1 }}>
-                    <h4 style={{ margin: '0 0 6px 0', fontSize: '15px', color: 'var(--ink)' }}>{c.name}</h4>
-                    <div style={{ color: 'var(--green-900)', fontWeight: '700', fontSize: '15px', marginBottom: '12px' }}>{c.price}</div>
+                  <div style={{ position: 'relative', height: '140px', overflow: 'hidden' }}>
+                    <img src={c.img} alt={c.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <span style={{
+                      position: 'absolute',
+                      top: '8px',
+                      left: '8px',
+                      backgroundColor: 'rgba(21, 128, 61, 0.9)',
+                      color: '#ffffff',
+                      fontSize: '10.5px',
+                      fontWeight: '700',
+                      padding: '2px 8px',
+                      borderRadius: '4px'
+                    }}>
+                      {c.badge}
+                    </span>
+                  </div>
+
+                  <div style={{ padding: '14px', display: 'flex', flexDirection: 'column', flex: 1 }}>
+                    <div style={{ fontSize: '11.5px', color: 'var(--ink-soft)', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <span>🏢</span> <strong>{c.supplier}</strong>
+                    </div>
+                    <h4 style={{ margin: '0 0 6px 0', fontSize: '14.5px', color: 'var(--ink)', fontWeight: '700', lineHeight: '1.4' }}>
+                      {c.name}
+                    </h4>
+                    <div style={{ color: '#e53e3e', fontWeight: '800', fontSize: '15px', marginBottom: '14px', marginTop: 'auto' }}>
+                      {c.price}
+                    </div>
+
                     <Link
                       href={`/combos/${c.id}`}
                       style={{
-                        marginTop: 'auto',
                         display: 'block',
                         textAlign: 'center',
-                        padding: '8px 12px',
+                        padding: '9px 12px',
                         borderRadius: '6px',
-                        backgroundColor: 'var(--green-100)',
-                        color: 'var(--green-900)',
+                        backgroundColor: 'var(--green-700)',
+                        color: '#ffffff',
                         textDecoration: 'none',
-                        fontWeight: '600',
-                        fontSize: '13px'
+                        fontWeight: '700',
+                        fontSize: '12.5px',
+                        transition: 'all 0.2s'
                       }}
                     >
-                      Xem chi tiết gói
+                      Chọn Nông Sản &amp; Đặt Combo &rarr;
                     </Link>
                   </div>
                 </div>
@@ -1434,6 +2432,11 @@ export default function ComboDetailPage() {
                 </div>
                 <div className="info">
                   <b>{item.product.name}</b>
+                  {item.product.selectedSummary && (
+                    <div style={{ fontSize: '11px', color: '#166534', backgroundColor: '#DCFCE7', padding: '2px 6px', borderRadius: '4px', marginTop: '3px', lineHeight: '1.4' }}>
+                      🥗 Đã chọn: {item.product.selectedSummary}
+                    </div>
+                  )}
                   <span>{item.product.price} {item.product.unit}</span>
                   <div className="qty-ctrl">
                     <button onClick={() => updateCartQty(item.product.id, -1)}>-</button>

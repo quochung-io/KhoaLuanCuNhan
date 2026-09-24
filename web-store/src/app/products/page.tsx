@@ -1,7 +1,8 @@
 'use client';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import SearchBar from '@/components/layout/SearchBar';
 
 const ICONS: Record<string, React.ReactNode> = {
   leaf: <svg viewBox="0 0 24 24" fill="none" stroke="#2E7D32" strokeWidth="1.8"><path d="M12 21c-5-1-8-5-8-10A7 7 0 0112 3a7 7 0 018 8c0 5-3 9-8 10z"/><path d="M12 21V9"/></svg>,
@@ -55,8 +56,10 @@ type SuggestionItem = {
   imageUrl?: string;
 };
 
-export default function AllProductsPage() {
+function AllProductsInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const urlSearch = searchParams.get('search') || '';
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [loading, setLoading] = useState(false);
   const [theme, setTheme] = useState('light');
@@ -74,7 +77,7 @@ export default function AllProductsPage() {
   const [addedItem, setAddedItem] = useState<number | null>(null);
 
   // Bộ lọc & Sắp xếp
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(urlSearch);
   const [suggestions, setSuggestions] = useState<SuggestionItem[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [filterCategory, setFilterCategory] = useState('all');
@@ -490,8 +493,10 @@ export default function AllProductsPage() {
   };
 
   useEffect(() => {
-    fetchProducts();
-  }, []);
+    const s = searchParams.get('search') || '';
+    setSearchQuery(s);
+    fetchProducts(s);
+  }, [searchParams]);
 
   const handleCustomerLogout = () => {
     localStorage.removeItem('customer_user');
@@ -634,78 +639,17 @@ export default function AllProductsPage() {
           </Link>
 
           {/* Thanh tìm kiếm trung tâm */}
-          <div className="search-shell">
-            <input 
-              type="text" 
-              value={searchQuery}
-              onChange={(e) => handleSearchChange(e.target.value)}
-              onFocus={() => setShowSuggestions(true)}
-              onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-              placeholder="Bạn muốn tìm nông sản gì? (Rau cải, bơ sáp, dâu tây...)" 
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') fetchProducts();
-              }}
-            />
-            <button className="go" onClick={() => fetchProducts()} aria-label="Tìm kiếm">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-              <span>Tìm</span>
-            </button>
-            
-            {showSuggestions && suggestions.length > 0 && (
-              <ul className="suggestions-list" style={{
-                position: 'absolute',
-                top: 'calc(100% + 6px)',
-                left: 0,
-                right: 0,
-                backgroundColor: 'var(--surface)',
-                border: '1px solid var(--line)',
-                borderRadius: '10px',
-                listStyle: 'none',
-                padding: '6px 0',
-                margin: 0,
-                zIndex: 999,
-                boxShadow: '0 10px 25px rgba(0,0,0,0.12)',
-                textAlign: 'left'
-              }}>
-                <li style={{ padding: '6px 14px', fontSize: '11.5px', color: 'var(--ink-soft)', fontWeight: '700', textTransform: 'uppercase' }}>
-                  Gợi ý sản phẩm phù hợp
-                </li>
-                {suggestions.map((s, idx) => (
-                  <li 
-                    key={idx} 
-                    onClick={() => {
-                      setShowSuggestions(false);
-                      router.push(`/products/${s.productId}`);
-                    }}
-                    style={{
-                      padding: '10px 14px',
-                      cursor: 'pointer',
-                      borderBottom: '1px solid var(--line)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '12px',
-                      transition: 'background .15s'
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--green-100)')}
-                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
-                    onMouseDown={(e) => e.preventDefault()}
-                  >
-                    <img 
-                      src={s.imageUrl || 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=100&auto=format&fit=crop&q=80'} 
-                      alt={s.productName} 
-                      style={{ width: '38px', height: '38px', objectFit: 'cover', borderRadius: '6px', border: '1px solid var(--line)' }} 
-                    />
-                    <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-                      <strong style={{ fontSize: '13.5px', color: 'var(--ink)' }}>{s.productName}</strong>
-                      <span style={{ fontSize: '12px', color: '#e53e3e', fontWeight: '700' }}>
-                        {s.price.toLocaleString('vi-VN')} đ<span style={{ color: 'var(--ink-soft)', fontWeight: 'normal', fontSize: '11px' }}> / {s.unit}</span>
-                      </span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+          <SearchBar 
+            initialValue={searchQuery}
+            onSearchSubmit={(val) => {
+              setSearchQuery(val);
+              if (val) {
+                router.push(`/products?search=${encodeURIComponent(val)}`);
+              } else {
+                router.push('/products');
+              }
+            }}
+          />
 
           {/* Nhóm nút tác vụ Header */}
           <div className="header-actions">
@@ -1066,6 +1010,43 @@ export default function AllProductsPage() {
               ))}
             </div>
           </div>
+
+          {/* Banner kết quả tìm kiếm */}
+          {searchQuery && (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: '18px',
+              background: 'var(--green-100, #F4F8F4)',
+              border: '1px solid var(--green-300, #C8E6C9)',
+              padding: '12px 18px',
+              borderRadius: '12px'
+            }}>
+              <span style={{ fontSize: '14px', color: 'var(--green-900)', fontWeight: '600' }}>
+                🔍 Kết quả tìm kiếm cho từ khóa: <strong style={{ color: 'var(--green-700)' }}>"{searchQuery}"</strong> (Tìm thấy {sortedProducts.length} sản phẩm)
+              </span>
+              <button 
+                onClick={() => {
+                  setSearchQuery('');
+                  router.push('/products');
+                }}
+                style={{
+                  border: 'none',
+                  background: '#FFFFFF',
+                  color: '#E53E3E',
+                  fontSize: '12.5px',
+                  fontWeight: '700',
+                  cursor: 'pointer',
+                  padding: '6px 14px',
+                  borderRadius: '6px',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.08)'
+                }}
+              >
+                ✕ Xóa tìm kiếm
+              </button>
+            </div>
+          )}
 
           {/* Kết quả đếm */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
@@ -2039,5 +2020,17 @@ export default function AllProductsPage() {
         </div>
       </aside>
     </>
+  );
+}
+
+export default function AllProductsPage() {
+  return (
+    <Suspense fallback={
+      <div style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <p style={{ color: 'var(--ink-soft)', fontSize: '14px' }}>Đang tải danh sách nông sản...</p>
+      </div>
+    }>
+      <AllProductsInner />
+    </Suspense>
   );
 }

@@ -2,14 +2,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import SearchBar from '@/components/layout/SearchBar';
 
-type SuggestionItem = {
-  productId: number;
-  productName: string;
-  price: number;
-  unit: string;
-  imageUrl?: string;
-};
 
 type CartItem = {
   product: {
@@ -50,10 +44,6 @@ export default function ForgotPasswordPage() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [cartBounce, setCartBounce] = useState(false);
-
-  const [searchQuery, setSearchQuery] = useState('');
-  const [suggestions, setSuggestions] = useState<SuggestionItem[]>([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
 
   useEffect(() => {
     document.body.setAttribute('data-theme', theme);
@@ -100,28 +90,6 @@ export default function ForgotPasswordPage() {
     localStorage.removeItem('customer_user');
     setCurrentUser(null);
     setShowUserDropdown(false);
-  };
-
-  const handleSearchChange = (val: string) => {
-    setSearchQuery(val);
-    if (val.trim().length > 0) {
-      fetch(`http://localhost:5023/api/products/autocomplete?prefix=${encodeURIComponent(val)}`)
-        .then(res => res.json())
-        .then((data: SuggestionItem[]) => {
-          setSuggestions(data || []);
-          setShowSuggestions(true);
-        })
-        .catch(() => setSuggestions([]));
-    } else {
-      setSuggestions([]);
-      setShowSuggestions(false);
-    }
-  };
-
-  const handleSearchSubmit = () => {
-    if (searchQuery.trim()) {
-      router.push(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
-    }
   };
 
   const updateCartQty = (id: number, delta: number) => {
@@ -302,73 +270,7 @@ export default function ForgotPasswordPage() {
             </div>
           </Link>
 
-          <div className="search-shell" style={{ position: 'relative' }}>
-            <input 
-              type="text" 
-              value={searchQuery}
-              onChange={(e) => handleSearchChange(e.target.value)}
-              onFocus={() => setShowSuggestions(true)}
-              onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-              placeholder="Bạn muốn tìm nông sản gì? (Rau cải, bơ sáp, dâu tây...)" 
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') handleSearchSubmit();
-              }}
-            />
-            <button className="go" onClick={handleSearchSubmit} aria-label="Tìm kiếm">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-              <span>Tìm</span>
-            </button>
-            
-            {showSuggestions && suggestions.length > 0 && (
-              <ul className="suggestions-list" style={{
-                position: 'absolute',
-                top: '100%',
-                left: 0,
-                right: 0,
-                backgroundColor: 'var(--surface)',
-                border: '1px solid var(--line)',
-                borderRadius: '8px',
-                listStyle: 'none',
-                padding: 0,
-                margin: '4px 0 0 0',
-                zIndex: 999,
-                boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
-                textAlign: 'left'
-              }}>
-                {suggestions.map((s, idx) => (
-                  <li 
-                    key={idx} 
-                    onClick={() => {
-                      setShowSuggestions(false);
-                      router.push(`/products/${s.productId}`);
-                    }}
-                    style={{
-                      padding: '10px 14px',
-                      cursor: 'pointer',
-                      borderBottom: '1px solid var(--line)',
-                      color: 'var(--ink)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '12px'
-                    }}
-                    onMouseDown={(e) => e.preventDefault()}
-                  >
-                    <img 
-                      src={s.imageUrl || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=80&h=80&q=80'} 
-                      alt={s.productName} 
-                      style={{ width: '36px', height: '36px', objectFit: 'cover', borderRadius: '4px' }} 
-                    />
-                    <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-                      <strong style={{ fontSize: '13px', color: 'var(--ink)' }}>{s.productName}</strong>
-                      <span style={{ fontSize: '12px', color: '#15803d', fontWeight: '600' }}>
-                        {s.price.toLocaleString('vi-VN')}₫<span style={{ color: 'var(--ink-soft)', fontWeight: 'normal' }}> / {s.unit}</span>
-                      </span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+          <SearchBar />
 
           <div className="header-actions">
             {/* Tài khoản */}
