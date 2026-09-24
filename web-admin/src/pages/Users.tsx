@@ -16,7 +16,8 @@ import {
   Descriptions, 
   Alert, 
   Divider,
-  Radio
+  Radio,
+  Image
 } from 'antd';
 import { 
   PlusOutlined, 
@@ -53,6 +54,7 @@ interface SupplierItem {
   phone?: string;
   status: string;
   rejectReason?: string;
+  certImages?: string[];
   createdAt?: string;
   approvedAt?: string;
   farm?: {
@@ -633,6 +635,39 @@ export const Users: React.FC = () => {
                   <div style={{ fontSize: 11, color: '#888', marginTop: 4 }}>Cấp bởi: Sở KH&ĐT Tỉnh</div>
                 </Card>
               </div>
+
+              {selectedSupplier.certImages && selectedSupplier.certImages.length > 0 && (
+                <div style={{ marginTop: 14, background: '#f8fafc', padding: 12, borderRadius: 8, border: '1px solid #e2e8f0' }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#334155', marginBottom: 8 }}>
+                    📎 Tệp hình ảnh minh chứng đã tải lên ({selectedSupplier.certImages.length} tệp):
+                  </div>
+                  <Image.PreviewGroup>
+                    <Space size={10} wrap>
+                      {selectedSupplier.certImages.map((imgUrl, idx) => {
+                        const fullUrl = imgUrl.startsWith('http') ? imgUrl : `http://localhost:5023${imgUrl}`;
+                        const isPdf = imgUrl.toLowerCase().endsWith('.pdf');
+                        if (isPdf) {
+                          return (
+                            <a key={idx} href={fullUrl} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 12px', background: '#fff', border: '1px solid #d9d9d9', borderRadius: 6, fontSize: 12 }}>
+                              📄 Tài liệu PDF #{idx + 1}
+                            </a>
+                          );
+                        }
+                        return (
+                          <Image
+                            key={idx}
+                            src={fullUrl}
+                            width={90}
+                            height={70}
+                            style={{ objectFit: 'cover', borderRadius: 6, border: '1px solid #cbd5e1' }}
+                            fallback="https://via.placeholder.com/90x70?text=No+Image"
+                          />
+                        );
+                      })}
+                    </Space>
+                  </Image.PreviewGroup>
+                </div>
+              )}
             </div>
           </div>
         )}

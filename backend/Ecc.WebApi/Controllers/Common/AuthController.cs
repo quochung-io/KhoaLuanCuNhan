@@ -199,10 +199,10 @@ public class AuthController : ControllerBase
 
         if (!string.IsNullOrWhiteSpace(cleanFullName))
         {
-            var isFullNameTaken = await _context.Users.AnyAsync(u => u.FullName.ToLower() == cleanFullName.ToLower());
-            if (isFullNameTaken)
+            var isSupplierNameTaken = await _context.Suppliers.AnyAsync(s => s.SupplierName.ToLower() == cleanFullName.ToLower());
+            if (isSupplierNameTaken)
             {
-                return BadRequest(new { message = $"Tên người dùng '{cleanFullName}' đã tồn tại trên hệ thống! Vui lòng chọn tên người dùng khác." });
+                return BadRequest(new { message = $"Tên đơn vị / Hợp tác xã '{cleanFullName}' đã tồn tại trên hệ thống! Vui lòng chọn tên khác." });
             }
         }
 

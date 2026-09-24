@@ -10,8 +10,12 @@ import {
   Typography, 
   Alert, 
   Result, 
-  Tag 
+  Tag,
+  Upload,
+  Modal,
+  message
 } from 'antd';
+import type { UploadFile, UploadProps } from 'antd';
 import { 
   UserOutlined, 
   LockOutlined, 
@@ -20,7 +24,8 @@ import {
   ShopOutlined, 
   EnvironmentOutlined, 
   SafetyCertificateOutlined, 
-  IdcardOutlined
+  IdcardOutlined,
+  InboxOutlined
 } from '@ant-design/icons';
 import { useNavigate, Link } from 'react-router-dom';
 import axiosClient from '../config/axiosClient';
@@ -47,6 +52,62 @@ export const Register: React.FC = () => {
   const [loadingProvinces, setLoadingProvinces] = useState<boolean>(false);
   const [districtsList, setDistrictsList] = useState<DistrictItem[]>(FALLBACK_DISTRICTS[68] || []);
   const [loadingDistricts, setLoadingDistricts] = useState<boolean>(false);
+
+  // States quản lý tải lên nhiều tệp hình ảnh chứng nhận / giấy tờ HTX
+  const [fileList, setFileList] = useState<UploadFile[]>([]);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewImage, setPreviewImage] = useState('');
+  const [previewTitle, setPreviewTitle] = useState('');
+
+  // Chuyển đổi tệp sang base64 để preview nhanh
+  const getBase64 = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (error) => reject(error);
+    });
+
+  // Tự động tải nhiều tệp ảnh lên Backend qua API /api/upload/images
+  const handleCustomUpload = async (options: any) => {
+    const { file, onSuccess, onError, onProgress } = options;
+    const formData = new FormData();
+    formData.append('files', file);
+
+    try {
+      onProgress({ percent: 40 });
+      const res = await axiosClient.post('/upload/images', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        onUploadProgress: (event) => {
+          if (event.total) {
+            const percent = Math.round((event.loaded * 100) / event.total);
+            onProgress({ percent });
+          }
+        }
+      });
+
+      onSuccess(res.data, file);
+      message.success(`Đã tải lên tệp: ${file.name}`);
+    } catch (err: any) {
+      console.error('Lỗi khi tải tệp:', err);
+      const errMsg = err.response?.data?.message || `Tải tệp '${file.name}' thất bại!`;
+      onError(err);
+      message.error(errMsg);
+    }
+  };
+
+  const handleFileChange: UploadProps['onChange'] = ({ fileList: newFileList }) => {
+    setFileList(newFileList);
+  };
+
+  const handlePreview = async (file: UploadFile) => {
+    if (!file.url && !file.preview) {
+      file.preview = await getBase64(file.originFileObj as File);
+    }
+    setPreviewImage(file.url || (file.preview as string));
+    setPreviewOpen(true);
+    setPreviewTitle(file.name || file.url!.substring(file.url!.lastIndexOf('/') + 1));
+  };
 
   const [form] = Form.useForm();
   const navigate = useNavigate();
@@ -174,47 +235,119 @@ export const Register: React.FC = () => {
   };
 
   const handleSubmit = async () => {
+    let values: any;
     try {
-      const values = await form.validateFields();
-      setLoading(true);
-      setErrorMessage(null);
+      values = await form.validateFields();
+    } catch (formError: any) {
+      console.log('Form validation failed:', formError);
+      if (formError?.errorFields && formError.errorFields.length > 0) {
+        const firstField = formError.errorFields[0];
+        const errorText = firstField.errors?.[0] || 'Vui lòng kiểm tra lại thông tin';
+        const fieldName = firstField.name?.[0];
+
+        message.error(`Thông tin chưa hợp lệ: ${errorText}`, 6);
+        setErrorMessage(`Vui lòng hoàn thiện trường "${fieldName}": ${errorText}`);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        // Tự động chuyển đến đúng bước chứa trường chưa điền để người dùng thấy ngay
+        if (['storeName', 'fullName', 'email', 'phone', 'password', 'confirmPassword'].includes(fieldName)) {
+          setCurrentStep(0);
+        } else if (['farmName', 'address', 'province', 'district', 'area', 'cropType'].includes(fieldName)) {
+          setCurrentStep(1);
+        } else {
+          setCurrentStep(2);
+        }
+      } else {
+        message.error('Vui lòng kiểm tra lại các trường thông tin bắt buộc!', 6);
+      }
+      return;
+    }
+
+    setLoading(true);
+    setErrorMessage(null);
+
+    try {
+      // Thu thập danh sách URL các tệp hình ảnh / tài liệu đã tải lên
+      const certImages: string[] = fileList
+        .map(f => {
+          if (f.response?.urls && Array.isArray(f.response.urls) && f.response.urls.length > 0) {
+            return f.response.urls[0];
+          }
+          if (f.response?.files && Array.isArray(f.response.files) && f.response.files.length > 0) {
+            return f.response.files[0].url;
+          }
+          if (f.url) return f.url;
+          return null;
+        })
+        .filter(Boolean) as string[];
 
       const payload = {
-        fullName: values.fullName.trim(),
-        storeName: values.storeName.trim(),
-        email: values.email.trim().toLowerCase(),
-        password: values.password,
-        phone: values.phone?.trim().replace(/\s+/g, ''),
-        farmName: values.farmName.trim(),
-        address: values.address.trim(),
+        fullName: values.fullName?.trim() || '',
+        storeName: values.storeName?.trim() || '',
+        email: values.email?.trim().toLowerCase() || '',
+        password: values.password || '',
+        phone: values.phone?.trim().replace(/\s+/g, '') || '',
+        farmName: values.farmName?.trim() || `${values.storeName || 'Trang trại'} Farm`,
+        address: values.address?.trim() || '',
         province: values.province || 'Tỉnh Lâm Đồng',
         district: values.district || 'Thành phố Đà Lạt',
-        area: values.area || 2.5,
+        area: values.area ? Number(values.area) : 2.5,
         cropType: values.cropType || 'Rau củ quả sạch',
         productionStandard: values.productionStandard || 'VietGAP',
-        identityCard: values.identityCard?.trim() || 'CCCD-VERIFIED',
-        businessLicense: values.businessLicense?.trim() || `BL-${Date.now().toString().slice(-6)}`
+        identityCard: values.identityCard?.trim() || `CCCD-${Date.now().toString().slice(-8)}`,
+        businessLicense: values.businessLicense?.trim() || `BL-${Date.now().toString().slice(-6)}`,
+        certImages: certImages
       };
 
       const res = await axiosClient.post('/users/supplier-register', payload);
       setRegisteredData({ ...payload, ...res.data });
       setIsSuccess(true);
-    } catch (err: any) {
-      const msg = err.response?.data?.message || 'Đăng ký hồ sơ thất bại. Vui lòng kiểm tra lại thông tin!';
-      setErrorMessage(msg);
+      message.success('Nộp hồ sơ đăng ký đối tác Hợp tác xã thành công!');
+    } catch (apiErr: any) {
+      console.error('API register error:', apiErr);
+      let errorMsg = '';
+
+      if (apiErr.response?.data?.message) {
+        errorMsg = apiErr.response.data.message;
+      } else if (apiErr.response?.data?.errors) {
+        const errorsObj = apiErr.response.data.errors;
+        const errList: string[] = [];
+        for (const key in errorsObj) {
+          if (Array.isArray(errorsObj[key])) {
+            errList.push(...errorsObj[key]);
+          } else {
+            errList.push(String(errorsObj[key]));
+          }
+        }
+        errorMsg = errList.join(' | ') || 'Dữ liệu không hợp lệ theo quy chuẩn của máy chủ!';
+      } else if (apiErr.response?.data?.title) {
+        errorMsg = apiErr.response.data.title;
+      } else if (typeof apiErr.response?.data === 'string') {
+        errorMsg = apiErr.response.data;
+      } else if (apiErr.message) {
+        errorMsg = apiErr.message;
+      } else {
+        errorMsg = 'Đăng ký hồ sơ thất bại do máy chủ từ chối yêu cầu. Vui lòng kiểm tra lại thông tin!';
+      }
+
+      setErrorMessage(errorMsg);
+      message.error(errorMsg, 8);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
       // Nếu lỗi liên quan đến email, số điện thoại, mật khẩu hoặc tên đơn vị, lùi về bước 1 để hiển thị lỗi
       if (
-        msg.includes('Email') || 
-        msg.includes('thoại') || 
-        msg.includes('Mật khẩu') || 
-        msg.includes('đơn vị') || 
-        msg.includes('người dùng')
+        errorMsg.includes('Email') || 
+        errorMsg.includes('thoại') || 
+        errorMsg.includes('Mật khẩu') || 
+        errorMsg.includes('đơn vị') || 
+        errorMsg.includes('Hợp tác xã') ||
+        errorMsg.includes('người dùng')
       ) {
         setCurrentStep(0);
-        if (msg.includes('Email')) form.setFields([{ name: 'email', errors: [msg] }]);
-        if (msg.includes('thoại')) form.setFields([{ name: 'phone', errors: [msg] }]);
-        if (msg.includes('Mật khẩu')) form.setFields([{ name: 'password', errors: [msg] }]);
-        if (msg.includes('đơn vị')) form.setFields([{ name: 'storeName', errors: [msg] }]);
+        if (errorMsg.includes('Email')) form.setFields([{ name: 'email', errors: [errorMsg] }]);
+        if (errorMsg.includes('thoại')) form.setFields([{ name: 'phone', errors: [errorMsg] }]);
+        if (errorMsg.includes('Mật khẩu')) form.setFields([{ name: 'password', errors: [errorMsg] }]);
+        if (errorMsg.includes('đơn vị') || errorMsg.includes('Hợp tác xã')) form.setFields([{ name: 'storeName', errors: [errorMsg] }]);
       }
     } finally {
       setLoading(false);
@@ -314,6 +447,7 @@ export const Register: React.FC = () => {
         <Form
           form={form}
           layout="vertical"
+          preserve={true}
           initialValues={{
             province: 'Tỉnh Lâm Đồng',
             district: 'Thành phố Đà Lạt',
@@ -323,8 +457,7 @@ export const Register: React.FC = () => {
           }}
         >
           {/* BƯỚC 1: THÔNG TIN TÀI KHOẢN & ĐẠI DIỆN */}
-          {currentStep === 0 && (
-            <div>
+          <div style={{ display: currentStep === 0 ? 'block' : 'none' }}>
               <Alert 
                 type="info" 
                 showIcon 
@@ -335,6 +468,7 @@ export const Register: React.FC = () => {
               <Form.Item
                 name="storeName"
                 label="Tên Cửa hàng / Hợp tác xã / Trang trại"
+                normalize={(value) => value ? value.trimStart() : ''}
                 rules={[{ required: true, message: 'Vui lòng nhập tên đơn vị kinh doanh!' }]}
               >
                 <Input 
@@ -359,6 +493,7 @@ export const Register: React.FC = () => {
               <Form.Item
                 name="fullName"
                 label="Họ và tên người đại diện pháp lý"
+                normalize={(value) => value ? value.trimStart() : ''}
                 rules={[{ required: true, message: 'Vui lòng nhập họ tên người đại diện!' }]}
               >
                 <Input prefix={<UserOutlined />} placeholder="Ví dụ: Nguyễn Văn A" />
@@ -368,6 +503,7 @@ export const Register: React.FC = () => {
                 <Form.Item
                   name="email"
                   label="Email liên hệ & đăng nhập"
+                  normalize={(value) => value ? value.trim().toLowerCase() : ''}
                   validateTrigger={['onChange', 'onBlur']}
                   rules={[
                     { required: true, message: 'Vui lòng nhập địa chỉ email!' },
@@ -397,6 +533,7 @@ export const Register: React.FC = () => {
                 <Form.Item
                   name="phone"
                   label="Số điện thoại di động"
+                  normalize={(value) => value ? value.trim().replace(/\s+/g, '') : ''}
                   validateTrigger={['onChange', 'onBlur']}
                   rules={[
                     { required: true, message: 'Vui lòng nhập số điện thoại!' },
@@ -500,12 +637,10 @@ export const Register: React.FC = () => {
                   </span>
                 </div>
               </div>
-            </div>
-          )}
+          </div>
 
           {/* BƯỚC 2: THÔNG TIN NÔNG TRẠI & VÙNG CANH TÁC */}
-          {currentStep === 1 && (
-            <div>
+          <div style={{ display: currentStep === 1 ? 'block' : 'none' }}>
               <Alert 
                 type="info" 
                 showIcon 
@@ -516,6 +651,7 @@ export const Register: React.FC = () => {
               <Form.Item
                 name="farmName"
                 label="Tên trang trại / Khu nông nghiệp công nghệ cao"
+                normalize={(value) => value ? value.trimStart() : ''}
                 rules={[{ required: true, message: 'Vui lòng nhập tên trang trại!' }]}
               >
                 <Input prefix={<ShopOutlined />} placeholder="Ví dụ: Trang trại Thung Lũng Xanh" />
@@ -524,6 +660,7 @@ export const Register: React.FC = () => {
               <Form.Item
                 name="address"
                 label="Địa chỉ chi tiết vùng trồng & kho chính"
+                normalize={(value) => value ? value.trimStart() : ''}
                 rules={[{ required: true, message: 'Vui lòng nhập địa chỉ vùng trồng!' }]}
               >
                 <Input prefix={<EnvironmentOutlined />} placeholder="Số nhà, đường, thôn/xã..." />
@@ -625,12 +762,10 @@ export const Register: React.FC = () => {
                   </Select>
                 </Form.Item>
               </div>
-            </div>
-          )}
+          </div>
 
           {/* BƯỚC 3: HỒ SƠ PHÁP LÝ & CHỨNG NHẬN TIÊU CHUẨN */}
-          {currentStep === 2 && (
-            <div>
+          <div style={{ display: currentStep === 2 ? 'block' : 'none' }}>
               <Alert 
                 type="info" 
                 showIcon 
@@ -642,17 +777,19 @@ export const Register: React.FC = () => {
                 <Form.Item
                   name="identityCard"
                   label="Số CCCD / Hộ chiếu người đại diện"
-                  rules={[{ required: true, message: 'Nhập số CCCD/Hộ chiếu!' }]}
+                  normalize={(value) => value ? value.trim() : ''}
+                  rules={[{ required: false }]}
                 >
-                  <Input prefix={<IdcardOutlined />} placeholder="0490xxxxxxxx" />
+                  <Input prefix={<IdcardOutlined />} placeholder="0490xxxxxxxx (Có thể để trống nếu đã đính kèm ảnh)" />
                 </Form.Item>
 
                 <Form.Item
                   name="businessLicense"
-                  label="Mã số ĐKKD / Mã số HTX (nếu có)"
-                  rules={[{ required: true, message: 'Nhập mã số ĐKKD hoặc số đăng ký HTX!' }]}
+                  label="Mã số ĐKKD / Mã số HTX (Không bắt buộc)"
+                  normalize={(value) => value ? value.trim() : ''}
+                  rules={[{ required: false }]}
                 >
-                  <Input prefix={<SafetyCertificateOutlined />} placeholder="Ví dụ: 5801234567" />
+                  <Input prefix={<SafetyCertificateOutlined />} placeholder="Ví dụ: 5801234567 (Tùy chọn)" />
                 </Form.Item>
               </div>
 
@@ -670,27 +807,67 @@ export const Register: React.FC = () => {
                 </Select>
               </Form.Item>
 
-              <div style={{ 
-                padding: 16, 
-                backgroundColor: '#fafafa', 
-                border: '1px dashed #d9d9d9', 
-                borderRadius: 8, 
-                marginBottom: 16 
-              }}>
-                <div style={{ fontWeight: 500, marginBottom: 6 }}>
-                  📎 Đính kèm ảnh CCCD & Giấy chứng nhận tiêu chuẩn (Mô phỏng xác thực):
+              {/* KHU VỰC TẢI LÊN NHIỀU TỆP HÌNH ẢNH CHỨNG NHẬN & PHÁP LÝ */}
+              <div style={{ marginBottom: 20 }}>
+                <div style={{ fontWeight: 600, color: '#1e293b', marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span>
+                    📸 Tải lên hình ảnh hồ sơ pháp lý & Chứng nhận nông sản (Nhiều tệp):
+                  </span>
+                  <Tag color="green">
+                    Đã tải: {fileList.length} tệp
+                  </Tag>
                 </div>
-                <div style={{ fontSize: 12, color: '#666', marginBottom: 10 }}>
-                  Hệ thống tự động kích hoạt tài liệu đính kèm kiểm định điện tử cho tài khoản mới.
-                </div>
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  <Tag color="cyan">✓ Ảnh CCCD 2 mặt (Đã xác minh)</Tag>
-                  <Tag color="green">✓ Bản sao Giấy phép HTX (Đã đính kèm)</Tag>
-                  <Tag color="blue">✓ Giấy chứng nhận VietGAP/GlobalGAP (Còn hạn)</Tag>
-                </div>
+
+                <Upload.Dragger
+                  name="files"
+                  multiple={true}
+                  fileList={fileList}
+                  customRequest={handleCustomUpload}
+                  onChange={handleFileChange}
+                  onPreview={handlePreview}
+                  listType="picture"
+                  accept="image/*,.pdf"
+                  style={{
+                    padding: '20px 16px',
+                    background: '#f8fafc',
+                    border: '2px dashed #bbf7d0',
+                    borderRadius: 12
+                  }}
+                >
+                  <p className="ant-upload-drag-icon" style={{ marginBottom: 12 }}>
+                    <InboxOutlined style={{ color: '#16a34a', fontSize: 44 }} />
+                  </p>
+                  <p className="ant-upload-text" style={{ fontSize: 15, fontWeight: 600, color: '#1e293b', margin: '0 0 6px 0' }}>
+                    Nhấp chọn hoặc kéo thả các tệp hình ảnh vào đây
+                  </p>
+                  <p className="ant-upload-hint" style={{ fontSize: 13, color: '#64748b', margin: 0 }}>
+                    Hỗ trợ chọn cùng lúc nhiều tệp (JPG, PNG, WEBP, PDF, tối đa 15MB/tệp).
+                    <br />
+                    Ví dụ: Ảnh CCCD 2 mặt, Giấy phép ĐKKD HTX, Chứng nhận VietGAP/GlobalGAP, Ảnh nông trại...
+                  </p>
+                </Upload.Dragger>
+
+                {fileList.length > 0 && (
+                  <Alert
+                    type="success"
+                    showIcon
+                    style={{ marginTop: 12, borderRadius: 8 }}
+                    message={`Hệ thống đã lưu ${fileList.length} tệp tài liệu chứng thực hợp lệ cho hồ sơ đối tác.`}
+                  />
+                )}
               </div>
-            </div>
-          )}
+
+              {/* Modal xem trước hình ảnh phóng to */}
+              <Modal
+                open={previewOpen}
+                title={previewTitle}
+                footer={null}
+                onCancel={() => setPreviewOpen(false)}
+                centered
+              >
+                <img alt="Xem trước tài liệu" style={{ width: '100%', borderRadius: 8 }} src={previewImage} />
+              </Modal>
+          </div>
 
           {/* CÁC NÚT ĐIỀU HƯỚNG */}
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 24 }}>

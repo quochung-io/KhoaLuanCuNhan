@@ -226,16 +226,32 @@ public class UsersController : ControllerBase
 
         var result = suppliers.Select(s => {
             var farm = farms.FirstOrDefault(f => f.SupplierId == s.SupplierId);
+            var desc = s.Description ?? "";
+            var certImages = new List<string>();
+            if (desc.Contains("CERT_IMAGES:"))
+            {
+                var idx = desc.IndexOf("CERT_IMAGES:");
+                var jsonPart = desc.Substring(idx + "CERT_IMAGES:".Length).Trim();
+                try
+                {
+                    certImages = System.Text.Json.JsonSerializer.Deserialize<List<string>>(jsonPart) ?? new List<string>();
+                }
+                catch { }
+            }
+
             return new {
                 supplierId = s.SupplierId,
                 userId = s.UserId,
                 fullName = s.SupplierName,
+                storeName = s.SupplierName,
                 representative = s.Representative ?? s.User?.FullName,
                 businessLicense = s.BusinessLicense,
                 email = s.User?.Email,
                 phone = s.User?.Phone,
                 status = s.ApprovalStatus ?? s.User?.Status ?? "Pending",
                 rejectReason = s.RejectReason,
+                description = desc,
+                certImages = certImages,
                 createdAt = s.CreatedAt,
                 approvedAt = s.ApprovedAt,
                 farm = farm == null ? null : new {
@@ -259,13 +275,17 @@ public class UsersController : ControllerBase
     [HttpPost("supplier-register")]
     public async Task<IActionResult> SupplierRegister([FromBody] SupplierRegisterDto dto)
     {
-        var cleanFullName = dto.FullName?.Trim() ?? dto.StoreName?.Trim();
+        var storeName = !string.IsNullOrWhiteSpace(dto.StoreName) ? dto.StoreName.Trim() : (!string.IsNullOrWhiteSpace(dto.FarmName) ? dto.FarmName.Trim() : dto.FullName?.Trim() ?? "Nhà cung cấp mới");
+        var representative = !string.IsNullOrWhiteSpace(dto.FullName) ? dto.FullName.Trim() : storeName;
         var cleanEmail = dto.Email?.Trim().ToLower();
         var cleanPhone = dto.Phone?.Trim().Replace(" ", "").Replace("-", "");
         if (cleanPhone != null && cleanPhone.StartsWith("+84")) cleanPhone = "0" + cleanPhone.Substring(3);
 
-        if (string.IsNullOrWhiteSpace(cleanFullName))
+        if (string.IsNullOrWhiteSpace(storeName))
             return BadRequest(new { message = "Vui lòng nhập tên nhà cung cấp / hợp tác xã!" });
+
+        if (string.IsNullOrWhiteSpace(representative))
+            return BadRequest(new { message = "Vui lòng nhập họ và tên người đại diện pháp lý!" });
 
         if (string.IsNullOrWhiteSpace(cleanEmail))
             return BadRequest(new { message = "Vui lòng nhập địa chỉ email!" });
@@ -301,21 +321,51 @@ public class UsersController : ControllerBase
             return BadRequest(new { message = "Mật khẩu phải chứa ít nhất 1 ký tự đặc biệt (!@#$%^&*...)!" });
 
         // Ràng buộc tính duy nhất trong database
-        if (await _context.Users.AnyAsync(u => u.FullName.ToLower() == cleanFullName.ToLower()))
-            return BadRequest(new { message = $"Tên đơn vị '{cleanFullName}' đã tồn tại trên hệ thống! Vui lòng chọn tên khác." });
-
         if (await _context.Users.AnyAsync(u => u.Email.ToLower() == cleanEmail))
             return BadRequest(new { message = $"Email '{cleanEmail}' đã tồn tại trong hệ thống! Mỗi email chỉ được đăng ký 1 tài khoản." });
 
         if (await _context.Users.AnyAsync(u => u.Phone == cleanPhone))
             return BadRequest(new { message = $"Số điện thoại '{cleanPhone}' đã tồn tại trong hệ thống! Mỗi số điện thoại chỉ được đăng ký 1 tài khoản." });
 
+        if (await _context.Suppliers.AnyAsync(s => s.SupplierName.ToLower() == storeName.ToLower()))
+            return BadRequest(new { message = $"Tên đơn vị / Hợp tác xã '{storeName}' đã tồn tại trên hệ thống! Vui lòng chọn tên khác." });
+
         try
         {
+            // Cắt độ dài chuỗi an toàn tương ứng với độ dài cột trong CSDL
+            var safeStoreName = storeName.Length > 150 ? storeName.Substring(0, 150) : storeName;
+            var safeRepresentative = representative.Length > 100 ? representative.Substring(0, 100) : representative;
+            var rawLicense = !string.IsNullOrWhiteSpace(dto.BusinessLicense) ? dto.BusinessLicense.Trim() : (!string.IsNullOrWhiteSpace(dto.IdentityCard) ? dto.IdentityCard.Trim() : $"BL-{DateTime.UtcNow:yyyyMMdd}");
+            var safeLicense = rawLicense.Length > 50 ? rawLicense.Substring(0, 50) : rawLicense;
+            var safeAddress = (dto.Address?.Trim() ?? "Đang cập nhật");
+            if (safeAddress.Length > 255) safeAddress = safeAddress.Substring(0, 255);
+            var safeProvince = (dto.Province?.Trim() ?? "Tỉnh Lâm Đồng");
+            if (safeProvince.Length > 100) safeProvince = safeProvince.Substring(0, 100);
+            var safeDistrict = (dto.District?.Trim() ?? "Thành phố Đà Lạt");
+            if (safeDistrict.Length > 100) safeDistrict = safeDistrict.Substring(0, 100);
+            var safeFarmName = !string.IsNullOrWhiteSpace(dto.FarmName) ? dto.FarmName.Trim() : $"{safeStoreName} Farm";
+            if (safeFarmName.Length > 150) safeFarmName = safeFarmName.Substring(0, 150);
+            var safeCropType = (dto.CropType?.Trim() ?? "Rau củ quả sạch");
+            if (safeCropType.Length > 150) safeCropType = safeCropType.Substring(0, 150);
+            var safeStandard = (dto.ProductionStandard?.Trim() ?? "VietGAP");
+            if (safeStandard.Length > 100) safeStandard = safeStandard.Substring(0, 100);
+
+            // Xử lý lưu chuỗi hình ảnh chứng nhận nếu có upload nhiều tệp
+            var desc = $"Chuyên nông sản sạch, đạt chuẩn {safeStandard}";
+            if (dto.CertImages != null && dto.CertImages.Count > 0)
+            {
+                var validImages = dto.CertImages.Where(x => !string.IsNullOrWhiteSpace(x)).ToList();
+                if (validImages.Count > 0)
+                {
+                    var json = System.Text.Json.JsonSerializer.Serialize(validImages);
+                    desc += $" | CERT_IMAGES:{json}";
+                }
+            }
+
             // 1. Tạo tài khoản User (Role = 2 SUPPLIER, Status = "Pending")
             var user = new User
             {
-                FullName = cleanFullName,
+                FullName = safeRepresentative,
                 Email = cleanEmail,
                 Phone = cleanPhone,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
@@ -327,16 +377,16 @@ public class UsersController : ControllerBase
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
-            // 2. Tạo bản ghi Supplier trong bảng Suppliers (bảng có sẵn trong CSDL)
+            // 2. Tạo bản ghi Supplier trong bảng Suppliers
             var supplier = new Supplier
             {
                 UserId = user.UserId,
-                SupplierName = cleanFullName,
-                Representative = !string.IsNullOrWhiteSpace(dto.FullName) ? dto.FullName.Trim() : cleanFullName,
-                BusinessLicense = dto.BusinessLicense ?? dto.IdentityCard ?? $"BL-{DateTime.UtcNow:yyyyMMdd}-{user.UserId}",
-                Address = dto.Address ?? "Đang cập nhật",
-                Province = dto.Province ?? "Lâm Đồng",
-                Description = $"Chuyên nông sản sạch, đạt chuẩn {dto.ProductionStandard ?? "VietGAP"}",
+                SupplierName = safeStoreName,
+                Representative = safeRepresentative,
+                BusinessLicense = safeLicense,
+                Address = safeAddress,
+                Province = safeProvince,
+                Description = desc,
                 ApprovalStatus = "Pending",
                 CreatedAt = DateTime.UtcNow
             };
@@ -347,13 +397,13 @@ public class UsersController : ControllerBase
             var farm = new Farm
             {
                 SupplierId = supplier.SupplierId,
-                FarmName = !string.IsNullOrWhiteSpace(dto.FarmName) ? dto.FarmName.Trim() : $"{cleanFullName} Farm",
-                Address = dto.Address ?? "Đang cập nhật",
-                Province = dto.Province ?? "Lâm Đồng",
-                District = dto.District ?? "Đà Lạt",
+                FarmName = safeFarmName,
+                Address = safeAddress,
+                Province = safeProvince,
+                District = safeDistrict,
                 Area = dto.Area.HasValue && dto.Area > 0 ? dto.Area.Value : 2.5m,
-                CropType = dto.CropType ?? "Rau củ quả sạch",
-                ProductionStandard = dto.ProductionStandard ?? "VietGAP",
+                CropType = safeCropType,
+                ProductionStandard = safeStandard,
                 Status = "Pending"
             };
             _context.Farms.Add(farm);
@@ -367,9 +417,9 @@ public class UsersController : ControllerBase
                 status = "Pending"
             });
         }
-        catch (DbUpdateException)
+        catch (DbUpdateException ex)
         {
-            return BadRequest(new { message = "Thông tin đăng ký (Tên đơn vị, Email hoặc Số điện thoại) đã tồn tại trên hệ thống. Mỗi email và số điện thoại chỉ được đăng ký 1 tài khoản!" });
+            return BadRequest(new { message = $"Lỗi cập nhật CSDL: {ex.InnerException?.Message ?? ex.Message}" });
         }
         catch (Exception ex)
         {
@@ -548,6 +598,7 @@ public class SupplierRegisterDto
     public string? IdentityCard { get; set; }
     public string? BusinessLicense { get; set; }
     public string? CertNumber { get; set; }
+    public List<string>? CertImages { get; set; }
 }
 
 public class RejectSupplierDto
