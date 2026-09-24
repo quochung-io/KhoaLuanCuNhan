@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import SearchBar from '@/components/layout/SearchBar';
+import { trackBehavior, getSessionId, getCurrentUserId } from '@/lib/recommendationTracker';
 
 const ICONS: Record<string, React.ReactNode> = {
   leaf: <svg viewBox="0 0 24 24" fill="none" stroke="#2E7D32" strokeWidth="1.8"><path d="M12 21c-5-1-8-5-8-10A7 7 0 0112 3a7 7 0 018 8c0 5-3 9-8 10z"/><path d="M12 21V9"/></svg>,
@@ -30,6 +31,9 @@ type Product = {
   imageUrl?: string;
   isOutOfStock?: boolean;
   availableStock?: number;
+  isRecommended?: boolean;
+  recommendationReason?: string;
+  recommendationScore?: number;
 };
 
 const initialProducts: Product[] = [];
@@ -172,6 +176,56 @@ export default function LanhLandingPage() {
   // QR Modal
   const [openQrFor, setOpenQrFor] = useState<number | null>(null);
 
+  // CARS Recommendation State (Dành riêng cho bạn)
+  const [forYouRecommendations, setForYouRecommendations] = useState<any[]>([]);
+  const [loadingForYou, setLoadingForYou] = useState(false);
+
+  const fetchForYouRecommendations = () => {
+    const sid = getSessionId();
+    const uid = getCurrentUserId();
+    setLoadingForYou(true);
+    fetch(`http://localhost:5023/api/recommendations/for-you?userId=${uid || ''}&sessionId=${sid || ''}&limit=6`)
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setForYouRecommendations(data);
+          // Tự động tái xếp hạng thông minh danh mục Thu Hoạch Trong Ngày
+          setProducts(prevProducts => {
+            if (!prevProducts || prevProducts.length === 0) return prevProducts;
+            const recMap = new Map(data.map(item => [item.productId, item]));
+            
+            const recItems: Product[] = [];
+            const otherItems: Product[] = [];
+
+            data.forEach(rec => {
+              const matched = prevProducts.find(p => p.id === rec.productId);
+              if (matched) {
+                recItems.push({
+                  ...matched,
+                  isRecommended: true,
+                  recommendationReason: rec.recommendationReason,
+                  recommendationScore: rec.score
+                });
+              }
+            });
+
+            prevProducts.forEach(p => {
+              if (!recMap.has(p.id)) {
+                otherItems.push({
+                  ...p,
+                  isRecommended: false
+                });
+              }
+            });
+
+            return [...recItems, ...otherItems];
+          });
+        }
+      })
+      .catch(err => console.error('Lỗi tải gợi ý cho bạn:', err))
+      .finally(() => setLoadingForYou(false));
+  };
+
   useEffect(() => {
     document.body.setAttribute('data-theme', theme);
   }, [theme]);
@@ -301,6 +355,15 @@ export default function LanhLandingPage() {
       })
       .catch(() => {})
       .finally(() => setLoadingNews(false));
+
+    // Khởi tạo tải gợi ý cá nhân hóa CARS cho người dùng
+    fetchForYouRecommendations();
+
+    const handleWindowFocus = () => {
+      fetchForYouRecommendations();
+    };
+    window.addEventListener('focus', handleWindowFocus);
+    return () => window.removeEventListener('focus', handleWindowFocus);
   }, []);
 
   useEffect(() => {
@@ -637,7 +700,33 @@ export default function LanhLandingPage() {
               availableStock: Number(item.availableStock) || 0
             };
           });
-          setProducts(mapped);
+          if (forYouRecommendations && forYouRecommendations.length > 0) {
+            const recMap = new Map(forYouRecommendations.map(item => [item.productId, item]));
+            const recItems: Product[] = [];
+            const otherItems: Product[] = [];
+
+            forYouRecommendations.forEach(rec => {
+              const matched = mapped.find(p => p.id === rec.productId);
+              if (matched) {
+                recItems.push({
+                  ...matched,
+                  isRecommended: true,
+                  recommendationReason: rec.recommendationReason,
+                  recommendationScore: rec.score
+                });
+              }
+            });
+
+            mapped.forEach(p => {
+              if (!recMap.has(p.id)) {
+                otherItems.push({ ...p, isRecommended: false });
+              }
+            });
+
+            setProducts([...recItems, ...otherItems]);
+          } else {
+            setProducts(mapped);
+          }
         }
       })
       .catch(err => console.error('Lỗi khi gọi API sản phẩm:', err));
@@ -1172,12 +1261,14 @@ export default function LanhLandingPage() {
           </div>
         </section>
 
-        {/* ── 2. SẢN PHẨM NỔI BẬT (Bestsellers) ── */}
+        {/* ── 2. SẢN PHẨM NỔI BẬT & THU HOẠCH TRONG NGÀY (Tích hợp thuật toán gợi ý ngữ cảnh CARS) ── */}
         <section className="section" style={{ paddingTop: '50px', paddingBottom: '50px' }}>
           <div className="wrap">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '28px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '28px', flexWrap: 'wrap', gap: '12px' }}>
               <div>
-                <span className="eyebrow">Thu Hoạch Trong Ngày</span>
+                <span className="eyebrow" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                  Thu Hoạch Trong Ngày {products.some(p => p.isRecommended) && <span style={{ color: '#2E7D32', fontWeight: 700 }}>• ✨ Tự động tối ưu theo sở thích của bạn</span>}
+                </span>
                 <h2 className="section-title" style={{ marginTop: '6px', fontSize: '30px' }}>
                   Nông Sản Hữu Cơ Nổi Bật
                 </h2>
@@ -1203,10 +1294,24 @@ export default function LanhLandingPage() {
               </Link>
             </div>
 
-            {/* Grid 8 sản phẩm nổi bật */}
+            {/* Grid 8 sản phẩm nổi bật - Đã được CARS tái xếp hạng theo sở thích, độ tươi và mùa vụ */}
             <div className="prod-grid">
               {products.slice(0, 8).map(p => (
-                <div key={p.id} className="prod-card" style={{ cursor: 'pointer' }} onClick={() => openQuickView(p)}>
+                <div 
+                  key={p.id} 
+                  className="prod-card" 
+                  style={{ 
+                    cursor: 'pointer',
+                    border: p.isRecommended ? '1.5px solid #81C784' : undefined,
+                    boxShadow: p.isRecommended ? '0 4px 14px rgba(46, 125, 50, 0.08)' : undefined
+                  }} 
+                  onClick={() => {
+                    if (p.isRecommended) {
+                      trackBehavior({ productId: p.id, actionType: 'RECOMMENDATION_CLICK', recommendationType: 'FOR_YOU' });
+                    }
+                    openQuickView(p);
+                  }}
+                >
                   <div className="prod-media" style={{ background: 'var(--green-100)', position: 'relative' }}>
                     <div style={{ display: 'block', width: '100%', height: '100%' }}>
                       {p.imageUrl ? (
@@ -1223,6 +1328,11 @@ export default function LanhLandingPage() {
                       )}
                     </div>
                     <div className="tag-row" style={{ pointerEvents: 'auto' }}>
+                      {p.isRecommended && (
+                        <span className="tag-cert" style={{ background: '#E8F5E9', color: '#1B5E20', border: '1px solid #A5D6A7', fontWeight: 700 }}>
+                          ✨ Gợi ý cho bạn
+                        </span>
+                      )}
                       {p.isOutOfStock ? (
                         <span className="tag-cert" style={{ background: '#DC2626', color: '#fff', fontWeight: 700 }}>Tạm hết hàng</span>
                       ) : (
@@ -1247,16 +1357,30 @@ export default function LanhLandingPage() {
                       <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"/></svg>
                       Xuất xứ: {p.region}
                     </span>
+                    {p.isRecommended && p.recommendationReason && (
+                      <div style={{ fontSize: '11px', color: '#1B5E20', backgroundColor: '#E8F5E9', padding: '3px 7px', borderRadius: '4px', marginBottom: '6px', fontWeight: 600 }}>
+                        💡 {p.recommendationReason}
+                      </div>
+                    )}
                     <span className="prod-name" style={{ cursor: 'pointer', transition: 'color 0.2s', opacity: p.isOutOfStock ? 0.7 : 1 }}>
                       {p.name}
                     </span>
-                    <div className="stars">
+                    <div 
+                      className="stars" 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const isCombo = p.category?.toLowerCase().includes('combo') || p.id >= 900;
+                        router.push(isCombo ? `/combos/${p.id}#reviews` : `/products/${p.id}#reviews`);
+                      }}
+                      title="Bấm để xem tất cả đánh giá của sản phẩm này"
+                      style={{ cursor: 'pointer', transition: 'opacity 0.15s' }}
+                    >
                       {p.reviews > 0 ? (
                         <>
-                          <span className="fill">★</span> <strong>{p.rating.toFixed(1)}</strong> · {p.reviews} đánh giá
+                          <span className="fill">★</span> <strong>{p.rating.toFixed(1)}</strong> · <span style={{ textDecoration: 'underline' }}>{p.reviews} đánh giá</span>
                         </>
                       ) : (
-                        <span style={{ color: 'var(--ink-soft)', fontSize: '12.5px', fontStyle: 'italic' }}>Chưa có đánh giá</span>
+                        <span style={{ color: 'var(--ink-soft)', fontSize: '12.5px', fontStyle: 'italic', textDecoration: 'underline' }}>Chưa có đánh giá</span>
                       )}
                     </div>
                     <div className="price-row">
@@ -1777,9 +1901,34 @@ export default function LanhLandingPage() {
                               </span>
                             )}
                           </div>
-                          <div className="review-meta-text" style={{ fontSize: '12px', color: 'var(--ink-soft)', fontFamily: 'var(--font-review)' }}>
-                            {review.role}
-                          </div>
+                          {review.productId ? (
+                            <div 
+                              onClick={() => {
+                                const isCombo = review.productName?.toLowerCase().includes('combo') || review.productId >= 900;
+                                router.push(isCombo ? `/combos/${review.productId}#reviews` : `/products/${review.productId}#reviews`);
+                              }}
+                              title={`Bấm để xem sản phẩm "${review.productName}" và tất cả đánh giá`}
+                              style={{ 
+                                fontSize: '12px', 
+                                color: 'var(--green-700)', 
+                                fontFamily: 'var(--font-review)',
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                textDecoration: 'underline',
+                                fontWeight: 500,
+                                marginTop: '2px'
+                              }}
+                            >
+                              <span>📦 {review.role || `Sản phẩm #${review.productId}`}</span>
+                              <span>→</span>
+                            </div>
+                          ) : (
+                            <div className="review-meta-text" style={{ fontSize: '12px', color: 'var(--ink-soft)', fontFamily: 'var(--font-review)' }}>
+                              {review.role}
+                            </div>
+                          )}
                         </div>
                       </div>
 
@@ -2490,7 +2639,16 @@ export default function LanhLandingPage() {
                     {quickViewProduct.name}
                   </h2>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
+                  <div 
+                    onClick={() => {
+                      const pId = quickViewProduct.id;
+                      setQuickViewProduct(null);
+                      const isCombo = quickViewProduct.category?.toLowerCase().includes('combo') || pId >= 900;
+                      router.push(isCombo ? `/combos/${pId}#reviews` : `/products/${pId}#reviews`);
+                    }}
+                    title="Bấm để xem chi tiết các đánh giá của sản phẩm này"
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', marginBottom: '14px', cursor: 'pointer' }}
+                  >
                     {quickViewProduct.reviews > 0 ? (
                       <>
                         <div className="stars" style={{ fontSize: '14px' }}>
@@ -2498,10 +2656,10 @@ export default function LanhLandingPage() {
                           <span style={{ color: '#D1D5DB' }}>{'☆'.repeat(5 - Math.min(5, Math.max(1, Math.round(quickViewProduct.rating))))}</span>
                         </div>
                         <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--ink)' }}>{quickViewProduct.rating.toFixed(1)}</span>
-                        <span style={{ fontSize: '12.5px', color: 'var(--ink-soft)' }}>({quickViewProduct.reviews} lượt đánh giá)</span>
+                        <span style={{ fontSize: '12.5px', color: 'var(--green-700)', textDecoration: 'underline', fontWeight: 600 }}>({quickViewProduct.reviews} lượt đánh giá →)</span>
                       </>
                     ) : (
-                      <span style={{ fontSize: '13px', color: 'var(--ink-soft)', fontStyle: 'italic' }}>Chưa có đánh giá</span>
+                      <span style={{ fontSize: '13px', color: 'var(--green-700)', textDecoration: 'underline' }}>Chưa có đánh giá (Bấm để viết đánh giá đầu tiên →)</span>
                     )}
                   </div>
 

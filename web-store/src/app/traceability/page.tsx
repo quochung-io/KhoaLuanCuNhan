@@ -12,6 +12,7 @@ interface DbProduct {
   price?: number;
   unit?: string;
   status?: string;
+  supplierId?: number;
   productImages?: Array<{ imageUrl: string; isPrimary: boolean }>;
 }
 
@@ -29,57 +30,302 @@ interface DbBatch {
   product?: DbProduct;
 }
 
-// Phân tích vùng trồng và nông trại theo tên sản phẩm
-function getFarmDetails(productName: string) {
+// Phân loại nhóm cây trồng và đặc tính nông học
+type CropType = 'fruit_tree' | 'fruiting_vine' | 'leafy_green' | 'mushroom';
+
+interface FarmProfile {
+  farmName: string;
+  supplierName: string;
+  location: string;
+  altitude: string;
+  standard: string;
+  soilFeature: string;
+  inspectorSeed: string;
+  inspectorCare: string;
+  inspectorHarvest: string;
+}
+
+interface CropProfile {
+  type: CropType;
+  groupName: string;
+  cycleDays: number;
+  seedStageName: string;
+  careStageName: string;
+  seedDesc: (farm: FarmProfile) => string;
+  careDesc: (farm: FarmProfile) => string;
+  harvestDesc: (batch: DbBatch) => string;
+  coldChainTemp: string;
+  storageDays: number;
+  seedIot: Array<{ label: string; val: string }>;
+  careIot: Array<{ label: string; val: string }>;
+  harvestIot: (batch: DbBatch) => Array<{ label: string; val: string }>;
+}
+
+function getCropProfile(productName: string): CropProfile {
   const n = (productName || '').toLowerCase();
-  if (n.includes('mộc châu') || n.includes('bắc hà') || n.includes('sapa') || n.includes('sơn la')) {
+
+  // Nhóm 1: Nấm thực phẩm & Vi sinh vật
+  if (n.includes('nấm')) {
     return {
-      farmName: 'Hợp Tác Xã Nông Nghiệp Sạch Mộc Châu',
-      location: 'Cao nguyên Mộc Châu, Huyện Mộc Châu, Tỉnh Sơn La',
-      altitude: '1.050m - Khí hậu mát lạnh quanh năm',
-      standard: 'VietGAP & GlobalGAP (Mã: GAP-MC-8821)'
+      type: 'mushroom',
+      groupName: 'Nấm thực phẩm & Vi sinh vật phòng lạnh',
+      cycleDays: 22,
+      seedStageName: 'Cấy meo giống & Ủ cơ chất mùn cưa tiệt trùng',
+      careStageName: 'Dưỡng sợi tơ & Kích ẩm buồng lạnh vô trùng',
+      seedDesc: (farm) => `Tuyển chọn meo nấm giống thuần chủng F1, cấy trên cơ chất mùn cưa cao su tự nhiên đã qua tiệt trùng lò hơi 121°C áp suất cao. Đảm bảo môi trường nuôi cấy vô trùng 100% tại ${farm.farmName}.`,
+      careDesc: (farm) => `Phát triển trong buồng lạnh khép kín với hệ thống siêu âm tạo sương giữ ẩm ổn định 85% – 92%. Ánh sáng khuếch tán dịu nhẹ, dinh dưỡng hữu cơ tự nhiên, tuyệt đối không chất bảo quản.`,
+      harvestDesc: (batch) => `Thu hái thủ công từng búp nấm đạt độ nở tiêu chuẩn loại 1 (mũ nấm dày, thân mập trắng ngà). Sản lượng đợt hái đạt ${batch.initialQuantity} ${batch.unit}, đưa vào phòng hạ nhiệt cấp tốc trong vòng 30 phút.`,
+      coldChainTemp: '2°C – 4°C (Bảo quản đạm thực vật)',
+      storageDays: 10,
+      seedIot: [
+        { label: 'Nhiệt độ ủ cơ chất', val: '24.0°C' },
+        { label: 'Áp suất tiệt trùng', val: '1.2 atm' },
+        { label: 'Độ ẩm cơ chất', val: '65%' }
+      ],
+      careIot: [
+        { label: 'Nhiệt độ buồng lạnh', val: '18.5°C' },
+        { label: 'Độ ẩm không khí', val: '88%' },
+        { label: 'Nồng độ CO2', val: '< 800 ppm' }
+      ],
+      harvestIot: (batch) => [
+        { label: 'Sản lượng đợt hái', val: `${batch.initialQuantity} ${batch.unit}` },
+        { label: 'Độ mở búp nấm', val: 'Chuẩn Loại 1' },
+        { label: 'Nhiệt độ buồng hái', val: '18.0°C' }
+      ]
     };
   }
-  if (n.includes('đồng tháp') || n.includes('bến tre') || n.includes('tiền giang') || n.includes('miền tây') || n.includes('sông tiền')) {
+
+  // Nhóm 2: Cây ăn trái thân gỗ (Mít Thái, Bưởi da xanh, Cam sành, Sầu riêng, Xoài, Mận, Nhãn...)
+  if (
+    n.includes('mít') || n.includes('bưởi') || n.includes('cam') || 
+    n.includes('xoài') || n.includes('sầu riêng') || n.includes('chuối') || 
+    n.includes('ổi') || n.includes('mận') || n.includes('chôm chôm') || 
+    n.includes('nhãn') || n.includes('dâu') || n.includes('quýt') || 
+    n.includes('thanh long') || n.includes('chanh') || n.includes('tắc') || n.includes('na')
+  ) {
     return {
-      farmName: 'Nông Trại Sinh Thái Phù Sa Đồng Tháp Farm',
-      location: 'Xã Mỹ Hội, Huyện Cao Lãnh, Tỉnh Đồng Tháp',
-      altitude: 'Vùng bãi bồi phù sa sông Tiền trù phú',
-      standard: 'Hữu cơ VietGAP (Mã: GAP-DT-4410)'
+      type: 'fruit_tree',
+      groupName: 'Cây ăn trái sinh thái lâu năm',
+      cycleDays: 125, // Chu kỳ quả từ thụ phấn đến già chín: ~4 tháng
+      seedStageName: 'Tuyển chọn cành ghép F1 & Dưỡng rễ thổ nhưỡng',
+      careStageName: 'Bao trái sinh học nano & Nuôi quả hữu cơ',
+      seedDesc: (farm) => `Cây giống đầu dòng F1 thuần chủng, sinh trưởng trên nền ${farm.soilFeature}. Bổ sung dinh dưỡng đợt đầu bằng phân hữu cơ vi sinh trùn quế và khoáng chất tự nhiên.`,
+      careDesc: (farm) => `Cắt tỉa cành thông thoáng, nuôi quả chọn lọc (mỗi nhánh chỉ giữ 1-2 quả đẹp nhất). Tiến hành bao bọc quả bằng túi vải không dệt nano từ sớm để ngăn ruồi vàng và sâu đục cuống mà không cần phun thuốc trừ sâu.`,
+      harvestDesc: (batch) => `Thu hoạch khi quả đạt độ già sinh lý xuất sắc (gõ tiếng trầm, gai nở phẳng, độ đường tự nhiên tích tụ tối đa). Cắt cuống bằng kéo vô trùng lúc sáng sớm, đợt thu đạt ${batch.initialQuantity} ${batch.unit}.`,
+      coldChainTemp: '8°C – 12°C (Giữ độ ngọt & không thâm vỏ)',
+      storageDays: 14,
+      seedIot: [
+        { label: 'Thổ nhưỡng đất', val: 'Đất phù sa / Bazan' },
+        { label: 'Độ ẩm tầng rễ sâu', val: '68%' },
+        { label: 'Độ pH đất', val: '6.2 – 6.8' }
+      ],
+      careIot: [
+        { label: 'Bao trái bảo vệ', val: 'Túi Nano 100%' },
+        { label: 'Dinh dưỡng tưới', val: 'Vi sinh hữu cơ' },
+        { label: 'Cường độ nắng', val: 'Vườn sinh thái' }
+      ],
+      harvestIot: (batch) => [
+        { label: 'Sản lượng đợt hái', val: `${batch.initialQuantity} ${batch.unit}` },
+        { label: 'Độ già sinh học', val: '90% – 95% (Đủ tuổi)' },
+        { label: 'Độ ngọt (Brix)', val: '14.5° Brix' }
+      ]
     };
   }
-  if (n.includes('đắk lắk') || n.includes('buôn ma thuột') || n.includes('tây nguyên')) {
+
+  // Nhóm 3: Củ quả leo giàn (Cà chua bi, Dưa leo, Khổ qua, Bí đỏ, Bầu, Mướp, Đậu bắp, Su hào, Củ dền...)
+  if (
+    n.includes('cà chua') || n.includes('dưa leo') || n.includes('khổ qua') || 
+    n.includes('bí') || n.includes('bầu') || n.includes('mướp') || 
+    n.includes('đậu') || n.includes('su hào') || n.includes('củ dền') || 
+    n.includes('củ cải') || n.includes('khoai') || n.includes('bông cải') || n.includes('bắp cải')
+  ) {
     return {
-      farmName: 'Trang Trại Hữu Cơ Cao Nguyên Ban Mê',
-      location: 'Thị xã Buôn Hồ, Tỉnh Đắk Lắk',
-      altitude: '500m - Đất đỏ bazan giàu khoáng chất',
-      standard: 'Hữu cơ USDA & VietGAP (Mã: GAP-DLK-7714)'
+      type: 'fruiting_vine',
+      groupName: 'Củ quả & Thân leo bán giàn',
+      cycleDays: 75,
+      seedStageName: 'Gieo mầm khay giá thể & Khử trùng nhiệt',
+      careStageName: 'Thụ phấn tự nhiên & Neo giàn quang học',
+      seedDesc: (farm) => `Hạt giống kháng bệnh nhiệt đới F1, gieo mầm trên khay xơ dừa sinh học đã xử lý nấm bệnh. Cây con bén rễ khỏe khoắn thích ứng tuyệt vời với khí hậu ${farm.altitude}.`,
+      careDesc: (farm) => `Thân cây được neo dây treo chữ A đón nắng tối đa. Thụ phấn tự nhiên bằng ong mật nuôi tại vườn kết hợp rung hoa cơ học. Tưới dinh dưỡng nhỏ giọt cân bằng theo từng chu kỳ đậu quả.`,
+      harvestDesc: (batch) => `Thu hái từng chùm quả đều màu, vỏ căng bóng không tì vết vào buổi sớm tinh mơ. Sản lượng đợt này ghi nhận ${batch.initialQuantity} ${batch.unit}, đưa vào làm mát tiền lạnh 15°C trước khi đóng hộp.`,
+      coldChainTemp: '6°C – 8°C (Giữ độ giòn ngọt mọng nước)',
+      storageDays: 12,
+      seedIot: [
+        { label: 'Tỉ lệ nảy mầm', val: '98.5%' },
+        { label: 'Nhiệt độ ươm cây', val: '22.0°C' },
+        { label: 'Độ ẩm giá thể', val: '75%' }
+      ],
+      careIot: [
+        { label: 'Lưu lượng tưới giọt', val: '1.8 lít/gốc/ngày' },
+        { label: 'Ẩm độ giàn leo', val: '70%' },
+        { label: 'Chỉ số tán lá NDVI', val: '0.82 (Khỏe mạnh)' }
+      ],
+      harvestIot: (batch) => [
+        { label: 'Sản lượng đợt hái', val: `${batch.initialQuantity} ${batch.unit}` },
+        { label: 'Phân loại quả', val: 'Loại 1 (Xuất sắc)' },
+        { label: 'Độ mọng nước', val: '92%' }
+      ]
     };
   }
+
+  // Nhóm 4: Rau ăn lá ngắn ngày (Cải thìa, Xà lách, Rau muống, Rau dền, Mồng tơi, Cải ngọt...)
   return {
-    farmName: 'HTX Nông Nghiệp Công Nghệ Cao LÀNH Đà Lạt',
-    location: 'Thôn Đa Quý, Xã Xuân Thọ, TP. Đà Lạt, Tỉnh Lâm Đồng',
-    altitude: '1.500m - Khí hậu ôn đới mát mẻ',
-    standard: 'VietGAP Công Nghệ Cao (Mã: GAP-LD-1102)'
+    type: 'leafy_green',
+    groupName: 'Rau ăn lá ngắn ngày dinh dưỡng cao',
+    cycleDays: 35,
+    seedStageName: 'Ươm mầm hạt giống hữu cơ trên luống xốp',
+    careStageName: 'Phun sương vi sinh & Phòng trừ sinh học',
+    seedDesc: (farm) => `Tuyển chọn hạt giống rau lá chuẩn hữu cơ không biến đổi gen (Non-GMO). Gieo cấy trên luống đất hữu cơ tơi xốp giàu trùn quế tại ${farm.farmName}.`,
+    careDesc: (farm) => `Hệ thống phun sương tự động điều hòa ẩm độ mát lành. Tuyệt đối không phân bón hóa học, cách ly chế phẩm vi sinh 10 ngày trước thu hoạch nhằm đảm bảo hàm lượng nitrat cực thấp.`,
+    harvestDesc: (batch) => `Thu hoạch từ 5:00 đến 6:30 sáng khi sương đêm còn đọng trên búp lá để giữ nguyên vẹn độ giòn sần sật và vitamin C. Đợt hái đạt sản lượng ${batch.initialQuantity} ${batch.unit}.`,
+    coldChainTemp: '4°C – 6°C (Chống héo úa & mất nước)',
+    storageDays: 7,
+    seedIot: [
+      { label: 'Nhiệt độ gieo hạt', val: '21.0°C' },
+      { label: 'Độ ẩm đất luống', val: '80%' },
+      { label: 'Độ pH đất', val: '6.5 (Chuẩn vi sinh)' }
+    ],
+    careIot: [
+      { label: 'Tần suất tưới sương', val: '3 lần/ngày' },
+      { label: 'Thời gian cách ly', val: '> 10 ngày (Đạt)' },
+      { label: 'Bẫy côn trùng', val: 'Bẫy dính sinh học' }
+    ],
+    harvestIot: (batch) => [
+      { label: 'Sản lượng đợt hái', val: `${batch.initialQuantity} ${batch.unit}` },
+      { label: 'Độ tươi giòn', val: '100% (Thu sương sớm)' },
+      { label: 'Chỉ số lá xanh SPAD', val: '42.8 (Xanh mướt)' }
+    ]
   };
 }
 
-// Sinh dòng thời gian 6 Mốc hành trình của CHÍNH LÔ HÀNG ĐÓ
+// Phân tích nông trại và nhà cung cấp đa vùng miền
+function getFarmAndSupplierProfile(batch: DbBatch): FarmProfile {
+  const pName = (batch.product?.productName || '').toLowerCase();
+  const fId = batch.farmId || 1;
+  const supId = batch.product?.supplierId || 1;
+
+  if (fId === 3 || fId === 4 || supId === 2 || pName.includes('miền tây') || pName.includes('tiền giang') || pName.includes('đồng tháp')) {
+    return {
+      farmName: 'HTX Nông Nghiệp & Cây Ăn Trái Phù Sa Sông Tiền',
+      supplierName: 'Hợp Tác Xã Rau Sạch & Nông Sản Miền Tây',
+      location: 'Cù lao Mỹ Hội, Huyện Cao Lãnh, Tỉnh Đồng Tháp / Cái Bè, Tiền Giang',
+      altitude: 'Bãi bồi phù sa ngọt trù phú ven sông Tiền',
+      soilFeature: 'đất phù sa bồi đắp màu mỡ giàu đạm thực vật tự nhiên và khoáng chất phù sa',
+      standard: 'VietGAP Hữu Cơ Sinh Thái (Mã: GAP-MT-4402)',
+      inspectorSeed: 'KS. Trần Văn Hữu (Kỹ sư giống sông Tiền)',
+      inspectorCare: 'KTV. Lê Thị Kim Cương (Bảo vệ thực vật sinh học)',
+      inspectorHarvest: 'Tổ trưởng thu hoạch: Nguyễn Văn Ba (Đội 2 Cái Bè)'
+    };
+  }
+
+  if (fId === 5 || fId === 6 || supId === 3 || pName.includes('đồng nai') || pName.includes('bến tre') || pName.includes('bình phước') || pName.includes('vũng tàu')) {
+    return {
+      farmName: 'Trang Trại Cây Ăn Trái Xuất Khẩu Nam Bộ Farm',
+      supplierName: 'Hợp Tác Xã Trái Cây & Nông Sản Việt',
+      location: 'Huyện Thống Nhất, Tỉnh Đồng Nai / Châu Thành, Tỉnh Bến Tre',
+      altitude: 'Vùng đồi bãi màu mỡ Đông Nam Bộ & Duyên hải phù sa',
+      soilFeature: 'đất thịt pha cát màu mỡ thoát nước tốt, tối ưu cho tích tụ đường tự nhiên',
+      standard: 'GlobalGAP & VietGAP Xuất Khẩu (Mã: GAP-NB-7821)',
+      inspectorSeed: 'ThS. Đặng Thu Thảo (Chuyên gia Cây ăn trái)',
+      inspectorCare: 'KS. Phan Minh Trí (Kỹ sư nông học GlobalGAP)',
+      inspectorHarvest: 'Trưởng trạm thu hái: Trần Quốc Tuấn'
+    };
+  }
+
+  if (pName.includes('mộc châu') || pName.includes('sơn la') || pName.includes('bắc hà') || pName.includes('lục ngạn') || pName.includes('chi lăng')) {
+    return {
+      farmName: 'Hợp Tác Xã Nông Sản Vùng Cao Mộc Châu',
+      supplierName: 'Hợp Tác Xã Nông Nghiệp Tây Bắc',
+      location: 'Cao nguyên Mộc Châu, Huyện Mộc Châu, Tỉnh Sơn La',
+      altitude: 'Cao độ 1.050m - Khí hậu mát lạnh quanh năm sương mù',
+      soilFeature: 'đất mùn vùng cao tơi xốp, giàu vi lượng tự nhiên',
+      standard: 'VietGAP Vùng Cao (Mã: GAP-MC-8821)',
+      inspectorSeed: 'KS. Hoàng A Súa (Kỹ sư giống bản địa Tây Bắc)',
+      inspectorCare: 'KS. Đỗ Thúy Hằng (Kỹ sư sinh thái ôn đới)',
+      inspectorHarvest: 'Tổ trưởng hái: Vàng A Páo'
+    };
+  }
+
+  if (pName.includes('đắk lắk') || pName.includes('ban mê') || pName.includes('tây nguyên')) {
+    return {
+      farmName: 'Trang Trại Hữu Cơ Đất Đỏ Cao Nguyên Ban Mê',
+      supplierName: 'Hợp Tác Xã Nông Sản Cao Nguyên',
+      location: 'Thị xã Buôn Hồ, Tỉnh Đắk Lắk',
+      altitude: 'Cao độ 550m - Đất đỏ bazan trù phú Tây Nguyên',
+      soilFeature: 'đất đỏ bazan tầng dày giàu khoáng oxit sắt nhôm màu mỡ',
+      standard: 'USDA Organic & VietGAP (Mã: GAP-DLK-7714)',
+      inspectorSeed: 'KS. Y Blô Mlô (Kỹ sư Thổ nhưỡng Tây Nguyên)',
+      inspectorCare: 'KS. Nguyễn Thị Lan (Phụ trách tưới nhỏ giọt Israel)',
+      inspectorHarvest: 'Tổ trưởng hái: Y Krang Byă'
+    };
+  }
+
+  // Mặc định: Nông trại Công nghệ cao Đà Lạt / Lâm Đồng (fId === 1, 2)
+  return {
+    farmName: 'HTX Nông Nghiệp Công Nghệ Cao LÀNH Đà Lạt',
+    supplierName: 'Hợp Tác Xã Nông Sản Đà Lạt',
+    location: 'Thôn Đa Quý, Xã Xuân Thọ, TP. Đà Lạt, Tỉnh Lâm Đồng',
+    altitude: 'Cao độ 1.500m - Khí hậu ôn đới quanh năm mát lành',
+    soilFeature: 'đất đỏ đồi núi cao kết hợp giá thể xơ dừa vi sinh đã khử độc nhiệt',
+    standard: 'VietGAP Công Nghệ Cao & GlobalGAP (Mã: GAP-LD-1102)',
+    inspectorSeed: 'ThS. Nguyễn Hoàng Nam (Chuyên gia Nông học Đà Lạt)',
+    inspectorCare: 'KS. Trần Thị Mai (Kỹ sư vi sinh nhà kính)',
+    inspectorHarvest: 'Đội trưởng thu hái: Lê Văn Nam (Đội 1 Đa Quý)'
+  };
+}
+
+// Bảng chỉ tiêu kiểm định phòng Lab linh hoạt theo loại cây
+function getQcIndicators(cropType: CropType) {
+  if (cropType === 'fruit_tree') {
+    return [
+      { name: 'Dư lượng thuốc BVTV (24 hoạt chất)', result: '0.00 ppm (Không phát hiện)', limit: 'Không phát hiện', status: 'ĐẠT (Hữu cơ)' },
+      { name: 'Độ đường tự nhiên (Độ Brix)', result: '14.2° – 15.5° Brix', limit: '≥ 12.0° Brix', status: 'ĐẠT (Ngọt đậm đà)' },
+      { name: 'Kim loại nặng (Chì, Cadimi)', result: 'Âm tính', limit: '≤ 0.05 mg/kg', status: 'ĐẠT' },
+      { name: 'Chất kích chín ép (Ethephon)', result: 'Không phát hiện', limit: 'Không phát hiện', status: 'ĐẠT (Ủ tự nhiên 100%)' }
+    ];
+  }
+  if (cropType === 'mushroom') {
+    return [
+      { name: 'Độc tố vi nấm Aflatoxin (B1, B2, G1, G2)', result: 'Không phát hiện', limit: '≤ 2.0 µg/kg', status: 'ĐẠT (An toàn)' },
+      { name: 'Vi khuẩn hiếu khí & Nấm men', result: '< 10² CFU/g', limit: '≤ 10³ CFU/g', status: 'ĐẠT' },
+      { name: 'Kim loại nặng (Chì, Thủy ngân)', result: 'Âm tính', limit: '≤ 0.05 mg/kg', status: 'ĐẠT' },
+      { name: 'Dư lượng chất tẩy trắng (SO2)', result: '0.00 mg/kg', limit: 'Không phát hiện', status: 'ĐẠT (Tự nhiên)' }
+    ];
+  }
+  if (cropType === 'fruiting_vine') {
+    return [
+      { name: 'Dư lượng thuốc BVTV (24 hoạt chất)', result: '0.00 ppm (Không phát hiện)', limit: 'Không phát hiện', status: 'ĐẠT (VietGAP)' },
+      { name: 'Hàm lượng Nitrat (NO3-)', result: '42 mg/kg', limit: '≤ 500 mg/kg', status: 'ĐẠT (An toàn)' },
+      { name: 'Kim loại nặng (Chì, Cadimi)', result: 'Âm tính', limit: '≤ 0.05 mg/kg', status: 'ĐẠT' },
+      { name: 'Vi khuẩn E. coli & Salmonella', result: 'Âm tính / 25g', limit: 'Không phát hiện', status: 'ĐẠT' }
+    ];
+  }
+  // leafy_green
+  return [
+    { name: 'Hàm lượng Nitrat (NO3-)', result: '32 mg/kg', limit: '≤ 500 mg/kg', status: 'ĐẠT (An toàn)' },
+    { name: 'Dư lượng thuốc BVTV (24 hoạt chất)', result: '0.00 ppm (Không phát hiện)', limit: 'Không phát hiện', status: 'ĐẠT (Hữu cơ)' },
+    { name: 'Kim loại nặng (Chì, Cadimi)', result: 'Âm tính', limit: '≤ 0.05 mg/kg', status: 'ĐẠT' },
+    { name: 'Vi khuẩn E. coli & Salmonella', result: 'Âm tính / 25g', limit: 'Không phát hiện', status: 'ĐẠT' }
+  ];
+}
+
+// Sinh dòng thời gian 6 Mốc hành trình CHUẨN XÁC theo Lô hàng, Nông trại và Cây trồng
 function generateBatchTimeline(batch: DbBatch) {
   const pName = batch.product?.productName || 'Nông sản sạch LÀNH';
-  const farm = getFarmDetails(pName);
+  const crop = getCropProfile(pName);
+  const farm = getFarmAndSupplierProfile(batch);
   
   const hDate = new Date(batch.harvestDate);
   const harvestStr = !isNaN(hDate.getTime())
     ? hDate.toLocaleDateString('vi-VN') + ' (05:30 AM)'
     : '20/08/2026 (05:30 AM)';
 
-  // Ngày gieo (tính lùi khoảng 45 ngày trước thu hoạch)
-  const sowDate = new Date(hDate.getTime() - 45 * 24 * 60 * 60 * 1000);
+  // Ngày gieo/chuẩn bị (tính lùi theo chu kỳ sinh học thực tế của loại cây)
+  const sowDate = new Date(hDate.getTime() - crop.cycleDays * 24 * 60 * 60 * 1000);
   const sowStr = !isNaN(sowDate.getTime()) ? sowDate.toLocaleDateString('vi-VN') : '05/07/2026';
 
-  // Ngày chăm sóc
-  const careStart = new Date(sowDate.getTime() + 5 * 24 * 60 * 60 * 1000);
+  // Khoảng thời gian chăm sóc sinh học
+  const careStart = new Date(sowDate.getTime() + 4 * 24 * 60 * 60 * 1000);
   const careEnd = new Date(hDate.getTime() - 2 * 24 * 60 * 60 * 1000);
   const careStr = (!isNaN(careStart.getTime()) && !isNaN(careEnd.getTime()))
     ? `${careStart.toLocaleDateString('vi-VN')} – ${careEnd.toLocaleDateString('vi-VN')}`
@@ -98,75 +344,63 @@ function generateBatchTimeline(batch: DbBatch) {
   return [
     {
       stepNumber: '01',
-      stepTitle: 'Nguồn giống & Thổ nhưỡng gieo trồng',
+      stepTitle: crop.seedStageName,
       date: sowStr,
-      stage: 'Ươm mầm đất sinh học',
+      stage: 'Nguồn giống & Khởi tạo giá thể',
       location: farm.farmName,
-      inspector: 'KS. Nguyễn Văn Hùng (Phụ trách giống)',
-      recordNo: `HỒ SƠ GIỐNG: #SEED-F${batch.farmId}-${batch.batchId.toString().padStart(3, '0')}`,
-      desc: `Tuyển chọn hạt giống F1 thuần chủng không biến đổi gen (Non-GMO), thích nghi hoàn hảo với điều kiện ${farm.altitude}. Gieo mầm trên giá thể đất hữu cơ đã qua khử trùng nhiệt và bổ sung vi sinh tự nhiên.`,
-      iotParams: [
-        { label: 'Nhiệt độ ươm', val: '21.5°C' },
-        { label: 'Độ ẩm giá thể', val: '78%' },
-        { label: 'Độ pH đất', val: '6.5 (Chuẩn)' }
-      ]
+      inspector: farm.inspectorSeed,
+      recordNo: `HỒ SƠ GIỐNG: #SEED-${batch.batchCode}`,
+      desc: crop.seedDesc(farm),
+      iotParams: crop.seedIot
     },
     {
       stepNumber: '02',
-      stepTitle: 'Chăm sóc sinh học & Giám sát IoT',
+      stepTitle: crop.careStageName,
       date: careStr,
-      stage: 'Canh tác vi sinh tự nhiên',
-      location: `Nhà kính phân khu A - ${farm.location}`,
-      inspector: 'KS. Trần Thị Mai (Kỹ sư nông học)',
+      stage: 'Canh tác sinh thái & Giám sát IoT',
+      location: `${farm.location}`,
+      inspector: farm.inspectorCare,
       recordNo: `NHẬT KÝ CANH TÁC: #LOG-${batch.batchCode}`,
-      desc: `Nuôi dưỡng bằng hệ thống tưới nhỏ giọt Israel tự động theo biểu đồ sinh trưởng. Tuyệt đối không dùng thuốc trừ sâu hóa học, chỉ phòng ngừa bằng chế phẩm sinh học lên men (tỏi, ớt, gừng) và bẫy dính côn trùng.`,
-      iotParams: [
-        { label: 'Nhiệt độ vườn', val: '23.8°C' },
-        { label: 'Ẩm độ không khí', val: '72%' },
-        { label: 'Cường độ sáng', val: '45.000 Lux' }
-      ]
+      desc: crop.careDesc(farm),
+      iotParams: crop.careIot
     },
     {
       stepNumber: '03',
-      stepTitle: 'Thu hoạch sáng sớm & Phân loại',
+      stepTitle: 'Thu hoạch sương sớm & Phân loại quả chuẩn',
       date: harvestStr,
       stage: 'Thu hái thủ công tại vườn',
       location: `Trạm thu hái tại nguồn - ${farm.farmName}`,
-      inspector: 'Đội trưởng thu hái: Lê Văn Nam',
+      inspector: farm.inspectorHarvest,
       recordNo: `BIÊN BẢN THU HOẠCH: #HRV-${batch.batchCode}`,
-      desc: `Thu hoạch vào khung giờ 5:00 – 6:30 sáng khi sương vừa tan để giữ trọn vẹn độ tươi giòn và hàm lượng dinh dưỡng. Đợt hái đạt sản lượng ${batch.initialQuantity} ${batch.unit}, loại bỏ 100% phần bị dập xước trước khi làm mát.`,
-      iotParams: [
-        { label: 'Sản lượng đợt hái', val: `${batch.initialQuantity} ${batch.unit}` },
-        { label: 'Nhiệt độ lúc hái', val: '18.2°C' },
-        { label: 'Phân loại', val: 'Loại 1 (Xuất sắc)' }
-      ]
+      desc: crop.harvestDesc(batch),
+      iotParams: crop.harvestIot(batch)
     },
     {
       stepNumber: '04',
-      stepTitle: 'Kiểm nghiệm chất lượng VietGAP',
-      date: `${hDate.toLocaleDateString('vi-VN')} (08:00 AM)`,
-      stage: 'Xét nghiệm an toàn thực phẩm',
-      location: 'Phòng Kiểm Nghiệm Độc Lập ISO/IEC 17025',
-      inspector: 'KTV. Đỗ Thu Trang (Chuyên viên vi sinh)',
+      stepTitle: `Kiểm nghiệm chất lượng an toàn thực phẩm`,
+      date: `${hDate.toLocaleDateString('vi-VN')} (08:30 AM)`,
+      stage: 'Xét nghiệm độc lập ISO/IEC 17025',
+      location: 'Phòng Phân Tích & Kiểm Định Nông Sản Độc Lập ISO/IEC 17025',
+      inspector: 'KTV. Đỗ Thu Trang (Chuyên viên vi sinh & hóa nghiệm)',
       recordNo: `PHIẾU KIỂM ĐỊNH: #QC-${batch.batchCode}`,
-      desc: `Lấy mẫu ngẫu nhiên từ chính lô hàng này để xét nghiệm 24 chỉ tiêu an toàn: kiểm tra dư lượng nitrat, kim loại nặng (chì, cadimi) và thuốc bảo vệ thực vật. Tất cả chỉ số đều đạt mức an toàn tuyệt đối theo chuẩn VietGAP.`,
+      desc: `Lấy mẫu ngẫu nhiên từ chính lô hàng này để xét nghiệm toàn diện các chỉ tiêu an toàn: kiểm tra dư lượng hoạt chất bảo vệ thực vật, kim loại nặng và vi sinh. Tất cả chỉ số đều đạt mức an toàn tuyệt đối theo chuẩn ${farm.standard}.`,
       iotParams: [
-        { label: 'Hàm lượng Nitrat', val: '< 35 mg/kg' },
-        { label: 'Dư lượng BVTV', val: '0.00 ppm' },
-        { label: 'Kim loại nặng', val: 'Âm tính' }
+        { label: 'Dư lượng BVTV', val: '0.00 ppm (Đạt)' },
+        { label: 'Kim loại nặng', val: 'Âm tính' },
+        { label: 'Tiêu chuẩn', val: farm.standard.split(' ')[0] }
       ]
     },
     {
       stepNumber: '05',
-      stepTitle: 'Vận chuyển chuỗi lạnh FreshLock 4°C',
+      stepTitle: `Vận chuyển chuỗi lạnh FreshLock (${crop.coldChainTemp.split(' ')[0]})`,
       date: `${hDate.toLocaleDateString('vi-VN')} (10:30 AM)`,
       stage: 'Logistics lạnh kiểm soát GPS',
       location: 'Đoàn xe lạnh chuyên dụng LÀNH Express (Biển số: 49C-184.22)',
       inspector: 'Tài xế vận hành: Phạm Quốc Hưng',
       recordNo: `VẬN ĐƠN XE LẠNH: #SHIP-${batch.batchCode}`,
-      desc: `Nông sản được đóng thùng xốp chuyên dụng và vận chuyển bằng xe lạnh. Cảm biến IoT trên xe kiểm soát nhiệt độ ổn định trong dải 4°C – 8°C và truyền dữ liệu GPS liên tục về máy chủ mỗi 5 phút.`,
+      desc: `Nông sản được đóng gói bảo quản và vận chuyển bằng xe lạnh chuyên dụng ở nhiệt độ ${crop.coldChainTemp}. Cảm biến IoT trên xe kiểm soát nhiệt độ liên tục và truyền dữ liệu GPS Live về máy chủ mỗi 5 phút.`,
       iotParams: [
-        { label: 'Nhiệt độ thùng xe', val: '5.4°C' },
+        { label: 'Nhiệt độ thùng xe', val: crop.coldChainTemp.split(' ')[0] },
         { label: 'Vận tốc trung bình', val: '58 km/h' },
         { label: 'Trạng thái GPS', val: 'Đang kết nối Live' }
       ]
@@ -329,7 +563,9 @@ function TraceabilityInner() {
 
   const timeline = generateBatchTimeline(selectedBatch);
   const currentStep = timeline[activeStepIdx] || timeline[0];
-  const farmInfo = getFarmDetails(selectedBatch.product?.productName || '');
+  const farmInfo = getFarmAndSupplierProfile(selectedBatch);
+  const cropProfile = getCropProfile(selectedBatch.product?.productName || '');
+  const qcIndicators = getQcIndicators(cropProfile.type);
 
   return (
     <>
@@ -592,10 +828,15 @@ function TraceabilityInner() {
               <h2 style={{ fontSize: '24px', margin: '0 0 6px 0', color: 'var(--green-900)' }}>
                 {selectedBatch.product?.productName || 'Nông sản sạch LÀNH'}
               </h2>
-              <div style={{ fontSize: '13.5px', color: 'var(--ink-soft)', display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
-                <span>Nông trại: <strong>{farmInfo.farmName}</strong></span>
+              <div style={{ fontSize: '13.5px', color: 'var(--ink-soft)', display: 'flex', gap: '14px', flexWrap: 'wrap' }}>
+                <span>Nông trại: <strong style={{ color: 'var(--ink)' }}>{farmInfo.farmName}</strong></span>
                 <span>•</span>
-                <span>Tiêu chuẩn: <strong>{farmInfo.standard}</strong></span>
+                <span>Nhà cung cấp: <strong style={{ color: 'var(--green-700)' }}>{farmInfo.supplierName}</strong></span>
+                <span>•</span>
+                <span>Tiêu chuẩn: <strong style={{ color: '#15803d' }}>{farmInfo.standard}</strong></span>
+              </div>
+              <div style={{ fontSize: '12px', color: 'var(--ink-soft)', marginTop: '4px' }}>
+                📍 <i>{farmInfo.location} ({farmInfo.altitude})</i>
               </div>
             </div>
 
@@ -897,36 +1138,20 @@ function TraceabilityInner() {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
-                    <td style={{ padding: '8px 12px', border: '1px solid var(--line)' }}>Dư lượng Nitrat (NO3-)</td>
-                    <td style={{ padding: '8px 12px', border: '1px solid var(--line)', fontWeight: 700, color: 'var(--green-700)' }}>32 mg/kg</td>
-                    <td style={{ padding: '8px 12px', border: '1px solid var(--line)' }}>≤ 500 mg/kg</td>
-                    <td style={{ padding: '8px 12px', border: '1px solid var(--line)', fontWeight: 700, color: '#15803d' }}>ĐẠT (An toàn)</td>
-                  </tr>
-                  <tr>
-                    <td style={{ padding: '8px 12px', border: '1px solid var(--line)' }}>Dư lượng thuốc BVTV (24 hoạt chất)</td>
-                    <td style={{ padding: '8px 12px', border: '1px solid var(--line)', fontWeight: 700, color: 'var(--green-700)' }}>0.00 ppm (Không phát hiện)</td>
-                    <td style={{ padding: '8px 12px', border: '1px solid var(--line)' }}>Không phát hiện</td>
-                    <td style={{ padding: '8px 12px', border: '1px solid var(--line)', fontWeight: 700, color: '#15803d' }}>ĐẠT (Hữu cơ)</td>
-                  </tr>
-                  <tr>
-                    <td style={{ padding: '8px 12px', border: '1px solid var(--line)' }}>Kim loại nặng (Chì, Cadimi)</td>
-                    <td style={{ padding: '8px 12px', border: '1px solid var(--line)', fontWeight: 700, color: 'var(--green-700)' }}>Âm tính</td>
-                    <td style={{ padding: '8px 12px', border: '1px solid var(--line)' }}>≤ 0.05 mg/kg</td>
-                    <td style={{ padding: '8px 12px', border: '1px solid var(--line)', fontWeight: 700, color: '#15803d' }}>ĐẠT</td>
-                  </tr>
-                  <tr>
-                    <td style={{ padding: '8px 12px', border: '1px solid var(--line)' }}>Vi khuẩn E. coli & Salmonella</td>
-                    <td style={{ padding: '8px 12px', border: '1px solid var(--line)', fontWeight: 700, color: 'var(--green-700)' }}>Âm tính</td>
-                    <td style={{ padding: '8px 12px', border: '1px solid var(--line)' }}>Không phát hiện / 25g</td>
-                    <td style={{ padding: '8px 12px', border: '1px solid var(--line)', fontWeight: 700, color: '#15803d' }}>ĐẠT</td>
-                  </tr>
+                  {qcIndicators.map((qc, i) => (
+                    <tr key={i}>
+                      <td style={{ padding: '8px 12px', border: '1px solid var(--line)' }}>{qc.name}</td>
+                      <td style={{ padding: '8px 12px', border: '1px solid var(--line)', fontWeight: 700, color: 'var(--green-700)' }}>{qc.result}</td>
+                      <td style={{ padding: '8px 12px', border: '1px solid var(--line)' }}>{qc.limit}</td>
+                      <td style={{ padding: '8px 12px', border: '1px solid var(--line)', fontWeight: 700, color: '#15803d' }}>{qc.status}</td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '24px', paddingTop: '16px', borderTop: '1px solid var(--line)' }}>
                 <div style={{ fontSize: '12px', color: 'var(--green-700)', fontWeight: 700 }}>
-                  ✓ Đã kiểm duyệt và cấp chứng thư VietGAP ngày {new Date(selectedBatch.harvestDate).toLocaleDateString('vi-VN')}
+                  ✓ Đã kiểm duyệt và cấp chứng thư {farmInfo.standard.split(' ')[0]} ngày {new Date(selectedBatch.harvestDate).toLocaleDateString('vi-VN')}
                 </div>
                 <button
                   type="button"

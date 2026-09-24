@@ -34,8 +34,11 @@ import {
   LogoutOutlined,
   UserOutlined,
   AppstoreAddOutlined,
-  ReloadOutlined
+  ReloadOutlined,
+  SafetyCertificateOutlined,
+  EditOutlined
 } from '@ant-design/icons';
+import dayjs from 'dayjs';
 import { useNavigate } from 'react-router-dom';
 import axiosClient from '../config/axiosClient';
 
@@ -63,18 +66,34 @@ interface BackendProduct {
   maxSlots?: number;
 }
 
-interface BackendCategory {
-  categoryId: number;
-  categoryName: string;
-  description?: string;
+interface BackendBatch {
+  batchId: number;
+  productId: number;
+  farmId: number;
+  batchCode: string;
+  harvestDate: string;
+  receivedDate: string;
+  expiryDate: string;
+  initialQuantity: number;
+  unit: string;
+  status: string;
+  product?: BackendProduct;
 }
 
-// Data mẫu cho Lô hàng & Đơn hàng
-const initialLots = [
-  { key: '1', lotCode: 'LOT#VN-DL-0842', productName: 'Cải bó xôi hữu cơ', harvestDate: '21/07/2026', expiryDate: '30/08/2026', qty: 250, zone: 'Nhà màng khu A', cert: 'VietGAP', status: 'Cận hạn' },
-  { key: '2', lotCode: 'LOT#VN-DL-0917', productName: 'Cà rốt baby Đà Lạt', harvestDate: '20/07/2026', expiryDate: '15/09/2026', qty: 500, zone: 'Cánh đồng khu B', cert: 'GlobalGAP', status: 'An toàn' },
-  { key: '3', lotCode: 'LOT#VN-DL-0721', productName: 'Xà lách xoăn thủy canh', harvestDate: '24/07/2026', expiryDate: '01/09/2026', qty: 15, zone: 'Khu giàn đứng C', cert: 'VietGAP', status: 'Sắp hết hạn' },
-];
+interface BackendSupplier {
+  userId: number;
+  supplierId?: number;
+  fullName: string;
+  supplierName?: string;
+  representative?: string;
+  farm?: {
+    farmId: number;
+    farmName: string;
+    province: string;
+    cropType: string;
+    productionStandard: string;
+  };
+}
 
 const initialOrders = [
   { key: '1', orderId: 'ORD-98421', items: 'Combo Gia Đình Nhỏ [Cải bó xôi, Cà rốt baby, Bơ 034]', customer: 'Bùi Quốc Hưng', date: '25/08/2026', status: 'Pending' },
@@ -86,8 +105,8 @@ export const Dashboard = () => {
   const [currentMenu, setCurrentMenu] = useState('dashboard');
   const [products, setProducts] = useState<BackendProduct[]>([]);
   const [combos, setCombos] = useState<BackendProduct[]>([]);
-  const [categories, setCategories] = useState<BackendCategory[]>([]);
-  const [lots, setLots] = useState(initialLots);
+  const [batches, setBatches] = useState<BackendBatch[]>([]);
+  const [suppliers, setSuppliers] = useState<BackendSupplier[]>([]);
   const [orders, setOrders] = useState(initialOrders);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [loading, setLoading] = useState(false);
@@ -96,12 +115,15 @@ export const Dashboard = () => {
 
   // Modals state
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
-  const [isLotModalOpen, setIsLotModalOpen] = useState(false);
   const [isComboModalOpen, setIsComboModalOpen] = useState(false);
+  const [isTraceModalOpen, setIsTraceModalOpen] = useState(false);
+  const [traceProduct, setTraceProduct] = useState<BackendProduct | null>(null);
+  const [traceBatch, setTraceBatch] = useState<BackendBatch | null>(null);
+  const [traceLoading, setTraceLoading] = useState(false);
 
   const [productForm] = Form.useForm();
-  const [lotForm] = Form.useForm();
   const [comboForm] = Form.useForm();
+  const [traceForm] = Form.useForm();
 
   // Helper trích xuất số slot tự chọn của combo
   const getComboSlots = (prod: BackendProduct) => {
@@ -134,12 +156,20 @@ export const Dashboard = () => {
     const mySupplierId = getActualSupplierId(user);
     setLoading(true);
     try {
-      const [prodRes, catRes] = await Promise.all([
+      const [prodRes, batchRes, supRes] = await Promise.all([
         axiosClient.get(`/products?supplierId=${mySupplierId}`),
-        axiosClient.get('/categories').catch(() => ({ data: [] }))
+        axiosClient.get('/productbatches').catch(() => ({ data: [] })),
+        axiosClient.get('/users/suppliers').catch(() => ({ data: [] }))
       ]);
       const allList: BackendProduct[] = prodRes.data || [];
-      setCategories(catRes.data || []);
+      const allBatches: BackendBatch[] = batchRes.data || [];
+      const allSups: BackendSupplier[] = supRes.data || [];
+
+      setSuppliers(allSups);
+
+      const supplierProductIds = new Set(allList.map(p => p.productId));
+      const myBatches = allBatches.filter(b => supplierProductIds.has(b.productId));
+      setBatches(myBatches);
       
       // Đồng bộ phân loại sản phẩm lẻ và combo tự chọn từ Database
       setProducts(allList.filter(p => p.categoryId !== 5));
@@ -181,23 +211,110 @@ export const Dashboard = () => {
     });
   };
 
-  // Thêm nông sản lẻ mới (Lưu trực tiếp vào Database với trạng thái Pending chờ Admin duyệt)
+  // Mở Modal Khai báo / Chỉnh sửa Lô hàng & Truy xuất nguồn gốc
+  const handleOpenTraceModal = (prod?: BackendProduct, specificBatch?: BackendBatch) => {
+    const targetProd = prod || (specificBatch ? products.find(p => p.productId === specificBatch.productId) : products[0]);
+    setTraceProduct(targetProd || null);
+    
+    const existing = specificBatch || (targetProd ? batches.find(b => b.productId === targetProd.productId) : null);
+    setTraceBatch(existing || null);
+
+    const mySupplierId = getActualSupplierId(currentUser);
+    const currentSup = suppliers.find(s => (s.supplierId || s.userId) === mySupplierId);
+    const defaultFarmId = currentSup?.farm?.farmId || 1;
+
+    if (existing) {
+      traceForm.setFieldsValue({
+        productId: existing.productId,
+        batchCode: existing.batchCode,
+        farmId: existing.farmId || defaultFarmId,
+        initialQuantity: existing.initialQuantity,
+        unit: existing.unit || targetProd?.unit || 'kg',
+        harvestDate: dayjs(existing.harvestDate),
+        expiryDate: dayjs(existing.expiryDate),
+        status: existing.status || 'Active'
+      });
+    } else {
+      traceForm.setFieldsValue({
+        productId: targetProd?.productId,
+        batchCode: `LHN-${dayjs().format('YYYYMMDD')}-${Math.floor(1000 + Math.random() * 9000)}`,
+        farmId: defaultFarmId,
+        initialQuantity: 100,
+        unit: targetProd?.unit || 'kg',
+        harvestDate: dayjs(),
+        expiryDate: dayjs().add(7, 'day'),
+        status: 'Active'
+      });
+    }
+    setIsTraceModalOpen(true);
+  };
+
+  const handleSaveTrace = async () => {
+    try {
+      const values = await traceForm.validateFields();
+      const pId = traceProduct?.productId || values.productId;
+      if (!pId) {
+        message.error('Vui lòng chọn nông sản cần khai báo lô!');
+        return;
+      }
+
+      setTraceLoading(true);
+      const payload = {
+        productId: pId,
+        farmId: values.farmId,
+        batchCode: values.batchCode,
+        harvestDate: values.harvestDate.toISOString(),
+        receivedDate: values.harvestDate.toISOString(),
+        expiryDate: values.expiryDate.toISOString(),
+        initialQuantity: values.initialQuantity,
+        unit: values.unit,
+        status: values.status || 'Active'
+      };
+
+      if (traceBatch) {
+        await axiosClient.put(`/productbatches/${traceBatch.batchId}`, {
+          ...payload,
+          batchId: traceBatch.batchId
+        });
+        message.success(`Đã cập nhật thành công hồ sơ lô hàng "${values.batchCode}"!`);
+      } else {
+        await axiosClient.post('/productbatches', payload);
+        message.success(`Khai báo lô hàng "${values.batchCode}" thành công! Đã gửi hồ sơ tới Ban Quản Trị để phân loại danh mục & phê duyệt.`);
+      }
+
+      setIsTraceModalOpen(false);
+      await loadData();
+    } catch (error: any) {
+      if (error?.response?.data?.message) {
+        message.error(error.response.data.message);
+      } else {
+        message.error('Không thể lưu hồ sơ lô hàng. Vui lòng kiểm tra lại!');
+      }
+    } finally {
+      setTraceLoading(false);
+    }
+  };
+
+  // Thêm nông sản lẻ mới (Lưu trực tiếp vào Database với trạng thái Pending & tự động mở Bước 2)
   const handleAddProduct = async (values: any) => {
     const mySupplierId = getActualSupplierId(currentUser);
     try {
-      await axiosClient.post('/products', {
+      const res = await axiosClient.post('/products', {
         productName: values.name,
-        categoryId: values.categoryId,
+        categoryId: 1, // Mặc định tạm thời; Ban Quản Trị (Admin) sẽ phân loại chuẩn hóa khi phê duyệt
         supplierId: mySupplierId,
         price: values.price,
         unit: values.unit || 'kg',
         status: 'Pending',
         description: values.description || ''
       });
-      message.success('Đã đăng ký nông sản mới! Đang chờ Ban Quản Trị xét duyệt.');
+      message.success('Đã lưu thông tin nông sản tạm thời! Đang chuyển sang Bước 2: Khai báo Lô hàng & Truy xuất nguồn gốc.');
       setIsProductModalOpen(false);
       productForm.resetFields();
-      loadData();
+      await loadData();
+
+      const created = res.data;
+      handleOpenTraceModal(created);
     } catch (error) {
       message.error('Đăng ký nông sản thất bại.');
     }
@@ -246,34 +363,35 @@ export const Dashboard = () => {
     }
   };
 
-  // Add Lot (Khai báo lô hàng thu hoạch mới)
-  const handleAddLot = (values: any) => {
-    const newLot = {
-      key: String(lots.length + 1),
-      lotCode: `LOT#VN-DL-0${Math.floor(100 + Math.random() * 900)}`,
-      productName: values.productName,
-      harvestDate: values.harvestDate.format('DD/MM/YYYY'),
-      expiryDate: values.expiryDate.format('DD/MM/YYYY'),
-      qty: values.qty,
-      zone: values.zone,
-      cert: values.cert,
-      status: 'An toàn'
-    };
-    setLots([...lots, newLot]);
-    message.success('Khai báo Lô hàng mới thành công! Mã QR truy xuất nguồn gốc đã sẵn sàng.');
-    setIsLotModalOpen(false);
-    lotForm.resetFields();
-  };
-
   // Cột Sản phẩm lẻ (Đồng bộ với Database)
   const productColumns = [
-    { title: 'ID', dataIndex: 'productId', key: 'productId', width: 70, render: (id: number) => <Tag>#{id}</Tag> },
+    { title: 'ID', dataIndex: 'productId', key: 'productId', width: 65, render: (id: number) => <Tag>#{id}</Tag> },
     { title: 'Tên nông sản', dataIndex: 'productName', key: 'productName', render: (text: string) => <b>{text}</b> },
     { 
       title: 'Danh mục', 
       dataIndex: ['category', 'categoryName'], 
       key: 'categoryName',
-      render: (text: string) => <Tag color="blue">{text || 'Nông sản'}</Tag>
+      render: (text: string, r: BackendProduct) => {
+        if (r.status === 'Pending') {
+          return <Tag color="gold">Chờ Admin phân loại</Tag>;
+        }
+        return <Tag color="blue">{text || 'Nông sản'}</Tag>;
+      }
+    },
+    { 
+      title: 'Hồ sơ Lô hàng & Truy xuất', 
+      key: 'batchInfo',
+      render: (_: any, r: BackendProduct) => {
+        const batch = batches.find(b => b.productId === r.productId);
+        if (batch) {
+          return (
+            <Tag color="cyan" style={{ fontSize: '11.5px', padding: '2px 8px' }}>
+              Mã: <b>{batch.batchCode}</b> · Hái: {dayjs(batch.harvestDate).format('DD/MM/YYYY')}
+            </Tag>
+          );
+        }
+        return <Tag color="warning">Chưa có Lô hàng</Tag>;
+      }
     },
     { 
       title: 'Giá bán sàn', 
@@ -281,23 +399,43 @@ export const Dashboard = () => {
       key: 'price',
       render: (val: number) => <span style={{ color: '#d32f2f', fontWeight: 600 }}>{Number(val).toLocaleString('vi-VN')} đ</span>
     },
-    { title: 'ĐVT', dataIndex: 'unit', key: 'unit', width: 80 },
+    { title: 'ĐVT', dataIndex: 'unit', key: 'unit', width: 70 },
     { 
-      title: 'Tồn kho khả dụng', 
+      title: 'Tồn kho', 
       dataIndex: 'availableStock', 
       key: 'availableStock',
+      width: 85,
       render: (stk?: number, r?: BackendProduct) => `${stk || 0} ${r?.unit || 'kg'}`
     },
     { 
       title: 'Trạng thái duyệt', 
       dataIndex: 'status', 
       key: 'status',
+      width: 140,
       render: (st: string) => {
         if (st === 'Active' || st === 'Approved') return <Tag color="green">ĐÃ DUYỆT (ĐANG BÁN)</Tag>;
         if (st === 'Pending') return <Tag color="orange">CHỜ DUYỆT (PENDING)</Tag>;
         return <Tag color="default">TẠM DỪNG</Tag>;
       }
     },
+    {
+      title: 'Thao tác',
+      key: 'actions',
+      width: 150,
+      render: (_: any, r: BackendProduct) => {
+        const batch = batches.find(b => b.productId === r.productId);
+        return (
+          <Button 
+            size="small"
+            icon={<SafetyCertificateOutlined />}
+            style={{ color: '#2e7d32', borderColor: '#2e7d32' }}
+            onClick={() => handleOpenTraceModal(r)}
+          >
+            {batch ? 'Sửa Lô / Truy xuất' : '+ Khai báo Lô'}
+          </Button>
+        );
+      }
+    }
   ];
 
   // Cột Gói Combo tự chọn (Đồng bộ 100% với Admin và Database)
@@ -381,23 +519,73 @@ export const Dashboard = () => {
     },
   ];
 
-  // Cột Lô hàng (Batches / Traceability)
+  // Cột Lô hàng (Batches / Traceability từ CSDL thật)
   const lotColumns = [
-    { title: 'Mã Lô (Traceability)', dataIndex: 'lotCode', key: 'lotCode', render: (t: string) => <Tag color="blue">{t}</Tag> },
-    { title: 'Sản phẩm', dataIndex: 'productName', key: 'productName' },
-    { title: 'Ngày thu hoạch', dataIndex: 'harvestDate', key: 'harvestDate' },
-    { title: 'Hạn dùng (FEFO)', dataIndex: 'expiryDate', key: 'expiryDate' },
-    { title: 'Sản lượng', dataIndex: 'qty', key: 'qty', render: (q: number) => `${q} kg` },
-    { title: 'Khu vực / Nhà kính', dataIndex: 'zone', key: 'zone' },
-    { title: 'Chứng nhận', dataIndex: 'cert', key: 'cert', render: (c: string) => <Tag color="green">{c}</Tag> },
+    { 
+      title: 'Mã Lô (Traceability)', 
+      dataIndex: 'batchCode', 
+      key: 'batchCode', 
+      render: (t: string) => <Tag color="blue" style={{ fontWeight: 600 }}>{t}</Tag> 
+    },
+    { 
+      title: 'Nông sản', 
+      key: 'productName',
+      render: (_: any, r: BackendBatch) => <b>{r.product?.productName || `Nông sản #${r.productId}`}</b> 
+    },
+    { 
+      title: 'Ngày thu hoạch', 
+      dataIndex: 'harvestDate', 
+      key: 'harvestDate',
+      render: (d: string) => dayjs(d).format('DD/MM/YYYY')
+    },
+    { 
+      title: 'Hạn dùng (FEFO)', 
+      dataIndex: 'expiryDate', 
+      key: 'expiryDate',
+      render: (d: string) => dayjs(d).format('DD/MM/YYYY')
+    },
+    { 
+      title: 'Sản lượng', 
+      key: 'qty', 
+      render: (_: any, r: BackendBatch) => `${r.initialQuantity} ${r.unit || 'kg'}`
+    },
+    { 
+      title: 'Nông trại thu hoạch', 
+      key: 'farm',
+      render: (_: any, r: BackendBatch) => {
+        const sup = suppliers.find(s => s.farm?.farmId === r.farmId);
+        return <span>{sup?.farm?.farmName || `Vườn mã #${r.farmId || 1}`}</span>;
+      }
+    },
     { 
       title: 'Tình trạng', 
-      dataIndex: 'status', 
       key: 'status',
-      render: (st: string) => {
-        if (st === 'An toàn') return <Badge status="success" text="Tươi mới" />;
-        if (st === 'Cận hạn') return <Badge status="warning" text="Cận hạn xuất" />;
-        return <Badge status="error" text="Hết hạn" />;
+      render: (_: any, r: BackendBatch) => {
+        const isExpired = dayjs().isAfter(dayjs(r.expiryDate), 'day');
+        if (isExpired) return <Badge status="error" text="Hết hạn" />;
+        const isNearExp = dayjs().add(3, 'day').isAfter(dayjs(r.expiryDate), 'day');
+        if (isNearExp) return <Badge status="warning" text="Cận hạn" />;
+        return <Badge status="success" text="Tươi mới" />;
+      }
+    },
+    {
+      title: 'Thao tác',
+      key: 'actions',
+      render: (_: any, r: BackendBatch) => {
+        const prod = products.find(p => p.productId === r.productId) || r.product;
+        return (
+          <Button 
+            size="small"
+            icon={<EditOutlined />}
+            onClick={() => {
+              if (prod) {
+                handleOpenTraceModal(prod as BackendProduct, r);
+              }
+            }}
+          >
+            Chỉnh sửa Lô
+          </Button>
+        );
       }
     }
   ];
@@ -634,12 +822,33 @@ export const Dashboard = () => {
             <Card 
               title="Quản lý Lô thu hoạch &amp; Dữ liệu Truy xuất Nguồn gốc" 
               extra={
-                <Button type="primary" icon={<PlusOutlined />} style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }} onClick={() => setIsLotModalOpen(true)}>
-                  Khai báo lô thu hoạch mới
-                </Button>
+                <Space>
+                  <Button icon={<ReloadOutlined />} onClick={() => loadData()} loading={loading}>Làm mới</Button>
+                  <Button 
+                    type="primary" 
+                    icon={<PlusOutlined />} 
+                    style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }} 
+                    onClick={() => handleOpenTraceModal()}
+                  >
+                    Khai báo lô thu hoạch mới
+                  </Button>
+                </Space>
               }
             >
-              <Table columns={lotColumns} dataSource={lots} />
+              <Alert 
+                type="info" 
+                showIcon 
+                message="Dữ liệu Lô hàng &amp; Truy xuất Nguồn gốc Đồng bộ" 
+                description="Mỗi lô hàng mang một mã truy xuất riêng biệt, được kết nối trực tiếp với trang Khách hàng (Web-Store) và mã QR trên bao bì sản phẩm. Nhà cung cấp có thể chỉnh sửa lại các thông số nếu phát hiện sai sót."
+                style={{ marginBottom: 16, borderRadius: '8px' }}
+              />
+              <Table 
+                columns={lotColumns} 
+                dataSource={batches} 
+                rowKey="batchId" 
+                loading={loading}
+                pagination={{ pageSize: 8 }} 
+              />
             </Card>
           )}
 
@@ -656,24 +865,26 @@ export const Dashboard = () => {
         </Footer>
       </Layout>
 
-      {/* MODAL: ĐĂNG KÝ SẢN PHẨM MỚI */}
+      {/* MODAL: ĐĂNG KÝ SẢN PHẨM MỚI (BƯỚC 1/2: THÔNG TIN NÔNG SẢN) */}
       <Modal
-        title="Đăng ký Nông sản mới gửi Ban Quản Trị duyệt"
+        title="Đăng ký Nông sản Mới (Bước 1/2: Thông tin cơ bản)"
         open={isProductModalOpen}
         onCancel={() => setIsProductModalOpen(false)}
         footer={null}
+        width={580}
       >
+        <Alert 
+          type="info" 
+          showIcon 
+          message="Quy trình 2 bước khép kín dành cho Nhà Cung Cấp"
+          description="Bước 1: Điền thông tin nông sản. Bước 2: Khai báo Lô hàng &amp; Nhật ký canh tác. Danh mục sản phẩm do Ban Quản Trị (Admin) trực tiếp kiểm định và phân loại chính thức khi phê duyệt lên sàn."
+          style={{ marginBottom: 16 }}
+        />
         <Form form={productForm} layout="vertical" onFinish={handleAddProduct}>
-          <Form.Item name="name" label="Tên nông sản" rules={[{ required: true, message: 'Vui lòng nhập tên!' }]}>
-            <Input placeholder="Ví dụ: Bông cải xanh Baby hữu cơ" />
+          <Form.Item name="name" label="Tên nông sản" rules={[{ required: true, message: 'Vui lòng nhập tên nông sản!' }]}>
+            <Input placeholder="Ví dụ: Mít Thái siêu sớm, Bông cải xanh Baby hữu cơ, Cà chua cherry..." />
           </Form.Item>
-          <Form.Item name="categoryId" label="Phân loại danh mục" rules={[{ required: true, message: 'Vui lòng chọn danh mục!' }]}>
-            <Select placeholder="Chọn nhóm danh mục">
-              {categories.filter(c => c.categoryId !== 5).map(c => (
-                <Select.Option key={c.categoryId} value={c.categoryId}>{c.categoryName}</Select.Option>
-              ))}
-            </Select>
-          </Form.Item>
+          {/* ĐÃ LOẠI BỎ CHỌN DANH MỤC - ADMIN SẼ PHÂN LOẠI KHI DUYỆT */}
           <Row gutter={16}>
             <Col span={14}>
               <Form.Item name="price" label="Đơn giá đề xuất (VNĐ)" rules={[{ required: true, message: 'Vui lòng nhập giá!' }]}>
@@ -687,67 +898,156 @@ export const Dashboard = () => {
             </Col>
           </Row>
           <Form.Item name="description" label="Mô tả tiêu chuẩn &amp; vùng trồng">
-            <Input.TextArea rows={3} placeholder="Mô tả giống cây, quy trình canh tác đạt chuẩn VietGAP..." />
+            <Input.TextArea rows={3} placeholder="Mô tả giống cây, quy trình canh tác đạt chuẩn VietGAP/GlobalGAP..." />
           </Form.Item>
           <Form.Item style={{ textAlign: 'right', marginBottom: 0 }}>
             <Space>
               <Button onClick={() => setIsProductModalOpen(false)}>Hủy</Button>
               <Button type="primary" htmlType="submit" style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}>
-                Gửi Admin xét duyệt
+                Tiếp tục: Khai báo Lô hàng &amp; Truy xuất (Bước 2/2) ➔
               </Button>
             </Space>
           </Form.Item>
         </Form>
       </Modal>
 
-      {/* MODAL: KHAI BÁO LÔ THU HOẠCH MỚI */}
+      {/* MODAL: KHAI BÁO / CHỈNH SỬA LÔ THU HOẠCH & TRUY XUẤT NGUỒN GỐC (BƯỚC 2/2) */}
       <Modal
-        title="Khai báo Lô thu hoạch mới (Cấp mã QR Truy xuất)"
-        open={isLotModalOpen}
-        onCancel={() => setIsLotModalOpen(false)}
-        footer={null}
+        title={
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <SafetyCertificateOutlined style={{ color: '#52c41a', fontSize: '20px' }} />
+            <span>
+              {traceBatch 
+                ? `Chỉnh Sửa Hồ Sơ Lô Hàng: ${traceProduct?.productName || ''}` 
+                : `Bước 2: Khai Báo Lô Hàng & Truy Xuất Cho "${traceProduct?.productName || 'Nông sản'}"`}
+            </span>
+          </div>
+        }
+        open={isTraceModalOpen}
+        onCancel={() => setIsTraceModalOpen(false)}
+        onOk={handleSaveTrace}
+        confirmLoading={traceLoading}
+        okText={traceBatch ? "Lưu Cập Nhật Lô Hàng" : "Hoàn Tất Khai Báo & Gửi Phê Duyệt"}
+        cancelText="Đóng"
+        width={680}
       >
-        <Form form={lotForm} layout="vertical" onFinish={handleAddLot}>
-          <Form.Item name="productName" label="Nông sản thu hoạch" rules={[{ required: true, message: 'Vui lòng chọn!' }]}>
-            <Select placeholder="Chọn loại nông sản">
-              {products.map(p => (
-                <Select.Option key={p.productId} value={p.productName}>{p.productName}</Select.Option>
-              ))}
-            </Select>
-          </Form.Item>
-          <Form.Item name="zone" label="Khu vực trồng thu hoạch" rules={[{ required: true, message: 'Vui lòng nhập khu vực!' }]}>
-            <Input placeholder="Ví dụ: Cánh đồng khu B" />
-          </Form.Item>
-          <Form.Item name="cert" label="Chứng nhận chất lượng của lô" rules={[{ required: true, message: 'Vui lòng chọn!' }]}>
-            <Select placeholder="Chọn chứng nhận">
-              <Select.Option value="VietGAP">VietGAP</Select.Option>
-              <Select.Option value="GlobalGAP">GlobalGAP</Select.Option>
-              <Select.Option value="Hữu cơ Organic">Hữu cơ Organic</Select.Option>
-            </Select>
-          </Form.Item>
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item name="harvestDate" label="Ngày thu hoạch" rules={[{ required: true, message: 'Chọn ngày!' }]}>
-                <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} />
+        <Alert 
+          type="success"
+          showIcon
+          message="Hồ sơ truy xuất độc quyền cho từng đợt thu hoạch"
+          description="Mỗi đợt thu hoạch mang mã lô và nhật ký canh tác riêng biệt. Dữ liệu này được kết nối trực tiếp đến trang Truy xuất nguồn gốc và mã QR trên bao bì cho khách hàng."
+          style={{ marginTop: 12, marginBottom: 16 }}
+        />
+
+        <div style={{ background: '#f6ffed', border: '1px solid #b7eb8f', padding: '10px 14px', borderRadius: '8px', marginBottom: '16px' }}>
+          <div>Nông sản: <b style={{ color: '#1b5e20' }}>{traceProduct?.productName || 'Chưa chọn'}</b> {traceProduct?.productId ? `(Mã SP: #${traceProduct.productId})` : ''}</div>
+          <div style={{ fontSize: '12px', color: '#555', marginTop: '2px' }}>
+            Trạng thái hiện tại: <Tag color="gold">Chờ Admin duyệt &amp; phân loại danh mục</Tag>
+          </div>
+        </div>
+
+        <Form form={traceForm} layout="vertical">
+          {!traceProduct && (
+            <Form.Item name="productId" label="Chọn Nông sản cần khai báo lô" rules={[{ required: true, message: 'Vui lòng chọn nông sản!' }]}>
+              <Select placeholder="Chọn nông sản của bạn">
+                {products.map(p => (
+                  <Select.Option key={p.productId} value={p.productId}>{p.productName} (#{p.productId})</Select.Option>
+                ))}
+              </Select>
+            </Form.Item>
+          )}
+
+          <Row gutter={12}>
+            <Col span={14}>
+              <Form.Item name="batchCode" label="Mã lô hàng truy xuất (Duy nhất)" rules={[{ required: true, message: 'Nhập mã lô' }]}>
+                <Input placeholder="VD: LHN-20260925-001" />
               </Form.Item>
             </Col>
-            <Col span={12}>
-              <Form.Item name="expiryDate" label="Hạn sử dụng (FEFO)" rules={[{ required: true, message: 'Chọn ngày!' }]}>
-                <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} />
+            <Col span={10}>
+              <Form.Item name="farmId" label="Nông trại / Vườn thu hoạch" rules={[{ required: true, message: 'Chọn nông trại' }]}>
+                <Select placeholder="Chọn nông trại">
+                  {suppliers.map(s => {
+                    const sid = s.supplierId || s.userId;
+                    const f = s.farm;
+                    return (
+                      <Select.Option key={f?.farmId || sid} value={f?.farmId || sid}>
+                        {f?.farmName || `${s.fullName} Farm`} ({f?.province || 'Đà Lạt'})
+                      </Select.Option>
+                    );
+                  })}
+                </Select>
               </Form.Item>
             </Col>
           </Row>
-          <Form.Item name="qty" label="Số lượng thu hoạch (kg)" rules={[{ required: true, message: 'Nhập số lượng!' }]}>
-            <InputNumber min={1} style={{ width: '100%' }} placeholder="Ví dụ: 300" />
-          </Form.Item>
-          <Form.Item style={{ textAlign: 'right', marginBottom: 0 }}>
-            <Space>
-              <Button onClick={() => setIsLotModalOpen(false)}>Hủy</Button>
-              <Button type="primary" htmlType="submit" style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}>
-                Xác nhận khai báo
-              </Button>
-            </Space>
-          </Form.Item>
+
+          <Row gutter={12}>
+            <Col span={12}>
+              <Form.Item name="initialQuantity" label="Sản lượng đợt thu hoạch" rules={[{ required: true, message: 'Nhập sản lượng' }]}>
+                <InputNumber min={1} style={{ width: '100%' }} />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="unit" label="Đơn vị tính" rules={[{ required: true, message: 'Nhập đơn vị' }]}>
+                <Input placeholder="kg, bắp, nải, hộp..." />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={12}>
+            <Col span={12}>
+              <Form.Item name="harvestDate" label="Ngày thu hoạch thực tế" rules={[{ required: true, message: 'Chọn ngày thu hoạch' }]}>
+                <DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" placeholder="Chọn ngày hái" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item 
+                name="expiryDate" 
+                label="Hạn sử dụng tốt nhất (FEFO)"
+                dependencies={['harvestDate']}
+                rules={[
+                  { required: true, message: 'Chọn hạn sử dụng' },
+                  ({ getFieldValue }) => ({
+                    validator(_, value) {
+                      const harvest = getFieldValue('harvestDate');
+                      if (!value || !harvest || value.isAfter(harvest, 'day')) {
+                        return Promise.resolve();
+                      }
+                      return Promise.reject(new Error('Hạn sử dụng phải sau ngày thu hoạch!'));
+                    },
+                  }),
+                ]}
+              >
+                <DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" placeholder="Chọn hạn dùng" />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          {/* Live Preview 6 Chặng Canh Tác */}
+          <div style={{ marginTop: 12, padding: '12px 16px', background: '#fafafa', border: '1px dashed #d9d9d9', borderRadius: '8px' }}>
+            <div style={{ fontWeight: 600, fontSize: '13px', color: '#135200', marginBottom: 8 }}>
+              🌿 Minh bạch hành trình 6 chặng canh tác &amp; phân phối tự động:
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, fontSize: '12px' }}>
+              <div style={{ background: '#fff', padding: '6px 8px', borderRadius: 4, border: '1px solid #eee' }}>
+                <b>01. Nguồn giống:</b> Chuẩn hữu cơ F1
+              </div>
+              <div style={{ background: '#fff', padding: '6px 8px', borderRadius: 4, border: '1px solid #eee' }}>
+                <b>02. Canh tác IoT:</b> Nhật ký vi sinh
+              </div>
+              <div style={{ background: '#fff', padding: '6px 8px', borderRadius: 4, border: '1px solid #eee' }}>
+                <b>03. Thu hoạch:</b> Hái sương sớm
+              </div>
+              <div style={{ background: '#fff', padding: '6px 8px', borderRadius: 4, border: '1px solid #eee' }}>
+                <b>04. Kiểm định Lab:</b> ISO/IEC 17025
+              </div>
+              <div style={{ background: '#fff', padding: '6px 8px', borderRadius: 4, border: '1px solid #eee' }}>
+                <b>05. Vận chuyển:</b> Chuỗi lạnh FreshLock
+              </div>
+              <div style={{ background: '#fff', padding: '6px 8px', borderRadius: 4, border: '1px solid #eee' }}>
+                <b>06. Xuất kho:</b> Giao hỏa tốc FEFO
+              </div>
+            </div>
+          </div>
         </Form>
       </Modal>
 

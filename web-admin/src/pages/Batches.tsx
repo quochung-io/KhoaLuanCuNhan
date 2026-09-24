@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Table, Button, Space, Modal, Form, Input, InputNumber, Select, DatePicker, Tag, message, Card, Row, Col } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
-import { productBatchService, productService } from '../services/api';
+import { productBatchService, productService, userService } from '../services/api';
 
 interface Product {
   productId: number;
@@ -27,6 +27,7 @@ interface ProductBatch {
 export const Batches: React.FC = () => {
   const [batches, setBatches] = useState<ProductBatch[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [suppliers, setSuppliers] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingBatch, setEditingBatch] = useState<ProductBatch | null>(null);
@@ -35,11 +36,14 @@ export const Batches: React.FC = () => {
   const loadData = async () => {
     setLoading(true);
     try {
-      const prodRes = await productService.getAll();
-      setProducts(prodRes.data);
-
-      const batchRes = await productBatchService.getAll();
-      setBatches(batchRes.data);
+      const [prodRes, batchRes, supRes] = await Promise.all([
+        productService.getAll(),
+        productBatchService.getAll(),
+        userService.getSuppliers().catch(() => ({ data: [] }))
+      ]);
+      setProducts(prodRes.data || []);
+      setBatches(batchRes.data || []);
+      setSuppliers(supRes.data || []);
     } catch (error) {
       message.error('Không thể tải danh sách lô hàng nông sản.');
     } finally {
@@ -54,9 +58,15 @@ export const Batches: React.FC = () => {
   const handleOpenAdd = () => {
     setEditingBatch(null);
     form.resetFields();
+    const defaultFarmId = suppliers[0]?.farm?.farmId || suppliers[0]?.supplierId || 1;
     form.setFieldsValue({
       batchCode: 'LHN-' + Math.floor(100000 + Math.random() * 900000),
-      farmId: 1 // Mặc định farm ID = 1
+      farmId: defaultFarmId,
+      unit: 'kg',
+      initialQuantity: 100,
+      harvestDate: dayjs(),
+      expiryDate: dayjs().add(12, 'day'),
+      status: 'Active'
     });
     setIsModalOpen(true);
   };
@@ -206,8 +216,18 @@ export const Batches: React.FC = () => {
             </Select>
           </Form.Item>
 
-          <Form.Item name="farmId" label="Mã nông trại / Vùng trồng (Farm ID)" rules={[{ required: true, message: 'Nhập Farm ID' }]}>
-            <InputNumber style={{ width: '100%' }} placeholder="Ví dụ: 1" />
+          <Form.Item name="farmId" label="Nông trại / Vùng canh tác" rules={[{ required: true, message: 'Chọn nông trại' }]}>
+            <Select placeholder="Chọn nông trại">
+              {suppliers.map(s => {
+                const sid = s.supplierId || s.userId;
+                const f = s.farm;
+                return (
+                  <Select.Option key={f?.farmId || sid} value={f?.farmId || sid}>
+                    {f?.farmName || `${s.fullName} Farm`} ({f?.province || 'Đà Lạt'})
+                  </Select.Option>
+                );
+              })}
+            </Select>
           </Form.Item>
 
           <Row gutter={8}>
