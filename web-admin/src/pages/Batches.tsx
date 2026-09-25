@@ -84,19 +84,24 @@ export const Batches: React.FC = () => {
   };
 
   const filteredBatches = batches.filter(b => {
-    // 1. Mã Lô hoặc ID
+    // 1. Mã Lô hoặc ID (Hỗ trợ #1, ID: 1, 1...)
     if (searchCodeOrId.trim()) {
       const q = searchCodeOrId.trim().toLowerCase();
-      const matchId = b.batchId.toString().includes(q);
-      const matchCode = (b.batchCode || '').toLowerCase().includes(q);
+      const cleanQ = q.replace(/^(#|id\s*:?\s*|lô\s*:?\s*|mã\s*:?\s*)/i, '').trim();
+      const bIdStr = b.batchId.toString();
+      const pIdStr = b.productId ? b.productId.toString() : '';
+      const matchId = bIdStr === cleanQ || bIdStr.includes(cleanQ) || (`#${bIdStr}`).includes(q) || pIdStr === cleanQ || (`#${pIdStr}`).includes(q);
+      const matchCode = (b.batchCode || '').toLowerCase().includes(q) || (cleanQ ? (b.batchCode || '').toLowerCase().includes(cleanQ) : false);
       if (!matchId && !matchCode) return false;
     }
 
-    // 2. Tên sản phẩm
+    // 2. Tên sản phẩm (Không phân biệt HOA/thường, hỗ trợ cả tiếng Việt có/không dấu)
     if (searchProductName.trim()) {
       const q = searchProductName.trim().toLowerCase();
+      const qNorm = q.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd');
       const pName = getProductName(b).toLowerCase();
-      if (!pName.includes(q)) return false;
+      const pNameNorm = pName.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd');
+      if (!pName.includes(q) && !pNameNorm.includes(qNorm)) return false;
     }
 
     // 3. Nông trại / Vườn

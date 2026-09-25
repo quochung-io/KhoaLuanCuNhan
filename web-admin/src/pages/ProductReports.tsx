@@ -21,7 +21,8 @@ import {
   Typography,
   Tabs,
   Alert,
-  Segmented
+  Segmented,
+  AutoComplete
 } from 'antd';
 import {
   SearchOutlined,
@@ -51,7 +52,7 @@ import {
   Award
 } from 'lucide-react';
 import dayjs, { Dayjs } from 'dayjs';
-import { reportService, categoryService, productBatchService, userService } from '../services/api';
+import { reportService, categoryService, productBatchService, userService, productService } from '../services/api';
 
 const { RangePicker } = DatePicker;
 const { Text, Title } = Typography;
@@ -139,6 +140,7 @@ export const ProductReports: React.FC = () => {
   // Categories & Suppliers list
   const [categories, setCategories] = useState<{ categoryId: number; categoryName: string }[]>([]);
   const [suppliers, setSuppliers] = useState<any[]>([]);
+  const [allProducts, setAllProducts] = useState<any[]>([]);
 
   // Batch details drilldown modal for a single product
   const [selectedProduct, setSelectedProduct] = useState<ProductReportItem | null>(null);
@@ -154,12 +156,13 @@ export const ProductReports: React.FC = () => {
   const [inventoryTabFilter, setInventoryTabFilter] = useState<string>('all');
   const [drillSearch, setDrillSearch] = useState<string>('');
 
-  // Load Categories & Suppliers on mount
+  // Load Categories, Suppliers & All Products on mount
   useEffect(() => {
     Promise.all([
       categoryService.getAll().catch(() => ({ data: [] })),
       userService.getSuppliers().catch(() => ({ data: [] })),
-    ]).then(([catRes, supRes]) => {
+      productService.getAll().catch(() => ({ data: [] })),
+    ]).then(([catRes, supRes, prodRes]) => {
       setCategories(catRes.data || []);
       const supList = supRes.data || [];
       setSuppliers(supList.length > 0 ? supList : [
@@ -167,8 +170,83 @@ export const ProductReports: React.FC = () => {
         { supplierId: 2, userId: 3, fullName: 'Hợp tác xã Rau Sạch Miền Tây' },
         { supplierId: 3, userId: 4, fullName: 'Hợp tác xã Trái Cây Việt' }
       ]);
+      setAllProducts(prodRes.data || []);
     });
   }, []);
+
+  // Helper loại bỏ dấu tiếng Việt để tìm kiếm không phân biệt có/không dấu
+  const removeVietnameseTones = useCallback((str: string) => {
+    if (!str) return '';
+    return str
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/đ/g, 'd')
+      .replace(/Đ/g, 'D')
+      .toLowerCase();
+  }, []);
+
+  // Danh sách gợi ý tìm kiếm thời gian thực (Autocomplete Suggestions) khi người dùng gõ ký tự (ví dụ: chữ 'c', 'C', '#10'...)
+  const searchSuggestions = useMemo(() => {
+    if (!search || !search.trim()) return [];
+
+    const rawQ = search.trim();
+    const qLower = rawQ.toLowerCase();
+    const qNorm = removeVietnameseTones(rawQ);
+    const cleanIdStr = qLower.replace(/^(#|id\s*:?\s*|sp\s*:?\s*|mã\s*:?\s*)/i, '').trim();
+
+    const matched = allProducts.filter((p: any) => {
+      const pIdStr = String(p.productId || '');
+      // 1. Khớp theo ID
+      if (cleanIdStr && pIdStr === cleanIdStr) return true;
+      if (cleanIdStr && pIdStr.includes(cleanIdStr)) return true;
+      if (('#' + pIdStr).includes(qLower)) return true;
+
+      // 2. Khớp theo Tên sản phẩm (không phân biệt HOA/thường, hỗ trợ cả tiếng Việt không dấu)
+      const name = p.productName || '';
+      if (name.toLowerCase().includes(qLower)) return true;
+      if (removeVietnameseTones(name).includes(qNorm)) return true;
+
+      // 3. Khớp SKU
+      if ((p.sku || '').toLowerCase().includes(qLower)) return true;
+
+      // 4. Khớp Danh mục
+      const catName = p.categoryName || p.category?.categoryName || '';
+      if (catName.toLowerCase().includes(qLower)) return true;
+      if (removeVietnameseTones(catName).includes(qNorm)) return true;
+
+      return false;
+    });
+
+    // Tạo danh sách Option đẹp mắt cho AutoComplete (tối đa 12 gợi ý phù hợp nhất)
+    return matched.slice(0, 12).map((p: any) => {
+      const pId = p.productId;
+      const pName = p.productName;
+      const catName = p.categoryName || p.category?.categoryName || 'Nông sản';
+
+      return {
+        value: pName,
+        key: `suggest-${pId}`,
+        label: (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 0' }}>
+            <Space size={8}>
+              <Tag color="purple" style={{ fontWeight: 700, margin: 0, fontSize: 11 }}>
+                #{pId}
+              </Tag>
+              <span style={{ fontWeight: 600, color: '#1B5E20' }}>
+                {pName}
+              </span>
+              <Tag color="cyan" style={{ fontSize: 11, margin: 0, padding: '0 4px' }}>
+                {catName}
+              </Tag>
+            </Space>
+            <span style={{ fontSize: 12, color: '#888' }}>
+              {p.unit ? `Đơn vị: ${p.unit}` : ''}
+            </span>
+          </div>
+        ),
+      };
+    });
+  }, [search, allProducts, removeVietnameseTones]);
 
   // Reset filters handler
   const handleResetFilters = () => {
@@ -1038,18 +1116,28 @@ export const ProductReports: React.FC = () => {
 
         {/* Hàng 2: Bộ lọc chi tiết theo tất cả các thành phần bảng */}
         <Row gutter={[12, 12]} style={{ marginTop: 16 }}>
-          {/* 1. Tìm kiếm đa năng theo ID, Tên, SKU, Danh mục, HTX */}
+          {/* 1. Tìm kiếm đa năng theo ID, Tên, SKU, Danh mục, HTX có gợi ý AutoComplete */}
           <Col xs={24} sm={12} md={8} lg={6}>
-            <Input
-              prefix={<SearchOutlined style={{ color: '#bbb' }} />}
-              placeholder="Tìm theo ID (#922), Tên, SKU, HTX..."
+            <AutoComplete
+              style={{ width: '100%' }}
+              options={searchSuggestions}
               value={search}
-              allowClear
-              onChange={(e) => {
-                setSearch(e.target.value);
+              onSelect={(val) => {
+                setSearch(val);
                 setPage(1);
               }}
-            />
+              onChange={(val) => {
+                setSearch(val);
+                setPage(1);
+              }}
+              popupMatchSelectWidth={false}
+            >
+              <Input
+                prefix={<SearchOutlined style={{ color: '#bbb' }} />}
+                placeholder="Nhập ID (#10), chữ cái (C, c...), Tên SP..."
+                allowClear
+              />
+            </AutoComplete>
           </Col>
 
           {/* 2. Lọc theo Danh mục nông sản */}
