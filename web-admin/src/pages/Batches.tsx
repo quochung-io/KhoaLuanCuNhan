@@ -1,6 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Table, Button, Space, Modal, Form, Input, InputNumber, Select, DatePicker, Tag, message, Card, Row, Col } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { 
+  PlusOutlined, 
+  EditOutlined, 
+  DeleteOutlined, 
+  SearchOutlined, 
+  ReloadOutlined, 
+  SafetyCertificateOutlined
+} from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { productBatchService, productService, userService } from '../services/api';
 
@@ -32,6 +39,101 @@ export const Batches: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingBatch, setEditingBatch] = useState<ProductBatch | null>(null);
   const [form] = Form.useForm();
+
+  // States Tìm Kiếm & Bộ Lọc Lô Hàng & Nguồn Gốc (Tất cả thành phần trong bảng)
+  const [searchCodeOrId, setSearchCodeOrId] = useState('');
+  const [searchProductName, setSearchProductName] = useState('');
+  const [filterFarmId, setFilterFarmId] = useState<number | 'all'>('all');
+  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [filterFefo, setFilterFefo] = useState<string>('all');
+  const [harvestDateRange, setHarvestDateRange] = useState<any>(null);
+
+  // Helper lấy tên sản phẩm
+  const getProductName = (r: ProductBatch) => {
+    return r.product?.productName || products.find(p => p.productId === r.productId)?.productName || `Nông sản #${r.productId}`;
+  };
+
+  // Helper lấy thông tin nông trại
+  const getFarmInfo = (farmId: number) => {
+    const sup = suppliers.find(s => s.farm?.farmId === farmId || s.supplierId === farmId || s.userId === farmId);
+    if (sup?.farm?.farmName) {
+      return { name: sup.farm.farmName, province: sup.farm.province || 'Lâm Đồng' };
+    }
+    if (sup?.fullName) {
+      return { name: sup.fullName, province: 'Đà Lạt' };
+    }
+    return { name: `Nông trại #${farmId}`, province: 'Đà Lạt' };
+  };
+
+  const isFiltering = Boolean(
+    searchCodeOrId.trim() ||
+    searchProductName.trim() ||
+    filterFarmId !== 'all' ||
+    filterStatus !== 'all' ||
+    filterFefo !== 'all' ||
+    (harvestDateRange && harvestDateRange.length === 2 && harvestDateRange[0] && harvestDateRange[1])
+  );
+
+  const handleResetFilters = () => {
+    setSearchCodeOrId('');
+    setSearchProductName('');
+    setFilterFarmId('all');
+    setFilterStatus('all');
+    setFilterFefo('all');
+    setHarvestDateRange(null);
+  };
+
+  const filteredBatches = batches.filter(b => {
+    // 1. Mã Lô hoặc ID (Hỗ trợ #1, ID: 1, 1...)
+    if (searchCodeOrId.trim()) {
+      const q = searchCodeOrId.trim().toLowerCase();
+      const cleanQ = q.replace(/^(#|id\s*:?\s*|lô\s*:?\s*|mã\s*:?\s*)/i, '').trim();
+      const bIdStr = b.batchId.toString();
+      const pIdStr = b.productId ? b.productId.toString() : '';
+      const matchId = bIdStr === cleanQ || bIdStr.includes(cleanQ) || (`#${bIdStr}`).includes(q) || pIdStr === cleanQ || (`#${pIdStr}`).includes(q);
+      const matchCode = (b.batchCode || '').toLowerCase().includes(q) || (cleanQ ? (b.batchCode || '').toLowerCase().includes(cleanQ) : false);
+      if (!matchId && !matchCode) return false;
+    }
+
+    // 2. Tên sản phẩm (Không phân biệt HOA/thường, hỗ trợ cả tiếng Việt có/không dấu)
+    if (searchProductName.trim()) {
+      const q = searchProductName.trim().toLowerCase();
+      const qNorm = q.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd');
+      const pName = getProductName(b).toLowerCase();
+      const pNameNorm = pName.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd');
+      if (!pName.includes(q) && !pNameNorm.includes(qNorm)) return false;
+    }
+
+    // 3. Nông trại / Vườn
+    if (filterFarmId !== 'all') {
+      if (b.farmId !== filterFarmId) return false;
+    }
+
+    // 4. Trạng thái
+    if (filterStatus !== 'all') {
+      if ((b.status || 'Active') !== filterStatus) return false;
+    }
+
+    // 5. Tình trạng Hạn sử dụng (FEFO)
+    if (filterFefo !== 'all') {
+      const now = dayjs();
+      const exp = dayjs(b.expiryDate);
+      const diffDays = exp.diff(now, 'day');
+      if (filterFefo === 'expired' && diffDays >= 0) return false;
+      if (filterFefo === 'warning' && (diffDays < 0 || diffDays > 3)) return false;
+      if (filterFefo === 'valid' && diffDays <= 3) return false;
+    }
+
+    // 6. Khoảng ngày thu hoạch
+    if (harvestDateRange && harvestDateRange.length === 2 && harvestDateRange[0] && harvestDateRange[1]) {
+      const hDate = dayjs(b.harvestDate);
+      const start = harvestDateRange[0].startOf('day');
+      const end = harvestDateRange[1].endOf('day');
+      if (hDate.isBefore(start) || hDate.isAfter(end)) return false;
+    }
+
+    return true;
+  });
 
   const loadData = async () => {
     setLoading(true);
@@ -135,41 +237,122 @@ export const Batches: React.FC = () => {
   };
 
   const columns = [
-    { title: 'ID', dataIndex: 'batchId', key: 'batchId', width: 60 },
-    { title: 'Mã Lô', dataIndex: 'batchCode', key: 'batchCode' },
-    { title: 'Sản phẩm', dataIndex: ['product', 'productName'], key: 'productName', render: (text: string, record: ProductBatch) => text || `ID: ${record.productId}` },
-    { title: 'Số lượng ban đầu', key: 'initialQuantity', render: (_: any, r: ProductBatch) => `${r.initialQuantity} ${r.unit}` },
     { 
-      title: 'Ngày thu hoạch', 
-      dataIndex: 'harvestDate', 
-      key: 'harvestDate',
-      render: (date: string) => dayjs(date).format('DD/MM/YYYY')
+      title: 'ID', 
+      dataIndex: 'batchId', 
+      key: 'batchId', 
+      width: 75,
+      sorter: (a: ProductBatch, b: ProductBatch) => a.batchId - b.batchId,
+      defaultSortOrder: 'descend' as const,
+      render: (id: number) => <Tag color="blue">#{id}</Tag>
     },
     { 
-      title: 'Hạn sử dụng', 
-      dataIndex: 'expiryDate', 
-      key: 'expiryDate',
-      render: (date: string) => {
-        const isExpired = dayjs().isAfter(dayjs(date));
+      title: 'Mã Lô (QR Code)', 
+      dataIndex: 'batchCode', 
+      key: 'batchCode',
+      sorter: (a: ProductBatch, b: ProductBatch) => a.batchCode.localeCompare(b.batchCode),
+      render: (code: string) => (
+        <Tag color="cyan" icon={<SafetyCertificateOutlined />} style={{ fontWeight: 600, fontSize: '12px' }}>
+          {code}
+        </Tag>
+      )
+    },
+    { 
+      title: 'Sản phẩm nông sản', 
+      key: 'productName',
+      sorter: (a: ProductBatch, b: ProductBatch) => getProductName(a).localeCompare(getProductName(b)),
+      render: (_: any, record: ProductBatch) => (
+        <div>
+          <b style={{ color: '#1b5e20', fontSize: '13.5px' }}>{getProductName(record)}</b>
+          <div style={{ fontSize: '11px', color: '#888' }}>Mã SP: #{record.productId}</div>
+        </div>
+      )
+    },
+    {
+      title: 'Nông trại / Xuất xứ',
+      key: 'farm',
+      sorter: (a: ProductBatch, b: ProductBatch) => getFarmInfo(a.farmId).name.localeCompare(getFarmInfo(b.farmId).name),
+      render: (_: any, r: ProductBatch) => {
+        const f = getFarmInfo(r.farmId);
         return (
-          <span style={{ color: isExpired ? 'red' : 'inherit', fontWeight: isExpired ? 'bold' : 'normal' }}>
-            {dayjs(date).format('DD/MM/YYYY')} {isExpired && '(Hết hạn)'}
-          </span>
+          <div>
+            <div style={{ fontWeight: 600, color: '#2e7d32' }}>🏡 {f.name}</div>
+            <div style={{ fontSize: '11.5px', color: '#666' }}>📍 {f.province}</div>
+          </div>
         );
       }
     },
     { 
-      title: 'Chứng nhận', 
+      title: 'Sản lượng ban đầu', 
+      key: 'initialQuantity', 
+      sorter: (a: ProductBatch, b: ProductBatch) => a.initialQuantity - b.initialQuantity,
+      render: (_: any, r: ProductBatch) => (
+        <span style={{ fontWeight: 600 }}>{r.initialQuantity} {r.unit}</span>
+      )
+    },
+    { 
+      title: 'Ngày thu hoạch', 
+      dataIndex: 'harvestDate', 
+      key: 'harvestDate',
+      sorter: (a: ProductBatch, b: ProductBatch) => dayjs(a.harvestDate).unix() - dayjs(b.harvestDate).unix(),
+      render: (date: string) => (
+        <span style={{ color: '#15803d', fontWeight: 500 }}>
+          {dayjs(date).format('DD/MM/YYYY')}
+        </span>
+      )
+    },
+    { 
+      title: 'Hạn sử dụng (FEFO)', 
+      dataIndex: 'expiryDate', 
+      key: 'expiryDate',
+      sorter: (a: ProductBatch, b: ProductBatch) => dayjs(a.expiryDate).unix() - dayjs(b.expiryDate).unix(),
+      render: (date: string) => {
+        const now = dayjs();
+        const exp = dayjs(date);
+        const diffDays = exp.diff(now, 'day');
+        const isExpired = diffDays < 0;
+        const isExpiringSoon = diffDays >= 0 && diffDays <= 3;
+        return (
+          <div>
+            <div style={{ color: isExpired ? '#cf1322' : (isExpiringSoon ? '#d46b08' : '#389e0d'), fontWeight: 600 }}>
+              {exp.format('DD/MM/YYYY')}
+            </div>
+            {isExpired ? (
+              <Tag color="error" style={{ fontSize: '10.5px', padding: '0 4px' }}>Đã hết hạn</Tag>
+            ) : isExpiringSoon ? (
+              <Tag color="warning" style={{ fontSize: '10.5px', padding: '0 4px' }}>Cận hạn ({diffDays} ngày)</Tag>
+            ) : (
+              <Tag color="success" style={{ fontSize: '10.5px', padding: '0 4px' }}>Còn {diffDays} ngày</Tag>
+            )}
+          </div>
+        );
+      }
+    },
+    { 
+      title: 'Tiêu chuẩn', 
       key: 'cert', 
+      width: 100,
       render: () => <Tag color="green">VietGAP</Tag> 
+    },
+    { 
+      title: 'Trạng thái', 
+      dataIndex: 'status', 
+      key: 'status',
+      width: 95,
+      sorter: (a: ProductBatch, b: ProductBatch) => (a.status || 'Active').localeCompare(b.status || 'Active'),
+      render: (st?: string) => {
+        if (st === 'Active' || !st) return <Tag color="green">Active</Tag>;
+        return <Tag color="default">{st}</Tag>;
+      }
     },
     { 
       title: 'Tác vụ', 
       key: 'actions',
+      width: 140,
       render: (_: any, record: ProductBatch) => (
-        <Space size="middle">
-          <Button icon={<EditOutlined />} onClick={() => handleOpenEdit(record)}>Sửa</Button>
-          <Button icon={<DeleteOutlined />} danger onClick={() => handleDelete(record.batchId)}>Xóa</Button>
+        <Space size="small">
+          <Button size="small" icon={<EditOutlined />} onClick={() => handleOpenEdit(record)}>Sửa</Button>
+          <Button size="small" icon={<DeleteOutlined />} danger onClick={() => handleDelete(record.batchId)}>Xóa</Button>
         </Space>
       )
     }
@@ -178,19 +361,157 @@ export const Batches: React.FC = () => {
   return (
     <div style={{ padding: 24 }}>
       <Card 
-        title="Quản Lý Lô Hàng Nông Sản & Kiểm Soát Nguồn Gốc (Traceability)" 
+        title={
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <SafetyCertificateOutlined style={{ color: '#2e7d32', fontSize: '20px' }} />
+            <span>Quản Lý Lô Hàng Nông Sản & Kiểm Soát Nguồn Gốc (Traceability)</span>
+          </div>
+        }
         extra={
-          <Button type="primary" icon={<PlusOutlined />} onClick={handleOpenAdd}>
+          <Button type="primary" icon={<PlusOutlined />} onClick={handleOpenAdd} style={{ backgroundColor: '#2e7d32', borderColor: '#2e7d32' }}>
             Thêm Lô Hàng
           </Button>
         }
       >
+        {/* KHUNG TÌM KIẾM & BỘ LỌC TẤT CẢ THÀNH PHẦN TRONG BẢNG LÔ HÀNG */}
+        <div style={{ 
+          background: '#f8fafc', 
+          border: '1px solid #e2e8f0', 
+          borderRadius: '10px', 
+          padding: '16px', 
+          marginBottom: '16px' 
+        }}>
+          <Row gutter={[12, 12]} align="middle">
+            {/* 1. Mã Lô hoặc ID Lô */}
+            <Col xs={24} sm={12} md={4}>
+              <div style={{ fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>
+                Mã Lô / ID Lô:
+              </div>
+              <Input
+                placeholder="Nhập ID hoặc mã (VD: LHN-)..."
+                prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
+                allowClear
+                value={searchCodeOrId}
+                onChange={e => setSearchCodeOrId(e.target.value)}
+              />
+            </Col>
+
+            {/* 2. Tên Nông Sản */}
+            <Col xs={24} sm={12} md={5}>
+              <div style={{ fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>
+                Tên nông sản:
+              </div>
+              <Input
+                placeholder="Tìm theo tên nông sản..."
+                prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
+                allowClear
+                value={searchProductName}
+                onChange={e => setSearchProductName(e.target.value)}
+              />
+            </Col>
+
+            {/* 3. Nông trại / Xuất xứ */}
+            <Col xs={24} sm={12} md={5}>
+              <div style={{ fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>
+                Nông trại / Xuất xứ:
+              </div>
+              <Select
+                style={{ width: '100%' }}
+                placeholder="Tất cả nông trại"
+                value={filterFarmId}
+                onChange={val => setFilterFarmId(val)}
+                showSearch
+                filterOption={(input, option) =>
+                  ((option?.children as any) || '').toLowerCase().includes(input.toLowerCase())
+                }
+              >
+                <Select.Option value="all">Tất cả nông trại ({suppliers.length})</Select.Option>
+                {suppliers.map(s => {
+                  const fid = s.farm?.farmId || s.supplierId || s.userId;
+                  const fName = s.farm?.farmName || `${s.fullName} Farm`;
+                  return (
+                    <Select.Option key={fid} value={fid}>
+                      🏡 {fName}
+                    </Select.Option>
+                  );
+                })}
+              </Select>
+            </Col>
+
+            {/* 4. Tình trạng hạn dùng (FEFO) */}
+            <Col xs={24} sm={12} md={4}>
+              <div style={{ fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>
+                Hạn sử dụng (FEFO):
+              </div>
+              <Select
+                style={{ width: '100%' }}
+                value={filterFefo}
+                onChange={val => setFilterFefo(val)}
+              >
+                <Select.Option value="all">Tất cả hạn dùng</Select.Option>
+                <Select.Option value="valid">🟢 Còn hạn an toàn (&gt; 3 ngày)</Select.Option>
+                <Select.Option value="warning">🟠 Cận hạn (≤ 3 ngày)</Select.Option>
+                <Select.Option value="expired">🔴 Đã hết hạn</Select.Option>
+              </Select>
+            </Col>
+
+            {/* 5. Khoảng ngày thu hoạch */}
+            <Col xs={24} sm={12} md={4}>
+              <div style={{ fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>
+                Ngày thu hoạch:
+              </div>
+              <DatePicker.RangePicker
+                format="DD/MM/YYYY"
+                style={{ width: '100%' }}
+                value={harvestDateRange}
+                onChange={val => setHarvestDateRange(val)}
+              />
+            </Col>
+
+            {/* 6. Nút Đặt lại */}
+            <Col xs={24} sm={12} md={2} style={{ display: 'flex', alignItems: 'flex-end' }}>
+              <Button 
+                icon={<ReloadOutlined />} 
+                onClick={handleResetFilters}
+                style={{ width: '100%' }}
+              >
+                Đặt lại
+              </Button>
+            </Col>
+          </Row>
+
+          {/* Dòng tóm tắt & lọc trạng thái */}
+          <div style={{ marginTop: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, fontSize: '12.5px', color: '#64748b' }}>
+            <div>
+              Tìm thấy: <b style={{ color: '#16a34a', fontSize: '13.5px' }}>{filteredBatches.length}</b> / {batches.length} lô hàng
+              {isFiltering && (
+                <Tag color="processing" style={{ marginLeft: 8 }}>
+                  Đang áp dụng bộ lọc
+                </Tag>
+              )}
+            </div>
+            <Space size="small">
+              <span style={{ fontSize: '12px', color: '#64748b' }}>Trạng thái:</span>
+              <Select 
+                size="small"
+                style={{ width: 140 }} 
+                value={filterStatus} 
+                onChange={val => setFilterStatus(val)}
+              >
+                <Select.Option value="all">Tất cả trạng thái</Select.Option>
+                <Select.Option value="Active">Active (Hoạt động)</Select.Option>
+                <Select.Option value="Inactive">Inactive (Tạm khóa)</Select.Option>
+              </Select>
+            </Space>
+          </div>
+        </div>
+
         <Table 
           columns={columns} 
-          dataSource={batches} 
+          dataSource={filteredBatches} 
           rowKey="batchId" 
           loading={loading}
-          pagination={{ pageSize: 10 }}
+          pagination={{ pageSize: 10, showTotal: (total) => `Tổng ${total} lô hàng` }}
         />
       </Card>
 

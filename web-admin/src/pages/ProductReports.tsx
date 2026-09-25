@@ -21,7 +21,8 @@ import {
   Typography,
   Tabs,
   Alert,
-  Segmented
+  Segmented,
+  AutoComplete
 } from 'antd';
 import {
   SearchOutlined,
@@ -51,7 +52,7 @@ import {
   Award
 } from 'lucide-react';
 import dayjs, { Dayjs } from 'dayjs';
-import { reportService, categoryService, productBatchService } from '../services/api';
+import { reportService, categoryService, productBatchService, userService, productService } from '../services/api';
 
 const { RangePicker } = DatePicker;
 const { Text, Title } = Typography;
@@ -62,6 +63,8 @@ interface ProductReportItem {
   productName: string;
   categoryId: number;
   categoryName: string;
+  supplierId?: number;
+  supplierName?: string;
   unit: string;
   price: number;
   status: string;
@@ -104,8 +107,10 @@ export const ProductReports: React.FC = () => {
   const [customDates, setCustomDates] = useState<[Dayjs | null, Dayjs | null] | null>(null);
   const [search, setSearch] = useState<string>('');
   const [categoryId, setCategoryId] = useState<number | undefined>(undefined);
+  const [supplierFilter, setSupplierFilter] = useState<number | 'all'>('all');
   const [stockFilter, setStockFilter] = useState<string>('ALL');
   const [businessStatus, setBusinessStatus] = useState<string>('ALL');
+  const [salesFilter, setSalesFilter] = useState<string>('all');
 
   // Pagination & Sorting state
   const [page, setPage] = useState<number>(1);
@@ -132,29 +137,138 @@ export const ProductReports: React.FC = () => {
   const [categoryDistribution, setCategoryDistribution] = useState<any[]>([]);
   const [stockStatusDistribution, setStockStatusDistribution] = useState<any[]>([]);
 
-  // Categories list
+  // Categories & Suppliers list
   const [categories, setCategories] = useState<{ categoryId: number; categoryName: string }[]>([]);
+  const [suppliers, setSuppliers] = useState<any[]>([]);
+  const [allProducts, setAllProducts] = useState<any[]>([]);
 
   // Batch details drilldown modal for a single product
   const [selectedProduct, setSelectedProduct] = useState<ProductReportItem | null>(null);
   const [batchModalOpen, setBatchModalOpen] = useState<boolean>(false);
   const [productBatches, setProductBatches] = useState<any[]>([]);
   const [batchLoading, setBatchLoading] = useState<boolean>(false);
+  const [batchSearch, setBatchSearch] = useState<string>('');
 
   // Drilldown Drawer State (Cho 4 thẻ KPI)
   const [drilldownType, setDrilldownType] = useState<'revenue' | 'sold' | 'inventory' | 'returns' | null>(null);
   const [drilldownLoading, setDrilldownLoading] = useState<boolean>(false);
   const [drilldownData, setDrilldownData] = useState<any>(null);
   const [inventoryTabFilter, setInventoryTabFilter] = useState<string>('all');
+  const [drillSearch, setDrillSearch] = useState<string>('');
 
-  // Load Categories on mount
+  // Load Categories, Suppliers & All Products on mount
   useEffect(() => {
-    categoryService.getAll().then((res) => {
-      setCategories(res.data || []);
-    }).catch(() => {});
+    Promise.all([
+      categoryService.getAll().catch(() => ({ data: [] })),
+      userService.getSuppliers().catch(() => ({ data: [] })),
+      productService.getAll().catch(() => ({ data: [] })),
+    ]).then(([catRes, supRes, prodRes]) => {
+      setCategories(catRes.data || []);
+      const supList = supRes.data || [];
+      setSuppliers(supList.length > 0 ? supList : [
+        { supplierId: 1, userId: 2, fullName: 'Hợp tác xã Nông Sản Đà Lạt' },
+        { supplierId: 2, userId: 3, fullName: 'Hợp tác xã Rau Sạch Miền Tây' },
+        { supplierId: 3, userId: 4, fullName: 'Hợp tác xã Trái Cây Việt' }
+      ]);
+      setAllProducts(prodRes.data || []);
+    });
   }, []);
 
-  // Fetch report data
+  // Helper loại bỏ dấu tiếng Việt để tìm kiếm không phân biệt có/không dấu
+  const removeVietnameseTones = useCallback((str: string) => {
+    if (!str) return '';
+    return str
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/đ/g, 'd')
+      .replace(/Đ/g, 'D')
+      .toLowerCase();
+  }, []);
+
+  // Danh sách gợi ý tìm kiếm thời gian thực (Autocomplete Suggestions) khi người dùng gõ ký tự (ví dụ: chữ 'c', 'C', '#10'...)
+  const searchSuggestions = useMemo(() => {
+    if (!search || !search.trim()) return [];
+
+    const rawQ = search.trim();
+    const qLower = rawQ.toLowerCase();
+    const qNorm = removeVietnameseTones(rawQ);
+    const cleanIdStr = qLower.replace(/^(#|id\s*:?\s*|sp\s*:?\s*|mã\s*:?\s*)/i, '').trim();
+
+    const matched = allProducts.filter((p: any) => {
+      const pIdStr = String(p.productId || '');
+      // 1. Khớp theo ID
+      if (cleanIdStr && pIdStr === cleanIdStr) return true;
+      if (cleanIdStr && pIdStr.includes(cleanIdStr)) return true;
+      if (('#' + pIdStr).includes(qLower)) return true;
+
+      // 2. Khớp theo Tên sản phẩm (không phân biệt HOA/thường, hỗ trợ cả tiếng Việt không dấu)
+      const name = p.productName || '';
+      if (name.toLowerCase().includes(qLower)) return true;
+      if (removeVietnameseTones(name).includes(qNorm)) return true;
+
+      // 3. Khớp SKU
+      if ((p.sku || '').toLowerCase().includes(qLower)) return true;
+
+      // 4. Khớp Danh mục
+      const catName = p.categoryName || p.category?.categoryName || '';
+      if (catName.toLowerCase().includes(qLower)) return true;
+      if (removeVietnameseTones(catName).includes(qNorm)) return true;
+
+      return false;
+    });
+
+    // Tạo danh sách Option đẹp mắt cho AutoComplete (tối đa 12 gợi ý phù hợp nhất)
+    return matched.slice(0, 12).map((p: any) => {
+      const pId = p.productId;
+      const pName = p.productName;
+      const catName = p.categoryName || p.category?.categoryName || 'Nông sản';
+
+      return {
+        value: pName,
+        key: `suggest-${pId}`,
+        label: (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 0' }}>
+            <Space size={8}>
+              <Tag color="purple" style={{ fontWeight: 700, margin: 0, fontSize: 11 }}>
+                #{pId}
+              </Tag>
+              <span style={{ fontWeight: 600, color: '#1B5E20' }}>
+                {pName}
+              </span>
+              <Tag color="cyan" style={{ fontSize: 11, margin: 0, padding: '0 4px' }}>
+                {catName}
+              </Tag>
+            </Space>
+            <span style={{ fontSize: 12, color: '#888' }}>
+              {p.unit ? `Đơn vị: ${p.unit}` : ''}
+            </span>
+          </div>
+        ),
+      };
+    });
+  }, [search, allProducts, removeVietnameseTones]);
+
+  // Reset filters handler
+  const handleResetFilters = () => {
+    setSearch('');
+    setCategoryId(undefined);
+    setSupplierFilter('all');
+    setStockFilter('ALL');
+    setBusinessStatus('ALL');
+    setSalesFilter('all');
+    setTimeRange('thisMonth');
+    setCustomDates(null);
+    setPage(1);
+  };
+
+  // Helper tìm tên nhà cung cấp
+  const getSupplierName = useCallback((supId?: number) => {
+    if (!supId) return 'Hợp tác xã Nông sản';
+    const s = suppliers.find((x: any) => x.supplierId === supId || x.userId === supId);
+    return s?.fullName || s?.supplierName || `Nhà cung cấp #${supId}`;
+  }, [suppliers]);
+
+  // Fetch report data with server-side filtering and pagination
   const fetchReport = useCallback(async () => {
     setLoading(true);
     try {
@@ -172,19 +286,16 @@ export const ProductReports: React.FC = () => {
       }
 
       if (categoryId) params.categoryId = categoryId;
+      if (supplierFilter !== 'all') params.supplierId = supplierFilter;
       if (businessStatus && businessStatus !== 'ALL') params.status = businessStatus;
+      if (stockFilter && stockFilter !== 'ALL') params.stockStatus = stockFilter;
+      if (salesFilter && salesFilter !== 'all') params.performance = salesFilter;
       if (search.trim()) params.search = search.trim();
 
       const res = await reportService.getProductReports(params);
       const data = res.data;
 
-      // Filter by stockStatus on client if specified
-      let displayItems = data.items || [];
-      if (stockFilter && stockFilter !== 'ALL') {
-        displayItems = displayItems.filter((i: ProductReportItem) => i.stockStatus === stockFilter);
-      }
-
-      setItems(displayItems);
+      setItems(data.items || []);
       setSummary(data.summary);
       setPeriod(data.period);
       setTopSelling(data.topSelling || []);
@@ -198,7 +309,7 @@ export const ProductReports: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [timeRange, customDates, categoryId, businessStatus, stockFilter, search, page, pageSize, sortBy, sortOrder]);
+  }, [timeRange, customDates, categoryId, supplierFilter, businessStatus, stockFilter, salesFilter, search, page, pageSize, sortBy, sortOrder]);
 
   useEffect(() => {
     fetchReport();
@@ -674,7 +785,10 @@ export const ProductReports: React.FC = () => {
         params.endDate = customDates[1].format('YYYY-MM-DD');
       }
       if (categoryId) params.categoryId = categoryId;
+      if (supplierFilter !== 'all') params.supplierId = supplierFilter;
       if (businessStatus && businessStatus !== 'ALL') params.status = businessStatus;
+      if (stockFilter && stockFilter !== 'ALL') params.stockStatus = stockFilter;
+      if (salesFilter && salesFilter !== 'all') params.performance = salesFilter;
       if (search.trim()) params.search = search.trim();
 
       const res = await reportService.exportProductReports(params);
@@ -698,6 +812,7 @@ export const ProductReports: React.FC = () => {
   // View batch drilldown for a single product
   const handleViewBatches = async (product: ProductReportItem) => {
     setSelectedProduct(product);
+    setBatchSearch('');
     setBatchModalOpen(true);
     setBatchLoading(true);
     try {
@@ -730,34 +845,75 @@ export const ProductReports: React.FC = () => {
     return <Tag color="default">0%</Tag>;
   };
 
-  // Table columns definition
+  // Table columns definition with comprehensive sorters and all attributes
   const columns = [
     {
-      title: 'Mã SKU',
-      dataIndex: 'sku',
-      key: 'sku',
+      title: 'Mã ID / SKU',
+      key: 'productId',
       width: 140,
-      render: (sku: string) => <Tag color="geekblue" style={{ fontFamily: 'monospace', fontWeight: 600 }}>{sku}</Tag>,
+      sorter: (a: ProductReportItem, b: ProductReportItem) => a.productId - b.productId,
+      render: (_: any, record: ProductReportItem) => (
+        <Space direction="vertical" size={2}>
+          <Tag color="purple" style={{ fontWeight: 700, margin: 0 }}>#{record.productId}</Tag>
+          <Tag color="geekblue" style={{ fontFamily: 'monospace', fontSize: 11, margin: 0 }}>{record.sku}</Tag>
+        </Space>
+      ),
     },
     {
       title: 'Tên Sản Phẩm',
       dataIndex: 'productName',
       key: 'productName',
+      sorter: (a: ProductReportItem, b: ProductReportItem) => a.productName.localeCompare(b.productName),
       render: (name: string, record: ProductReportItem) => (
         <div>
           <div style={{ fontWeight: 600, color: '#1B5E20' }}>{name}</div>
           <div style={{ fontSize: 12, color: '#888' }}>
             <Tag color="cyan" style={{ fontSize: 11, padding: '0 4px', marginRight: 4 }}>{record.categoryName}</Tag>
-            Đơn giá: {record.price.toLocaleString('vi-VN')} ₫ / {record.unit}
+            Đơn vị: <strong>{record.unit}</strong>
           </div>
         </div>
+      ),
+    },
+    {
+      title: 'Nhà Cung Cấp / HTX',
+      key: 'supplierName',
+      width: 180,
+      sorter: (a: ProductReportItem, b: ProductReportItem) => {
+        const nameA = a.supplierName || getSupplierName(a.supplierId);
+        const nameB = b.supplierName || getSupplierName(b.supplierId);
+        return nameA.localeCompare(nameB);
+      },
+      render: (_: any, record: ProductReportItem) => {
+        const sName = record.supplierName || getSupplierName(record.supplierId);
+        return (
+          <Space direction="vertical" size={2}>
+            <span style={{ fontWeight: 600, color: '#0958d9', fontSize: 13 }}>
+              🏢 {sName}
+            </span>
+            {record.supplierId ? (
+              <span style={{ fontSize: 11, color: '#888' }}>Mã HTX: #{record.supplierId}</span>
+            ) : null}
+          </Space>
+        );
+      },
+    },
+    {
+      title: 'Đơn Giá',
+      dataIndex: 'price',
+      key: 'price',
+      width: 130,
+      sorter: (a: ProductReportItem, b: ProductReportItem) => a.price - b.price,
+      render: (price: number, record: ProductReportItem) => (
+        <strong style={{ color: '#2e7d32', fontSize: 13 }}>
+          {price.toLocaleString('vi-VN')} ₫ <span style={{ fontSize: 11, color: '#888', fontWeight: 'normal' }}>/{record.unit}</span>
+        </strong>
       ),
     },
     {
       title: 'Tồn Kho Hiện Tại',
       dataIndex: 'currentStock',
       key: 'currentStock',
-      sorter: true,
+      sorter: (a: ProductReportItem, b: ProductReportItem) => a.currentStock - b.currentStock,
       render: (stock: number, record: ProductReportItem) => {
         let badgeStatus: 'success' | 'warning' | 'error' = 'success';
         let statusText = 'Còn hàng';
@@ -788,16 +944,26 @@ export const ProductReports: React.FC = () => {
       title: 'Đã Bán Trong Kỳ',
       dataIndex: 'soldQuantity',
       key: 'soldQuantity',
-      sorter: true,
+      sorter: (a: ProductReportItem, b: ProductReportItem) => a.soldQuantity - b.soldQuantity,
       render: (qty: number, record: ProductReportItem) => (
         <div>
           <div style={{ fontWeight: 600, fontSize: 14, color: qty > 0 ? '#1890ff' : '#999' }}>
             {qty.toLocaleString('vi-VN')} {record.unit}
           </div>
           <div style={{ marginTop: 2 }}>
-            <Tooltip title="Tỷ lệ tăng trưởng số lượng bán so với kỳ trước">
-              {renderGrowthTag(record.soldQuantityGrowthRate)}
-            </Tooltip>
+            {qty === 0 ? (
+              record.soldQuantityGrowthRate === -100 ? (
+                <Tooltip title="Kỳ trước có phát sinh đơn hàng, kỳ này chưa phát sinh đơn mới">
+                  <Tag color="default" style={{ fontSize: 11 }}>Chưa bán kỳ này (-100%)</Tag>
+                </Tooltip>
+              ) : (
+                <Tag color="default" style={{ fontSize: 11 }}>Chưa bán kỳ này</Tag>
+              )
+            ) : (
+              <Tooltip title="Tỷ lệ tăng trưởng số lượng bán so với kỳ trước">
+                {renderGrowthTag(record.soldQuantityGrowthRate)}
+              </Tooltip>
+            )}
           </div>
         </div>
       ),
@@ -806,16 +972,20 @@ export const ProductReports: React.FC = () => {
       title: 'Tổng Doanh Thu',
       dataIndex: 'totalRevenue',
       key: 'totalRevenue',
-      sorter: true,
+      sorter: (a: ProductReportItem, b: ProductReportItem) => a.totalRevenue - b.totalRevenue,
       render: (rev: number, record: ProductReportItem) => (
         <div>
           <div style={{ fontWeight: 700, fontSize: 14, color: rev > 0 ? '#2E7D32' : '#999' }}>
             {rev.toLocaleString('vi-VN')} ₫
           </div>
           <div style={{ marginTop: 2 }}>
-            <Tooltip title="Tỷ lệ tăng trưởng doanh thu so với kỳ trước">
-              {renderGrowthTag(record.revenueGrowthRate)}
-            </Tooltip>
+            {rev === 0 ? (
+              <span style={{ fontSize: 11, color: '#aaa' }}>0 ₫ doanh thu</span>
+            ) : (
+              <Tooltip title="Tỷ lệ tăng trưởng doanh thu so với kỳ trước">
+                {renderGrowthTag(record.revenueGrowthRate)}
+              </Tooltip>
+            )}
           </div>
         </div>
       ),
@@ -824,7 +994,8 @@ export const ProductReports: React.FC = () => {
       title: 'Kinh Doanh',
       dataIndex: 'status',
       key: 'status',
-      width: 110,
+      width: 115,
+      sorter: (a: ProductReportItem, b: ProductReportItem) => (a.status || '').localeCompare(b.status || ''),
       render: (st: string) => (
         <Tag color={st?.toLowerCase() === 'active' ? 'green' : 'orange'}>
           {st?.toLowerCase() === 'active' ? 'Đang bán' : 'Tạm dừng'}
@@ -834,7 +1005,7 @@ export const ProductReports: React.FC = () => {
     {
       title: 'Chi Tiết',
       key: 'action',
-      width: 100,
+      width: 95,
       render: (_: any, record: ProductReportItem) => (
         <Button
           size="small"
@@ -847,6 +1018,17 @@ export const ProductReports: React.FC = () => {
     },
   ];
 
+  const hasActiveFilters = Boolean(
+    search.trim() ||
+    categoryId ||
+    supplierFilter !== 'all' ||
+    stockFilter !== 'ALL' ||
+    businessStatus !== 'ALL' ||
+    salesFilter !== 'all' ||
+    timeRange !== 'thisMonth' ||
+    customDates
+  );
+
   return (
     <div style={{ padding: 24 }}>
       {/* ── HEADER & ACTIONS ── */}
@@ -856,10 +1038,19 @@ export const ProductReports: React.FC = () => {
             📊 Thống Kê Báo Cáo Sản Phẩm & Quản Lý Tồn Kho
           </Title>
           <Text type="secondary">
-            Kỳ báo cáo: <strong style={{ color: '#2E7D32' }}>{period?.label || 'Đang tải...'}</strong> · Nhấn vào từng thẻ KPI bên dưới để mở dữ liệu chi tiết tương ứng
+            Kỳ báo cáo: <strong style={{ color: '#2E7D32' }}>{period?.label || 'Đang tải...'}</strong> · Tìm kiếm, lọc và phân tích chi tiết theo mọi tiêu chí
           </Text>
         </div>
         <Space wrap>
+          {hasActiveFilters && (
+            <Button
+              icon={<RollbackOutlined />}
+              onClick={handleResetFilters}
+              danger
+            >
+              Đặt lại bộ lọc
+            </Button>
+          )}
           <Button
             type="primary"
             icon={<DownloadOutlined />}
@@ -879,7 +1070,7 @@ export const ProductReports: React.FC = () => {
         </Space>
       </div>
 
-      {/* ── BỘ LỌC THỜI GIAN & TÌM KIẾM CHUYÊN SÂU ── */}
+      {/* ── BỘ LỌC THỜI GIAN & TÌM KIẾM CHUYÊN SÂU TOÀN DIỆN ── */}
       <Card style={{ marginBottom: 20, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
         <Row gutter={[16, 16]} align="middle">
           {/* Preset Thời gian */}
@@ -921,22 +1112,36 @@ export const ProductReports: React.FC = () => {
               />
             </Col>
           )}
+        </Row>
 
-          {/* Bộ lọc sản phẩm, Danh mục, Trạng thái & Tìm kiếm */}
-          <Col xs={24} sm={12} md={6} lg={6}>
-            <Input
-              prefix={<SearchOutlined style={{ color: '#bbb' }} />}
-              placeholder="Tìm theo Tên hoặc SKU..."
+        {/* Hàng 2: Bộ lọc chi tiết theo tất cả các thành phần bảng */}
+        <Row gutter={[12, 12]} style={{ marginTop: 16 }}>
+          {/* 1. Tìm kiếm đa năng theo ID, Tên, SKU, Danh mục, HTX có gợi ý AutoComplete */}
+          <Col xs={24} sm={12} md={8} lg={6}>
+            <AutoComplete
+              style={{ width: '100%' }}
+              options={searchSuggestions}
               value={search}
-              allowClear
-              onChange={(e) => {
-                setSearch(e.target.value);
+              onSelect={(val) => {
+                setSearch(val);
                 setPage(1);
               }}
-            />
+              onChange={(val) => {
+                setSearch(val);
+                setPage(1);
+              }}
+              popupMatchSelectWidth={false}
+            >
+              <Input
+                prefix={<SearchOutlined style={{ color: '#bbb' }} />}
+                placeholder="Nhập ID (#10), chữ cái (C, c...), Tên SP..."
+                allowClear
+              />
+            </AutoComplete>
           </Col>
 
-          <Col xs={24} sm={12} md={6} lg={6}>
+          {/* 2. Lọc theo Danh mục nông sản */}
+          <Col xs={24} sm={12} md={8} lg={4}>
             <Select
               placeholder="Danh mục nông sản"
               allowClear
@@ -947,7 +1152,7 @@ export const ProductReports: React.FC = () => {
                 setPage(1);
               }}
             >
-              <Select.Option value={0}>Tất cả danh mục</Select.Option>
+              <Select.Option value={0}>Tất cả danh mục ({categories.length})</Select.Option>
               {categories.map((c) => (
                 <Select.Option key={c.categoryId} value={c.categoryId}>
                   {c.categoryName}
@@ -956,23 +1161,51 @@ export const ProductReports: React.FC = () => {
             </Select>
           </Col>
 
-          <Col xs={24} sm={12} md={6} lg={6}>
+          {/* 3. Lọc theo Nhà cung cấp / Hợp tác xã */}
+          <Col xs={24} sm={12} md={8} lg={5}>
+            <Select
+              placeholder="Nhà cung cấp / HTX"
+              style={{ width: '100%' }}
+              value={supplierFilter}
+              onChange={(val) => {
+                setSupplierFilter(val);
+                setPage(1);
+              }}
+            >
+              <Select.Option value="all">Tất cả nhà cung cấp ({suppliers.length})</Select.Option>
+              {suppliers.map((s: any) => {
+                const sid = s.supplierId || s.userId;
+                return (
+                  <Select.Option key={sid} value={sid}>
+                    🏢 {s.fullName || s.supplierName || `Nhà cung cấp #${sid}`}
+                  </Select.Option>
+                );
+              })}
+            </Select>
+          </Col>
+
+          {/* 4. Lọc theo Trạng thái tồn kho */}
+          <Col xs={24} sm={12} md={8} lg={3}>
             <Select
               placeholder="Trạng thái tồn kho"
               style={{ width: '100%' }}
               value={stockFilter}
-              onChange={(val) => setStockFilter(val)}
+              onChange={(val) => {
+                setStockFilter(val);
+                setPage(1);
+              }}
             >
               <Select.Option value="ALL">Tất cả tồn kho</Select.Option>
               <Select.Option value="InStock">🟢 Còn hàng (&gt; 20)</Select.Option>
-              <Select.Option value="LowStock">🟡 Sắp hết hàng (1 - 20)</Select.Option>
+              <Select.Option value="LowStock">🟡 Sắp hết (1 - 20)</Select.Option>
               <Select.Option value="OutOfStock">🔴 Hết hàng (0)</Select.Option>
             </Select>
           </Col>
 
-          <Col xs={24} sm={12} md={6} lg={6}>
+          {/* 5. Lọc theo Trạng thái kinh doanh */}
+          <Col xs={24} sm={12} md={8} lg={3}>
             <Select
-              placeholder="Trạng thái kinh doanh"
+              placeholder="Trạng thái KD"
               style={{ width: '100%' }}
               value={businessStatus}
               onChange={(val) => {
@@ -980,12 +1213,96 @@ export const ProductReports: React.FC = () => {
                 setPage(1);
               }}
             >
-              <Select.Option value="ALL">Tất cả trạng thái</Select.Option>
-              <Select.Option value="Active">Đang kinh doanh</Select.Option>
-              <Select.Option value="Inactive">Tạm dừng kinh doanh</Select.Option>
+              <Select.Option value="ALL">Tất cả kinh doanh</Select.Option>
+              <Select.Option value="Active">Đang bán</Select.Option>
+              <Select.Option value="Inactive">Tạm dừng</Select.Option>
+            </Select>
+          </Col>
+
+          {/* 6. Lọc theo Doanh số & Hiệu suất bán hàng */}
+          <Col xs={24} sm={12} md={8} lg={3}>
+            <Select
+              placeholder="Hiệu suất bán"
+              style={{ width: '100%' }}
+              value={salesFilter}
+              onChange={(val) => {
+                setSalesFilter(val);
+                setPage(1);
+              }}
+            >
+              <Select.Option value="all">Tất cả hiệu suất</Select.Option>
+              <Select.Option value="hasSales">🟢 Đã bán trong kỳ (&gt; 0)</Select.Option>
+              <Select.Option value="noSales">⚪ Chưa bán trong kỳ (0)</Select.Option>
+              <Select.Option value="positiveGrowth">📈 Tăng trưởng dương (+%)</Select.Option>
+              <Select.Option value="negativeGrowth">📉 Tăng trưởng âm (-%)</Select.Option>
             </Select>
           </Col>
         </Row>
+
+        {/* Hàng 3: Thanh tóm tắt kết quả tìm kiếm thời gian thực & Các bộ lọc đang áp dụng */}
+        <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px solid #f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+          <Space wrap size={6}>
+            <Tag color="blue" style={{ fontSize: 13, padding: '4px 12px', borderRadius: 6, fontWeight: 600 }}>
+              Tổng kết quả lọc: <strong style={{ color: '#0958d9', fontSize: 15 }}>{totalItems}</strong> nông sản
+              {totalItems > 0 && (
+                <span style={{ fontWeight: 400, color: '#475569', marginLeft: 6 }}>
+                  (Đang xem trang {page}/{Math.ceil(totalItems / pageSize) || 1} · {items.length} sp/trang)
+                </span>
+              )}
+            </Tag>
+
+            {search.trim() && (
+              <Tag closable onClose={() => setSearch('')} color="geekblue">
+                Từ khóa: "{search.trim()}"
+              </Tag>
+            )}
+
+            {categoryId && categoryId > 0 && (
+              <Tag closable onClose={() => setCategoryId(undefined)} color="cyan">
+                Danh mục: {categories.find(c => c.categoryId === categoryId)?.categoryName}
+              </Tag>
+            )}
+
+            {supplierFilter !== 'all' && (
+              <Tag closable onClose={() => setSupplierFilter('all')} color="purple">
+                HTX: {getSupplierName(Number(supplierFilter))}
+              </Tag>
+            )}
+
+            {stockFilter !== 'ALL' && (
+              <Tag closable onClose={() => { setStockFilter('ALL'); setPage(1); }} color="orange">
+                Tồn kho: {stockFilter === 'InStock' ? 'Còn hàng (>20)' : (stockFilter === 'LowStock' ? 'Sắp hết (1-20)' : 'Hết hàng (0)')}
+              </Tag>
+            )}
+
+            {businessStatus !== 'ALL' && (
+              <Tag closable onClose={() => { setBusinessStatus('ALL'); setPage(1); }} color="green">
+                Kinh doanh: {businessStatus === 'Active' ? 'Đang bán' : 'Tạm dừng'}
+              </Tag>
+            )}
+
+            {salesFilter !== 'all' && (
+              <Tag closable onClose={() => { setSalesFilter('all'); setPage(1); }} color="magenta">
+                Hiệu suất: {
+                  salesFilter === 'hasSales' ? 'Đã bán trong kỳ (>0)' :
+                  salesFilter === 'noSales' ? 'Chưa bán trong kỳ (0)' :
+                  salesFilter === 'positiveGrowth' ? 'Tăng trưởng (+%)' : 'Tăng trưởng (-%)'
+                }
+              </Tag>
+            )}
+          </Space>
+
+          {hasActiveFilters && (
+            <Button
+              type="link"
+              size="small"
+              onClick={handleResetFilters}
+              style={{ color: '#ff4d4f', padding: 0 }}
+            >
+              Xóa tất cả bộ lọc (Reset)
+            </Button>
+          )}
+        </div>
       </Card>
 
       {/* ── KPI CARDS CÓ KHẢ NĂNG NHẤN VÀO ĐỂ DRILL DOWN RA DỮ LIỆU CỤ THỂ ── */}
@@ -1495,10 +1812,33 @@ export const ProductReports: React.FC = () => {
 
       {/* ── BẢNG THỐNG KÊ CHI TIẾT SẢN PHẨM & TỒN KHO ── */}
       <Card
-        title="Danh Sách Thống Kê Chi Tiết Sản Phẩm & Quản Lý Tồn Kho"
+        title={
+          <Space size={10} align="center">
+            <span>Danh Sách Thống Kê Chi Tiết Sản Phẩm &amp; Quản Lý Tồn Kho</span>
+            <Tag color={totalItems > 0 ? 'green' : 'default'} style={{ fontSize: 13, fontWeight: 700, padding: '2px 10px', borderRadius: 12 }}>
+              {totalItems} nông sản
+            </Tag>
+          </Space>
+        }
         extra={
-          <Space>
-            <Text type="secondary">Sắp xếp theo:</Text>
+          <Space wrap>
+            <Text type="secondary">Hiển thị:</Text>
+            <Select
+              value={pageSize}
+              style={{ width: 145 }}
+              onChange={(val) => {
+                setPageSize(val);
+                setPage(1);
+              }}
+            >
+              <Select.Option value={10}>10 dòng / trang</Select.Option>
+              <Select.Option value={20}>20 dòng / trang</Select.Option>
+              <Select.Option value={50}>50 dòng / trang</Select.Option>
+              <Select.Option value={100}>100 dòng / trang</Select.Option>
+              <Select.Option value={500}>Xem tất cả (Toàn bộ)</Select.Option>
+            </Select>
+
+            <Text type="secondary" style={{ marginLeft: 6 }}>Sắp xếp theo:</Text>
             <Select
               value={sortBy}
               style={{ width: 140 }}
@@ -1536,8 +1876,13 @@ export const ProductReports: React.FC = () => {
             pageSize: pageSize,
             total: totalItems,
             showSizeChanger: true,
-            pageSizeOptions: ['10', '20', '50', '100'],
-            showTotal: (total, range) => `${range[0]}-${range[1]} trên tổng số ${total} sản phẩm`,
+            pageSizeOptions: ['10', '20', '50', '100', '500'],
+            position: ['topRight', 'bottomRight'],
+            showTotal: (total, range) => (
+              <span style={{ fontSize: 13, color: '#475569', marginRight: 12 }}>
+                Đang hiển thị <strong>{range[0]}-{range[1]}</strong> trên tổng số <strong style={{ color: '#10B981', fontSize: 14 }}>{total}</strong> sản phẩm ({Math.ceil(total / pageSize) || 1} trang)
+              </span>
+            ),
             onChange: (p, ps) => {
               setPage(p);
               setPageSize(ps);
@@ -1560,36 +1905,88 @@ export const ProductReports: React.FC = () => {
         footer={[
           <Button key="close" onClick={() => setBatchModalOpen(false)}>Đóng</Button>
         ]}
-        width={750}
+        width={800}
       >
         {selectedProduct && (
           <div style={{ marginTop: 10 }}>
-            <div style={{ marginBottom: 15, padding: 12, backgroundColor: '#f9f9f9', borderRadius: 6, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ marginBottom: 15, padding: 12, backgroundColor: '#f9f9f9', borderRadius: 6, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
               <div>
+                <strong>Mã ID: </strong><Tag color="purple">#{selectedProduct.productId}</Tag>
                 <strong>Mã SKU: </strong><Tag color="geekblue">{selectedProduct.sku}</Tag>
                 <div style={{ fontSize: 13, color: '#555', marginTop: 4 }}>
-                  Tổng tồn khả dụng: <strong style={{ color: '#2E7D32' }}>{selectedProduct.currentStock.toLocaleString('vi-VN')} {selectedProduct.unit}</strong>
+                  Tổng tồn khả dụng: <strong style={{ color: '#2E7D32' }}>{selectedProduct.currentStock.toLocaleString('vi-VN')} {selectedProduct.unit}</strong> · {selectedProduct.batchesCount} lô
                 </div>
               </div>
-              <Tag color={selectedProduct.stockStatus === 'InStock' ? 'green' : (selectedProduct.stockStatus === 'LowStock' ? 'orange' : 'red')}>
-                {selectedProduct.stockStatus === 'InStock' ? 'Còn hàng' : (selectedProduct.stockStatus === 'LowStock' ? 'Sắp hết' : 'Hết hàng')}
+              <Tag color={selectedProduct.stockStatus === 'InStock' ? 'green' : (selectedProduct.stockStatus === 'LowStock' ? 'orange' : 'red')} style={{ fontSize: 12, padding: '4px 10px' }}>
+                {selectedProduct.stockStatus === 'InStock' ? '🟢 Còn hàng' : (selectedProduct.stockStatus === 'LowStock' ? '🟡 Sắp hết hàng' : '🔴 Hết hàng')}
               </Tag>
             </div>
 
+            <Input
+              prefix={<SearchOutlined style={{ color: '#bbb' }} />}
+              placeholder="Tìm theo Mã lô, Ngày thu hoạch, Hạn dùng, Trạng thái..."
+              value={batchSearch}
+              allowClear
+              onChange={(e) => setBatchSearch(e.target.value)}
+              style={{ marginBottom: 12 }}
+            />
+
             <Table
-              dataSource={productBatches}
+              dataSource={productBatches.filter((b: any) => {
+                if (!batchSearch.trim()) return true;
+                const q = batchSearch.trim().toLowerCase();
+                const bCode = (b.batchCode || '').toLowerCase();
+                const harv = b.harvestDate ? dayjs(b.harvestDate).format('DD/MM/YYYY') : '';
+                const exp = b.expiryDate ? dayjs(b.expiryDate).format('DD/MM/YYYY') : '';
+                const st = (b.status || '').toLowerCase();
+                return bCode.includes(q) || harv.includes(q) || exp.includes(q) || st.includes(q);
+              })}
               rowKey="batchId"
               loading={batchLoading}
               size="small"
               columns={[
-                { title: 'Mã Lô', dataIndex: 'batchCode', key: 'batchCode', render: (code) => <code style={{ fontWeight: 600 }}>{code}</code> },
-                { title: 'Ngày thu hoạch', dataIndex: 'harvestDate', key: 'harvestDate', render: (d) => d ? dayjs(d).format('DD/MM/YYYY') : '-' },
-                { title: 'Hạn dùng (FEFO)', dataIndex: 'expiryDate', key: 'expiryDate', render: (d) => {
-                  const isExpired = dayjs(d).isBefore(dayjs());
-                  return <span style={{ color: isExpired ? '#ff4d4f' : '#2E7D32', fontWeight: isExpired ? 600 : 'normal' }}>{dayjs(d).format('DD/MM/YYYY')} {isExpired ? '(Hết hạn)' : ''}</span>;
-                }},
-                { title: 'Tồn thực tế', dataIndex: 'initialQuantity', key: 'initialQuantity', render: (q, rec) => <strong>{q} {rec.unit || selectedProduct.unit}</strong> },
-                { title: 'Trạng thái', dataIndex: 'status', key: 'status', render: (st) => <Tag color={st === 'Active' ? 'green' : 'default'}>{st || 'Active'}</Tag> },
+                {
+                  title: 'Mã Lô',
+                  dataIndex: 'batchCode',
+                  key: 'batchCode',
+                  sorter: (a: any, b: any) => (a.batchCode || '').localeCompare(b.batchCode || ''),
+                  render: (code: string) => <Tag color="blue" style={{ fontWeight: 600, fontFamily: 'monospace' }}>{code}</Tag>
+                },
+                {
+                  title: 'Ngày thu hoạch',
+                  dataIndex: 'harvestDate',
+                  key: 'harvestDate',
+                  sorter: (a: any, b: any) => dayjs(a.harvestDate || 0).unix() - dayjs(b.harvestDate || 0).unix(),
+                  render: (d: any) => d ? dayjs(d).format('DD/MM/YYYY') : '-'
+                },
+                {
+                  title: 'Hạn dùng (FEFO)',
+                  dataIndex: 'expiryDate',
+                  key: 'expiryDate',
+                  sorter: (a: any, b: any) => dayjs(a.expiryDate || 0).unix() - dayjs(b.expiryDate || 0).unix(),
+                  render: (d: any) => {
+                    const isExpired = dayjs(d).isBefore(dayjs());
+                    return (
+                      <span style={{ color: isExpired ? '#ff4d4f' : '#2E7D32', fontWeight: isExpired ? 600 : 'normal' }}>
+                        {dayjs(d).format('DD/MM/YYYY')} {isExpired ? '(Hết hạn)' : ''}
+                      </span>
+                    );
+                  }
+                },
+                {
+                  title: 'Tồn thực tế',
+                  dataIndex: 'initialQuantity',
+                  key: 'initialQuantity',
+                  sorter: (a: any, b: any) => (a.initialQuantity || 0) - (b.initialQuantity || 0),
+                  render: (q: number, rec: any) => <strong>{q} {rec.unit || selectedProduct.unit}</strong>
+                },
+                {
+                  title: 'Trạng thái',
+                  dataIndex: 'status',
+                  key: 'status',
+                  sorter: (a: any, b: any) => (a.status || '').localeCompare(b.status || ''),
+                  render: (st: string) => <Tag color={st === 'Active' ? 'green' : 'default'}>{st || 'Active'}</Tag>
+                },
               ]}
               pagination={false}
             />
@@ -1606,8 +2003,11 @@ export const ProductReports: React.FC = () => {
           `🛡️ Nhật Ký Đơn Hàng Hoàn Kho & Trả Hàng (Rollback ACID) - ${drilldownData?.periodLabel || period?.label}`
         }
         placement="right"
-        width={880}
-        onClose={() => setDrilldownType(null)}
+        width={920}
+        onClose={() => {
+          setDrilldownType(null);
+          setDrillSearch('');
+        }}
         open={drilldownType !== null}
         loading={drilldownLoading}
         extra={
@@ -1616,6 +2016,16 @@ export const ProductReports: React.FC = () => {
           </Button>
         }
       >
+        {/* Thanh tìm kiếm nhanh bên trong Drawer */}
+        <Input
+          prefix={<SearchOutlined style={{ color: '#bbb' }} />}
+          placeholder="Tìm nhanh theo Mã đơn, Sản phẩm, Khách hàng, SĐT, Mã lô..."
+          value={drillSearch}
+          allowClear
+          onChange={(e) => setDrillSearch(e.target.value)}
+          style={{ marginBottom: 16 }}
+        />
+
         {/* 1. DRILLDOWN DOANH THU */}
         {drilldownType === 'revenue' && (
           <div>
@@ -1640,7 +2050,15 @@ export const ProductReports: React.FC = () => {
             />
 
             <Table
-              dataSource={drilldownData?.orders || []}
+              dataSource={(drilldownData?.orders || []).filter((o: any) => {
+                if (!drillSearch.trim()) return true;
+                const q = drillSearch.trim().toLowerCase();
+                const code = String(o.orderCode || '').toLowerCase();
+                const name = (o.customerName || '').toLowerCase();
+                const phone = (o.customerPhone || '').toLowerCase();
+                const itemsMatch = (o.items || []).some((i: any) => (i.productName || '').toLowerCase().includes(q));
+                return code.includes(q) || name.includes(q) || phone.includes(q) || itemsMatch;
+              })}
               rowKey="orderId"
               size="small"
               columns={[
@@ -1684,7 +2102,15 @@ export const ProductReports: React.FC = () => {
             </div>
 
             <Table
-              dataSource={drilldownData?.products || []}
+              dataSource={(drilldownData?.products || []).filter((p: any) => {
+                if (!drillSearch.trim()) return true;
+                const q = drillSearch.trim().toLowerCase();
+                const sku = (p.sku || '').toLowerCase();
+                const name = (p.productName || '').toLowerCase();
+                const cat = (p.categoryName || '').toLowerCase();
+                const pid = String(p.productId || '');
+                return sku.includes(q) || name.includes(q) || cat.includes(q) || pid.includes(q);
+              })}
               rowKey="productId"
               size="small"
               columns={[
@@ -1704,6 +2130,7 @@ export const ProductReports: React.FC = () => {
                       onClick={() => {
                         setSearch(r.productName);
                         setDrilldownType(null);
+                        setDrillSearch('');
                       }}
                     >
                       Lọc bảng chính
@@ -1743,9 +2170,15 @@ export const ProductReports: React.FC = () => {
 
             <Table
               dataSource={(drilldownData?.batches || []).filter((b: any) => {
-                if (inventoryTabFilter === 'nearExpiry') return b.isNearExpiry;
-                if (inventoryTabFilter === 'outOfStock') return b.stock <= 0;
-                return true;
+                if (inventoryTabFilter === 'nearExpiry' && !b.isNearExpiry) return false;
+                if (inventoryTabFilter === 'outOfStock' && b.stock > 0) return false;
+                if (!drillSearch.trim()) return true;
+                const q = drillSearch.trim().toLowerCase();
+                const code = (b.batchCode || '').toLowerCase();
+                const pName = (b.productName || '').toLowerCase();
+                const fName = (b.farmName || '').toLowerCase();
+                const sku = (b.sku || '').toLowerCase();
+                return code.includes(q) || pName.includes(q) || fName.includes(q) || sku.includes(q);
               })}
               rowKey="batchId"
               size="small"
@@ -1812,7 +2245,18 @@ export const ProductReports: React.FC = () => {
             />
 
             <Table
-              dataSource={drilldownData?.orders || []}
+              dataSource={(drilldownData?.orders || []).filter((o: any) => {
+                if (!drillSearch.trim()) return true;
+                const q = drillSearch.trim().toLowerCase();
+                const code = String(o.orderCode || '').toLowerCase();
+                const name = (o.customerName || '').toLowerCase();
+                const phone = (o.customerPhone || '').toLowerCase();
+                const itemsMatch = (o.items || []).some((i: any) =>
+                  (i.productName || '').toLowerCase().includes(q) ||
+                  (i.batchCode || '').toLowerCase().includes(q)
+                );
+                return code.includes(q) || name.includes(q) || phone.includes(q) || itemsMatch;
+              })}
               rowKey="orderId"
               size="small"
               columns={[

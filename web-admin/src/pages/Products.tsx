@@ -35,7 +35,9 @@ import {
   CheckCircleOutlined,
   InfoCircleOutlined,
   SafetyCertificateOutlined,
-  CheckOutlined
+  CheckOutlined,
+  SearchOutlined,
+  ReloadOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { productService, categoryService, productImageService, userService, productBatchService } from '../services/api';
@@ -120,6 +122,24 @@ export const Products: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [comboTypeFilter, setComboTypeFilter] = useState<'all' | 'periodic' | 'program'>('all');
   
+  // States Tìm Kiếm & Bộ Lọc Nông Sản Lẻ (ID, Tên SP, Danh mục, Nhà cung cấp, Trạng thái)
+  const [singleIdFilter, setSingleIdFilter] = useState('');
+  const [singleNameFilter, setSingleNameFilter] = useState('');
+  const [singleCatFilter, setSingleCatFilter] = useState<number | 'all'>('all');
+  const [singleSupplierFilter, setSingleSupplierFilter] = useState<number | 'all'>('all');
+  const [singleStatusFilter, setSingleStatusFilter] = useState<string>('all');
+
+  // States Tìm Kiếm & Bộ Lọc Gói Combo (Mã gói, Tên gói, NCC phụ trách, Trạng thái)
+  const [comboIdFilter, setComboIdFilter] = useState('');
+  const [comboNameFilter, setComboNameFilter] = useState('');
+  const [comboSupplierFilter, setComboSupplierFilter] = useState<number | 'all'>('all');
+  const [comboStatusFilter, setComboStatusFilter] = useState<string>('all');
+
+  // States Tìm Kiếm & Bộ Lọc Danh Mục Nông Sản (Mã DM, Tên DM, Trạng thái)
+  const [catIdFilter, setCatIdFilter] = useState('');
+  const [catNameFilter, setCatNameFilter] = useState('');
+  const [catStatusFilter, setCatStatusFilter] = useState<string>('all');
+
   // Modals
   const [isProdModalOpen, setIsProdModalOpen] = useState(false);
   const [isComboModalOpen, setIsComboModalOpen] = useState(false);
@@ -197,6 +217,102 @@ export const Products: React.FC = () => {
     if (comboTypeFilter === 'program') return p.comboType === 'program';
     return true;
   });
+
+  // Lọc Sản Phẩm Lẻ theo ID, Tên, Danh mục, Nhà cung cấp, Trạng thái
+  const filteredSingleProducts = singleProducts.filter(p => {
+    if (singleIdFilter.trim()) {
+      if (!p.productId.toString().includes(singleIdFilter.trim())) return false;
+    }
+    if (singleNameFilter.trim()) {
+      const q = singleNameFilter.trim().toLowerCase();
+      if (!p.productName.toLowerCase().includes(q)) return false;
+    }
+    if (singleCatFilter !== 'all') {
+      if (p.categoryId !== singleCatFilter) return false;
+    }
+    if (singleSupplierFilter !== 'all') {
+      if (p.supplierId !== singleSupplierFilter) return false;
+    }
+    if (singleStatusFilter !== 'all') {
+      if ((p.status || 'Active') !== singleStatusFilter) return false;
+    }
+    return true;
+  });
+
+  const isSingleFiltering = Boolean(
+    singleIdFilter.trim() || 
+    singleNameFilter.trim() || 
+    singleCatFilter !== 'all' || 
+    singleSupplierFilter !== 'all' || 
+    singleStatusFilter !== 'all'
+  );
+
+  const handleResetSingleFilter = () => {
+    setSingleIdFilter('');
+    setSingleNameFilter('');
+    setSingleCatFilter('all');
+    setSingleSupplierFilter('all');
+    setSingleStatusFilter('all');
+  };
+
+  // Lọc Gói Combo theo ID, Tên gói, Nhà cung cấp phụ trách, Trạng thái
+  const filteredComboProducts = comboProducts.filter(c => {
+    if (comboIdFilter.trim()) {
+      if (!c.productId.toString().includes(comboIdFilter.trim())) return false;
+    }
+    if (comboNameFilter.trim()) {
+      const q = comboNameFilter.trim().toLowerCase();
+      if (!c.productName.toLowerCase().includes(q)) return false;
+    }
+    if (comboSupplierFilter !== 'all') {
+      if (c.supplierId !== comboSupplierFilter) return false;
+    }
+    if (comboStatusFilter !== 'all') {
+      if ((c.status || 'Active') !== comboStatusFilter) return false;
+    }
+    return true;
+  });
+
+  const isComboFiltering = Boolean(
+    comboIdFilter.trim() || 
+    comboNameFilter.trim() || 
+    comboSupplierFilter !== 'all' || 
+    comboStatusFilter !== 'all'
+  );
+
+  const handleResetComboFilter = () => {
+    setComboIdFilter('');
+    setComboNameFilter('');
+    setComboSupplierFilter('all');
+    setComboStatusFilter('all');
+  };
+
+  // Lọc Danh Mục theo ID, Tên danh mục, Trạng thái
+  const filteredCategories = categories.filter(c => {
+    if (catIdFilter.trim()) {
+      if (!c.categoryId.toString().includes(catIdFilter.trim())) return false;
+    }
+    if (catNameFilter.trim()) {
+      const q = catNameFilter.trim().toLowerCase();
+      if (!c.categoryName.toLowerCase().includes(q)) return false;
+    }
+    if (catStatusFilter !== 'all') {
+      if ((c.status || 'Active') !== catStatusFilter) return false;
+    }
+    return true;
+  });
+
+  const isCatFiltering = Boolean(
+    catIdFilter.trim() || 
+    catNameFilter.trim() || 
+    catStatusFilter !== 'all'
+  );
+
+  const handleResetCatFilter = () => {
+    setCatIdFilter('');
+    setCatNameFilter('');
+    setCatStatusFilter('all');
+  };
 
   // Helper tìm tên nhà cung cấp
   const getSupplierName = (supplierId: number) => {
@@ -702,11 +818,20 @@ export const Products: React.FC = () => {
 
   // --- Columns Config: Sản Phẩm Lẻ ---
   const singleProdColumns = [
-    { title: 'ID', dataIndex: 'productId', key: 'productId', width: 65 },
+    { 
+      title: 'ID', 
+      dataIndex: 'productId', 
+      key: 'productId', 
+      width: 75,
+      sorter: (a: Product, b: Product) => a.productId - b.productId,
+      defaultSortOrder: 'descend' as const,
+      render: (id: number) => <Tag color="blue">#{id}</Tag>
+    },
     { 
       title: 'Tên nông sản', 
       dataIndex: 'productName', 
       key: 'productName',
+      sorter: (a: Product, b: Product) => a.productName.localeCompare(b.productName),
       render: (t: string) => <b>{t}</b>
     },
     { 
@@ -759,6 +884,7 @@ export const Products: React.FC = () => {
       title: 'Giá bán', 
       dataIndex: 'price', 
       key: 'price', 
+      sorter: (a: Product, b: Product) => a.price - b.price,
       render: (val: number) => <span style={{ color: '#d32f2f', fontWeight: 700 }}>{val.toLocaleString('vi-VN')} đ</span> 
     },
     { title: 'ĐVT', dataIndex: 'unit', key: 'unit', width: 70 },
@@ -816,7 +942,15 @@ export const Products: React.FC = () => {
 
   // --- Columns Config: Combo Tự Chọn ---
   const comboColumns = [
-    { title: 'Mã Gói', dataIndex: 'productId', key: 'productId', width: 80, render: (id: number) => <Tag color="geekblue">#{id}</Tag> },
+    { 
+      title: 'Mã Gói', 
+      dataIndex: 'productId', 
+      key: 'productId', 
+      width: 90, 
+      sorter: (a: Product, b: Product) => a.productId - b.productId,
+      defaultSortOrder: 'descend' as const,
+      render: (id: number) => <Tag color="geekblue">#{id}</Tag> 
+    },
     { 
       title: 'Phân loại', 
       dataIndex: 'comboType', 
@@ -833,6 +967,7 @@ export const Products: React.FC = () => {
       title: 'Tên Gói Combo Tự Chọn', 
       dataIndex: 'productName', 
       key: 'productName',
+      sorter: (a: Product, b: Product) => a.productName.localeCompare(b.productName),
       render: (t: string, r: Product) => (
         <div>
           <div style={{ fontWeight: 700, fontSize: '14px', color: '#1b5e20' }}>{t}</div>
@@ -881,6 +1016,7 @@ export const Products: React.FC = () => {
       dataIndex: 'price', 
       key: 'price', 
       width: 140,
+      sorter: (a: Product, b: Product) => a.price - b.price,
       render: (val: number, r: Product) => (
         <div>
           <b style={{ color: '#d32f2f', fontSize: '14px' }}>{val.toLocaleString('vi-VN')} đ</b>
@@ -947,8 +1083,21 @@ export const Products: React.FC = () => {
 
   // --- Columns Config: Danh Mục ---
   const catColumns = [
-    { title: 'ID', dataIndex: 'categoryId', key: 'categoryId', width: 80 },
-    { title: 'Tên danh mục', dataIndex: 'categoryName', key: 'categoryName', render: (t: string) => <b>{t}</b> },
+    { 
+      title: 'ID', 
+      dataIndex: 'categoryId', 
+      key: 'categoryId', 
+      width: 80, 
+      sorter: (a: Category, b: Category) => a.categoryId - b.categoryId,
+      render: (id: number) => <Tag color="geekblue">#{id}</Tag>
+    },
+    { 
+      title: 'Tên danh mục', 
+      dataIndex: 'categoryName', 
+      key: 'categoryName', 
+      sorter: (a: Category, b: Category) => a.categoryName.localeCompare(b.categoryName),
+      render: (t: string) => <b>{t}</b> 
+    },
     { title: 'Mô tả', dataIndex: 'description', key: 'description' },
     { 
       title: 'Tác vụ', 
@@ -979,7 +1128,7 @@ export const Products: React.FC = () => {
                 <Space>
                   <ShopOutlined />
                   <span>Sản Phẩm Nông Sản Lẻ</span>
-                  <Badge count={singleProducts.length} style={{ backgroundColor: '#52c41a' }} />
+                  <Badge count={filteredSingleProducts.length} style={{ backgroundColor: '#52c41a' }} />
                 </Space>
               ),
               children: (
@@ -992,12 +1141,136 @@ export const Products: React.FC = () => {
                       Thêm Nông Sản Lẻ
                     </Button>
                   </div>
+
+                  {/* KHUNG TÌM KIẾM & BỘ LỌC NÔNG SẢN LẺ */}
+                  <div style={{ 
+                    background: '#f8fafc', 
+                    border: '1px solid #e2e8f0', 
+                    borderRadius: '10px', 
+                    padding: '16px', 
+                    marginBottom: '16px' 
+                  }}>
+                    <Row gutter={[12, 12]} align="middle">
+                      {/* 1. Tìm theo ID */}
+                      <Col xs={24} sm={12} md={4}>
+                        <div style={{ fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>
+                          Mã ID sản phẩm:
+                        </div>
+                        <Input
+                          placeholder="Nhập ID (VD: 922)..."
+                          prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
+                          allowClear
+                          value={singleIdFilter}
+                          onChange={e => setSingleIdFilter(e.target.value)}
+                        />
+                      </Col>
+
+                      {/* 2. Tìm theo Tên nông sản */}
+                      <Col xs={24} sm={12} md={6}>
+                        <div style={{ fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>
+                          Tên nông sản:
+                        </div>
+                        <Input
+                          placeholder="Nhập tên nông sản (VD: Cà chua, Bơ...)..."
+                          prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
+                          allowClear
+                          value={singleNameFilter}
+                          onChange={e => setSingleNameFilter(e.target.value)}
+                        />
+                      </Col>
+
+                      {/* 3. Lọc theo Danh mục */}
+                      <Col xs={24} sm={12} md={5}>
+                        <div style={{ fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>
+                          Danh mục nông sản:
+                        </div>
+                        <Select
+                          style={{ width: '100%' }}
+                          placeholder="Tất cả danh mục"
+                          value={singleCatFilter}
+                          onChange={val => setSingleCatFilter(val)}
+                        >
+                          <Select.Option value="all">Tất cả danh mục ({categories.filter(c => c.categoryId !== 5).length})</Select.Option>
+                          {categories.filter(c => c.categoryId !== 5).map(c => (
+                            <Select.Option key={c.categoryId} value={c.categoryId}>
+                              {c.categoryName}
+                            </Select.Option>
+                          ))}
+                        </Select>
+                      </Col>
+
+                      {/* 4. Lọc theo Nhà cung cấp */}
+                      <Col xs={24} sm={12} md={5}>
+                        <div style={{ fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>
+                          Nhà cung cấp / HTX:
+                        </div>
+                        <Select
+                          style={{ width: '100%' }}
+                          placeholder="Tất cả nhà cung cấp"
+                          value={singleSupplierFilter}
+                          onChange={val => setSingleSupplierFilter(val)}
+                          showSearch
+                          filterOption={(input, option) =>
+                            ((option?.children as any) || '').toLowerCase().includes(input.toLowerCase())
+                          }
+                        >
+                          <Select.Option value="all">Tất cả nhà cung cấp ({suppliers.length})</Select.Option>
+                          {suppliers.map(s => {
+                            const sid = s.supplierId || s.userId;
+                            return (
+                              <Select.Option key={sid} value={sid}>
+                                {s.fullName || s.supplierName}
+                              </Select.Option>
+                            );
+                          })}
+                        </Select>
+                      </Col>
+
+                      {/* 5. Nút Đặt lại */}
+                      <Col xs={24} sm={12} md={4} style={{ display: 'flex', alignItems: 'flex-end' }}>
+                        <Button 
+                          icon={<ReloadOutlined />} 
+                          onClick={handleResetSingleFilter}
+                          style={{ width: '100%' }}
+                        >
+                          Đặt lại bộ lọc
+                        </Button>
+                      </Col>
+                    </Row>
+
+                    {/* Dòng tóm tắt & lọc trạng thái */}
+                    <div style={{ marginTop: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, fontSize: '12.5px', color: '#64748b' }}>
+                      <div>
+                        Tìm thấy: <b style={{ color: '#16a34a', fontSize: '13.5px' }}>{filteredSingleProducts.length}</b> / {singleProducts.length} nông sản
+                        {isSingleFiltering && (
+                          <Tag color="processing" style={{ marginLeft: 8 }}>
+                            Đang áp dụng bộ lọc
+                          </Tag>
+                        )}
+                      </div>
+                      <Space size="small">
+                        <span style={{ fontSize: '12px', color: '#64748b' }}>Trạng thái:</span>
+                        <Radio.Group 
+                          size="small" 
+                          value={singleStatusFilter} 
+                          onChange={e => setSingleStatusFilter(e.target.value)}
+                          buttonStyle="solid"
+                        >
+                          <Radio.Button value="all">Tất cả</Radio.Button>
+                          <Radio.Button value="Active">Đang bán</Radio.Button>
+                          <Radio.Button value="Pending">Chờ duyệt</Radio.Button>
+                          <Radio.Button value="Inactive">Tạm ngừng</Radio.Button>
+                        </Radio.Group>
+                      </Space>
+                    </div>
+                  </div>
+
                   <Table 
                     columns={singleProdColumns} 
-                    dataSource={singleProducts} 
+                    dataSource={filteredSingleProducts} 
                     rowKey="productId" 
                     loading={loading}
-                    pagination={{ pageSize: 10 }}
+                    pagination={{ pageSize: 10, showTotal: (total) => `Tổng ${total} nông sản` }}
                   />
                 </div>
               )
@@ -1008,7 +1281,7 @@ export const Products: React.FC = () => {
                 <Space>
                   <AppstoreAddOutlined />
                   <span>Gói Combo Tự Chọn</span>
-                  <Badge count={comboProducts.length} style={{ backgroundColor: '#1890ff' }} />
+                  <Badge count={filteredComboProducts.length} style={{ backgroundColor: '#1890ff' }} />
                 </Space>
               ),
               children: (
@@ -1021,24 +1294,126 @@ export const Products: React.FC = () => {
                     style={{ marginBottom: 16, borderRadius: '8px' }}
                   />
                   
-                  {/* Phân loại Combo */}
-                  <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-                    <Radio.Group 
-                      value={comboTypeFilter} 
-                      onChange={e => setComboTypeFilter(e.target.value)}
-                      buttonStyle="solid"
-                    >
-                      <Radio.Button value="all">
-                        Tất cả ({products.filter(p => p.categoryId === 5).length})
-                      </Radio.Button>
-                      <Radio.Button value="periodic">
-                        📅 Combo Định Kỳ ({products.filter(p => p.categoryId === 5 && (!p.comboType || p.comboType === 'periodic')).length})
-                      </Radio.Button>
-                      <Radio.Button value="program">
-                        🎁 Combo Theo Chương Trình ({products.filter(p => p.categoryId === 5 && p.comboType === 'program').length})
-                      </Radio.Button>
-                    </Radio.Group>
+                  {/* KHUNG TÌM KIẾM & BỘ LỌC GÓI COMBO */}
+                  <div style={{ 
+                    background: '#f8fafc', 
+                    border: '1px solid #e2e8f0', 
+                    borderRadius: '10px', 
+                    padding: '16px', 
+                    marginBottom: '16px' 
+                  }}>
+                    <Row gutter={[12, 12]} align="middle">
+                      {/* 1. Tìm theo ID combo */}
+                      <Col xs={24} sm={12} md={5}>
+                        <div style={{ fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>
+                          Mã gói Combo:
+                        </div>
+                        <Input
+                          placeholder="Nhập mã gói (VD: 10)..."
+                          prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
+                          allowClear
+                          value={comboIdFilter}
+                          onChange={e => setComboIdFilter(e.target.value)}
+                        />
+                      </Col>
 
+                      {/* 2. Tìm theo Tên combo */}
+                      <Col xs={24} sm={12} md={7}>
+                        <div style={{ fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>
+                          Tên gói Combo:
+                        </div>
+                        <Input
+                          placeholder="Nhập tên gói combo tự chọn..."
+                          prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
+                          allowClear
+                          value={comboNameFilter}
+                          onChange={e => setComboNameFilter(e.target.value)}
+                        />
+                      </Col>
+
+                      {/* 3. Lọc theo Nhà cung cấp phụ trách */}
+                      <Col xs={24} sm={12} md={7}>
+                        <div style={{ fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>
+                          Nhà cung cấp phụ trách:
+                        </div>
+                        <Select
+                          style={{ width: '100%' }}
+                          placeholder="Tất cả nhà cung cấp"
+                          value={comboSupplierFilter}
+                          onChange={val => setComboSupplierFilter(val)}
+                          showSearch
+                          filterOption={(input, option) =>
+                            ((option?.children as any) || '').toLowerCase().includes(input.toLowerCase())
+                          }
+                        >
+                          <Select.Option value="all">Tất cả nhà cung cấp ({suppliers.length})</Select.Option>
+                          {suppliers.map(s => {
+                            const sid = s.supplierId || s.userId;
+                            return (
+                              <Select.Option key={sid} value={sid}>
+                                {s.fullName || s.supplierName}
+                              </Select.Option>
+                            );
+                          })}
+                        </Select>
+                      </Col>
+
+                      {/* 4. Nút Đặt lại */}
+                      <Col xs={24} sm={12} md={5} style={{ display: 'flex', alignItems: 'flex-end' }}>
+                        <Button 
+                          icon={<ReloadOutlined />} 
+                          onClick={handleResetComboFilter}
+                          style={{ width: '100%' }}
+                        >
+                          Đặt lại bộ lọc
+                        </Button>
+                      </Col>
+                    </Row>
+
+                    {/* Dòng phân loại combo & số lượng */}
+                    <div style={{ marginTop: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
+                      <div style={{ fontSize: '12.5px', color: '#64748b' }}>
+                        Tìm thấy: <b style={{ color: '#0284c7', fontSize: '13.5px' }}>{filteredComboProducts.length}</b> / {comboProducts.length} gói combo
+                        {isComboFiltering && (
+                          <Tag color="processing" style={{ marginLeft: 8 }}>
+                            Đang áp dụng bộ lọc
+                          </Tag>
+                        )}
+                      </div>
+
+                      <Space size="middle" wrap>
+                        <Radio.Group 
+                          value={comboTypeFilter} 
+                          onChange={e => setComboTypeFilter(e.target.value)}
+                          buttonStyle="solid"
+                          size="small"
+                        >
+                          <Radio.Button value="all">
+                            Tất cả ({products.filter(p => p.categoryId === 5).length})
+                          </Radio.Button>
+                          <Radio.Button value="periodic">
+                            📅 Combo Định Kỳ ({products.filter(p => p.categoryId === 5 && (!p.comboType || p.comboType === 'periodic')).length})
+                          </Radio.Button>
+                          <Radio.Button value="program">
+                            🎁 Combo Theo Chương Trình ({products.filter(p => p.categoryId === 5 && p.comboType === 'program').length})
+                          </Radio.Button>
+                        </Radio.Group>
+
+                        <Radio.Group 
+                          size="small" 
+                          value={comboStatusFilter} 
+                          onChange={e => setComboStatusFilter(e.target.value)}
+                          buttonStyle="solid"
+                        >
+                          <Radio.Button value="all">Tất cả TT</Radio.Button>
+                          <Radio.Button value="Active">Đang bán</Radio.Button>
+                          <Radio.Button value="Pending">Chờ duyệt</Radio.Button>
+                        </Radio.Group>
+                      </Space>
+                    </div>
+                  </div>
+
+                  <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'flex-end' }}>
                     <Button type="primary" icon={<PlusOutlined />} onClick={handleOpenAddCombo} style={{ backgroundColor: '#1890ff', borderColor: '#1890ff' }}>
                       Tạo Gói Combo Mới
                     </Button>
@@ -1046,10 +1421,10 @@ export const Products: React.FC = () => {
 
                   <Table 
                     columns={comboColumns} 
-                    dataSource={comboProducts} 
+                    dataSource={filteredComboProducts} 
                     rowKey="productId" 
                     loading={loading}
-                    pagination={{ pageSize: 10 }}
+                    pagination={{ pageSize: 10, showTotal: (total) => `Tổng ${total} gói combo` }}
                   />
                 </div>
               )
@@ -1060,21 +1435,102 @@ export const Products: React.FC = () => {
                 <Space>
                   <FolderOutlined />
                   <span>Danh Mục Nông Sản</span>
+                  <Badge count={filteredCategories.length} style={{ backgroundColor: '#722ed1' }} />
                 </Space>
               ),
               children: (
                 <div>
-                  <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'flex-end' }}>
+                  <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ color: '#666', fontSize: '13px' }}>
+                      Quản lý cấu trúc danh mục phân loại nông sản hiển thị trên sàn thương mại điện tử
+                    </div>
                     <Button type="primary" icon={<PlusOutlined />} onClick={handleOpenAddCat}>
-                      Thêm Danh Mục
+                      Thêm Danh Mục Mới
                     </Button>
                   </div>
+
+                  {/* KHUNG TÌM KIẾM & BỘ LỌC DANH MỤC */}
+                  <div style={{ 
+                    background: '#f8fafc', 
+                    border: '1px solid #e2e8f0', 
+                    borderRadius: '10px', 
+                    padding: '16px', 
+                    marginBottom: '16px' 
+                  }}>
+                    <Row gutter={[12, 12]} align="middle">
+                      {/* 1. Tìm theo ID danh mục */}
+                      <Col xs={24} sm={12} md={6}>
+                        <div style={{ fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>
+                          Mã ID danh mục:
+                        </div>
+                        <Input
+                          placeholder="Nhập ID danh mục (VD: 1, 2)..."
+                          prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
+                          allowClear
+                          value={catIdFilter}
+                          onChange={e => setCatIdFilter(e.target.value)}
+                        />
+                      </Col>
+
+                      {/* 2. Tìm theo Tên danh mục */}
+                      <Col xs={24} sm={12} md={10}>
+                        <div style={{ fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>
+                          Tên danh mục nông sản:
+                        </div>
+                        <Input
+                          placeholder="Nhập tên danh mục (VD: Trái cây, Rau củ, Nấm...)..."
+                          prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
+                          allowClear
+                          value={catNameFilter}
+                          onChange={e => setCatNameFilter(e.target.value)}
+                        />
+                      </Col>
+
+                      {/* 3. Lọc theo Trạng thái */}
+                      <Col xs={24} sm={12} md={5}>
+                        <div style={{ fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>
+                          Trạng thái:
+                        </div>
+                        <Select
+                          style={{ width: '100%' }}
+                          value={catStatusFilter}
+                          onChange={val => setCatStatusFilter(val)}
+                        >
+                          <Select.Option value="all">Tất cả trạng thái</Select.Option>
+                          <Select.Option value="Active">Active (Hoạt động)</Select.Option>
+                          <Select.Option value="Inactive">Inactive (Tạm ngừng)</Select.Option>
+                        </Select>
+                      </Col>
+
+                      {/* 4. Nút Đặt lại */}
+                      <Col xs={24} sm={12} md={3} style={{ display: 'flex', alignItems: 'flex-end' }}>
+                        <Button 
+                          icon={<ReloadOutlined />} 
+                          onClick={handleResetCatFilter}
+                          style={{ width: '100%' }}
+                        >
+                          Đặt lại
+                        </Button>
+                      </Col>
+                    </Row>
+
+                    {/* Dòng kết quả */}
+                    <div style={{ marginTop: '10px', fontSize: '12.5px', color: '#64748b' }}>
+                      Tìm thấy: <b style={{ color: '#722ed1', fontSize: '13.5px' }}>{filteredCategories.length}</b> / {categories.length} danh mục
+                      {isCatFiltering && (
+                        <Tag color="processing" style={{ marginLeft: 8 }}>
+                          Đang áp dụng bộ lọc
+                        </Tag>
+                      )}
+                    </div>
+                  </div>
+
                   <Table 
                     columns={catColumns} 
-                    dataSource={categories} 
+                    dataSource={filteredCategories} 
                     rowKey="categoryId" 
                     loading={loading}
-                    pagination={{ pageSize: 10 }}
+                    pagination={{ pageSize: 10, showTotal: (total) => `Tổng ${total} danh mục` }}
                   />
                 </div>
               )

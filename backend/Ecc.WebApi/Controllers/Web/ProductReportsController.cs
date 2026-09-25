@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using Ecc.Infrastructure.Data;
 using Ecc.Infrastructure.Entities;
 using System.Text;
+using System.Globalization;
+using System.Text.RegularExpressions;
 
 namespace Ecc.WebApi.Controllers;
 
@@ -128,7 +130,10 @@ public class ProductReportsController : ControllerBase
         [FromQuery] DateTime? startDate = null,
         [FromQuery] DateTime? endDate = null,
         [FromQuery] int? categoryId = null,
+        [FromQuery] long? supplierId = null,
         [FromQuery] string? status = null,
+        [FromQuery] string? stockStatus = null,
+        [FromQuery] string? performance = null,
         [FromQuery] string? search = null,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 10,
@@ -197,7 +202,7 @@ public class ProductReportsController : ControllerBase
             decimal returnedRevenue = returnedOrders.Sum(o => o.TotalAmount);
             decimal returnedQuantity = returnedOrders.SelectMany(o => o.OrderItems).Sum(oi => oi.Quantity);
 
-            // 5. Query sản phẩm và áp dụng bộ lọc (Category, Status, Search)
+            // 5. Query sản phẩm và áp dụng bộ lọc (Category, Supplier, Status)
             var productsQuery = _context.Products
                 .Include(p => p.Category)
                 .AsQueryable();
@@ -207,12 +212,21 @@ public class ProductReportsController : ControllerBase
                 productsQuery = productsQuery.Where(p => p.CategoryId == categoryId.Value);
             }
 
+            if (supplierId.HasValue && supplierId.Value > 0)
+            {
+                productsQuery = productsQuery.Where(p => p.SupplierId == supplierId.Value);
+            }
+
             if (!string.IsNullOrWhiteSpace(status) && status.ToLower() != "all")
             {
                 productsQuery = productsQuery.Where(p => p.Status == status);
             }
 
             var allProductsList = await productsQuery.ToListAsync();
+
+            // Lấy từ điển Nhà cung cấp để hiển thị tên chuẩn
+            var suppliers = await _context.Suppliers.ToDictionaryAsync(s => s.SupplierId, s => s.SupplierName);
+            var users = await _context.Users.ToDictionaryAsync(u => u.UserId, u => u.FullName);
 
             // 6. Map dữ liệu hoàn chỉnh cho từng sản phẩm
             var productReports = allProductsList.Select(p =>
@@ -233,6 +247,17 @@ public class ProductReportsController : ControllerBase
 
                 string stockStatus = stock <= 0 ? "OutOfStock" : (stock <= 20 ? "LowStock" : "InStock");
 
+                // Tìm tên nhà cung cấp từ bảng Suppliers hoặc Users
+                string supplierName = "Hợp tác xã Nông sản Việt";
+                if (suppliers.TryGetValue(p.SupplierId, out var sName) && !string.IsNullOrWhiteSpace(sName))
+                {
+                    supplierName = sName;
+                }
+                else if (users.TryGetValue(p.SupplierId, out var uName) && !string.IsNullOrWhiteSpace(uName))
+                {
+                    supplierName = uName;
+                }
+
                 return new ProductReportItemDto
                 {
                     ProductId = p.ProductId,
@@ -240,6 +265,8 @@ public class ProductReportsController : ControllerBase
                     ProductName = p.ProductName,
                     CategoryId = p.CategoryId,
                     CategoryName = p.Category?.CategoryName ?? "Chưa phân loại",
+                    SupplierId = p.SupplierId,
+                    SupplierName = supplierName,
                     Unit = p.Unit,
                     Price = p.Price,
                     Status = p.Status ?? "Active",
@@ -254,14 +281,71 @@ public class ProductReportsController : ControllerBase
                 };
             }).ToList();
 
-            // 7. Lọc tìm kiếm theo Tên hoặc SKU
+            // 7. Lọc tìm kiếm theo TẤT CẢ các thành phần: ID (hỗ trợ #, ID:, ID), SKU, Tên, Danh mục, Nhà cung cấp (Không phân biệt HOA/thường, hỗ trợ tiếng Việt có/không dấu)
             if (!string.IsNullOrWhiteSpace(search))
             {
-                var s = search.Trim().ToLower();
+                var rawSearch = search.Trim();
+                var sLower = rawSearch.ToLower();
+                var sNorm = NormalizeSearchText(rawSearch);
+                var cleanIdStr = Regex.Replace(sLower, @"^(#|id\s*:?\s*|sp\s*:?\s*|mã\s*:?\s*)", "").Trim();
+                long.TryParse(cleanIdStr, out var parsedId);
+
                 productReports = productReports.Where(p => 
-                    p.ProductName.ToLower().Contains(s) || 
-                    p.Sku.ToLower().Contains(s) ||
-                    p.CategoryName.ToLower().Contains(s)).ToList();
+                {
+                    // 1. Khớp chính xác ID (Ví dụ: "10", "#10", "id: 10", "id 10", "sp 10")
+                    if (parsedId > 0 && p.ProductId == parsedId) return true;
+
+                    // 2. Khớp ID chuỗi và có tiền tố '#'
+                    var pIdStr = p.ProductId.ToString();
+                    if ($"#{pIdStr}".Contains(sLower)) return true;
+                    if (pIdStr == sLower) return true;
+                    if (!string.IsNullOrEmpty(cleanIdStr) && pIdStr.Contains(cleanIdStr)) return true;
+
+                    // 3. Khớp SKU
+                    if (p.Sku.ToLower().Contains(sLower)) return true;
+
+                    // 4. Khớp Tên sản phẩm, Danh mục, Nhà cung cấp (Không phân biệt HOA/thường, hỗ trợ cả tiếng Việt không dấu)
+                    if (p.ProductName.ToLower().Contains(sLower)) return true;
+                    if (NormalizeSearchText(p.ProductName).Contains(sNorm)) return true;
+
+                    if (p.CategoryName.ToLower().Contains(sLower)) return true;
+                    if (NormalizeSearchText(p.CategoryName).Contains(sNorm)) return true;
+
+                    if (p.SupplierName.ToLower().Contains(sLower)) return true;
+                    if (NormalizeSearchText(p.SupplierName).Contains(sNorm)) return true;
+
+                    if (p.Unit.ToLower().Contains(sLower)) return true;
+                    if (p.Price.ToString().Contains(sLower)) return true;
+                    if (p.Status.ToLower().Contains(sLower)) return true;
+
+                    return false;
+                }).ToList();
+            }
+
+            // 7.1 Lọc theo Trạng thái tồn kho (InStock, LowStock, OutOfStock)
+            if (!string.IsNullOrWhiteSpace(stockStatus) && stockStatus.ToUpper() != "ALL")
+            {
+                productReports = productReports.Where(p => p.StockStatus.Equals(stockStatus, StringComparison.OrdinalIgnoreCase)).ToList();
+            }
+
+            // 7.2 Lọc theo Hiệu suất bán hàng trong kỳ (hasSales: Đã bán > 0, noSales: Chưa bán = 0, positiveGrowth, negativeGrowth)
+            if (!string.IsNullOrWhiteSpace(performance) && performance.ToLower() != "all")
+            {
+                switch (performance.ToLower())
+                {
+                    case "hassales":
+                        productReports = productReports.Where(p => p.SoldQuantity > 0).ToList();
+                        break;
+                    case "nosales":
+                        productReports = productReports.Where(p => p.SoldQuantity == 0).ToList();
+                        break;
+                    case "positivegrowth":
+                        productReports = productReports.Where(p => p.RevenueGrowthRate > 0).ToList();
+                        break;
+                    case "negativegrowth":
+                        productReports = productReports.Where(p => p.RevenueGrowthRate < 0).ToList();
+                        break;
+                }
             }
 
             // 8. Thống kê tổng hợp (KPI Cards)
@@ -273,6 +357,7 @@ public class ProductReportsController : ControllerBase
 
             decimal totalRevenueGrowth = prevTotalRevenue > 0 
                 ? Math.Round(((totalRevenue - prevTotalRevenue) / prevTotalRevenue) * 100, 1) 
+
                 : (totalRevenue > 0 ? 100 : 0);
 
             decimal totalSoldGrowth = prevTotalSoldQuantity > 0 
@@ -366,11 +451,15 @@ public class ProductReportsController : ControllerBase
             var isAsc = string.Equals(sortOrder, "asc", StringComparison.OrdinalIgnoreCase);
             var sortedList = sortBy?.ToLower() switch
             {
-                "productname" => isAsc ? productReports.OrderBy(p => p.ProductName) : productReports.OrderByDescending(p => p.ProductName),
+                "productid" or "id" => isAsc ? productReports.OrderBy(p => p.ProductId) : productReports.OrderByDescending(p => p.ProductId),
+                "productname" or "name" => isAsc ? productReports.OrderBy(p => p.ProductName) : productReports.OrderByDescending(p => p.ProductName),
                 "sku" => isAsc ? productReports.OrderBy(p => p.Sku) : productReports.OrderByDescending(p => p.Sku),
-                "soldquantity" => isAsc ? productReports.OrderBy(p => p.SoldQuantity) : productReports.OrderByDescending(p => p.SoldQuantity),
-                "currentstock" => isAsc ? productReports.OrderBy(p => p.CurrentStock) : productReports.OrderByDescending(p => p.CurrentStock),
+                "suppliername" or "supplier" => isAsc ? productReports.OrderBy(p => p.SupplierName) : productReports.OrderByDescending(p => p.SupplierName),
+                "categoryname" or "category" => isAsc ? productReports.OrderBy(p => p.CategoryName) : productReports.OrderByDescending(p => p.CategoryName),
+                "soldquantity" or "sold" => isAsc ? productReports.OrderBy(p => p.SoldQuantity) : productReports.OrderByDescending(p => p.SoldQuantity),
+                "currentstock" or "stock" => isAsc ? productReports.OrderBy(p => p.CurrentStock) : productReports.OrderByDescending(p => p.CurrentStock),
                 "price" => isAsc ? productReports.OrderBy(p => p.Price) : productReports.OrderByDescending(p => p.Price),
+                "status" => isAsc ? productReports.OrderBy(p => p.Status) : productReports.OrderByDescending(p => p.Status),
                 _ => isAsc ? productReports.OrderBy(p => p.TotalRevenue) : productReports.OrderByDescending(p => p.TotalRevenue)
             };
 
@@ -436,7 +525,10 @@ public class ProductReportsController : ControllerBase
         [FromQuery] DateTime? startDate = null,
         [FromQuery] DateTime? endDate = null,
         [FromQuery] int? categoryId = null,
+        [FromQuery] long? supplierId = null,
         [FromQuery] string? status = null,
+        [FromQuery] string? stockStatus = null,
+        [FromQuery] string? performance = null,
         [FromQuery] string? search = null)
     {
         try
@@ -471,39 +563,106 @@ public class ProductReportsController : ControllerBase
             if (categoryId.HasValue && categoryId.Value > 0)
                 query = query.Where(p => p.CategoryId == categoryId.Value);
 
+            if (supplierId.HasValue && supplierId.Value > 0)
+                query = query.Where(p => p.SupplierId == supplierId.Value);
+
             if (!string.IsNullOrWhiteSpace(status) && status.ToLower() != "all")
                 query = query.Where(p => p.Status == status);
 
             var products = await query.ToListAsync();
+            var suppliers = await _context.Suppliers.ToDictionaryAsync(s => s.SupplierId, s => s.SupplierName);
+            var users = await _context.Users.ToDictionaryAsync(u => u.UserId, u => u.FullName);
 
-            var reports = products.Select(p => new
+            var reports = products.Select(p =>
             {
-                Sku = $"SKU-PRD-{p.ProductId:D5}",
-                p.ProductName,
-                Category = p.Category?.CategoryName ?? "N/A",
-                p.Price,
-                p.Unit,
-                CurrentStock = batches.TryGetValue(p.ProductId, out var stock) ? stock : 0,
-                SoldQuantity = currentOrderItems.TryGetValue(p.ProductId, out var oi) ? oi.SoldQuantity : 0,
-                TotalRevenue = oi != null ? oi.TotalRevenue : 0,
-                Status = p.Status ?? "Active"
+                string supplierName = "Hợp tác xã Nông sản Việt";
+                if (suppliers.TryGetValue(p.SupplierId, out var sName) && !string.IsNullOrWhiteSpace(sName))
+                {
+                    supplierName = sName;
+                }
+                else if (users.TryGetValue(p.SupplierId, out var uName) && !string.IsNullOrWhiteSpace(uName))
+                {
+                    supplierName = uName;
+                }
+
+                return new
+                {
+                    p.ProductId,
+                    Sku = $"SKU-PRD-{p.ProductId:D5}",
+                    p.ProductName,
+                    Category = p.Category?.CategoryName ?? "N/A",
+                    Supplier = supplierName,
+                    p.Price,
+                    p.Unit,
+                    CurrentStock = batches.TryGetValue(p.ProductId, out var stock) ? stock : 0,
+                    SoldQuantity = currentOrderItems.TryGetValue(p.ProductId, out var oi) ? oi.SoldQuantity : 0,
+                    TotalRevenue = oi != null ? oi.TotalRevenue : 0,
+                    Status = p.Status ?? "Active"
+                };
             });
 
             if (!string.IsNullOrWhiteSpace(search))
             {
-                var s = search.Trim().ToLower();
-                reports = reports.Where(p => p.ProductName.ToLower().Contains(s) || p.Sku.ToLower().Contains(s));
+                var rawSearch = search.Trim();
+                var sLower = rawSearch.ToLower();
+                var sNorm = NormalizeSearchText(rawSearch);
+                var cleanIdStr = Regex.Replace(sLower, @"^(#|id\s*:?\s*|sp\s*:?\s*|mã\s*:?\s*)", "").Trim();
+                long.TryParse(cleanIdStr, out var parsedId);
+
+                reports = reports.Where(p => 
+                {
+                    if (parsedId > 0 && p.ProductId == parsedId) return true;
+                    var pIdStr = p.ProductId.ToString();
+                    if ($"#{pIdStr}".Contains(sLower)) return true;
+                    if (pIdStr == sLower) return true;
+                    if (!string.IsNullOrEmpty(cleanIdStr) && pIdStr.Contains(cleanIdStr)) return true;
+
+                    if (p.Sku.ToLower().Contains(sLower)) return true;
+                    if (p.ProductName.ToLower().Contains(sLower)) return true;
+                    if (NormalizeSearchText(p.ProductName).Contains(sNorm)) return true;
+
+                    if (p.Category.ToLower().Contains(sLower)) return true;
+                    if (NormalizeSearchText(p.Category).Contains(sNorm)) return true;
+
+                    if (p.Supplier.ToLower().Contains(sLower)) return true;
+                    if (NormalizeSearchText(p.Supplier).Contains(sNorm)) return true;
+
+                    if (p.Unit.ToLower().Contains(sLower)) return true;
+                    if (p.Price.ToString().Contains(sLower)) return true;
+                    if (p.Status.ToLower().Contains(sLower)) return true;
+
+                    return false;
+                });
+            }
+
+            if (!string.IsNullOrWhiteSpace(stockStatus) && stockStatus.ToUpper() != "ALL")
+            {
+                if (stockStatus.Equals("InStock", StringComparison.OrdinalIgnoreCase))
+                    reports = reports.Where(p => p.CurrentStock > 20);
+                else if (stockStatus.Equals("LowStock", StringComparison.OrdinalIgnoreCase))
+                    reports = reports.Where(p => p.CurrentStock > 0 && p.CurrentStock <= 20);
+                else if (stockStatus.Equals("OutOfStock", StringComparison.OrdinalIgnoreCase))
+                    reports = reports.Where(p => p.CurrentStock <= 0);
+            }
+
+            if (!string.IsNullOrWhiteSpace(performance) && performance.ToLower() != "all")
+            {
+                if (performance.Equals("hasSales", StringComparison.OrdinalIgnoreCase))
+                    reports = reports.Where(p => p.SoldQuantity > 0);
+                else if (performance.Equals("noSales", StringComparison.OrdinalIgnoreCase))
+                    reports = reports.Where(p => p.SoldQuantity == 0);
             }
 
             var csvBuilder = new StringBuilder();
             // Thêm Header CSV
-            csvBuilder.AppendLine("Mã SKU,Tên Sản Phẩm,Danh Mục,Đơn Giá (VNĐ),Đơn Vị,Tồn Kho Hiện Tại,Số Lượng Đã Bán,Doanh Thu (VNĐ),Trạng Thái");
+            csvBuilder.AppendLine("Mã ID,Mã SKU,Tên Sản Phẩm,Danh Mục,Nhà Cung Cấp,Đơn Giá (VNĐ),Đơn Vị,Tồn Kho Hiện Tại,Số Lượng Đã Bán,Doanh Thu (VNĐ),Trạng Thái");
 
             foreach (var item in reports)
             {
                 string safeName = $"\"{item.ProductName.Replace("\"", "\"\"")}\"";
                 string safeCat = $"\"{item.Category.Replace("\"", "\"\"")}\"";
-                csvBuilder.AppendLine($"{item.Sku},{safeName},{safeCat},{item.Price},{item.Unit},{item.CurrentStock},{item.SoldQuantity},{item.TotalRevenue},{item.Status}");
+                string safeSup = $"\"{item.Supplier.Replace("\"", "\"\"")}\"";
+                csvBuilder.AppendLine($"{item.ProductId},{item.Sku},{safeName},{safeCat},{safeSup},{item.Price},{item.Unit},{item.CurrentStock},{item.SoldQuantity},{item.TotalRevenue},{item.Status}");
             }
 
             // UTF-8 with BOM to open properly in Excel
@@ -783,6 +942,113 @@ public class ProductReportsController : ControllerBase
             return StatusCode(500, new { message = $"Lỗi: {ex.Message}" });
         }
     }
+
+    // Helper: Chuẩn hóa tiếng Việt bỏ dấu và chuyển chữ thường để tìm kiếm không phân biệt HOA/thường và dấu
+    public static string NormalizeSearchText(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return string.Empty;
+        var normalized = text.Normalize(NormalizationForm.FormD);
+        var sb = new StringBuilder();
+        foreach (var ch in normalized)
+        {
+            var uc = CharUnicodeInfo.GetUnicodeCategory(ch);
+            if (uc != UnicodeCategory.NonSpacingMark)
+            {
+                sb.Append(ch);
+            }
+        }
+        return sb.ToString().Normalize(NormalizationForm.FormC).ToLower().Replace("đ", "d");
+    }
+
+    // GET: api/reports/products/suggestions?q=c
+    [HttpGet("suggestions")]
+    public async Task<IActionResult> GetSearchSuggestions([FromQuery] string? q = null)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(q))
+            {
+                return Ok(new List<object>());
+            }
+
+            var rawQ = q.Trim();
+            var qLower = rawQ.ToLower();
+            var qNorm = NormalizeSearchText(rawQ);
+            var cleanIdStr = Regex.Replace(qLower, @"^(#|id\s*:?\s*|sp\s*:?\s*|mã\s*:?\s*)", "").Trim();
+            long.TryParse(cleanIdStr, out var parsedId);
+
+            var today = DateTime.Today;
+            var batches = await _context.ProductBatches
+                .Where(b => b.ExpiryDate >= today && (b.Status == "Active" || string.IsNullOrEmpty(b.Status)))
+                .GroupBy(b => b.ProductId)
+                .Select(g => new { ProductId = g.Key, Stock = g.Sum(b => b.InitialQuantity) })
+                .ToDictionaryAsync(b => b.ProductId, b => b.Stock);
+
+            var query = _context.Products.Include(p => p.Category).AsQueryable();
+            var products = await query.ToListAsync();
+            var suppliers = await _context.Suppliers.ToDictionaryAsync(s => s.SupplierId, s => s.SupplierName);
+            var users = await _context.Users.ToDictionaryAsync(u => u.UserId, u => u.FullName);
+
+            var matched = products.Where(p =>
+            {
+                // Khớp ID chính xác hoặc tương đối
+                if (parsedId > 0 && p.ProductId == parsedId) return true;
+                var pIdStr = p.ProductId.ToString();
+                if ($"#{pIdStr}".Contains(qLower)) return true;
+                if (!string.IsNullOrEmpty(cleanIdStr) && pIdStr.Contains(cleanIdStr)) return true;
+
+                // Khớp SKU
+                var sku = $"SKU-PRD-{p.ProductId:D5}";
+                if (sku.ToLower().Contains(qLower)) return true;
+
+                // Khớp Tên sản phẩm không phân biệt HOA/thường và có/không dấu
+                if (p.ProductName.ToLower().Contains(qLower)) return true;
+                if (NormalizeSearchText(p.ProductName).Contains(qNorm)) return true;
+
+                // Khớp Danh mục
+                var cat = p.Category?.CategoryName ?? "";
+                if (cat.ToLower().Contains(qLower) || NormalizeSearchText(cat).Contains(qNorm)) return true;
+
+                // Khớp Nhà cung cấp
+                string sName = "";
+                if (suppliers.TryGetValue(p.SupplierId, out var sn)) sName = sn;
+                else if (users.TryGetValue(p.SupplierId, out var un)) sName = un;
+                if (!string.IsNullOrEmpty(sName) && (sName.ToLower().Contains(qLower) || NormalizeSearchText(sName).Contains(qNorm))) return true;
+
+                return false;
+            })
+            .Take(15)
+            .Select(p =>
+            {
+                var sku = $"SKU-PRD-{p.ProductId:D5}";
+                string sName = "Hợp tác xã Nông sản Việt";
+                if (suppliers.TryGetValue(p.SupplierId, out var sn)) sName = sn;
+                else if (users.TryGetValue(p.SupplierId, out var un)) sName = un;
+
+                batches.TryGetValue(p.ProductId, out var stock);
+
+                return new
+                {
+                    productId = p.ProductId,
+                    sku,
+                    productName = p.ProductName,
+                    categoryName = p.Category?.CategoryName ?? "Chưa phân loại",
+                    supplierName = sName,
+                    unit = p.Unit,
+                    price = p.Price,
+                    currentStock = stock
+                };
+            })
+            .ToList();
+
+            return Ok(matched);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Lỗi khi gợi ý tìm kiếm sản phẩm.");
+            return StatusCode(500, new { message = ex.Message });
+        }
+    }
 }
 
 public class ProductReportItemDto
@@ -792,6 +1058,8 @@ public class ProductReportItemDto
     public string ProductName { get; set; } = string.Empty;
     public int CategoryId { get; set; }
     public string CategoryName { get; set; } = string.Empty;
+    public long SupplierId { get; set; }
+    public string SupplierName { get; set; } = string.Empty;
     public string Unit { get; set; } = string.Empty;
     public decimal Price { get; set; }
     public string Status { get; set; } = "Active";

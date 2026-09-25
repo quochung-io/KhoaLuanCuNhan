@@ -87,24 +87,55 @@ type SuggestionItem = {
 
 const heroSlides = [
   {
-    image: '/banners/farm_hero_banner_1789080079371.jpg',
-    eyebrow: 'Nông Nghiệp Hữu Cơ Thông Minh',
-    title: 'Nông Sản Tươi LÀNH,\nChuẩn Vị Từ Đất Mẹ.',
-    desc: 'Kết nối trực tiếp với hơn 120 nông trại hữu cơ chuẩn VietGAP & GlobalGAP. Thu hoạch mỗi sớm mai, giao nhanh trong 2 giờ.',
-    ctaText: 'Khám phá ngay nông sản',
+    image: '/banners/farm_hero_banner_v2.jpg',
+    tag: '🌱 Nông Nghiệp Hữu Cơ Đà Lạt',
+    badge: 'Chuẩn VietGAP & GlobalGAP',
+    titleMain: 'Nông Sản Tươi Lành,',
+    titleHighlight: 'Chuẩn Vị Từ Đất Mẹ',
+    desc: 'Kết nối trực tiếp hơn 120 nông trại hữu cơ tại Lâm Đồng và Tây Nguyên. Rau củ thu hoạch sớm mai, trao tay tươi nguyên trong 2 giờ.',
+    ctaText: 'Khám phá nông sản tươi',
     ctaLink: '/products',
-    subLinkText: 'Tìm hiểu quy trình Farm to Table',
-    subLink: '/traceability'
+    subLinkText: 'Truy xuất nguồn gốc QR',
+    subLink: '/traceability',
+    stats: [
+      { num: '120+', label: 'Nông trại sạch' },
+      { num: '100%', label: 'Thuần hữu cơ' },
+      { num: '2 Giờ', label: 'Giao siêu tốc' }
+    ]
   },
   {
-    image: '/banners/fruit_season_banner_1789080094055.jpg',
-    eyebrow: 'Trái Cây Đúng Mùa Thu Hoạch',
-    title: 'Mùa Vụ Bội Thu,\nNgọt Ngào Tươi Mới.',
-    desc: 'Thưởng thức trái cây đặc sản chín cây tự nhiên từ Mộc Châu, Đà Lạt và Đồng Bằng Sông Cửu Long không chất bảo quản.',
-    ctaText: 'Xem trái cây mùa vụ',
+    image: '/banners/fruit_season_banner_v2.jpg',
+    tag: '🍊 Trái Cây Mùa Vụ Tự Nhiên',
+    badge: 'Chín Cây Ngọt Mát',
+    titleMain: 'Mùa Vụ Bội Thu,',
+    titleHighlight: 'Hương Vị Ngọt Lành',
+    desc: 'Xoài cát Hòa Lộc, bơ sáp 034, dâu tây Đà Lạt và cam sành mọng nước. Tươi ngon ngọt dịu tự nhiên, tuyệt đối không hóa chất bảo quản.',
+    ctaText: 'Chọn trái cây mùa vụ',
     ctaLink: '/products',
-    subLinkText: 'Đăng ký Combo tuần tiện lợi',
-    subLink: '/combos'
+    subLinkText: 'Lịch mùa vụ nông sản',
+    subLink: '/products',
+    stats: [
+      { num: '15+', label: 'Vùng đặc sản' },
+      { num: '0%', label: 'Chất bảo quản' },
+      { num: 'Mỗi ngày', label: 'Thu hái tận vườn' }
+    ]
+  },
+  {
+    image: '/banners/combo_box_banner_v2.jpg',
+    tag: '📦 Hộp Quà Xanh Gia Đình',
+    badge: 'Tiết Kiệm Đến 25%',
+    titleMain: 'Gói Combo Tiện Lợi,',
+    titleHighlight: 'Dinh Dưỡng Mỗi Ngày',
+    desc: 'Thiết kế cân bằng dinh dưỡng cho gia đình từ 2 - 6 người. Tự do tùy chọn các món ưa thích, giao định kỳ tận cửa đúng lịch hẹn.',
+    ctaText: 'Xem các gói Combo',
+    ctaLink: '/combos',
+    subLinkText: 'Tự chọn món ăn tuần',
+    subLink: '/combos',
+    stats: [
+      { num: '5,000+', label: 'Gia đình tin dùng' },
+      { num: '25%', label: 'Tiết kiệm chi phí' },
+      { num: 'Mỗi tuần', label: 'Tùy chọn đổi món' }
+    ]
   }
 ];
 
@@ -1107,16 +1138,19 @@ export default function LanhLandingPage() {
       </header>
 
       <main id="main">
-        {/* ── 1. BANNER HERO AI SLIDER (Full width & Bắt mắt) ── */}
-        <section style={{
-          position: 'relative',
-          overflow: 'hidden',
-          backgroundColor: '#0F2314',
-          minHeight: '520px',
-          display: 'flex',
-          alignItems: 'center'
-        }}>
-          {/* Background Images */}
+        {/* ── 1. BANNER HERO AI SLIDER (Full width, Glassmorphic Card & Hài Hòa) ── */}
+        <section 
+          style={{
+            position: 'relative',
+            overflow: 'hidden',
+            backgroundColor: '#0a1a0e',
+            minHeight: '580px',
+            display: 'flex',
+            alignItems: 'center'
+          }}
+          aria-label="Banner nổi bật"
+        >
+          {/* Background Images với hiệu ứng chuyển đổi mượt mà */}
           {heroSlides.map((slide, idx) => (
             <div
               key={idx}
@@ -1127,135 +1161,310 @@ export default function LanhLandingPage() {
                 width: '100%',
                 height: '100%',
                 opacity: currentSlide === idx ? 1 : 0,
-                transition: 'opacity 1s ease-in-out',
-                zIndex: 1
+                transform: currentSlide === idx ? 'scale(1.02)' : 'scale(1)',
+                transition: 'opacity 0.9s cubic-bezier(0.4, 0, 0.2, 1), transform 6s ease-out',
+                zIndex: 1,
+                pointerEvents: 'none'
               }}
             >
               <img
                 src={slide.image}
-                alt={slide.title}
+                alt={slide.titleMain + ' ' + slide.titleHighlight}
                 style={{
                   width: '100%',
                   height: '100%',
                   objectFit: 'cover',
                   objectPosition: 'center',
-                  filter: 'brightness(0.65)'
+                  filter: 'brightness(0.96) saturate(1.08)'
                 }}
               />
+              {/* Lớp phủ Gradient đa tầng thông minh: làm êm góc trái để chữ nổi bật, giữ trọn ánh sáng rực rỡ bên phải */}
               <div style={{
                 position: 'absolute',
                 top: 0,
                 left: 0,
                 width: '100%',
                 height: '100%',
-                background: 'linear-gradient(90deg, rgba(15,35,20,0.85) 0%, rgba(15,35,20,0.4) 60%, rgba(15,35,20,0.2) 100%)'
+                background: 'linear-gradient(90deg, rgba(8, 22, 12, 0.78) 0%, rgba(8, 22, 12, 0.45) 45%, rgba(8, 22, 12, 0.05) 100%)'
+              }} />
+              <div style={{
+                position: 'absolute',
+                bottom: 0,
+                left: 0,
+                width: '100%',
+                height: '140px',
+                background: 'linear-gradient(0deg, rgba(8, 22, 12, 0.5) 0%, transparent 100%)'
               }} />
             </div>
           ))}
 
-          {/* Content Overlay */}
-          <div className="wrap" style={{ position: 'relative', zIndex: 2, padding: '60px 24px', width: '100%' }}>
-            <div style={{ maxWidth: '640px', color: '#FFFFFF' }}>
-              <span style={{
-                display: 'inline-block',
-                backgroundColor: 'var(--green-700)',
-                color: '#FFFFFF',
-                padding: '6px 14px',
-                borderRadius: '999px',
-                fontSize: '12.5px',
-                fontWeight: '700',
-                letterSpacing: '1px',
-                textTransform: 'uppercase',
-                marginBottom: '16px',
-                boxShadow: '0 2px 10px rgba(46, 125, 50, 0.4)'
-              }}>
-                {activeSlideData.eyebrow}
-              </span>
+          {/* Content Box: Khung Kính Mờ Frosted Glassmorphism sang trọng */}
+          <div className="wrap" style={{ position: 'relative', zIndex: 2, padding: '48px 24px', width: '100%' }}>
+            <div 
+              style={{
+                maxWidth: '650px',
+                background: 'linear-gradient(135deg, rgba(10, 28, 14, 0.78) 0%, rgba(16, 42, 22, 0.62) 100%)',
+                backdropFilter: 'blur(16px)',
+                WebkitBackdropFilter: 'blur(16px)',
+                border: '1px solid rgba(255, 255, 255, 0.16)',
+                borderRadius: '24px',
+                padding: '36px 42px',
+                boxShadow: '0 20px 50px rgba(0, 0, 0, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
+                color: '#FFFFFF'
+              }}
+            >
+              {/* Tags & Badges */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '18px' }}>
+                <span style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  backgroundColor: 'rgba(76, 175, 80, 0.25)',
+                  color: '#C8E6C9',
+                  border: '1px solid rgba(129, 199, 132, 0.45)',
+                  padding: '5px 14px',
+                  borderRadius: '999px',
+                  fontSize: '12.5px',
+                  fontWeight: '700',
+                  letterSpacing: '0.4px'
+                }}>
+                  {activeSlideData.tag}
+                </span>
 
+                <span style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  backgroundColor: 'rgba(255, 193, 7, 0.18)',
+                  color: '#FFE082',
+                  border: '1px solid rgba(255, 213, 79, 0.4)',
+                  padding: '5px 12px',
+                  borderRadius: '999px',
+                  fontSize: '11.5px',
+                  fontWeight: '700',
+                  letterSpacing: '0.3px'
+                }}>
+                  ★ {activeSlideData.badge}
+                </span>
+              </div>
+
+              {/* Headline Tiêu Đề Hài Hòa */}
               <h1 style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: '44px',
+                fontFamily: 'var(--font-display, inherit)',
+                fontSize: 'clamp(32px, 4vw, 44px)',
                 lineHeight: '1.2',
                 fontWeight: '800',
                 color: '#FFFFFF',
                 margin: '0 0 16px 0',
-                whiteSpace: 'pre-line',
-                textShadow: '0 2px 10px rgba(0,0,0,0.3)'
+                letterSpacing: '-0.5px'
               }}>
-                {activeSlideData.title}
+                <div>{activeSlideData.titleMain}</div>
+                <div style={{
+                  background: 'linear-gradient(135deg, #A5D6A7 0%, #FFF59D 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  display: 'inline-block'
+                }}>
+                  {activeSlideData.titleHighlight}
+                </div>
               </h1>
 
+              {/* Mô Tả Dễ Đọc */}
               <p style={{
-                fontSize: '16px',
-                lineHeight: '1.6',
-                color: '#EAF4E9',
-                margin: '0 0 28px 0',
-                textShadow: '0 1px 4px rgba(0,0,0,0.3)'
+                fontSize: '15.5px',
+                lineHeight: '1.65',
+                color: '#E2EFE0',
+                margin: '0 0 24px 0',
+                fontWeight: '400',
+                textShadow: '0 1px 3px rgba(0,0,0,0.4)'
               }}>
                 {activeSlideData.desc}
               </p>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+              {/* Hàng Chỉ Số Uy Tín (Stats Row) */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(3, 1fr)',
+                gap: '12px',
+                padding: '14px 18px',
+                backgroundColor: 'rgba(0, 0, 0, 0.22)',
+                borderRadius: '14px',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                marginBottom: '26px'
+              }}>
+                {activeSlideData.stats.map((st, sIdx) => (
+                  <div key={sIdx} style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: '18px', fontWeight: '800', color: '#A5D6A7' }}>
+                      {st.num}
+                    </div>
+                    <div style={{ fontSize: '11.5px', color: '#B0BEC5', marginTop: '2px', fontWeight: '500' }}>
+                      {st.label}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Nhóm Nút Bấm Kêu Gọi Hành Động (CTA Buttons) */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
                 <Link
                   href={activeSlideData.ctaLink}
-                  className="btn btn-accent"
                   style={{
-                    padding: '14px 28px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '13px 26px',
                     fontSize: '15px',
                     fontWeight: '700',
+                    color: '#FFFFFF',
+                    background: 'linear-gradient(135deg, #2E7D32 0%, #1B5E20 100%)',
                     borderRadius: '999px',
-                    boxShadow: '0 4px 20px rgba(255, 152, 0, 0.4)'
+                    textDecoration: 'none',
+                    boxShadow: '0 6px 20px rgba(46, 125, 50, 0.45)',
+                    border: '1px solid rgba(255, 255, 255, 0.25)',
+                    transition: 'all 0.2s ease-in-out'
                   }}
+                  onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+                  onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
                 >
-                  {activeSlideData.ctaText} →
+                  <span>{activeSlideData.ctaText}</span>
+                  <span style={{ fontSize: '16px' }}>→</span>
                 </Link>
 
                 <Link
                   href={activeSlideData.subLink}
                   style={{
-                    color: '#FFFFFF',
-                    textDecoration: 'none',
-                    fontSize: '14.5px',
-                    fontWeight: '600',
-                    display: 'flex',
+                    display: 'inline-flex',
                     alignItems: 'center',
                     gap: '6px',
-                    padding: '10px 16px',
+                    padding: '12px 20px',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    color: '#FFFFFF',
+                    textDecoration: 'none',
                     borderRadius: '999px',
-                    backgroundColor: 'rgba(255,255,255,0.15)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.12)',
                     backdropFilter: 'blur(8px)',
-                    transition: 'all 0.2s'
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    transition: 'all 0.2s ease-in-out'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.22)';
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.12)';
+                    e.currentTarget.style.transform = 'translateY(0)';
                   }}
                 >
-                  {activeSlideData.subLinkText}
+                  <span>🔍</span>
+                  <span>{activeSlideData.subLinkText}</span>
                 </Link>
               </div>
             </div>
           </div>
 
-          {/* Slider Dots */}
+          {/* Nút Điều Hướng Trái / Phải (Glassmorphic Navigation Arrows) */}
+          <button
+            onClick={() => setCurrentSlide(prev => (prev - 1 + heroSlides.length) % heroSlides.length)}
+            aria-label="Slide trước"
+            style={{
+              position: 'absolute',
+              left: '24px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              zIndex: 3,
+              width: '44px',
+              height: '44px',
+              borderRadius: '50%',
+              backgroundColor: 'rgba(10, 26, 14, 0.55)',
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              color: '#FFFFFF',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '18px',
+              cursor: 'pointer',
+              boxShadow: '0 4px 15px rgba(0,0,0,0.3)',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(46, 125, 50, 0.85)';
+              e.currentTarget.style.transform = 'translateY(-50%) scale(1.08)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(10, 26, 14, 0.55)';
+              e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
+            }}
+          >
+            ❮
+          </button>
+
+          <button
+            onClick={() => setCurrentSlide(prev => (prev + 1) % heroSlides.length)}
+            aria-label="Slide kế tiếp"
+            style={{
+              position: 'absolute',
+              right: '24px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              zIndex: 3,
+              width: '44px',
+              height: '44px',
+              borderRadius: '50%',
+              backgroundColor: 'rgba(10, 26, 14, 0.55)',
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              color: '#FFFFFF',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '18px',
+              cursor: 'pointer',
+              boxShadow: '0 4px 15px rgba(0,0,0,0.3)',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(46, 125, 50, 0.85)';
+              e.currentTarget.style.transform = 'translateY(-50%) scale(1.08)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(10, 26, 14, 0.55)';
+              e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
+            }}
+          >
+            ❯
+          </button>
+
+          {/* Dots Chỉ Báo Phân Trang (Modern Slide Indicators) */}
           <div style={{
             position: 'absolute',
             bottom: '24px',
-            right: '40px',
+            right: '48px',
             zIndex: 3,
             display: 'flex',
-            gap: '8px'
+            alignItems: 'center',
+            gap: '8px',
+            backgroundColor: 'rgba(10, 26, 14, 0.6)',
+            backdropFilter: 'blur(8px)',
+            padding: '6px 12px',
+            borderRadius: '999px',
+            border: '1px solid rgba(255, 255, 255, 0.15)'
           }}>
             {heroSlides.map((_, i) => (
               <button
                 key={i}
                 onClick={() => setCurrentSlide(i)}
                 style={{
-                  width: currentSlide === i ? '28px' : '10px',
-                  height: '10px',
+                  width: currentSlide === i ? '28px' : '9px',
+                  height: '9px',
                   borderRadius: '999px',
-                  backgroundColor: currentSlide === i ? 'var(--accent)' : 'rgba(255,255,255,0.5)',
+                  backgroundColor: currentSlide === i ? '#81C784' : 'rgba(255,255,255,0.4)',
                   border: 'none',
                   cursor: 'pointer',
-                  transition: 'all 0.3s'
+                  padding: 0,
+                  transition: 'all 0.35s cubic-bezier(0.4, 0, 0.2, 1)'
                 }}
-                aria-label={`Slide ${i + 1}`}
+                aria-label={`Chuyển tới Slide ${i + 1}`}
               />
             ))}
           </div>
