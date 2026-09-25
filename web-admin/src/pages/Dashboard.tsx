@@ -50,8 +50,10 @@ const { Text, Title } = Typography;
 
 interface RevenuePoint {
   name: string;
-  Revenue: number;
-  Orders: number;
+  revenue: number;
+  orders: number;
+  Revenue?: number;
+  Orders?: number;
 }
 
 interface TopProduct {
@@ -113,7 +115,15 @@ export const Dashboard: React.FC = () => {
 
       // 2. Tải doanh thu & đơn hàng theo chu kỳ động
       const revenueRes = await orderService.getRevenueWeekly(selectedRange);
-      setRevenueData(revenueRes.data || []);
+      const rawList = Array.isArray(revenueRes.data) ? revenueRes.data : [];
+      const normalized: RevenuePoint[] = rawList.map((item: any) => ({
+        name: item.name || '',
+        revenue: Number(item.revenue ?? item.Revenue ?? 0),
+        orders: Number(item.orders ?? item.Orders ?? 0),
+        Revenue: Number(item.revenue ?? item.Revenue ?? 0),
+        Orders: Number(item.orders ?? item.Orders ?? 0),
+      }));
+      setRevenueData(normalized);
 
       // 3. Tải top sản phẩm bán chạy
       const topProdRes = await orderService.getTopProducts(selectedRange);
@@ -124,7 +134,7 @@ export const Dashboard: React.FC = () => {
       setNearExpiry(expiryRes.data || []);
 
       setLastUpdated(dayjs().format('HH:mm:ss'));
-    } catch (error) {
+    } catch {
       message.error('Không thể kết nối API thống kê. Đang hiển thị dữ liệu mô phỏng.');
       
       // Fallback thông minh
@@ -148,13 +158,13 @@ export const Dashboard: React.FC = () => {
         }
       });
       setRevenueData([
-        { name: 'T2', Revenue: 4500000, Orders: 18 },
-        { name: 'T3', Revenue: 5200000, Orders: 22 },
-        { name: 'T4', Revenue: 6800000, Orders: 26 },
-        { name: 'T5', Revenue: 8100000, Orders: 31 },
-        { name: 'T6', Revenue: 7900000, Orders: 29 },
-        { name: 'T7', Revenue: 9500000, Orders: 36 },
-        { name: 'CN', Revenue: 10400000, Orders: 42 },
+        { name: 'T2', revenue: 4500000, orders: 18, Revenue: 4500000, Orders: 18 },
+        { name: 'T3', revenue: 5200000, orders: 22, Revenue: 5200000, Orders: 22 },
+        { name: 'T4', revenue: 6800000, orders: 26, Revenue: 6800000, Orders: 26 },
+        { name: 'T5', revenue: 8100000, orders: 31, Revenue: 8100000, Orders: 31 },
+        { name: 'T6', revenue: 7900000, orders: 29, Revenue: 7900000, Orders: 29 },
+        { name: 'T7', revenue: 9500000, orders: 36, Revenue: 9500000, Orders: 36 },
+        { name: 'CN', revenue: 10400000, orders: 42, Revenue: 10400000, Orders: 42 },
       ]);
       setTopProducts([
         { name: 'Cải bó xôi hữu cơ', sales: 165 },
@@ -425,52 +435,67 @@ export const Dashboard: React.FC = () => {
             loading={loading}
             style={{ borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
           >
-            <div style={{ width: '100%', height: 320 }}>
-              <ResponsiveContainer>
-                <AreaChart data={revenueData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
+            <div style={{ width: '100%', height: 340 }}>
+              <ResponsiveContainer width="100%" height={340}>
+                <AreaChart data={revenueData} margin={{ top: 15, right: 15, left: 10, bottom: 5 }}>
                   <defs>
                     <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#2e7d32" stopOpacity={0.4}/>
-                      <stop offset="95%" stopColor="#2e7d32" stopOpacity={0.0}/>
+                      <stop offset="5%" stopColor="#2e7d32" stopOpacity={0.45}/>
+                      <stop offset="95%" stopColor="#2e7d32" stopOpacity={0.02}/>
                     </linearGradient>
                     <linearGradient id="colorOrders" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#1677ff" stopOpacity={0.35}/>
-                      <stop offset="95%" stopColor="#1677ff" stopOpacity={0.0}/>
+                      <stop offset="5%" stopColor="#1677ff" stopOpacity={0.4}/>
+                      <stop offset="95%" stopColor="#1677ff" stopOpacity={0.02}/>
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
                   <XAxis dataKey="name" tickLine={false} />
-                  <YAxis yAxisId="left" tickLine={false} tickFormatter={(v) => `${(v / 1000).toLocaleString()}k`} />
-                  <YAxis yAxisId="right" orientation="right" tickLine={false} />
+                  <YAxis 
+                    yAxisId="left" 
+                    tickLine={false} 
+                    tickFormatter={(v) => v >= 1000000 ? `${(v / 1000000).toFixed(1)}tr` : (v >= 1000 ? `${(v / 1000).toFixed(0)}k` : `${v}`)} 
+                  />
+                  <YAxis 
+                    yAxisId="right" 
+                    orientation="right" 
+                    tickLine={false}
+                    allowDecimals={false}
+                  />
                   <Tooltip 
                     formatter={(value: any, name: any) => [
-                      name.includes('Doanh Thu') ? `${Number(value).toLocaleString('vi-VN')} đ` : `${value} đơn`,
+                      String(name).toLowerCase().includes('doanh thu') 
+                        ? `${Number(value).toLocaleString('vi-VN')} ₫` 
+                        : `${value} đơn hàng`,
                       name
                     ]}
                   />
-                  <Legend />
+                  <Legend verticalAlign="top" height={36} />
                   {(chartMetric === 'both' || chartMetric === 'revenue') && (
                     <Area 
                       yAxisId="left" 
                       type="monotone" 
-                      dataKey="Revenue" 
+                      dataKey="revenue" 
                       stroke="#2e7d32" 
                       strokeWidth={2.5}
                       fillOpacity={1} 
                       fill="url(#colorRevenue)" 
-                      name="Doanh Thu (đ)" 
+                      name="Doanh Thu (₫)" 
+                      dot={{ r: 3, fill: '#2e7d32' }}
+                      activeDot={{ r: 6 }}
                     />
                   )}
                   {(chartMetric === 'both' || chartMetric === 'orders') && (
                     <Area 
                       yAxisId="right" 
                       type="monotone" 
-                      dataKey="Orders" 
+                      dataKey="orders" 
                       stroke="#1677ff" 
                       strokeWidth={2}
                       fillOpacity={1} 
                       fill="url(#colorOrders)" 
                       name="Số Đơn Hàng" 
+                      dot={{ r: 3, fill: '#1677ff' }}
+                      activeDot={{ r: 6 }}
                     />
                   )}
                 </AreaChart>

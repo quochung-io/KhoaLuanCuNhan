@@ -203,35 +203,65 @@ public class OrdersController : ControllerBase
         if (timeRange?.ToLower() == "today")
         {
             var todayOrders = await _context.Orders
-                .Where(o => o.CreatedAt >= today && o.CreatedAt < today.AddDays(1))
+                .Where(o => o.CreatedAt >= today && o.CreatedAt < today.AddDays(1) && o.OrderStatus != "Cancelled" && o.OrderStatus != "Returned")
                 .ToListAsync();
 
             var slots = new[] { 0, 4, 8, 12, 16, 20 };
             var hourlyStats = slots.Select(hour => {
                 var slotOrders = todayOrders.Where(o => o.CreatedAt.HasValue && o.CreatedAt.Value.Hour >= hour && o.CreatedAt.Value.Hour < hour + 4).ToList();
+                decimal rev = slotOrders.Sum(o => o.TotalAmount);
+                int count = slotOrders.Count;
                 return new {
                     name = $"{hour:D2}:00",
-                    Revenue = slotOrders.Sum(o => o.TotalAmount),
-                    Orders = slotOrders.Count
+                    revenue = rev,
+                    orders = count
                 };
             }).ToList();
 
             return Ok(hourlyStats);
         }
+        else if (timeRange?.ToLower() == "thismonth")
+        {
+            var monthStart = new DateTime(today.Year, today.Month, 1);
+            var daysInMonth = DateTime.DaysInMonth(today.Year, today.Month);
+            var monthOrders = await _context.Orders
+                .Where(o => o.CreatedAt >= monthStart && o.OrderStatus != "Cancelled" && o.OrderStatus != "Returned")
+                .ToListAsync();
+
+            var stats = Enumerable.Range(0, daysInMonth)
+                .Select(i => monthStart.AddDays(i))
+                .Select(date => {
+                    decimal rev = monthOrders.Where(o => o.CreatedAt.HasValue && o.CreatedAt.Value.Date == date).Sum(o => o.TotalAmount);
+                    int count = monthOrders.Where(o => o.CreatedAt.HasValue && o.CreatedAt.Value.Date == date).Count();
+                    return new
+                    {
+                        name = date.ToString("dd/MM"),
+                        revenue = rev,
+                        orders = count
+                    };
+                })
+                .ToList();
+
+            return Ok(stats);
+        }
         else if (timeRange?.ToLower() == "30days" || timeRange?.ToLower() == "last30days")
         {
             var thirtyDaysAgo = today.AddDays(-29);
             var ordersList = await _context.Orders
-                .Where(o => o.CreatedAt >= thirtyDaysAgo)
+                .Where(o => o.CreatedAt >= thirtyDaysAgo && o.OrderStatus != "Cancelled" && o.OrderStatus != "Returned")
                 .ToListAsync();
 
             var stats = Enumerable.Range(0, 30)
                 .Select(i => thirtyDaysAgo.AddDays(i))
-                .Select(date => new
-                {
-                    name = date.ToString("dd/MM"),
-                    Revenue = ordersList.Where(o => o.CreatedAt.HasValue && o.CreatedAt.Value.Date == date).Sum(o => o.TotalAmount),
-                    Orders = ordersList.Where(o => o.CreatedAt.HasValue && o.CreatedAt.Value.Date == date).Count()
+                .Select(date => {
+                    decimal rev = ordersList.Where(o => o.CreatedAt.HasValue && o.CreatedAt.Value.Date == date).Sum(o => o.TotalAmount);
+                    int count = ordersList.Where(o => o.CreatedAt.HasValue && o.CreatedAt.Value.Date == date).Count();
+                    return new
+                    {
+                        name = date.ToString("dd/MM"),
+                        revenue = rev,
+                        orders = count
+                    };
                 })
                 .ToList();
 
@@ -241,15 +271,19 @@ public class OrdersController : ControllerBase
         {
             var yearStart = new DateTime(today.Year, 1, 1);
             var yearOrders = await _context.Orders
-                .Where(o => o.CreatedAt >= yearStart)
+                .Where(o => o.CreatedAt >= yearStart && o.OrderStatus != "Cancelled" && o.OrderStatus != "Returned")
                 .ToListAsync();
 
             var stats = Enumerable.Range(1, 12)
-                .Select(month => new
-                {
-                    name = $"T{month}",
-                    Revenue = yearOrders.Where(o => o.CreatedAt.HasValue && o.CreatedAt.Value.Month == month).Sum(o => o.TotalAmount),
-                    Orders = yearOrders.Where(o => o.CreatedAt.HasValue && o.CreatedAt.Value.Month == month).Count()
+                .Select(month => {
+                    decimal rev = yearOrders.Where(o => o.CreatedAt.HasValue && o.CreatedAt.Value.Month == month).Sum(o => o.TotalAmount);
+                    int count = yearOrders.Where(o => o.CreatedAt.HasValue && o.CreatedAt.Value.Month == month).Count();
+                    return new
+                    {
+                        name = $"T{month}",
+                        revenue = rev,
+                        orders = count
+                    };
                 })
                 .ToList();
 
@@ -260,16 +294,20 @@ public class OrdersController : ControllerBase
             // Mặc định: 7 ngày qua
             var sevenDaysAgo = today.AddDays(-6);
             var ordersList = await _context.Orders
-                .Where(o => o.CreatedAt >= sevenDaysAgo)
+                .Where(o => o.CreatedAt >= sevenDaysAgo && o.OrderStatus != "Cancelled" && o.OrderStatus != "Returned")
                 .ToListAsync();
 
             var stats = Enumerable.Range(0, 7)
                 .Select(i => sevenDaysAgo.AddDays(i))
-                .Select(date => new
-                {
-                    name = date.ToString("dd/MM"),
-                    Revenue = ordersList.Where(o => o.CreatedAt.HasValue && o.CreatedAt.Value.Date == date).Sum(o => o.TotalAmount),
-                    Orders = ordersList.Where(o => o.CreatedAt.HasValue && o.CreatedAt.Value.Date == date).Count()
+                .Select(date => {
+                    decimal rev = ordersList.Where(o => o.CreatedAt.HasValue && o.CreatedAt.Value.Date == date).Sum(o => o.TotalAmount);
+                    int count = ordersList.Where(o => o.CreatedAt.HasValue && o.CreatedAt.Value.Date == date).Count();
+                    return new
+                    {
+                        name = date.ToString("dd/MM"),
+                        revenue = rev,
+                        orders = count
+                    };
                 })
                 .ToList();
 
