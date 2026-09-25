@@ -58,9 +58,9 @@ export const orderService = {
   update: (id: number, data: any) => api.put(`/orders/${id}`, data),
   updateStatus: (id: number, data: { orderStatus: string; paymentStatus?: string }) => api.put(`/orders/${id}/status`, data),
   delete: (id: number) => api.delete(`/orders/${id}`),
-  getSummary: () => api.get('/orders/stats/summary'),
-  getRevenueWeekly: () => api.get('/orders/stats/revenue-weekly'),
-  getTopProducts: () => api.get('/orders/stats/top-products'),
+  getSummary: (timeRange = '7days') => api.get(`/orders/stats/summary?timeRange=${timeRange}`),
+  getRevenueWeekly: (timeRange = '7days') => api.get(`/orders/stats/revenue-weekly?timeRange=${timeRange}`),
+  getTopProducts: (timeRange = '7days') => api.get(`/orders/stats/top-products?timeRange=${timeRange}`),
   getNearExpiry: () => api.get('/orders/stats/near-expiry'),
 };
 
@@ -93,7 +93,10 @@ export const reportService = {
     startDate?: string;
     endDate?: string;
     categoryId?: number;
+    supplierId?: number;
     status?: string;
+    stockStatus?: string;
+    performance?: string;
     search?: string;
     page?: number;
     pageSize?: number;
@@ -105,7 +108,10 @@ export const reportService = {
     startDate?: string;
     endDate?: string;
     categoryId?: number;
+    supplierId?: number;
     status?: string;
+    stockStatus?: string;
+    performance?: string;
     search?: string;
   }) => api.get('/reports/products/export', { params, responseType: 'blob' }),
   getRevenueDrilldown: (params?: any) => api.get('/reports/products/drilldown/revenue', { params }),

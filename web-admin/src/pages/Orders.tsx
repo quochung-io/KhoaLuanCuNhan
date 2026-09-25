@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Button, Space, Modal, Form, Select, Tag, message, Card, Tooltip, Steps } from 'antd';
-import { EditOutlined, EyeOutlined } from '@ant-design/icons';
+import { Table, Button, Space, Modal, Form, Select, Tag, message, Card, Tooltip, Steps, Input, DatePicker, Row, Col } from 'antd';
+import { EditOutlined, EyeOutlined, SearchOutlined, ReloadOutlined, ShoppingOutlined } from '@ant-design/icons';
+import dayjs from 'dayjs';
 import { orderService } from '../services/api';
 
 interface OrderItem {
@@ -44,6 +45,87 @@ export const Orders: React.FC = () => {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [form] = Form.useForm();
+
+  // States Tìm Kiếm & Bộ Lọc Đơn Hàng & Vận Hành (Tất cả thành phần trong bảng)
+  const [searchOrderId, setSearchOrderId] = useState('');
+  const [searchCustomer, setSearchCustomer] = useState('');
+  const [searchAddress, setSearchAddress] = useState('');
+  const [filterOrderStatus, setFilterOrderStatus] = useState<string>('all');
+  const [filterPaymentStatus, setFilterPaymentStatus] = useState<string>('all');
+  const [orderDateRange, setOrderDateRange] = useState<any>(null);
+
+  const isFiltering = Boolean(
+    searchOrderId.trim() ||
+    searchCustomer.trim() ||
+    searchAddress.trim() ||
+    filterOrderStatus !== 'all' ||
+    filterPaymentStatus !== 'all' ||
+    (orderDateRange && orderDateRange.length === 2 && orderDateRange[0] && orderDateRange[1])
+  );
+
+  const handleResetFilters = () => {
+    setSearchOrderId('');
+    setSearchCustomer('');
+    setSearchAddress('');
+    setFilterOrderStatus('all');
+    setFilterPaymentStatus('all');
+    setOrderDateRange(null);
+  };
+
+  const filteredOrders = orders.filter(o => {
+    // 1. Mã đơn hàng (ID)
+    if (searchOrderId.trim()) {
+      const q = searchOrderId.trim().toLowerCase().replace('#', '').replace('ord-', '');
+      const matchId = o.orderId.toString().includes(q);
+      if (!matchId) return false;
+    }
+
+    // 2. Khách hàng (Tên, SĐT, Email, Tên người nhận)
+    if (searchCustomer.trim()) {
+      const q = searchCustomer.trim().toLowerCase();
+      const matchCustomer = (o.customer?.fullName || '').toLowerCase().includes(q);
+      const matchEmail = (o.customer?.email || '').toLowerCase().includes(q);
+      const matchReceiver = (o.address?.receiverName || '').toLowerCase().includes(q);
+      const matchPhone = (o.address?.phone || '').includes(q);
+      if (!matchCustomer && !matchEmail && !matchReceiver && !matchPhone) return false;
+    }
+
+    // 3. Địa chỉ giao đến (Quận, Huyện, Tỉnh, Địa chỉ chi tiết)
+    if (searchAddress.trim()) {
+      const q = searchAddress.trim().toLowerCase();
+      const addr = [
+        o.address?.addressDetail,
+        o.address?.ward,
+        o.address?.district,
+        o.address?.province,
+        o.address?.addressType
+      ].filter(Boolean).join(' ').toLowerCase();
+      if (!addr.includes(q)) return false;
+    }
+
+    // 4. Trạng thái đơn hàng (Vận hành)
+    if (filterOrderStatus !== 'all') {
+      if ((o.orderStatus || '').toLowerCase() !== filterOrderStatus.toLowerCase()) return false;
+    }
+
+    // 5. Trạng thái thanh toán
+    if (filterPaymentStatus !== 'all') {
+      const p = (o.paymentStatus || '').toLowerCase();
+      if (filterPaymentStatus === 'Paid' && p !== 'paid') return false;
+      if (filterPaymentStatus === 'Refunded' && p !== 'refunded') return false;
+      if (filterPaymentStatus === 'Pending' && (p === 'paid' || p === 'refunded')) return false;
+    }
+
+    // 6. Khoảng ngày đặt hàng
+    if (orderDateRange && orderDateRange.length === 2 && orderDateRange[0] && orderDateRange[1]) {
+      const orderDate = dayjs(o.createdAt);
+      const start = orderDateRange[0].startOf('day');
+      const end = orderDateRange[1].endOf('day');
+      if (orderDate.isBefore(start) || orderDate.isAfter(end)) return false;
+    }
+
+    return true;
+  });
 
   const fetchOrders = async () => {
     setLoading(true);
@@ -195,15 +277,33 @@ export const Orders: React.FC = () => {
   };
 
   const columns = [
-    { title: 'Mã Đơn', dataIndex: 'orderId', key: 'orderId', width: 90 },
     { 
-      title: 'Khách hàng', 
-      dataIndex: ['customer', 'fullName'], 
-      key: 'customerName', 
-      render: (text: string, record: Order) => text || `User ID: ${record.customerId}` 
+      title: 'Mã Đơn', 
+      dataIndex: 'orderId', 
+      key: 'orderId', 
+      width: 95,
+      sorter: (a: Order, b: Order) => a.orderId - b.orderId,
+      defaultSortOrder: 'descend' as const,
+      render: (id: number) => <Tag color="geekblue" style={{ fontWeight: 600 }}>#{id}</Tag>
     },
     { 
-      title: 'Giao đến', 
+      title: 'Khách hàng & Liên hệ', 
+      key: 'customerName',
+      sorter: (a: Order, b: Order) => (a.customer?.fullName || '').localeCompare(b.customer?.fullName || ''),
+      render: (_: any, record: Order) => (
+        <div>
+          <b style={{ color: '#1b5e20' }}>{record.customer?.fullName || record.address?.receiverName || `Khách hàng #${record.customerId}`}</b>
+          {record.address?.phone && (
+            <div style={{ fontSize: '11.5px', color: '#1677ff' }}>📞 {record.address.phone}</div>
+          )}
+          {record.customer?.email && (
+            <div style={{ fontSize: '11px', color: '#888' }}>{record.customer.email}</div>
+          )}
+        </div>
+      )
+    },
+    { 
+      title: 'Giao đến (Địa chỉ)', 
       key: 'shippingAddress',
       render: (_: any, record: Order) => (
         record.address ? (
@@ -211,8 +311,8 @@ export const Orders: React.FC = () => {
             <Tag color={record.address.addressType === 'Công ty' ? 'blue' : 'green'} style={{ marginBottom: 2, fontSize: 11 }}>
               {record.address.addressType === 'Công ty' ? '🏢 Công ty' : '🏠 Nhà ở'}
             </Tag>
-            <div style={{ fontSize: '12px', color: '#555' }}>
-              {record.address.receiverName} - {record.address.district}
+            <div style={{ fontSize: '12px', color: '#444', maxWidth: 220 }} className="truncate">
+              {record.address.addressDetail ? `${record.address.addressDetail}, ` : ''}{record.address.district}, {record.address.province}
             </div>
           </div>
         ) : <span style={{ color: '#999' }}>-</span>
@@ -222,27 +322,28 @@ export const Orders: React.FC = () => {
       title: 'Ngày đặt', 
       dataIndex: 'createdAt', 
       key: 'createdAt',
-      render: (date: string) => date ? new Date(date).toLocaleString('vi-VN') : 'N/A'
+      width: 140,
+      sorter: (a: Order, b: Order) => dayjs(a.createdAt).unix() - dayjs(b.createdAt).unix(),
+      render: (date: string) => (
+        <span style={{ fontSize: '12px', color: '#555' }}>
+          {date ? dayjs(date).format('DD/MM/YYYY HH:mm') : 'N/A'}
+        </span>
+      )
     },
     { 
       title: 'Tổng tiền', 
       dataIndex: 'totalAmount', 
       key: 'totalAmount',
-      render: (val: number) => <strong>{val.toLocaleString('vi-VN')} VNĐ</strong>
+      width: 130,
+      sorter: (a: Order, b: Order) => a.totalAmount - b.totalAmount,
+      render: (val: number) => <strong style={{ color: '#d32f2f' }}>{val.toLocaleString('vi-VN')} đ</strong>
     },
     { 
-      title: 'Trạng thái đơn hàng', 
+      title: 'Trạng thái vận hành', 
       dataIndex: 'orderStatus', 
       key: 'orderStatus',
-      filters: [
-        { text: 'Chờ xác nhận (Pending)', value: 'Pending' },
-        { text: 'Đã xác nhận (Confirmed)', value: 'Confirmed' },
-        { text: 'Đang giao hàng (Shipping)', value: 'Shipping' },
-        { text: 'Giao thành công (Completed)', value: 'Completed' },
-        { text: 'Đã hủy (Cancelled)', value: 'Cancelled' },
-        { text: 'Trả hàng / Hoàn tiền (Returned)', value: 'Returned' },
-      ],
-      onFilter: (value: any, record: Order) => record.orderStatus?.toLowerCase() === String(value).toLowerCase(),
+      width: 170,
+      sorter: (a: Order, b: Order) => (a.orderStatus || '').localeCompare(b.orderStatus || ''),
       render: (status: string) => (
         <Tag color={getStatusTagColor(status)} style={{ fontWeight: 600 }}>
           {getStatusLabel(status)} ({status?.toUpperCase() || 'PENDING'})
@@ -253,17 +354,8 @@ export const Orders: React.FC = () => {
       title: 'Thanh toán', 
       dataIndex: 'paymentStatus', 
       key: 'paymentStatus',
-      filters: [
-        { text: 'Đã thanh toán (Paid)', value: 'Paid' },
-        { text: 'Chưa thanh toán (Pending/Unpaid)', value: 'Pending' },
-        { text: 'Đã hoàn tiền (Refunded)', value: 'Refunded' },
-      ],
-      onFilter: (value: any, record: Order) => {
-        const p = record.paymentStatus?.toLowerCase();
-        if (value === 'Paid') return p === 'paid';
-        if (value === 'Refunded') return p === 'refunded';
-        return p !== 'paid' && p !== 'refunded';
-      },
+      width: 150,
+      sorter: (a: Order, b: Order) => (a.paymentStatus || '').localeCompare(b.paymentStatus || ''),
       render: (text: string) => {
         const isPaid = text?.toLowerCase() === 'paid';
         const isRefunded = text?.toLowerCase() === 'refunded';
@@ -277,13 +369,15 @@ export const Orders: React.FC = () => {
     { 
       title: 'Tác vụ', 
       key: 'actions',
+      width: 160,
       render: (_: any, record: Order) => {
         const isTerminal = ['cancelled', 'returned'].includes(record.orderStatus?.toLowerCase());
         return (
-          <Space size="middle">
-            <Button icon={<EyeOutlined />} onClick={() => handleOpenView(record)}>Chi tiết</Button>
+          <Space size="small">
+            <Button size="small" icon={<EyeOutlined />} onClick={() => handleOpenView(record)}>Chi tiết</Button>
             <Tooltip title={isTerminal ? 'Đơn hàng đã kết thúc (Terminal), không thể đổi trạng thái' : 'Cập nhật trạng thái kế tiếp'}>
               <Button 
+                size="small"
                 icon={<EditOutlined />} 
                 disabled={isTerminal}
                 onClick={() => handleOpenEdit(record)}
@@ -299,13 +393,143 @@ export const Orders: React.FC = () => {
 
   return (
     <div style={{ padding: 24 }}>
-      <Card title="Quản Lý Đơn Hàng & Vận Hành">
+      <Card 
+        title={
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <ShoppingOutlined style={{ color: '#2e7d32', fontSize: '20px' }} />
+            <span>Quản Lý Đơn Hàng & Vận Hành Chuỗi Cung Ứng</span>
+          </div>
+        }
+      >
+        {/* KHUNG TÌM KIẾM & BỘ LỌC ĐƠN HÀNG VẬN HÀNH */}
+        <div style={{ 
+          background: '#f8fafc', 
+          border: '1px solid #e2e8f0', 
+          borderRadius: '10px', 
+          padding: '16px', 
+          marginBottom: '16px' 
+        }}>
+          <Row gutter={[12, 12]} align="middle">
+            {/* 1. Mã đơn */}
+            <Col xs={24} sm={12} md={4}>
+              <div style={{ fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>
+                Mã đơn hàng:
+              </div>
+              <Input
+                placeholder="Nhập mã đơn (VD: 1, 2)..."
+                prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
+                allowClear
+                value={searchOrderId}
+                onChange={e => setSearchOrderId(e.target.value)}
+              />
+            </Col>
+
+            {/* 2. Khách hàng / Liên hệ */}
+            <Col xs={24} sm={12} md={5}>
+              <div style={{ fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>
+                Khách hàng / SĐT:
+              </div>
+              <Input
+                placeholder="Tên khách, SĐT, Email..."
+                prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
+                allowClear
+                value={searchCustomer}
+                onChange={e => setSearchCustomer(e.target.value)}
+              />
+            </Col>
+
+            {/* 3. Địa chỉ giao hàng */}
+            <Col xs={24} sm={12} md={5}>
+              <div style={{ fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>
+                Địa chỉ / Khu vực giao:
+              </div>
+              <Input
+                placeholder="Quận, huyện, tỉnh thành..."
+                prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
+                allowClear
+                value={searchAddress}
+                onChange={e => setSearchAddress(e.target.value)}
+              />
+            </Col>
+
+            {/* 4. Trạng thái vận hành */}
+            <Col xs={24} sm={12} md={4}>
+              <div style={{ fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>
+                Trạng thái vận hành:
+              </div>
+              <Select
+                style={{ width: '100%' }}
+                value={filterOrderStatus}
+                onChange={val => setFilterOrderStatus(val)}
+              >
+                <Select.Option value="all">Tất cả trạng thái</Select.Option>
+                <Select.Option value="Pending">Chờ xác nhận (Pending)</Select.Option>
+                <Select.Option value="Confirmed">Đã xác nhận (Confirmed)</Select.Option>
+                <Select.Option value="Shipping">Đang giao hàng (Shipping)</Select.Option>
+                <Select.Option value="Completed">Giao thành công (Completed)</Select.Option>
+                <Select.Option value="Cancelled">Đã hủy (Cancelled)</Select.Option>
+                <Select.Option value="Returned">Trả hàng / Hoàn tiền (Returned)</Select.Option>
+              </Select>
+            </Col>
+
+            {/* 5. Trạng thái thanh toán */}
+            <Col xs={24} sm={12} md={3}>
+              <div style={{ fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>
+                Thanh toán:
+              </div>
+              <Select
+                style={{ width: '100%' }}
+                value={filterPaymentStatus}
+                onChange={val => setFilterPaymentStatus(val)}
+              >
+                <Select.Option value="all">Tất cả</Select.Option>
+                <Select.Option value="Paid">Đã thanh toán</Select.Option>
+                <Select.Option value="Pending">Chưa thanh toán</Select.Option>
+                <Select.Option value="Refunded">Đã hoàn tiền</Select.Option>
+              </Select>
+            </Col>
+
+            {/* 6. Nút Đặt lại */}
+            <Col xs={24} sm={12} md={3} style={{ display: 'flex', alignItems: 'flex-end' }}>
+              <Button 
+                icon={<ReloadOutlined />} 
+                onClick={handleResetFilters}
+                style={{ width: '100%' }}
+              >
+                Đặt lại
+              </Button>
+            </Col>
+          </Row>
+
+          {/* Dòng 2: Khoảng ngày đặt hàng & Thống kê kết quả */}
+          <div style={{ marginTop: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10, fontSize: '12.5px', color: '#64748b' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '12px', fontWeight: 600, color: '#475569' }}>Ngày đặt hàng:</span>
+              <DatePicker.RangePicker
+                format="DD/MM/YYYY"
+                style={{ width: 240 }}
+                value={orderDateRange}
+                onChange={val => setOrderDateRange(val)}
+              />
+            </div>
+
+            <div>
+              Tìm thấy: <b style={{ color: '#16a34a', fontSize: '13.5px' }}>{filteredOrders.length}</b> / {orders.length} đơn hàng
+              {isFiltering && (
+                <Tag color="processing" style={{ marginLeft: 8 }}>
+                  Đang áp dụng bộ lọc
+                </Tag>
+              )}
+            </div>
+          </div>
+        </div>
+
         <Table 
           columns={columns} 
-          dataSource={orders} 
+          dataSource={filteredOrders} 
           rowKey="orderId" 
           loading={loading}
-          pagination={{ pageSize: 10 }}
+          pagination={{ pageSize: 10, showTotal: (total) => `Tổng ${total} đơn hàng` }}
         />
       </Card>
 

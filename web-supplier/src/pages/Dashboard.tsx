@@ -37,7 +37,8 @@ import {
   ReloadOutlined,
   SafetyCertificateOutlined,
   EditOutlined,
-  DeleteOutlined
+  DeleteOutlined,
+  SearchOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { useNavigate } from 'react-router-dom';
@@ -111,6 +112,70 @@ export const Dashboard = () => {
   const [orders, setOrders] = useState(initialOrders);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+
+  // States tìm kiếm & bộ lọc Nông sản của Nhà cung cấp
+  const [supplierProdIdFilter, setSupplierProdIdFilter] = useState('');
+  const [supplierProdNameFilter, setSupplierProdNameFilter] = useState('');
+  const [supplierProdStatusFilter, setSupplierProdStatusFilter] = useState<string>('all');
+
+  const filteredProducts = products.filter(p => {
+    if (supplierProdIdFilter.trim()) {
+      if (!p.productId.toString().includes(supplierProdIdFilter.trim())) return false;
+    }
+    if (supplierProdNameFilter.trim()) {
+      const q = supplierProdNameFilter.trim().toLowerCase();
+      if (!p.productName.toLowerCase().includes(q)) return false;
+    }
+    if (supplierProdStatusFilter !== 'all') {
+      if (p.status !== supplierProdStatusFilter) return false;
+    }
+    return true;
+  });
+
+  // States tìm kiếm & bộ lọc Lô thu hoạch của Nhà cung cấp
+  const [supplierLotCodeFilter, setSupplierLotCodeFilter] = useState('');
+  const [supplierLotProdFilter, setSupplierLotProdFilter] = useState('');
+  const [supplierLotFefoFilter, setSupplierLotFefoFilter] = useState('all');
+
+  const filteredBatches = batches.filter(b => {
+    if (supplierLotCodeFilter.trim()) {
+      const q = supplierLotCodeFilter.trim().toLowerCase();
+      const matchId = b.batchId.toString().includes(q);
+      const matchCode = (b.batchCode || '').toLowerCase().includes(q);
+      if (!matchId && !matchCode) return false;
+    }
+    if (supplierLotProdFilter.trim()) {
+      const q = supplierLotProdFilter.trim().toLowerCase();
+      const pName = (b.product?.productName || '').toLowerCase();
+      if (!pName.includes(q)) return false;
+    }
+    if (supplierLotFefoFilter !== 'all') {
+      const isExpired = dayjs().isAfter(dayjs(b.expiryDate), 'day');
+      const isNearExp = dayjs().add(3, 'day').isAfter(dayjs(b.expiryDate), 'day');
+      if (supplierLotFefoFilter === 'expired' && !isExpired) return false;
+      if (supplierLotFefoFilter === 'warning' && (isExpired || !isNearExp)) return false;
+      if (supplierLotFefoFilter === 'valid' && isNearExp) return false;
+    }
+    return true;
+  });
+
+  // States tìm kiếm & bộ lọc Đơn hàng của Nhà cung cấp
+  const [supplierOrderIdFilter, setSupplierOrderIdFilter] = useState('');
+  const [supplierOrderCustomerFilter, setSupplierOrderCustomerFilter] = useState('');
+  const [supplierOrderStatusFilter, setSupplierOrderStatusFilter] = useState('all');
+
+  const filteredSupplierOrders = orders.filter(o => {
+    if (supplierOrderIdFilter.trim()) {
+      if (!o.orderId.toLowerCase().includes(supplierOrderIdFilter.trim().toLowerCase())) return false;
+    }
+    if (supplierOrderCustomerFilter.trim()) {
+      if (!o.customer.toLowerCase().includes(supplierOrderCustomerFilter.trim().toLowerCase())) return false;
+    }
+    if (supplierOrderStatusFilter !== 'all') {
+      if (o.status !== supplierOrderStatusFilter) return false;
+    }
+    return true;
+  });
 
   const navigate = useNavigate();
 
@@ -405,8 +470,22 @@ export const Dashboard = () => {
 
   // Cột Sản phẩm lẻ (Đồng bộ với Database)
   const productColumns = [
-    { title: 'ID', dataIndex: 'productId', key: 'productId', width: 65, render: (id: number) => <Tag>#{id}</Tag> },
-    { title: 'Tên nông sản', dataIndex: 'productName', key: 'productName', render: (text: string) => <b>{text}</b> },
+    { 
+      title: 'ID', 
+      dataIndex: 'productId', 
+      key: 'productId', 
+      width: 75, 
+      sorter: (a: BackendProduct, b: BackendProduct) => a.productId - b.productId,
+      defaultSortOrder: 'descend' as const,
+      render: (id: number) => <Tag color="blue">#{id}</Tag> 
+    },
+    { 
+      title: 'Tên nông sản', 
+      dataIndex: 'productName', 
+      key: 'productName', 
+      sorter: (a: BackendProduct, b: BackendProduct) => a.productName.localeCompare(b.productName),
+      render: (text: string) => <b>{text}</b> 
+    },
     { 
       title: 'Danh mục', 
       dataIndex: ['category', 'categoryName'], 
@@ -437,6 +516,7 @@ export const Dashboard = () => {
       title: 'Giá bán sàn', 
       dataIndex: 'price', 
       key: 'price',
+      sorter: (a: BackendProduct, b: BackendProduct) => a.price - b.price,
       render: (val: number) => <span style={{ color: '#d32f2f', fontWeight: 600 }}>{Number(val).toLocaleString('vi-VN')} đ</span>
     },
     { title: 'ĐVT', dataIndex: 'unit', key: 'unit', width: 70 },
@@ -657,10 +737,27 @@ export const Dashboard = () => {
 
   // Cột Đơn hàng cần đóng gói
   const orderColumns = [
-    { title: 'Mã đơn', dataIndex: 'orderId', key: 'orderId' },
-    { title: 'Khách hàng', dataIndex: 'customer', key: 'customer' },
+    { 
+      title: 'Mã đơn', 
+      dataIndex: 'orderId', 
+      key: 'orderId',
+      sorter: (a: any, b: any) => a.orderId.localeCompare(b.orderId),
+      render: (id: string) => <Tag color="geekblue" style={{ fontWeight: 600 }}>{id}</Tag>
+    },
+    { 
+      title: 'Khách hàng', 
+      dataIndex: 'customer', 
+      key: 'customer',
+      sorter: (a: any, b: any) => a.customer.localeCompare(b.customer),
+      render: (t: string) => <b>{t}</b>
+    },
     { title: 'Sản phẩm đặt', dataIndex: 'items', key: 'items' },
-    { title: 'Ngày đặt', dataIndex: 'date', key: 'date' },
+    { 
+      title: 'Ngày đặt', 
+      dataIndex: 'date', 
+      key: 'date',
+      sorter: (a: any, b: any) => a.date.localeCompare(b.date)
+    },
     { 
       title: 'Tiến độ', 
       dataIndex: 'status', 
@@ -837,12 +934,65 @@ export const Dashboard = () => {
                 </Space>
               }
             >
+              {/* KHUNG TÌM KIẾM NÔNG SẢN */}
+              <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '12px 16px', marginBottom: '16px' }}>
+                <Row gutter={[12, 12]} align="middle">
+                  <Col xs={24} sm={12} md={5}>
+                    <div style={{ fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>Mã ID:</div>
+                    <Input 
+                      placeholder="Nhập ID (VD: 922)..." 
+                      prefix={<SearchOutlined style={{ color: '#94a3b8' }} />} 
+                      allowClear 
+                      value={supplierProdIdFilter} 
+                      onChange={e => setSupplierProdIdFilter(e.target.value)} 
+                    />
+                  </Col>
+                  <Col xs={24} sm={12} md={9}>
+                    <div style={{ fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>Tên nông sản:</div>
+                    <Input 
+                      placeholder="Tìm theo tên nông sản..." 
+                      prefix={<SearchOutlined style={{ color: '#94a3b8' }} />} 
+                      allowClear 
+                      value={supplierProdNameFilter} 
+                      onChange={e => setSupplierProdNameFilter(e.target.value)} 
+                    />
+                  </Col>
+                  <Col xs={24} sm={12} md={6}>
+                    <div style={{ fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>Trạng thái duyệt:</div>
+                    <Select 
+                      style={{ width: '100%' }} 
+                      value={supplierProdStatusFilter} 
+                      onChange={val => setSupplierProdStatusFilter(val)}
+                    >
+                      <Select.Option value="all">Tất cả trạng thái</Select.Option>
+                      <Select.Option value="Active">Đã duyệt (Active)</Select.Option>
+                      <Select.Option value="Pending">Chờ duyệt (Pending)</Select.Option>
+                    </Select>
+                  </Col>
+                  <Col xs={24} sm={12} md={4} style={{ display: 'flex', alignItems: 'flex-end' }}>
+                    <Button 
+                      icon={<ReloadOutlined />} 
+                      onClick={() => { setSupplierProdIdFilter(''); setSupplierProdNameFilter(''); setSupplierProdStatusFilter('all'); }}
+                      style={{ width: '100%' }}
+                    >
+                      Đặt lại
+                    </Button>
+                  </Col>
+                </Row>
+                <div style={{ marginTop: '8px', fontSize: '12px', color: '#64748b' }}>
+                  Tìm thấy: <b style={{ color: '#16a34a' }}>{filteredProducts.length}</b> / {products.length} nông sản
+                  {(supplierProdIdFilter.trim() || supplierProdNameFilter.trim() || supplierProdStatusFilter !== 'all') && (
+                    <Tag color="processing" style={{ marginLeft: 8 }}>Đang áp dụng bộ lọc</Tag>
+                  )}
+                </div>
+              </div>
+
               <Table 
                 columns={productColumns} 
-                dataSource={products} 
+                dataSource={filteredProducts} 
                 rowKey="productId"
                 loading={loading}
-                pagination={{ pageSize: 8 }}
+                pagination={{ pageSize: 8, showTotal: total => `Tổng ${total} nông sản` }}
               />
             </Card>
           )}
@@ -907,20 +1057,128 @@ export const Dashboard = () => {
                 description="Mỗi lô hàng mang một mã truy xuất riêng biệt, được kết nối trực tiếp với trang Khách hàng (Web-Store) và mã QR trên bao bì sản phẩm. Nhà cung cấp có thể chỉnh sửa lại các thông số nếu phát hiện sai sót."
                 style={{ marginBottom: 16, borderRadius: '8px' }}
               />
+              {/* KHUNG TÌM KIẾM LÔ THU HOẠCH */}
+              <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '12px 16px', marginBottom: '16px' }}>
+                <Row gutter={[12, 12]} align="middle">
+                  <Col xs={24} sm={12} md={5}>
+                    <div style={{ fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>Mã Lô / ID Lô:</div>
+                    <Input 
+                      placeholder="Nhập mã lô hoặc ID..." 
+                      prefix={<SearchOutlined style={{ color: '#94a3b8' }} />} 
+                      allowClear 
+                      value={supplierLotCodeFilter} 
+                      onChange={e => setSupplierLotCodeFilter(e.target.value)} 
+                    />
+                  </Col>
+                  <Col xs={24} sm={12} md={9}>
+                    <div style={{ fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>Tên nông sản:</div>
+                    <Input 
+                      placeholder="Tìm theo tên nông sản..." 
+                      prefix={<SearchOutlined style={{ color: '#94a3b8' }} />} 
+                      allowClear 
+                      value={supplierLotProdFilter} 
+                      onChange={e => setSupplierLotProdFilter(e.target.value)} 
+                    />
+                  </Col>
+                  <Col xs={24} sm={12} md={6}>
+                    <div style={{ fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>Tình trạng hạn dùng (FEFO):</div>
+                    <Select 
+                      style={{ width: '100%' }} 
+                      value={supplierLotFefoFilter} 
+                      onChange={val => setSupplierLotFefoFilter(val)}
+                    >
+                      <Select.Option value="all">Tất cả hạn dùng</Select.Option>
+                      <Select.Option value="valid">🟢 Còn hạn an toàn</Select.Option>
+                      <Select.Option value="warning">🟠 Cận hạn (≤ 3 ngày)</Select.Option>
+                      <Select.Option value="expired">🔴 Đã hết hạn</Select.Option>
+                    </Select>
+                  </Col>
+                  <Col xs={24} sm={12} md={4} style={{ display: 'flex', alignItems: 'flex-end' }}>
+                    <Button 
+                      icon={<ReloadOutlined />} 
+                      onClick={() => { setSupplierLotCodeFilter(''); setSupplierLotProdFilter(''); setSupplierLotFefoFilter('all'); }}
+                      style={{ width: '100%' }}
+                    >
+                      Đặt lại
+                    </Button>
+                  </Col>
+                </Row>
+                <div style={{ marginTop: '8px', fontSize: '12px', color: '#64748b' }}>
+                  Tìm thấy: <b style={{ color: '#16a34a' }}>{filteredBatches.length}</b> / {batches.length} lô thu hoạch
+                  {(supplierLotCodeFilter.trim() || supplierLotProdFilter.trim() || supplierLotFefoFilter !== 'all') && (
+                    <Tag color="processing" style={{ marginLeft: 8 }}>Đang áp dụng bộ lọc</Tag>
+                  )}
+                </div>
+              </div>
+
               <Table 
                 columns={lotColumns} 
-                dataSource={batches} 
+                dataSource={filteredBatches} 
                 rowKey="batchId" 
                 loading={loading}
-                pagination={{ pageSize: 8 }} 
+                pagination={{ pageSize: 8, showTotal: total => `Tổng ${total} lô thu hoạch` }} 
               />
             </Card>
           )}
 
           {/* VIEW: ORDERS */}
           {currentMenu === 'orders' && (
-            <Card title="Danh sách Đơn hàng cần đóng gói &amp; Giao Shipper">
-              <Table columns={orderColumns} dataSource={orders} />
+            <Card title="Danh sách Đơn hàng cần đóng gói & Giao Shipper">
+              {/* KHUNG TÌM KIẾM ĐƠN HÀNG */}
+              <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '12px 16px', marginBottom: '16px' }}>
+                <Row gutter={[12, 12]} align="middle">
+                  <Col xs={24} sm={12} md={6}>
+                    <div style={{ fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>Mã đơn hàng:</div>
+                    <Input 
+                      placeholder="Tìm theo mã đơn..." 
+                      prefix={<SearchOutlined style={{ color: '#94a3b8' }} />} 
+                      allowClear 
+                      value={supplierOrderIdFilter} 
+                      onChange={e => setSupplierOrderIdFilter(e.target.value)} 
+                    />
+                  </Col>
+                  <Col xs={24} sm={12} md={8}>
+                    <div style={{ fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>Khách hàng:</div>
+                    <Input 
+                      placeholder="Tìm theo tên khách..." 
+                      prefix={<SearchOutlined style={{ color: '#94a3b8' }} />} 
+                      allowClear 
+                      value={supplierOrderCustomerFilter} 
+                      onChange={e => setSupplierOrderCustomerFilter(e.target.value)} 
+                    />
+                  </Col>
+                  <Col xs={24} sm={12} md={6}>
+                    <div style={{ fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>Tiến độ:</div>
+                    <Select 
+                      style={{ width: '100%' }} 
+                      value={supplierOrderStatusFilter} 
+                      onChange={val => setSupplierOrderStatusFilter(val)}
+                    >
+                      <Select.Option value="all">Tất cả tiến độ</Select.Option>
+                      <Select.Option value="Pending">Chờ hái & đóng gói</Select.Option>
+                      <Select.Option value="ReadyForShipper">Đã giao Shipper</Select.Option>
+                      <Select.Option value="Completed">Hoàn tất</Select.Option>
+                    </Select>
+                  </Col>
+                  <Col xs={24} sm={12} md={4} style={{ display: 'flex', alignItems: 'flex-end' }}>
+                    <Button 
+                      icon={<ReloadOutlined />} 
+                      onClick={() => { setSupplierOrderIdFilter(''); setSupplierOrderCustomerFilter(''); setSupplierOrderStatusFilter('all'); }}
+                      style={{ width: '100%' }}
+                    >
+                      Đặt lại
+                    </Button>
+                  </Col>
+                </Row>
+                <div style={{ marginTop: '8px', fontSize: '12px', color: '#64748b' }}>
+                  Tìm thấy: <b style={{ color: '#16a34a' }}>{filteredSupplierOrders.length}</b> / {orders.length} đơn hàng
+                  {(supplierOrderIdFilter.trim() || supplierOrderCustomerFilter.trim() || supplierOrderStatusFilter !== 'all') && (
+                    <Tag color="processing" style={{ marginLeft: 8 }}>Đang áp dụng bộ lọc</Tag>
+                  )}
+                </div>
+              </div>
+
+              <Table columns={orderColumns} dataSource={filteredSupplierOrders} />
             </Card>
           )}
         </Content>
