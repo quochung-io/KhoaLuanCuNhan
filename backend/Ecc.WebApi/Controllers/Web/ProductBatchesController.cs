@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using Ecc.Infrastructure.Data;
 using Ecc.Infrastructure.Entities;
 
+using Ecc.WebApi.Services;
+
 namespace Ecc.WebApi.Controllers;
 
 [ApiController]
@@ -10,10 +12,12 @@ namespace Ecc.WebApi.Controllers;
 public class ProductBatchesController : ControllerBase
 {
     private readonly AppDbContext _context;
+    private readonly FefoClearanceBackgroundService _clearanceService;
 
-    public ProductBatchesController(AppDbContext context)
+    public ProductBatchesController(AppDbContext context, FefoClearanceBackgroundService clearanceService)
     {
         _context = context;
+        _clearanceService = clearanceService;
     }
 
     [HttpGet]
@@ -359,6 +363,18 @@ public class ProductBatchesController : ControllerBase
         {
             message = $"Đã khôi phục giá gốc thành công cho {revertedCount} sản phẩm.",
             revertedCount
+        });
+    }
+
+    // ── FEFO 7. Kích hoạt quét tự động FEFO Auto Markdown tức thì ────
+    [HttpPost("auto-sync-clearance")]
+    public async Task<IActionResult> AutoSyncClearance()
+    {
+        var count = await _clearanceService.RunAutoMarkdownAsync();
+        return Ok(new
+        {
+            message = $"Đã tự động rà quét và đồng bộ khuyến mãi xả hàng cho {count} sản phẩm cận hạn.",
+            syncedCount = count
         });
     }
 }

@@ -251,6 +251,20 @@ export const Batches: React.FC = () => {
     }
   };
 
+  // Tự động quét và áp dụng Auto Markdown FEFO cho toàn bộ nông sản cận hạn
+  const handleAutoSyncClearance = async () => {
+    setIsScanning(true);
+    try {
+      const res = await productBatchService.autoSyncClearance();
+      message.success(res.data?.message || 'Đã tự động đồng bộ khuyến mãi xả hàng cận hạn!');
+      await loadData();
+    } catch (error: any) {
+      message.error(error.response?.data?.message || 'Lỗi khi đồng bộ tự động.');
+    } finally {
+      setIsScanning(false);
+    }
+  };
+
   // Xuất hủy (Write-off) lô quá hạn hoặc cận hạn hỏng
   const handleWriteOff = async (batchId: number, batchCode: string) => {
     setIsWritingOff(true);
@@ -914,6 +928,16 @@ export const Batches: React.FC = () => {
                 >
                   Xả Hàng Cận Hạn (-20% đến -50%)
                 </Button>
+                <Button 
+                  size="small" 
+                  icon={<ThunderboltOutlined />} 
+                  loading={isScanning} 
+                  onClick={handleAutoSyncClearance}
+                  style={{ backgroundColor: '#fff7e6', color: '#d46b08', borderColor: '#ffd591', fontWeight: 600 }}
+                  title="Tự động quét và áp dụng mức giảm 20% - 50% cho tất cả sản phẩm cận hạn"
+                >
+                  ⚡ Tự Động Áp Khuyến Mãi Cận Date
+                </Button>
                 {fefoStats.urgent > 0 && (
                   <Button 
                     size="small" 
@@ -927,11 +951,11 @@ export const Batches: React.FC = () => {
                 )}
                 <Button 
                   size="small" 
-                  icon={<ThunderboltOutlined />}
+                  icon={<CloseCircleOutlined />}
                   loading={isScanning}
                   onClick={handleAutoScanExpired}
                 >
-                  Quét & Khóa Tự Động Lô Hết Hạn
+                  Quét & Khóa Lô Hết Hạn
                 </Button>
               </Space>
             </div>

@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Ecc.Infrastructure.Data;
 using Ecc.Infrastructure.Services;
+using Ecc.WebApi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,6 +17,10 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 // ── Đăng ký dịch vụ gửi mã OTP qua Gmail thực tế ───────
 builder.Services.AddSingleton<IOtpService, OtpService>();
+
+// ── Đăng ký Background Service tự động áp dụng FEFO Auto Markdown cho sản phẩm cận date ──
+builder.Services.AddSingleton<FefoClearanceBackgroundService>();
+builder.Services.AddHostedService(sp => sp.GetRequiredService<FefoClearanceBackgroundService>());
 
 // ── Cấu hình CORS cho phép tất cả các nguồn (Web + Mobile App) ──
 builder.Services.AddCors(options =>

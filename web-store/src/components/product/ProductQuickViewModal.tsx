@@ -252,6 +252,43 @@ export const ProductQuickViewModal: React.FC<ProductQuickViewModalProps> = ({
               }}>
                 VIETGAP CHUẨN
               </span>
+              {Boolean(productDetails?.discountPercent && productDetails.discountPercent > 0) && (
+                <div style={{
+                  position: 'absolute',
+                  top: '10px',
+                  right: '10px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'flex-end',
+                  gap: '3px'
+                }}>
+                  <span style={{
+                    backgroundColor: '#DC2626',
+                    color: '#FFFFFF',
+                    padding: '4px 10px',
+                    borderRadius: '6px',
+                    fontSize: '12px',
+                    fontWeight: '800',
+                    boxShadow: '0 2px 8px rgba(220, 38, 38, 0.4)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}>
+                    ⚡ XẢ HÀNG -{productDetails.discountPercent}%
+                  </span>
+                  <span style={{
+                    backgroundColor: '#FEF3C7',
+                    color: '#92400E',
+                    fontSize: '10px',
+                    fontWeight: '700',
+                    padding: '2px 6px',
+                    borderRadius: '4px',
+                    border: '1px solid #FCD34D'
+                  }}>
+                    CẬN HẠN DÙNG NGAY
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Danh sách ảnh nhỏ nếu có nhiều hơn 1 ảnh */}
@@ -325,6 +362,30 @@ export const ProductQuickViewModal: React.FC<ProductQuickViewModalProps> = ({
                   ({currentReviews} đánh giá từ khách hàng)
                 </span>
               </div>
+
+              {/* KHUNG THÔNG BÁO XẢ HÀNG TRÊN SẢN PHẨM */}
+              {Boolean(productDetails?.discountPercent && productDetails.discountPercent > 0) && (
+                <div style={{
+                  background: 'linear-gradient(135deg, #FFF1F2 0%, #FEF2F2 100%)',
+                  border: '1px solid #FECDD3',
+                  borderRadius: '10px',
+                  padding: '10px 14px',
+                  marginTop: '10px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px'
+                }}>
+                  <span style={{ fontSize: '20px' }}>⚡</span>
+                  <div>
+                    <div style={{ fontWeight: 800, color: '#9F1239', fontSize: '12.5px' }}>
+                      ƯU ĐÃI XẢ HÀNG CẬN DATE - GIẢM {productDetails.discountPercent}%
+                    </div>
+                    <div style={{ fontSize: '11px', color: '#BE123C', marginTop: '2px' }}>
+                      Nông sản đạt chuẩn, khuyến nghị sử dụng ngay trong 1-3 ngày tới để thưởng thức hương vị tươi ngon nhất!
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Đơn giá */}
@@ -357,6 +418,9 @@ export const ProductQuickViewModal: React.FC<ProductQuickViewModalProps> = ({
                   }}>
                     ⚡ Xả hàng -{productDetails.discountPercent}%
                   </span>
+                  <div style={{ width: '100%', fontSize: '11.5px', color: '#dc2626', fontWeight: 600, marginTop: '-4px' }}>
+                    Tiết kiệm {toVND(productDetails.originalPrice - currentPrice)} / {currentUnit}
+                  </div>
                 </>
               )}
               <span style={{ fontSize: '13.5px', color: '#64748b', fontWeight: '500' }}>

@@ -57,6 +57,7 @@ export const productBatchService = {
     api.post('/productbatches/apply-clearance-discount', { items }),
   revertClearanceDiscount: (productIds: number[]) => 
     api.post('/productbatches/revert-clearance-discount', { productIds }),
+  autoSyncClearance: () => api.post('/productbatches/auto-sync-clearance'),
 };
 
 export const orderService = {

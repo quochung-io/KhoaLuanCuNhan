@@ -1325,6 +1325,46 @@ export default function ProductDetailPage() {
                   </button>
                 )}
               </div>
+
+              {/* HUY HIỆU XẢ HÀNG NỔI BẬT TRÊN ẢNH SẢN PHẨM */}
+              {Boolean(product.discountPercent && product.discountPercent > 0) && (
+                <div style={{
+                  position: 'absolute',
+                  top: '16px',
+                  right: '16px',
+                  zIndex: 5,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'flex-end',
+                  gap: '4px'
+                }}>
+                  <span style={{
+                    background: 'linear-gradient(135deg, #DC2626 0%, #B91C1C 100%)',
+                    color: '#fff',
+                    fontSize: '13.5px',
+                    fontWeight: 800,
+                    padding: '6px 14px',
+                    borderRadius: '10px',
+                    boxShadow: '0 4px 12px rgba(220, 38, 38, 0.45)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}>
+                    ⚡ XẢ HÀNG -{product.discountPercent}%
+                  </span>
+                  <span style={{
+                    background: 'rgba(254, 243, 199, 0.95)',
+                    color: '#92400E',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    padding: '3px 8px',
+                    borderRadius: '6px',
+                    border: '1px solid #FCD34D'
+                  }}>
+                    🔥 CẬN HẠN DÙNG NGAY
+                  </span>
+                </div>
+              )}
               <div style={{ position: 'absolute', bottom: '16px', left: '16px', right: '16px', background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(8px)', padding: '10px 16px', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '12px', color: 'var(--green-900)', border: '1px solid rgba(255,255,255,0.8)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
@@ -1494,6 +1534,30 @@ export default function ProductDetailPage() {
               <span style={{ color: '#2E7D32', fontWeight: 600 }}>Đã bán 1.400+ kg</span>
             </div>
 
+            {/* THÔNG BÁO XẢ HÀNG TRÊN SẢN PHẨM */}
+            {Boolean(product.discountPercent && product.discountPercent > 0) && (
+              <div style={{
+                background: 'linear-gradient(135deg, #FFF1F2 0%, #FEF2F2 100%)',
+                border: '1px solid #FECDD3',
+                borderRadius: '14px',
+                padding: '12px 18px',
+                marginBottom: '20px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px'
+              }}>
+                <span style={{ fontSize: '26px' }}>⚡</span>
+                <div>
+                  <div style={{ fontWeight: 800, color: '#9F1239', fontSize: '13.5px' }}>
+                    ƯU ĐÃI XẢ HÀNG CẬN DATE - GIẢM {product.discountPercent}% THEO CHUẨN FEFO
+                  </div>
+                  <div style={{ fontSize: '12px', color: '#BE123C', marginTop: '2px' }}>
+                    Sản phẩm nông sản vẫn giữ trọn độ tươi ngon tự nhiên, được khuyến khích sử dụng ngay trong 1-3 ngày tới!
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Giá tiền */}
             <div style={{ background: 'var(--surface)', padding: '20px', borderRadius: '18px', border: '1px solid var(--line)', marginBottom: '24px' }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px', flexWrap: 'wrap' }}>
@@ -1508,6 +1572,9 @@ export default function ProductDetailPage() {
                     <span style={{ background: '#FEE2E2', color: '#DC2626', fontSize: '13px', fontWeight: 700, padding: '3px 10px', borderRadius: '8px', border: '1px solid #FCA5A5' }}>
                       ⚡ Xả hàng cận hạn -{product.discountPercent}%
                     </span>
+                    <div style={{ width: '100%', fontSize: '13px', color: '#DC2626', fontWeight: 700, marginTop: '2px' }}>
+                      Tiết kiệm {((product.originalPrice || 0) - product.price).toLocaleString('vi-VN')}₫ / {product.unit}
+                    </div>
                   </>
                 )}
                 <span style={{ fontSize: '16px', color: 'var(--ink-soft)', fontWeight: 500 }}>

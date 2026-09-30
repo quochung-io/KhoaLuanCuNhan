@@ -20,24 +20,50 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 }) => {
   return (
     <div className="prod-card">
-      <div className="prod-media" style={{ background: 'var(--green-100)' }}>
+      <div className="prod-media" style={{ background: 'var(--green-100)', position: 'relative' }}>
+        {/* THÔNG BÁO GIẢM GIÁ NỔI BẬT TRÊN ẢNH SẢN PHẨM */}
+        {(product as any).discountPercent > 0 && (
+          <div style={{
+            position: 'absolute',
+            top: '8px',
+            left: '8px',
+            zIndex: 4,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'flex-start',
+            gap: '3px'
+          }}>
+            <span style={{
+              backgroundColor: '#DC2626',
+              color: '#FFFFFF',
+              fontSize: '11px',
+              fontWeight: 800,
+              padding: '3px 8px',
+              borderRadius: '6px',
+              boxShadow: '0 2px 6px rgba(220, 38, 38, 0.4)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '3px',
+              letterSpacing: '0.2px'
+            }}>
+              ⚡ GIẢM {(product as any).discountPercent}%
+            </span>
+            <span style={{
+              backgroundColor: 'rgba(254, 243, 199, 0.95)',
+              color: '#B45309',
+              fontSize: '9.5px',
+              fontWeight: 700,
+              padding: '1px 5px',
+              borderRadius: '4px',
+              border: '1px solid #FCD34D'
+            }}>
+              XẢ CẬN DATE
+            </span>
+          </div>
+        )}
         {ICONS[product.icon]}
         <div className="tag-row">
           <span className="tag-cert">{product.cert}</span>
-          {(product as any).discountPercent > 0 && (
-            <span style={{ 
-              backgroundColor: '#DC2626', 
-              color: '#FFFFFF', 
-              fontSize: '10.5px', 
-              fontWeight: 700, 
-              padding: '2px 6px', 
-              borderRadius: '4px',
-              boxShadow: '0 1px 2px rgba(220,38,38,0.3)',
-              marginLeft: '4px'
-            }}>
-              ⚡ -{(product as any).discountPercent}%
-            </span>
-          )}
           <button className="qr-btn" onClick={() => setOpenQrFor(product.id)} aria-label="Xem truy xuất nguồn gốc">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" strokeWidth="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM20 14v3M14 20h3M20 20v.01"/></svg>
           </button>
@@ -57,6 +83,27 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           Xuất xứ: {product.region}
         </span>
         <span className="prod-name">{product.name}</span>
+        
+        {/* THÔNG BÁO TRÊN SẢN PHẨM */}
+        {(product as any).discountPercent > 0 && (
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '4px',
+            backgroundColor: '#FEF2F2',
+            color: '#DC2626',
+            padding: '2px 7px',
+            borderRadius: '4px',
+            fontSize: '11px',
+            fontWeight: 700,
+            marginTop: '3px',
+            border: '1px solid #FECDD3'
+          }}>
+            <span>🔥</span>
+            <span>Xả nông sản cận date (-{(product as any).discountPercent}%)</span>
+          </div>
+        )}
+
         <div className="stars">
           {product.reviews > 0 ? (
             <>
@@ -68,11 +115,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         </div>
         <div className="price-row">
           <div>
-            <span className="price" style={{ color: (product as any).isOutOfStock ? '#DC2626' : undefined }}>
+            <span className="price" style={{ color: (product as any).isOutOfStock ? '#DC2626' : (product as any).discountPercent > 0 ? '#DC2626' : undefined }}>
               {(product as any).isOutOfStock ? 'Hết hàng' : product.price}<span>{(product as any).isOutOfStock ? '' : product.unit}</span>
             </span>
             {!(product as any).isOutOfStock && (product as any).discountPercent > 0 && (product as any).originalPrice && (
-              <div style={{ fontSize: '11px', color: '#94A3B8', textDecoration: 'line-through', marginTop: '-2px' }}>
+              <div style={{ fontSize: '11.5px', color: '#94A3B8', textDecoration: 'line-through', marginTop: '-2px' }}>
                 {Number((product as any).originalPrice).toLocaleString('vi-VN')} đ
               </div>
             )}
