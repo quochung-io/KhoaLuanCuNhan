@@ -204,9 +204,182 @@ public class ProductBatchesController : ControllerBase
             status = batch.Status
         });
     }
+
+    // ── FEFO 4. Lấy danh sách nông sản cận hạn cần kích hoạt khuyến mãi xả hàng (Clearance Candidates) ──
+    [HttpGet("clearance-candidates")]
+    public async Task<IActionResult> GetClearanceCandidates()
+    {
+        var today = DateTime.Today;
+        var products = await _context.Products
+            .Include(p => p.Category)
+            .Include(p => p.ProductBatches)
+            .Where(p => p.ProductBatches.Any(b => (b.Status == "Active" || string.IsNullOrEmpty(b.Status)) && b.InitialQuantity > 0))
+            .ToListAsync();
+
+        var candidates = new List<object>();
+
+        foreach (var p in products)
+        {
+            var validBatches = p.ProductBatches
+                .Where(b => (b.Status == "Active" || string.IsNullOrEmpty(b.Status)) && b.InitialQuantity > 0)
+                .OrderBy(b => b.ExpiryDate)
+                .ToList();
+
+            if (!validBatches.Any()) continue;
+
+            var nearestBatch = validBatches.First();
+            var diffDays = (nearestBatch.ExpiryDate.Date - today).Days;
+
+            // Chỉ xét các lô cận hạn <= 5 ngày (và chưa bị quá hạn < 0 ngày)
+            if (diffDays >= 0 && diffDays <= 5)
+            {
+                int recommendedDiscount;
+                string urgencyLevel;
+                string suggestionNote;
+
+                if (diffDays <= 1)
+                {
+                    recommendedDiscount = 50;
+                    urgencyLevel = "Urgent";
+                    suggestionNote = "Cận hạn khẩn cấp (≤ 1 ngày). Xả gấp 50% để thu hồi tối đa chi phí trước khi phải xuất hủy.";
+                }
+                else if (diffDays <= 2)
+                {
+                    recommendedDiscount = 40;
+                    urgencyLevel = "Urgent";
+                    suggestionNote = "Cận hạn (2 ngày). Đề xuất Flash Sale giảm 40% kích cầu tiêu dùng trong ngày.";
+                }
+                else if (diffDays <= 3)
+                {
+                    recommendedDiscount = 30;
+                    urgencyLevel = "Urgent";
+                    suggestionNote = "Cận hạn (3 ngày). Đề xuất giảm 30% xả kho nhanh.";
+                }
+                else
+                {
+                    recommendedDiscount = 20;
+                    urgencyLevel = "Warning";
+                    suggestionNote = "Cần chú ý (4-5 ngày). Đề xuất giảm 20% giữ biên lợi nhuận mỏng.";
+                }
+
+                decimal basePrice = p.OriginalPrice.HasValue && p.OriginalPrice.Value > 0 ? p.OriginalPrice.Value : p.Price;
+                decimal salePrice = Math.Round(basePrice * (100 - recommendedDiscount) / 100m, 0);
+
+                candidates.Add(new
+                {
+                    productId = p.ProductId,
+                    productName = p.ProductName,
+                    unit = p.Unit,
+                    categoryName = p.Category?.CategoryName ?? "Nông sản",
+                    currentPrice = p.Price,
+                    originalPrice = basePrice,
+                    currentDiscountPercent = p.DiscountPercent ?? 0,
+                    batchId = nearestBatch.BatchId,
+                    batchCode = nearestBatch.BatchCode,
+                    batchQuantity = nearestBatch.InitialQuantity,
+                    expiryDate = nearestBatch.ExpiryDate,
+                    daysRemaining = diffDays,
+                    recommendedDiscountPercent = recommendedDiscount,
+                    recommendedSalePrice = salePrice,
+                    urgencyLevel,
+                    suggestionNote,
+                    isDiscountActive = p.DiscountPercent.HasValue && p.DiscountPercent.Value > 0
+                });
+            }
+        }
+
+        return Ok(candidates);
+    }
+
+    // ── FEFO 5. Áp dụng giảm giá xả hàng cận hạn cho sản phẩm ────
+    [HttpPost("apply-clearance-discount")]
+    public async Task<IActionResult> ApplyClearanceDiscount([FromBody] ApplyClearanceDiscountRequest req)
+    {
+        if (req == null || req.Items == null || !req.Items.Any())
+        {
+            return BadRequest(new { message = "Danh sách sản phẩm áp dụng giảm giá không hợp lệ." });
+        }
+
+        var productIds = req.Items.Select(i => i.ProductId).Distinct().ToList();
+        var products = await _context.Products.Where(p => productIds.Contains(p.ProductId)).ToListAsync();
+
+        int appliedCount = 0;
+        foreach (var item in req.Items)
+        {
+            var p = products.FirstOrDefault(x => x.ProductId == item.ProductId);
+            if (p == null) continue;
+
+            if (!p.OriginalPrice.HasValue || p.OriginalPrice.Value <= 0)
+            {
+                p.OriginalPrice = p.Price;
+            }
+
+            int discount = Math.Clamp(item.DiscountPercent, 5, 90);
+            p.DiscountPercent = discount;
+            p.Price = Math.Round(p.OriginalPrice.Value * (100 - discount) / 100m, 0);
+            p.UpdatedAt = DateTime.UtcNow;
+            appliedCount++;
+        }
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new
+        {
+            message = $"Đã áp dụng giảm giá xả hàng cận hạn thành công cho {appliedCount} sản phẩm.",
+            appliedCount
+        });
+    }
+
+    // ── FEFO 6. Khôi phục giá gốc ban đầu ────
+    [HttpPost("revert-clearance-discount")]
+    public async Task<IActionResult> RevertClearanceDiscount([FromBody] RevertDiscountRequest req)
+    {
+        if (req == null || req.ProductIds == null || !req.ProductIds.Any())
+        {
+            return BadRequest(new { message = "Danh sách sản phẩm không hợp lệ." });
+        }
+
+        var products = await _context.Products.Where(p => req.ProductIds.Contains(p.ProductId)).ToListAsync();
+        int revertedCount = 0;
+
+        foreach (var p in products)
+        {
+            if (p.OriginalPrice.HasValue && p.OriginalPrice.Value > 0)
+            {
+                p.Price = p.OriginalPrice.Value;
+                p.DiscountPercent = 0;
+                p.UpdatedAt = DateTime.UtcNow;
+                revertedCount++;
+            }
+        }
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new
+        {
+            message = $"Đã khôi phục giá gốc thành công cho {revertedCount} sản phẩm.",
+            revertedCount
+        });
+    }
 }
 
 public class WriteOffRequest
 {
     public string? Reason { get; set; } = "Hết hạn sử dụng";
+}
+
+public class ApplyClearanceDiscountRequest
+{
+    public List<ClearanceDiscountItem> Items { get; set; } = new();
+}
+
+public class ClearanceDiscountItem
+{
+    public long ProductId { get; set; }
+    public int DiscountPercent { get; set; }
+}
+
+public class RevertDiscountRequest
+{
+    public List<long> ProductIds { get; set; } = new();
 }

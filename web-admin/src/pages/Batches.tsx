@@ -30,7 +30,9 @@ import {
   CheckCircleOutlined,
   CloseCircleOutlined,
   ClockCircleOutlined,
-  ClearOutlined
+  ClearOutlined,
+  PercentageOutlined,
+  UndoOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { productBatchService, productService, userService } from '../services/api';
@@ -55,6 +57,26 @@ interface ProductBatch {
   createdAt?: string;
 }
 
+interface ClearanceCandidate {
+  productId: number;
+  productName: string;
+  unit: string;
+  categoryName: string;
+  currentPrice: number;
+  originalPrice: number;
+  currentDiscountPercent: number;
+  batchId: number;
+  batchCode: string;
+  batchQuantity: number;
+  expiryDate: string;
+  daysRemaining: number;
+  recommendedDiscountPercent: number;
+  recommendedSalePrice: number;
+  urgencyLevel: string;
+  suggestionNote: string;
+  isDiscountActive: boolean;
+}
+
 export const Batches: React.FC = () => {
   const [batches, setBatches] = useState<ProductBatch[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -65,6 +87,13 @@ export const Batches: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingBatch, setEditingBatch] = useState<ProductBatch | null>(null);
   const [form] = Form.useForm();
+
+  // States cho Quản Lý Giảm Giá Cận Hạn (Dynamic Markdown / Clearance Modal)
+  const [isClearanceModalOpen, setIsClearanceModalOpen] = useState(false);
+  const [candidates, setCandidates] = useState<ClearanceCandidate[]>([]);
+  const [candidateDiscounts, setCandidateDiscounts] = useState<Record<number, number>>({});
+  const [loadingClearance, setLoadingClearance] = useState(false);
+  const [applyingDiscount, setApplyingDiscount] = useState(false);
 
   // States Tìm Kiếm & Bộ Lọc Lô Hàng & Nguồn Gốc (Tất cả thành phần trong bảng)
   const [searchCodeOrId, setSearchCodeOrId] = useState('');
@@ -233,6 +262,88 @@ export const Batches: React.FC = () => {
       message.error(error.response?.data?.message || 'Xuất hủy lô hàng thất bại.');
     } finally {
       setIsWritingOff(false);
+    }
+  };
+
+  // ── Mở Modal Quản Lý Xả Hàng Cận Hạn (Dynamic Markdown) ──
+  const handleOpenClearanceModal = async () => {
+    setIsClearanceModalOpen(true);
+    setLoadingClearance(true);
+    try {
+      const res = await productBatchService.getClearanceCandidates();
+      const data: ClearanceCandidate[] = res.data || [];
+      setCandidates(data);
+      const initDiscounts: Record<number, number> = {};
+      data.forEach(c => {
+        initDiscounts[c.productId] = c.currentDiscountPercent > 0 ? c.currentDiscountPercent : c.recommendedDiscountPercent;
+      });
+      setCandidateDiscounts(initDiscounts);
+    } catch (error) {
+      message.error('Không thể tải danh sách nông sản cận hạn.');
+    } finally {
+      setLoadingClearance(false);
+    }
+  };
+
+  // Áp dụng mức giảm giá cho 1 sản phẩm
+  const handleApplySingleProduct = async (productId: number) => {
+    const discount = candidateDiscounts[productId] || 30;
+    try {
+      await productBatchService.applyClearanceDiscount([{ productId, discountPercent: discount }]);
+      message.success(`Đã áp dụng giảm giá -${discount}% cho sản phẩm thành công!`);
+      await handleOpenClearanceModal();
+      await loadData();
+    } catch (error: any) {
+      message.error(error.response?.data?.message || 'Lỗi khi áp dụng giảm giá.');
+    }
+  };
+
+  // Áp dụng hàng loạt cho tất cả các sản phẩm cận hạn theo đề xuất FEFO
+  const handleApplyAllRecommended = async () => {
+    if (candidates.length === 0) {
+      message.info('Không có sản phẩm nào cận hạn cần áp dụng giảm giá.');
+      return;
+    }
+    setApplyingDiscount(true);
+    try {
+      const items = candidates.map(c => ({
+        productId: c.productId,
+        discountPercent: candidateDiscounts[c.productId] || c.recommendedDiscountPercent
+      }));
+      const res = await productBatchService.applyClearanceDiscount(items);
+      message.success(res.data?.message || 'Đã áp dụng khuyến mãi xả hàng cận hạn thành công cho tất cả sản phẩm!');
+      await handleOpenClearanceModal();
+      await loadData();
+    } catch (error: any) {
+      message.error(error.response?.data?.message || 'Lỗi khi áp dụng giảm giá.');
+    } finally {
+      setApplyingDiscount(false);
+    }
+  };
+
+  // Khôi phục giá gốc cho 1 sản phẩm
+  const handleRevertSingleProduct = async (productId: number) => {
+    try {
+      await productBatchService.revertClearanceDiscount([productId]);
+      message.success('Đã khôi phục giá gốc thành công!');
+      await handleOpenClearanceModal();
+      await loadData();
+    } catch (error: any) {
+      message.error(error.response?.data?.message || 'Lỗi khi khôi phục giá gốc.');
+    }
+  };
+
+  // Khôi phục tất cả về giá gốc
+  const handleRevertAll = async () => {
+    if (candidates.length === 0) return;
+    try {
+      const pids = candidates.map(c => c.productId);
+      await productBatchService.revertClearanceDiscount(pids);
+      message.success('Đã khôi phục giá gốc cho tất cả sản phẩm cận hạn!');
+      await handleOpenClearanceModal();
+      await loadData();
+    } catch (error: any) {
+      message.error(error.response?.data?.message || 'Lỗi khi khôi phục giá gốc.');
     }
   };
 
@@ -429,7 +540,7 @@ export const Batches: React.FC = () => {
     { 
       title: 'Chiến lược FEFO & Khuyến nghị', 
       key: 'fefoAction',
-      width: 190,
+      width: 220,
       render: (_: any, r: ProductBatch) => {
         const now = dayjs().startOf('day');
         const exp = dayjs(r.expiryDate).startOf('day');
@@ -475,8 +586,16 @@ export const Batches: React.FC = () => {
                 ⚡ ƯU TIÊN XUẤT KHO (FEFO)
               </Tag>
               <div style={{ fontSize: '11px', color: '#cf1322', marginTop: 2, fontWeight: 500 }}>
-                Khuyến nghị: Flash Sale / Xả gấp
+                Khuyến nghị: Giảm 30% - 50%
               </div>
+              <Button 
+                size="small" 
+                icon={<PercentageOutlined />} 
+                onClick={handleOpenClearanceModal}
+                style={{ fontSize: '11px', height: '22px', marginTop: 4, color: '#d4380d', borderColor: '#ffbb96' }}
+              >
+                Cấu hình xả hàng
+              </Button>
             </div>
           );
         }
@@ -488,7 +607,7 @@ export const Batches: React.FC = () => {
                 CẦN CHÚ Ý THEO DÕI
               </Tag>
               <div style={{ fontSize: '11px', color: '#d46b08', marginTop: 2 }}>
-                Lên kế hoạch xuất trước
+                Khuyến nghị: Giảm 20% xả sớm
               </div>
             </div>
           );
@@ -521,6 +640,135 @@ export const Batches: React.FC = () => {
         <Space size="small">
           <Button size="small" icon={<EditOutlined />} onClick={() => handleOpenEdit(record)}>Sửa</Button>
           <Button size="small" icon={<DeleteOutlined />} danger onClick={() => handleDelete(record.batchId)}>Xóa</Button>
+        </Space>
+      )
+    }
+  ];
+
+  // Bảng hiển thị danh sách nông sản cận hạn trong Modal Clearance
+  const clearanceColumns = [
+    {
+      title: 'Sản phẩm & Danh mục',
+      key: 'product',
+      render: (_: any, c: ClearanceCandidate) => (
+        <div>
+          <b style={{ color: '#1b5e20', fontSize: '13.5px' }}>{c.productName}</b>
+          <div style={{ fontSize: '11px', color: '#888' }}>
+            {c.categoryName} · Mã SP: #{c.productId}
+          </div>
+        </div>
+      )
+    },
+    {
+      title: 'Lô cận hạn nhất',
+      key: 'batch',
+      render: (_: any, c: ClearanceCandidate) => (
+        <div>
+          <Tag color="cyan">{c.batchCode}</Tag>
+          <div style={{ fontSize: '11.5px', marginTop: 2 }}>
+            Tồn khả dụng: <b>{c.batchQuantity} {c.unit}</b>
+          </div>
+          <div style={{ fontSize: '11px', color: c.daysRemaining <= 1 ? '#cf1322' : c.daysRemaining <= 3 ? '#d4380d' : '#d46b08', fontWeight: 600 }}>
+            HSD: {dayjs(c.expiryDate).format('DD/MM/YYYY')} (Còn {c.daysRemaining} ngày)
+          </div>
+        </div>
+      )
+    },
+    {
+      title: 'Giá gốc',
+      dataIndex: 'originalPrice',
+      key: 'originalPrice',
+      render: (p: number, c: ClearanceCandidate) => (
+        <span style={{ fontWeight: 600 }}>{p.toLocaleString('vi-VN')} đ / {c.unit}</span>
+      )
+    },
+    {
+      title: '% Khuyến mãi xả hàng',
+      key: 'discountInput',
+      width: 150,
+      render: (_: any, c: ClearanceCandidate) => {
+        const val = candidateDiscounts[c.productId] ?? c.recommendedDiscountPercent;
+        return (
+          <Space direction="vertical" size={2}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <InputNumber
+                min={5}
+                max={90}
+                value={val}
+                formatter={v => `${v}%`}
+                parser={v => (v ? parseInt(v.replace('%', '')) : 0)}
+                onChange={v => {
+                  if (v !== null) {
+                    setCandidateDiscounts(prev => ({ ...prev, [c.productId]: v }));
+                  }
+                }}
+                style={{ width: 85 }}
+              />
+              <Tag color={c.daysRemaining <= 1 ? 'red' : c.daysRemaining <= 3 ? 'volcano' : 'gold'}>
+                Gợi ý {c.recommendedDiscountPercent}%
+              </Tag>
+            </div>
+            <span style={{ fontSize: '10.5px', color: '#8c8c8c' }}>
+              {c.daysRemaining <= 1 ? 'Xả gấp 50%' : c.daysRemaining <= 3 ? 'Flash sale 30-40%' : 'Giảm nhẹ 20%'}
+            </span>
+          </Space>
+        );
+      }
+    },
+    {
+      title: 'Giá bán sau giảm',
+      key: 'salePrice',
+      render: (_: any, c: ClearanceCandidate) => {
+        const discount = candidateDiscounts[c.productId] ?? c.recommendedDiscountPercent;
+        const finalPrice = Math.round(c.originalPrice * (100 - discount) / 100);
+        return (
+          <div>
+            <div style={{ color: '#cf1322', fontWeight: 700, fontSize: '13.5px' }}>
+              {finalPrice.toLocaleString('vi-VN')} đ
+            </div>
+            <div style={{ fontSize: '11px', color: '#8c8c8c', textDecoration: 'line-through' }}>
+              {c.originalPrice.toLocaleString('vi-VN')} đ
+            </div>
+          </div>
+        );
+      }
+    },
+    {
+      title: 'Trạng thái',
+      key: 'status',
+      render: (_: any, c: ClearanceCandidate) => {
+        if (c.isDiscountActive) {
+          return (
+            <Tag color="success" icon={<FireOutlined />}>
+              Đang giảm -{c.currentDiscountPercent}%
+            </Tag>
+          );
+        }
+        return <Tag color="default">Chưa áp dụng</Tag>;
+      }
+    },
+    {
+      title: 'Hành động',
+      key: 'actions',
+      render: (_: any, c: ClearanceCandidate) => (
+        <Space size="small">
+          <Button 
+            size="small" 
+            type="primary" 
+            style={{ backgroundColor: '#2e7d32', borderColor: '#2e7d32' }}
+            onClick={() => handleApplySingleProduct(c.productId)}
+          >
+            Áp dụng
+          </Button>
+          {c.isDiscountActive && (
+            <Button 
+              size="small" 
+              icon={<UndoOutlined />}
+              onClick={() => handleRevertSingleProduct(c.productId)}
+            >
+              Hủy giảm
+            </Button>
+          )}
         </Space>
       )
     }
@@ -577,7 +825,7 @@ export const Batches: React.FC = () => {
               prefix={<ClockCircleOutlined />}
             />
             <div style={{ fontSize: '11.5px', color: '#faad14', marginTop: 6 }}>
-              Lên kế hoạch điều phối, hạn chế nhập dồn
+              Lên kế hoạch điều phối, khuyến nghị giảm 20%
             </div>
           </Card>
         </Col>
@@ -603,7 +851,7 @@ export const Batches: React.FC = () => {
               prefix={<FireOutlined />}
             />
             <div style={{ fontSize: '11.5px', color: '#cf1322', marginTop: 6, fontWeight: 500 }}>
-              ⚡ Ưu tiên xuất kho trước (FEFO) / Flash Sale
+              ⚡ Ưu tiên xuất kho (FEFO) · Giảm 30% - 50%
             </div>
           </Card>
         </Col>
@@ -636,7 +884,7 @@ export const Batches: React.FC = () => {
       </Row>
 
       {/* ── BANNER CẢNH BÁO QUẢN TRỊ VÒNG ĐỜI NÔNG SẢN FEFO ── */}
-      {(fefoStats.urgent > 0 || fefoStats.expired > 0) && (
+      {(fefoStats.urgent > 0 || fefoStats.warning > 0 || fefoStats.expired > 0) && (
         <Alert
           type={fefoStats.expired > 0 ? "error" : "warning"}
           showIcon
@@ -657,6 +905,15 @@ export const Batches: React.FC = () => {
                 )}
               </div>
               <Space wrap>
+                <Button 
+                  size="small" 
+                  type="primary" 
+                  icon={<PercentageOutlined />}
+                  style={{ backgroundColor: '#fa8c16', borderColor: '#fa8c16' }}
+                  onClick={handleOpenClearanceModal}
+                >
+                  Xả Hàng Cận Hạn (-20% đến -50%)
+                </Button>
                 {fefoStats.urgent > 0 && (
                   <Button 
                     size="small" 
@@ -692,6 +949,14 @@ export const Batches: React.FC = () => {
         }
         extra={
           <Space>
+            <Button 
+              icon={<PercentageOutlined />} 
+              type="primary"
+              style={{ backgroundColor: '#fa8c16', borderColor: '#fa8c16' }}
+              onClick={handleOpenClearanceModal}
+            >
+              Chiến Lược Khuyến Mãi Cận Hạn
+            </Button>
             <Button 
               icon={<ThunderboltOutlined />} 
               loading={isScanning}
@@ -849,6 +1114,66 @@ export const Batches: React.FC = () => {
           pagination={{ pageSize: 10, showTotal: (total) => `Tổng ${total} lô hàng` }}
         />
       </Card>
+
+      {/* ── MODAL CHIẾN LƯỢC KHUYẾN MÃI XẢ HÀNG CẬN HẠN (DYNAMIC MARKDOWN) ── */}
+      <Modal
+        title={
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <PercentageOutlined style={{ color: '#fa8c16', fontSize: '20px' }} />
+            <span style={{ fontSize: '16px', fontWeight: 700 }}>
+              Chiến Lược Khuyến Mãi & Xả Hàng Nông Sản Cận Hạn (Dynamic Markdown)
+            </span>
+          </div>
+        }
+        open={isClearanceModalOpen}
+        onCancel={() => setIsClearanceModalOpen(false)}
+        width={1000}
+        footer={[
+          <Button key="revert" icon={<UndoOutlined />} onClick={handleRevertAll}>
+            Khôi Phục Tất Cả Về Giá Gốc
+          </Button>,
+          <Button key="close" onClick={() => setIsClearanceModalOpen(false)}>
+            Đóng
+          </Button>,
+          <Button 
+            key="applyAll" 
+            type="primary" 
+            icon={<FireOutlined />}
+            loading={applyingDiscount}
+            style={{ backgroundColor: '#fa8c16', borderColor: '#fa8c16' }}
+            onClick={handleApplyAllRecommended}
+          >
+            🚀 Áp Dụng Giảm Giá Hàng Loạt Theo Đề Xuất
+          </Button>
+        ]}
+      >
+        <div style={{ marginBottom: 16 }}>
+          <Alert 
+            type="info" 
+            showIcon 
+            message={
+              <div>
+                <b>Quy tắc định mức khuyến mãi tự động theo hạn dùng (DTE):</b>
+                <div style={{ fontSize: '12px', marginTop: 4 }}>
+                  • <b>Còn 1 ngày:</b> Giảm <b>50%</b> (Xả gấp thu hồi chi phí trước khi phải xuất hủy)<br />
+                  • <b>Còn 2 ngày:</b> Giảm <b>40%</b> (Kích thích người tiêu dùng mua nấu ăn ngay trong ngày)<br />
+                  • <b>Còn 3 ngày:</b> Giảm <b>30%</b> (Đẩy nhanh tốc độ quay vòng kho)<br />
+                  • <b>Còn 4 - 5 ngày:</b> Giảm <b>20%</b> (Giữ chân biên lợi nhuận mỏng, hạn chế hàng đọng)
+                </div>
+              </div>
+            }
+          />
+        </div>
+
+        <Table
+          columns={clearanceColumns}
+          dataSource={candidates}
+          rowKey="productId"
+          loading={loadingClearance}
+          pagination={false}
+          locale={{ emptyText: 'Hiện không có sản phẩm nào cận hạn (≤ 5 ngày). Toàn bộ kho đang ở mức an toàn!' }}
+        />
+      </Modal>
 
       {/* ── MODAL THÊM / SỬA LÔ HÀNG ── */}
       <Modal

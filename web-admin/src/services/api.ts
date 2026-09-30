@@ -52,6 +52,11 @@ export const productBatchService = {
   getFefoSummary: () => api.get('/productbatches/fefo-summary'),
   autoScanExpired: () => api.post('/productbatches/auto-scan-expired'),
   writeOff: (id: number, reason?: string) => api.post(`/productbatches/${id}/write-off`, { reason }),
+  getClearanceCandidates: () => api.get('/productbatches/clearance-candidates'),
+  applyClearanceDiscount: (items: { productId: number; discountPercent: number }[]) => 
+    api.post('/productbatches/apply-clearance-discount', { items }),
+  revertClearanceDiscount: (productIds: number[]) => 
+    api.post('/productbatches/revert-clearance-discount', { productIds }),
 };
 
 export const orderService = {

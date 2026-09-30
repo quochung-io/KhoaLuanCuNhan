@@ -24,6 +24,20 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         {ICONS[product.icon]}
         <div className="tag-row">
           <span className="tag-cert">{product.cert}</span>
+          {(product as any).discountPercent > 0 && (
+            <span style={{ 
+              backgroundColor: '#DC2626', 
+              color: '#FFFFFF', 
+              fontSize: '10.5px', 
+              fontWeight: 700, 
+              padding: '2px 6px', 
+              borderRadius: '4px',
+              boxShadow: '0 1px 2px rgba(220,38,38,0.3)',
+              marginLeft: '4px'
+            }}>
+              ⚡ -{(product as any).discountPercent}%
+            </span>
+          )}
           <button className="qr-btn" onClick={() => setOpenQrFor(product.id)} aria-label="Xem truy xuất nguồn gốc">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" strokeWidth="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM20 14v3M14 20h3M20 20v.01"/></svg>
           </button>
@@ -53,9 +67,16 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           )}
         </div>
         <div className="price-row">
-          <span className="price" style={{ color: (product as any).isOutOfStock ? '#DC2626' : undefined }}>
-            {(product as any).isOutOfStock ? 'Hết hàng' : product.price}<span>{(product as any).isOutOfStock ? '' : product.unit}</span>
-          </span>
+          <div>
+            <span className="price" style={{ color: (product as any).isOutOfStock ? '#DC2626' : undefined }}>
+              {(product as any).isOutOfStock ? 'Hết hàng' : product.price}<span>{(product as any).isOutOfStock ? '' : product.unit}</span>
+            </span>
+            {!(product as any).isOutOfStock && (product as any).discountPercent > 0 && (product as any).originalPrice && (
+              <div style={{ fontSize: '11px', color: '#94A3B8', textDecoration: 'line-through', marginTop: '-2px' }}>
+                {Number((product as any).originalPrice).toLocaleString('vi-VN')} đ
+              </div>
+            )}
+          </div>
           <button 
             disabled={(product as any).isOutOfStock}
             className={`add-btn ${addedItem === product.id ? 'added' : ''}`} 
