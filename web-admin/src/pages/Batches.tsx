@@ -1,12 +1,36 @@
-import React, { useEffect, useState } from 'react';
-import { Table, Button, Space, Modal, Form, Input, InputNumber, Select, DatePicker, Tag, message, Card, Row, Col } from 'antd';
+import React, { useEffect, useState, useMemo } from 'react';
+import { 
+  Table, 
+  Button, 
+  Space, 
+  Modal, 
+  Form, 
+  Input, 
+  InputNumber, 
+  Select, 
+  DatePicker, 
+  Tag, 
+  message, 
+  Card, 
+  Row, 
+  Col, 
+  Alert, 
+  Statistic, 
+  Popconfirm 
+} from 'antd';
 import { 
   PlusOutlined, 
   EditOutlined, 
   DeleteOutlined, 
   SearchOutlined, 
   ReloadOutlined, 
-  SafetyCertificateOutlined
+  SafetyCertificateOutlined,
+  ThunderboltOutlined,
+  FireOutlined,
+  CheckCircleOutlined,
+  CloseCircleOutlined,
+  ClockCircleOutlined,
+  ClearOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { productBatchService, productService, userService } from '../services/api';
@@ -36,6 +60,8 @@ export const Batches: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [suppliers, setSuppliers] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
+  const [isWritingOff, setIsWritingOff] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingBatch, setEditingBatch] = useState<ProductBatch | null>(null);
   const [form] = Form.useForm();
@@ -64,6 +90,29 @@ export const Batches: React.FC = () => {
     }
     return { name: `Nông trại #${farmId}`, province: 'Đà Lạt' };
   };
+
+  // Tính ma trận thống kê hạn dùng FEFO theo thời gian thực (Traffic Light System)
+  const fefoStats = useMemo(() => {
+    const today = dayjs().startOf('day');
+    return batches.reduce(
+      (acc, b) => {
+        acc.total++;
+        const exp = dayjs(b.expiryDate).startOf('day');
+        const diff = exp.diff(today, 'day');
+        if (diff < 0 || b.status === 'Expired') {
+          acc.expired++;
+        } else if (diff <= 3) {
+          acc.urgent++;
+        } else if (diff <= 5) {
+          acc.warning++;
+        } else {
+          acc.safe++;
+        }
+        return acc;
+      },
+      { total: 0, safe: 0, warning: 0, urgent: 0, expired: 0 }
+    );
+  }, [batches]);
 
   const isFiltering = Boolean(
     searchCodeOrId.trim() ||
@@ -116,12 +165,14 @@ export const Batches: React.FC = () => {
 
     // 5. Tình trạng Hạn sử dụng (FEFO)
     if (filterFefo !== 'all') {
-      const now = dayjs();
-      const exp = dayjs(b.expiryDate);
+      const now = dayjs().startOf('day');
+      const exp = dayjs(b.expiryDate).startOf('day');
       const diffDays = exp.diff(now, 'day');
-      if (filterFefo === 'expired' && diffDays >= 0) return false;
-      if (filterFefo === 'warning' && (diffDays < 0 || diffDays > 3)) return false;
-      if (filterFefo === 'valid' && diffDays <= 3) return false;
+      const isExpired = diffDays < 0 || b.status === 'Expired';
+      if (filterFefo === 'expired' && !isExpired) return false;
+      if (filterFefo === 'urgent' && (isExpired || diffDays > 3)) return false;
+      if (filterFefo === 'warning' && (isExpired || diffDays <= 3 || diffDays > 5)) return false;
+      if (filterFefo === 'safe' && (isExpired || diffDays <= 5)) return false;
     }
 
     // 6. Khoảng ngày thu hoạch
@@ -156,6 +207,34 @@ export const Batches: React.FC = () => {
   useEffect(() => {
     loadData();
   }, []);
+
+  // Tự động quét và khóa toàn bộ lô quá hạn
+  const handleAutoScanExpired = async () => {
+    setIsScanning(true);
+    try {
+      const res = await productBatchService.autoScanExpired();
+      message.success(res.data?.message || 'Đã quét và khóa các lô hàng hết hạn!');
+      await loadData();
+    } catch (error: any) {
+      message.error(error.response?.data?.message || 'Lỗi khi quét tự động lô hết hạn.');
+    } finally {
+      setIsScanning(false);
+    }
+  };
+
+  // Xuất hủy (Write-off) lô quá hạn hoặc cận hạn hỏng
+  const handleWriteOff = async (batchId: number, batchCode: string) => {
+    setIsWritingOff(true);
+    try {
+      const res = await productBatchService.writeOff(batchId, 'Xuất tiêu hủy do quá hạn sử dụng theo chuẩn FEFO');
+      message.success(res.data?.message || `Đã xuất hủy thành công lô hàng ${batchCode}.`);
+      await loadData();
+    } catch (error: any) {
+      message.error(error.response?.data?.message || 'Xuất hủy lô hàng thất bại.');
+    } finally {
+      setIsWritingOff(false);
+    }
+  };
 
   const handleOpenAdd = () => {
     setEditingBatch(null);
@@ -283,11 +362,22 @@ export const Batches: React.FC = () => {
       }
     },
     { 
-      title: 'Sản lượng ban đầu', 
+      title: 'Tồn kho khả dụng', 
       key: 'initialQuantity', 
       sorter: (a: ProductBatch, b: ProductBatch) => a.initialQuantity - b.initialQuantity,
       render: (_: any, r: ProductBatch) => (
-        <span style={{ fontWeight: 600 }}>{r.initialQuantity} {r.unit}</span>
+        <div>
+          <span style={{ 
+            fontWeight: 700, 
+            fontSize: '13.5px',
+            color: r.initialQuantity <= 0 ? '#8c8c8c' : '#1b5e20' 
+          }}>
+            {r.initialQuantity} {r.unit}
+          </span>
+          {r.initialQuantity <= 0 && (
+            <div style={{ fontSize: '10.5px', color: '#ff4d4f' }}>Hết hàng</div>
+          )}
+        </div>
       )
     },
     { 
@@ -302,37 +392,114 @@ export const Batches: React.FC = () => {
       )
     },
     { 
-      title: 'Hạn sử dụng (FEFO)', 
+      title: 'Hạn sử dụng (HSD)', 
       dataIndex: 'expiryDate', 
       key: 'expiryDate',
       sorter: (a: ProductBatch, b: ProductBatch) => dayjs(a.expiryDate).unix() - dayjs(b.expiryDate).unix(),
-      render: (date: string) => {
-        const now = dayjs();
-        const exp = dayjs(date);
+      render: (date: string, r: ProductBatch) => {
+        const now = dayjs().startOf('day');
+        const exp = dayjs(date).startOf('day');
         const diffDays = exp.diff(now, 'day');
-        const isExpired = diffDays < 0;
-        const isExpiringSoon = diffDays >= 0 && diffDays <= 3;
+        const isExpired = diffDays < 0 || r.status === 'Expired';
+        const isUrgent = !isExpired && diffDays <= 3;
+        const isWarning = !isExpired && diffDays > 3 && diffDays <= 5;
+
         return (
           <div>
-            <div style={{ color: isExpired ? '#cf1322' : (isExpiringSoon ? '#d46b08' : '#389e0d'), fontWeight: 600 }}>
+            <div style={{ 
+              color: isExpired ? '#cf1322' : isUrgent ? '#d4380d' : isWarning ? '#d46b08' : '#389e0d', 
+              fontWeight: 700,
+              fontSize: '13px'
+            }}>
               {exp.format('DD/MM/YYYY')}
             </div>
             {isExpired ? (
-              <Tag color="error" style={{ fontSize: '10.5px', padding: '0 4px' }}>Đã hết hạn</Tag>
-            ) : isExpiringSoon ? (
-              <Tag color="warning" style={{ fontSize: '10.5px', padding: '0 4px' }}>Cận hạn ({diffDays} ngày)</Tag>
+              <Tag color="error" style={{ fontSize: '11px', margin: '2px 0 0 0' }}>Đã hết hạn</Tag>
+            ) : isUrgent ? (
+              <Tag color="volcano" style={{ fontSize: '11px', margin: '2px 0 0 0', fontWeight: 600 }}>Cận hạn ({diffDays} ngày)</Tag>
+            ) : isWarning ? (
+              <Tag color="warning" style={{ fontSize: '11px', margin: '2px 0 0 0' }}>Còn {diffDays} ngày</Tag>
             ) : (
-              <Tag color="success" style={{ fontSize: '10.5px', padding: '0 4px' }}>Còn {diffDays} ngày</Tag>
+              <Tag color="success" style={{ fontSize: '11px', margin: '2px 0 0 0' }}>An toàn ({diffDays} ngày)</Tag>
             )}
           </div>
         );
       }
     },
     { 
-      title: 'Tiêu chuẩn', 
-      key: 'cert', 
-      width: 100,
-      render: () => <Tag color="green">VietGAP</Tag> 
+      title: 'Chiến lược FEFO & Khuyến nghị', 
+      key: 'fefoAction',
+      width: 190,
+      render: (_: any, r: ProductBatch) => {
+        const now = dayjs().startOf('day');
+        const exp = dayjs(r.expiryDate).startOf('day');
+        const diffDays = exp.diff(now, 'day');
+        const isExpired = diffDays < 0 || r.status === 'Expired';
+
+        if (isExpired) {
+          return (
+            <Space direction="vertical" size={2}>
+              <Tag color="#434343" icon={<CloseCircleOutlined />} style={{ fontWeight: 600 }}>
+                HẾT HẠN - KHÓA BÁN
+              </Tag>
+              {r.initialQuantity > 0 ? (
+                <Popconfirm
+                  title="Xác nhận xuất hủy lô hàng?"
+                  description="Thao tác này sẽ đưa tồn kho về 0 và chuyển trạng thái Expired."
+                  okText="Xuất tiêu hủy"
+                  cancelText="Hủy"
+                  okButtonProps={{ danger: true, loading: isWritingOff }}
+                  onConfirm={() => handleWriteOff(r.batchId, r.batchCode)}
+                >
+                  <Button 
+                    size="small" 
+                    danger 
+                    type="primary" 
+                    icon={<ClearOutlined />} 
+                    style={{ fontSize: '11px', height: '24px', padding: '0 8px' }}
+                  >
+                    Xuất hủy (Write-off)
+                  </Button>
+                </Popconfirm>
+              ) : (
+                <span style={{ fontSize: '11px', color: '#8c8c8c' }}>Đã thanh lý / Tồn 0</span>
+              )}
+            </Space>
+          );
+        }
+
+        if (diffDays <= 3) {
+          return (
+            <div>
+              <Tag color="error" icon={<FireOutlined />} style={{ fontWeight: 700, margin: 0 }}>
+                ⚡ ƯU TIÊN XUẤT KHO (FEFO)
+              </Tag>
+              <div style={{ fontSize: '11px', color: '#cf1322', marginTop: 2, fontWeight: 500 }}>
+                Khuyến nghị: Flash Sale / Xả gấp
+              </div>
+            </div>
+          );
+        }
+
+        if (diffDays <= 5) {
+          return (
+            <div>
+              <Tag color="warning" icon={<ClockCircleOutlined />} style={{ fontWeight: 600, margin: 0 }}>
+                CẦN CHÚ Ý THEO DÕI
+              </Tag>
+              <div style={{ fontSize: '11px', color: '#d46b08', marginTop: 2 }}>
+                Lên kế hoạch xuất trước
+              </div>
+            </div>
+          );
+        }
+
+        return (
+          <Tag color="success" icon={<CheckCircleOutlined />} style={{ margin: 0 }}>
+            Tồn kho an toàn
+          </Tag>
+        );
+      }
     },
     { 
       title: 'Trạng thái', 
@@ -341,6 +508,7 @@ export const Batches: React.FC = () => {
       width: 95,
       sorter: (a: ProductBatch, b: ProductBatch) => (a.status || 'Active').localeCompare(b.status || 'Active'),
       render: (st?: string) => {
+        if (st === 'Expired') return <Tag color="error">Expired</Tag>;
         if (st === 'Active' || !st) return <Tag color="green">Active</Tag>;
         return <Tag color="default">{st}</Tag>;
       }
@@ -360,17 +528,182 @@ export const Batches: React.FC = () => {
 
   return (
     <div style={{ padding: 24 }}>
+      {/* ── THỐNG KÊ MA TRẬN FEFO TRAFFIC LIGHT (ĐÈN GIAO THÔNG) ── */}
+      <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
+        {/* Thẻ 1: Lô An Toàn */}
+        <Col xs={24} sm={12} md={6}>
+          <Card 
+            hoverable 
+            onClick={() => setFilterFefo(filterFefo === 'safe' ? 'all' : 'safe')}
+            style={{ 
+              borderRadius: 12, 
+              borderColor: filterFefo === 'safe' ? '#52c41a' : '#d9f7be',
+              background: filterFefo === 'safe' ? '#f6ffed' : '#ffffff',
+              boxShadow: filterFefo === 'safe' ? '0 0 0 2px #52c41a' : undefined,
+              cursor: 'pointer'
+            }}
+          >
+            <Statistic
+              title={<span style={{ fontWeight: 600, color: '#389e0d' }}>🟢 An Toàn (&gt; 5 Ngày)</span>}
+              value={fefoStats.safe}
+              suffix={<span style={{ fontSize: '14px', color: '#8c8c8c' }}>/ {fefoStats.total} lô</span>}
+              valueStyle={{ color: '#389e0d', fontWeight: 700 }}
+              prefix={<CheckCircleOutlined />}
+            />
+            <div style={{ fontSize: '11.5px', color: '#73d13d', marginTop: 6 }}>
+              Hàng bảo quản tốt, phân phối bình thường
+            </div>
+          </Card>
+        </Col>
+
+        {/* Thẻ 2: Cần Chú Ý */}
+        <Col xs={24} sm={12} md={6}>
+          <Card 
+            hoverable 
+            onClick={() => setFilterFefo(filterFefo === 'warning' ? 'all' : 'warning')}
+            style={{ 
+              borderRadius: 12, 
+              borderColor: filterFefo === 'warning' ? '#faad14' : '#ffe58f',
+              background: filterFefo === 'warning' ? '#fffbe6' : '#ffffff',
+              boxShadow: filterFefo === 'warning' ? '0 0 0 2px #faad14' : undefined,
+              cursor: 'pointer'
+            }}
+          >
+            <Statistic
+              title={<span style={{ fontWeight: 600, color: '#d46b08' }}>🟡 Cần Chú Ý (3 - 5 Ngày)</span>}
+              value={fefoStats.warning}
+              suffix={<span style={{ fontSize: '14px', color: '#8c8c8c' }}>lô</span>}
+              valueStyle={{ color: '#d46b08', fontWeight: 700 }}
+              prefix={<ClockCircleOutlined />}
+            />
+            <div style={{ fontSize: '11.5px', color: '#faad14', marginTop: 6 }}>
+              Lên kế hoạch điều phối, hạn chế nhập dồn
+            </div>
+          </Card>
+        </Col>
+
+        {/* Thẻ 3: Khẩn Cấp Cận Hạn */}
+        <Col xs={24} sm={12} md={6}>
+          <Card 
+            hoverable 
+            onClick={() => setFilterFefo(filterFefo === 'urgent' ? 'all' : 'urgent')}
+            style={{ 
+              borderRadius: 12, 
+              borderColor: filterFefo === 'urgent' ? '#ff4d4f' : '#ffa39e',
+              background: filterFefo === 'urgent' ? '#fff1f0' : '#ffffff',
+              boxShadow: filterFefo === 'urgent' ? '0 0 0 2px #ff4d4f' : undefined,
+              cursor: 'pointer'
+            }}
+          >
+            <Statistic
+              title={<span style={{ fontWeight: 700, color: '#cf1322' }}>🔴 Cận Hạn Khẩn Cấp (1 - 3 Ngày)</span>}
+              value={fefoStats.urgent}
+              suffix={<span style={{ fontSize: '14px', color: '#8c8c8c' }}>lô</span>}
+              valueStyle={{ color: '#cf1322', fontWeight: 800 }}
+              prefix={<FireOutlined />}
+            />
+            <div style={{ fontSize: '11.5px', color: '#cf1322', marginTop: 6, fontWeight: 500 }}>
+              ⚡ Ưu tiên xuất kho trước (FEFO) / Flash Sale
+            </div>
+          </Card>
+        </Col>
+
+        {/* Thẻ 4: Đã Quá Hạn */}
+        <Col xs={24} sm={12} md={6}>
+          <Card 
+            hoverable 
+            onClick={() => setFilterFefo(filterFefo === 'expired' ? 'all' : 'expired')}
+            style={{ 
+              borderRadius: 12, 
+              borderColor: filterFefo === 'expired' ? '#595959' : '#d9d9d9',
+              background: filterFefo === 'expired' ? '#f5f5f5' : '#ffffff',
+              boxShadow: filterFefo === 'expired' ? '0 0 0 2px #595959' : undefined,
+              cursor: 'pointer'
+            }}
+          >
+            <Statistic
+              title={<span style={{ fontWeight: 600, color: '#434343' }}>⚫ Đã Quá Hạn Sử Dụng</span>}
+              value={fefoStats.expired}
+              suffix={<span style={{ fontSize: '14px', color: '#8c8c8c' }}>lô</span>}
+              valueStyle={{ color: '#434343', fontWeight: 700 }}
+              prefix={<CloseCircleOutlined />}
+            />
+            <div style={{ fontSize: '11.5px', color: '#8c8c8c', marginTop: 6 }}>
+              Khóa xuất kho, thủ tục xuất tiêu hủy
+            </div>
+          </Card>
+        </Col>
+      </Row>
+
+      {/* ── BANNER CẢNH BÁO QUẢN TRỊ VÒNG ĐỜI NÔNG SẢN FEFO ── */}
+      {(fefoStats.urgent > 0 || fefoStats.expired > 0) && (
+        <Alert
+          type={fefoStats.expired > 0 ? "error" : "warning"}
+          showIcon
+          style={{ marginBottom: 16, borderRadius: 10, border: '1px solid' }}
+          message={
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+              <div>
+                <b style={{ fontSize: '14px' }}>Cảnh Báo Vòng Đời Nông Sản (FEFO):</b>
+                {fefoStats.urgent > 0 && (
+                  <span style={{ marginLeft: 8, color: '#cf1322' }}>
+                    Có <b>{fefoStats.urgent}</b> lô hàng cận hạn (1-3 ngày) cần đẩy bán ưu tiên!
+                  </span>
+                )}
+                {fefoStats.expired > 0 && (
+                  <span style={{ marginLeft: 8, color: '#434343' }}>
+                    Phát hiện <b>{fefoStats.expired}</b> lô hàng đã hết hạn cần xuất tiêu hủy / cách ly kho.
+                  </span>
+                )}
+              </div>
+              <Space wrap>
+                {fefoStats.urgent > 0 && (
+                  <Button 
+                    size="small" 
+                    type="primary" 
+                    danger 
+                    icon={<FireOutlined />}
+                    onClick={() => setFilterFefo('urgent')}
+                  >
+                    Lọc Lô Cần Xả Gấp
+                  </Button>
+                )}
+                <Button 
+                  size="small" 
+                  icon={<ThunderboltOutlined />}
+                  loading={isScanning}
+                  onClick={handleAutoScanExpired}
+                >
+                  Quét & Khóa Tự Động Lô Hết Hạn
+                </Button>
+              </Space>
+            </div>
+          }
+        />
+      )}
+
+      {/* ── CARD BẢNG DỮ LIỆU & TÌM KIẾM ── */}
       <Card 
         title={
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <SafetyCertificateOutlined style={{ color: '#2e7d32', fontSize: '20px' }} />
-            <span>Quản Lý Lô Hàng Nông Sản & Kiểm Soát Nguồn Gốc (Traceability)</span>
+            <span>Quản Lý Lô Hàng Nông Sản & Kiểm Soát Hạn Dùng FEFO</span>
           </div>
         }
         extra={
-          <Button type="primary" icon={<PlusOutlined />} onClick={handleOpenAdd} style={{ backgroundColor: '#2e7d32', borderColor: '#2e7d32' }}>
-            Thêm Lô Hàng
-          </Button>
+          <Space>
+            <Button 
+              icon={<ThunderboltOutlined />} 
+              loading={isScanning}
+              onClick={handleAutoScanExpired}
+              title="Quét toàn bộ lô trong hệ thống và tự động chuyển trạng thái Expired cho các lô quá hạn"
+            >
+              Quét Hạn Dùng
+            </Button>
+            <Button type="primary" icon={<PlusOutlined />} onClick={handleOpenAdd} style={{ backgroundColor: '#2e7d32', borderColor: '#2e7d32' }}>
+              Thêm Lô Hàng Mới
+            </Button>
+          </Space>
         }
       >
         {/* KHUNG TÌM KIẾM & BỘ LỌC TẤT CẢ THÀNH PHẦN TRONG BẢNG LÔ HÀNG */}
@@ -441,17 +774,18 @@ export const Batches: React.FC = () => {
             {/* 4. Tình trạng hạn dùng (FEFO) */}
             <Col xs={24} sm={12} md={4}>
               <div style={{ fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>
-                Hạn sử dụng (FEFO):
+                Phân loại hạn dùng (FEFO):
               </div>
               <Select
                 style={{ width: '100%' }}
                 value={filterFefo}
                 onChange={val => setFilterFefo(val)}
               >
-                <Select.Option value="all">Tất cả hạn dùng</Select.Option>
-                <Select.Option value="valid">🟢 Còn hạn an toàn (&gt; 3 ngày)</Select.Option>
-                <Select.Option value="warning">🟠 Cận hạn (≤ 3 ngày)</Select.Option>
-                <Select.Option value="expired">🔴 Đã hết hạn</Select.Option>
+                <Select.Option value="all">Tất cả hạn dùng ({batches.length})</Select.Option>
+                <Select.Option value="safe">🟢 An toàn (&gt; 5 ngày)</Select.Option>
+                <Select.Option value="warning">🟡 Cần chú ý (3 - 5 ngày)</Select.Option>
+                <Select.Option value="urgent">🔴 Cận hạn khẩn cấp (≤ 3 ngày)</Select.Option>
+                <Select.Option value="expired">⚫ Đã quá hạn sử dụng</Select.Option>
               </Select>
             </Col>
 
@@ -494,12 +828,13 @@ export const Batches: React.FC = () => {
               <span style={{ fontSize: '12px', color: '#64748b' }}>Trạng thái:</span>
               <Select 
                 size="small"
-                style={{ width: 140 }} 
+                style={{ width: 150 }} 
                 value={filterStatus} 
                 onChange={val => setFilterStatus(val)}
               >
                 <Select.Option value="all">Tất cả trạng thái</Select.Option>
                 <Select.Option value="Active">Active (Hoạt động)</Select.Option>
+                <Select.Option value="Expired">Expired (Hết hạn)</Select.Option>
                 <Select.Option value="Inactive">Inactive (Tạm khóa)</Select.Option>
               </Select>
             </Space>
@@ -515,6 +850,7 @@ export const Batches: React.FC = () => {
         />
       </Card>
 
+      {/* ── MODAL THÊM / SỬA LÔ HÀNG ── */}
       <Modal
         title={editingBatch ? 'Cập Nhật Lô Hàng' : 'Khai Báo Lô Hàng Nông Sản Mới'}
         open={isModalOpen}
@@ -604,6 +940,7 @@ export const Batches: React.FC = () => {
           <Form.Item name="status" label="Trạng thái">
             <Select placeholder="Chọn trạng thái">
               <Select.Option value="Active">Active</Select.Option>
+              <Select.Option value="Expired">Expired</Select.Option>
               <Select.Option value="Inactive">Inactive</Select.Option>
             </Select>
           </Form.Item>

@@ -49,6 +49,9 @@ export const productBatchService = {
   create: (data: any) => api.post('/productbatches', data),
   update: (id: number, data: any) => api.put(`/productbatches/${id}`, data),
   delete: (id: number) => api.delete(`/productbatches/${id}`),
+  getFefoSummary: () => api.get('/productbatches/fefo-summary'),
+  autoScanExpired: () => api.post('/productbatches/auto-scan-expired'),
+  writeOff: (id: number, reason?: string) => api.post(`/productbatches/${id}/write-off`, { reason }),
 };
 
 export const orderService = {

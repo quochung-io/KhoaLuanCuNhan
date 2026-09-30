@@ -115,4 +115,98 @@ public class ProductBatchesController : ControllerBase
         await _context.SaveChangesAsync();
         return NoContent();
     }
+
+    // ── FEFO 1. Thống kê ma trận hạn sử dụng FEFO ──────────────────
+    [HttpGet("fefo-summary")]
+    public async Task<IActionResult> GetFefoSummary()
+    {
+        var today = DateTime.Today;
+        var batches = await _context.ProductBatches
+            .Include(b => b.Product)
+            .ToListAsync();
+
+        var safe = 0;
+        var warning = 0;
+        var urgent = 0;
+        var expired = 0;
+
+        foreach (var b in batches)
+        {
+            var diff = (b.ExpiryDate.Date - today).Days;
+            if (diff < 0 || b.Status == "Expired")
+            {
+                expired++;
+            }
+            else if (diff <= 3)
+            {
+                urgent++;
+            }
+            else if (diff <= 5)
+            {
+                warning++;
+            }
+            else
+            {
+                safe++;
+            }
+        }
+
+        return Ok(new
+        {
+            total = batches.Count,
+            safe,
+            warning,
+            urgent,
+            expired,
+            scannedAt = DateTime.Now
+        });
+    }
+
+    // ── FEFO 2. Tự động quét và khóa toàn bộ lô hàng đã hết hạn sử dụng ────
+    [HttpPost("auto-scan-expired")]
+    public async Task<IActionResult> AutoScanExpiredBatches()
+    {
+        var today = DateTime.Today;
+        var expiredBatches = await _context.ProductBatches
+            .Where(b => b.ExpiryDate < today && b.Status != "Expired")
+            .ToListAsync();
+
+        foreach (var b in expiredBatches)
+        {
+            b.Status = "Expired";
+        }
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new
+        {
+            message = $"Đã tự động quét và khóa thành công {expiredBatches.Count} lô hàng hết hạn.",
+            lockedCount = expiredBatches.Count
+        });
+    }
+
+    // ── FEFO 3. Xuất hủy / Tiêu hủy lô hàng hết hạn (Write-off) ────
+    [HttpPost("{id}/write-off")]
+    public async Task<IActionResult> WriteOffBatch(long id, [FromBody] WriteOffRequest? req)
+    {
+        var batch = await _context.ProductBatches.Include(b => b.Product).FirstOrDefaultAsync(b => b.BatchId == id);
+        if (batch == null) return NotFound(new { message = "Không tìm thấy lô hàng." });
+
+        batch.Status = "Expired";
+        batch.InitialQuantity = 0; // Đưa tồn kho vật lý về 0
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new
+        {
+            message = $"Đã xuất hủy thành công lô hàng {batch.BatchCode}. Lý do: {req?.Reason ?? "Hết hạn sử dụng"}.",
+            batchId = id,
+            status = batch.Status
+        });
+    }
+}
+
+public class WriteOffRequest
+{
+    public string? Reason { get; set; } = "Hết hạn sử dụng";
 }
