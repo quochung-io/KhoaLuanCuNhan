@@ -29,6 +29,8 @@ interface ProductDetail {
   status: string;
   category?: Category;
   productImages?: ProductImage[];
+  originalPrice?: number;
+  discountPercent?: number;
 }
 
 interface BatchInfo {
@@ -1494,10 +1496,20 @@ export default function ProductDetailPage() {
 
             {/* Giá tiền */}
             <div style={{ background: 'var(--surface)', padding: '20px', borderRadius: '18px', border: '1px solid var(--line)', marginBottom: '24px' }}>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-                <span style={{ fontSize: '36px', fontWeight: 800, color: 'var(--green-700)', letterSpacing: '-0.5px' }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '36px', fontWeight: 800, color: product.discountPercent ? '#DC2626' : 'var(--green-700)', letterSpacing: '-0.5px' }}>
                   {product.price.toLocaleString('vi-VN')}₫
                 </span>
+                {Boolean(product.discountPercent && product.originalPrice && product.originalPrice > product.price) && (
+                  <>
+                    <span style={{ fontSize: '18px', color: '#94A3B8', textDecoration: 'line-through' }}>
+                      {product.originalPrice?.toLocaleString('vi-VN')}₫
+                    </span>
+                    <span style={{ background: '#FEE2E2', color: '#DC2626', fontSize: '13px', fontWeight: 700, padding: '3px 10px', borderRadius: '8px', border: '1px solid #FCA5A5' }}>
+                      ⚡ Xả hàng cận hạn -{product.discountPercent}%
+                    </span>
+                  </>
+                )}
                 <span style={{ fontSize: '16px', color: 'var(--ink-soft)', fontWeight: 500 }}>
                   / {product.unit}
                 </span>

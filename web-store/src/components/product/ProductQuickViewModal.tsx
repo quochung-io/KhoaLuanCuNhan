@@ -335,11 +335,30 @@ export const ProductQuickViewModal: React.FC<ProductQuickViewModalProps> = ({
               border: '1px solid #e2e8f0',
               display: 'flex',
               alignItems: 'baseline',
-              gap: '8px'
+              gap: '10px',
+              flexWrap: 'wrap'
             }}>
-              <span style={{ fontSize: '22px', fontWeight: '800', color: '#16a34a' }}>
+              <span style={{ fontSize: '24px', fontWeight: '800', color: productDetails?.discountPercent ? '#dc2626' : '#16a34a' }}>
                 {toVND(currentPrice)}
               </span>
+              {Boolean(productDetails?.discountPercent && productDetails?.originalPrice && productDetails.originalPrice > currentPrice) && (
+                <>
+                  <span style={{ fontSize: '15px', color: '#94a3b8', textDecoration: 'line-through' }}>
+                    {toVND(productDetails.originalPrice)}
+                  </span>
+                  <span style={{
+                    backgroundColor: '#fee2e2',
+                    color: '#dc2626',
+                    fontSize: '12px',
+                    fontWeight: '700',
+                    padding: '2px 8px',
+                    borderRadius: '6px',
+                    border: '1px solid #fca5a5'
+                  }}>
+                    ⚡ Xả hàng -{productDetails.discountPercent}%
+                  </span>
+                </>
+              )}
               <span style={{ fontSize: '13.5px', color: '#64748b', fontWeight: '500' }}>
                 / {currentUnit}
               </span>
