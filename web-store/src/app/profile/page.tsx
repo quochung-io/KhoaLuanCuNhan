@@ -62,6 +62,7 @@ export default function ProfilePage() {
 
   // Kho Lưu Trữ Vouchers
   const [userVouchers, setUserVouchers] = useState<any[]>([]);
+  const [voucherFilter, setVoucherFilter] = useState<'all' | 'available' | 'used'>('all');
 
   // Lịch sử đơn hàng
   const [orders, setOrders] = useState<any[]>([]);
@@ -505,6 +506,33 @@ export default function ProfilePage() {
       fetchLoyalty(user.userId);
     } catch (err: any) {
       setRedeemError(err.message || 'Lỗi khi gọi API đổi điểm.');
+    }
+  };
+
+  const handleUseVoucherNow = (voucher: any) => {
+    if (voucher.isUsed) return;
+    localStorage.setItem('pending_voucher_code', voucher.code);
+    
+    // Kiểm tra giỏ hàng
+    try {
+      const storedCart = localStorage.getItem('cart');
+      const cartItems = storedCart ? JSON.parse(storedCart) : [];
+      if (cartItems.length > 0) {
+        showToast(`Đã chọn mã "${voucher.code}". Chuyển sang thanh toán...`, 'success');
+        router.push(`/checkout?voucher=${encodeURIComponent(voucher.code)}`);
+      } else {
+        showToast(`Đã lưu mã "${voucher.code}". Hãy chọn nông sản vào giỏ hàng để áp dụng!`, 'success');
+        router.push('/products');
+      }
+    } catch {
+      router.push(`/checkout?voucher=${encodeURIComponent(voucher.code)}`);
+    }
+  };
+
+  const handleCopyVoucherCode = (code: string) => {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(code);
+      showToast(`Đã sao chép mã "${code}" vào bộ nhớ tạm!`, 'success');
     }
   };
 
@@ -1843,78 +1871,275 @@ export default function ProfilePage() {
             {/* TAB 4: KHO LƯU TRỮ VOUCHER */}
             {activeTab === 'vouchers' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
-                  <div style={{ fontSize: '13.5px', color: 'var(--ink-soft)' }}>
-                    Tổng số: <strong>{userVouchers.length}</strong> voucher (<strong>{userVouchers.filter(v => !v.isUsed).length}</strong> khả dụng)
+                {/* Banner thông báo đồng bộ với trang thanh toán */}
+                <div style={{
+                  backgroundColor: '#F0FDF4',
+                  border: '1.5px solid #86EFAC',
+                  borderRadius: '12px',
+                  padding: '14px 18px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  gap: '12px'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <span style={{ fontSize: '22px' }}>🔄</span>
+                    <div>
+                      <div style={{ fontSize: '13.5px', fontWeight: '700', color: '#166534' }}>
+                        Kho voucher được đồng bộ tự động với Trang Thanh Toán (Checkout)
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#15803d', marginTop: '2px' }}>
+                        Bạn có thể bấm &quot;Dùng ngay&quot; để áp dụng nhanh mã ưu đãi khi mua sắm nông sản sạch!
+                      </div>
+                    </div>
                   </div>
+                  <Link
+                    href="/checkout"
+                    style={{
+                      padding: '6px 14px',
+                      backgroundColor: '#15803d',
+                      color: '#ffffff',
+                      borderRadius: '8px',
+                      fontSize: '12px',
+                      fontWeight: '700',
+                      textDecoration: 'none',
+                      boxShadow: '0 2px 6px rgba(21, 128, 61, 0.2)'
+                    }}
+                  >
+                    Đến trang thanh toán →
+                  </Link>
+                </div>
+
+                {/* Thanh điều khiển: Bộ lọc & Đổi điểm */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+                  {/* Bộ lọc trạng thái */}
+                  <div style={{ display: 'flex', gap: '6px', backgroundColor: 'var(--bg)', padding: '3px', borderRadius: '8px', border: '1px solid var(--line)' }}>
+                    <button
+                      type="button"
+                      onClick={() => setVoucherFilter('all')}
+                      style={{
+                        padding: '6px 12px',
+                        borderRadius: '6px',
+                        border: 'none',
+                        fontSize: '12px',
+                        fontWeight: voucherFilter === 'all' ? '700' : '500',
+                        backgroundColor: voucherFilter === 'all' ? 'var(--surface)' : 'transparent',
+                        color: voucherFilter === 'all' ? 'var(--green-900)' : 'var(--ink-soft)',
+                        boxShadow: voucherFilter === 'all' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Tất cả ({userVouchers.length})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setVoucherFilter('available')}
+                      style={{
+                        padding: '6px 12px',
+                        borderRadius: '6px',
+                        border: 'none',
+                        fontSize: '12px',
+                        fontWeight: voucherFilter === 'available' ? '700' : '500',
+                        backgroundColor: voucherFilter === 'available' ? 'var(--surface)' : 'transparent',
+                        color: voucherFilter === 'available' ? 'var(--green-900)' : 'var(--ink-soft)',
+                        boxShadow: voucherFilter === 'available' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Khả dụng ({userVouchers.filter(v => !v.isUsed).length})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setVoucherFilter('used')}
+                      style={{
+                        padding: '6px 12px',
+                        borderRadius: '6px',
+                        border: 'none',
+                        fontSize: '12px',
+                        fontWeight: voucherFilter === 'used' ? '700' : '500',
+                        backgroundColor: voucherFilter === 'used' ? 'var(--surface)' : 'transparent',
+                        color: voucherFilter === 'used' ? 'var(--green-900)' : 'var(--ink-soft)',
+                        boxShadow: voucherFilter === 'used' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Đã sử dụng ({userVouchers.filter(v => v.isUsed).length})
+                    </button>
+                  </div>
+
                   <button
                     type="button"
-                    onClick={() => setActiveTab('loyalty')}
+                    onClick={() => {
+                      setActiveTab('loyalty');
+                      setLoyaltySubTab('rewards');
+                    }}
                     className="btn btn-accent"
-                    style={{ padding: '6px 14px', fontSize: '12.5px' }}
+                    style={{ padding: '7px 14px', fontSize: '12.5px', display: 'flex', alignItems: 'center', gap: '6px' }}
                   >
-                    + Đổi thêm voucher từ Điểm thưởng
+                    <span>🎁</span>
+                    <span>Đổi thêm voucher từ Điểm</span>
                   </button>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
-                  {userVouchers.map(v => (
-                    <div
-                      key={v.voucherId || v.id}
-                      style={{
-                        border: v.isUsed ? '1px dashed var(--line)' : '1px solid var(--line)',
-                        borderRadius: 'var(--radius-md)',
-                        backgroundColor: v.isUsed ? 'var(--bg)' : 'var(--surface)',
-                        padding: '18px',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        justifyContent: 'space-between',
-                        opacity: v.isUsed ? 0.6 : 1,
-                        position: 'relative'
-                      }}
-                    >
-                      <div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                          <span style={{
-                            padding: '3px 8px',
-                            borderRadius: '4px',
-                            fontSize: '11px',
-                            fontWeight: '700',
-                            backgroundColor: v.voucherType === 'ship' ? '#EBF8FF' : '#FEF3C7',
-                            color: v.voucherType === 'ship' ? '#2B6CB0' : '#B45309'
-                          }}>
-                            {v.voucherType === 'ship' ? 'FREESHIP' : 'GIẢM GIÁ'}
-                          </span>
-                          {v.isUsed ? (
-                            <span style={{ fontSize: '11.5px', fontWeight: '700', color: 'var(--ink-soft)' }}>Đã sử dụng</span>
-                          ) : (
-                            <span style={{ fontSize: '11.5px', fontWeight: '700', color: 'var(--green-700)' }}>Khả dụng</span>
-                          )}
-                        </div>
-
-                        <h4 style={{ margin: '0 0 6px 0', fontSize: '15px', color: 'var(--ink)', fontWeight: '700' }}>
-                          {v.title || v.name}
-                        </h4>
-                        <div style={{ fontSize: '12.5px', color: 'var(--ink-soft)', marginBottom: '8px' }}>
-                          Áp dụng đơn từ: <strong>{(v.minOrderAmount || v.minOrder || 0).toLocaleString('vi-VN')} đ</strong>
-                        </div>
-                      </div>
-
-                      <div style={{ borderTop: '1px dashed var(--line)', paddingTop: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                {/* Grid danh sách Voucher */}
+                {userVouchers.filter(v => {
+                  if (voucherFilter === 'available') return !v.isUsed;
+                  if (voucherFilter === 'used') return v.isUsed;
+                  return true;
+                }).length === 0 ? (
+                  <div style={{
+                    textAlign: 'center',
+                    padding: '40px 20px',
+                    backgroundColor: 'var(--surface)',
+                    borderRadius: 'var(--radius-md)',
+                    border: '1px dashed var(--line)'
+                  }}>
+                    <div style={{ fontSize: '36px', marginBottom: '8px' }}>🎟️</div>
+                    <div style={{ fontSize: '14px', fontWeight: '700', color: 'var(--ink)', marginBottom: '4px' }}>
+                      Không có voucher nào trong danh mục này
+                    </div>
+                    <div style={{ fontSize: '12.5px', color: 'var(--ink-soft)' }}>
+                      Tích lũy điểm khi mua sắm để đổi các mã giảm giá và Freeship hấp dẫn!
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '16px' }}>
+                    {userVouchers.filter(v => {
+                      if (voucherFilter === 'available') return !v.isUsed;
+                      if (voucherFilter === 'used') return v.isUsed;
+                      return true;
+                    }).map(v => (
+                      <div
+                        key={v.voucherId || v.id}
+                        style={{
+                          border: v.isUsed ? '1px dashed var(--line)' : '1.5px solid var(--line)',
+                          borderRadius: 'var(--radius-md)',
+                          backgroundColor: v.isUsed ? 'var(--bg)' : 'var(--surface)',
+                          padding: '18px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          justifyContent: 'space-between',
+                          opacity: v.isUsed ? 0.65 : 1,
+                          position: 'relative',
+                          boxShadow: v.isUsed ? 'none' : '0 2px 8px rgba(0,0,0,0.04)',
+                          transition: 'all 0.2s'
+                        }}
+                      >
                         <div>
-                          <div style={{ fontSize: '11px', color: 'var(--ink-soft)' }}>MÃ VOUCHER</div>
-                          <code style={{ fontSize: '13px', fontWeight: '800', color: 'var(--green-700)', letterSpacing: '0.5px' }}>{v.code}</code>
-                        </div>
-                        <div style={{ textAlign: 'right' }}>
-                          <div style={{ fontSize: '11px', color: 'var(--ink-soft)' }}>HẠN DÙNG</div>
-                          <div style={{ fontSize: '11.5px', fontWeight: '600', color: 'var(--ink)' }}>
-                            {v.expiryDate ? new Date(v.expiryDate).toLocaleDateString('vi-VN') : v.expiry || ''}
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                            <span style={{
+                              padding: '3px 8px',
+                              borderRadius: '4px',
+                              fontSize: '11px',
+                              fontWeight: '700',
+                              backgroundColor: v.voucherType === 'ship' ? '#EBF8FF' : '#FEF3C7',
+                              color: v.voucherType === 'ship' ? '#2B6CB0' : '#B45309'
+                            }}>
+                              {v.voucherType === 'ship' ? 'FREESHIP' : 'GIẢM GIÁ'}
+                            </span>
+                            {v.isUsed ? (
+                              <span style={{ fontSize: '11.5px', fontWeight: '700', color: 'var(--ink-soft)', backgroundColor: '#F1F5F9', padding: '2px 6px', borderRadius: '4px' }}>
+                                Đã sử dụng
+                              </span>
+                            ) : (
+                              <span style={{ fontSize: '11.5px', fontWeight: '700', color: '#15803d', backgroundColor: '#F0FDF4', padding: '2px 6px', borderRadius: '4px', border: '1px solid #BBF7D0' }}>
+                                ● Khả dụng
+                              </span>
+                            )}
+                          </div>
+
+                          <h4 style={{ margin: '0 0 6px 0', fontSize: '15px', color: 'var(--ink)', fontWeight: '700' }}>
+                            {v.title || v.name}
+                          </h4>
+
+                          <div style={{ fontSize: '13px', fontWeight: '700', color: '#15803d', marginBottom: '4px' }}>
+                            {v.voucherType === 'ship'
+                              ? `Giảm ${Number(v.discountValue).toLocaleString('vi-VN')}₫ phí giao hàng`
+                              : v.voucherType === 'percent' || v.voucherType === 'discount'
+                              ? `Giảm ${v.discountValue}% giá trị đơn hàng`
+                              : `Giảm trực tiếp ${Number(v.discountValue).toLocaleString('vi-VN')}₫`}
+                          </div>
+
+                          <div style={{ fontSize: '12px', color: 'var(--ink-soft)', marginBottom: '12px' }}>
+                            Áp dụng đơn từ: <strong>{(v.minOrderAmount || v.minOrder || 0).toLocaleString('vi-VN')}₫</strong>
                           </div>
                         </div>
+
+                        <div>
+                          <div style={{ borderTop: '1px dashed var(--line)', paddingTop: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                            <div>
+                              <div style={{ fontSize: '10.5px', color: 'var(--ink-soft)', textTransform: 'uppercase' }}>Mã Voucher</div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
+                                <code style={{ fontSize: '14px', fontWeight: '800', color: 'var(--green-700)', letterSpacing: '0.5px' }}>{v.code}</code>
+                                <button
+                                  type="button"
+                                  onClick={() => handleCopyVoucherCode(v.code)}
+                                  style={{
+                                    border: 'none',
+                                    background: 'none',
+                                    cursor: 'pointer',
+                                    padding: '2px 4px',
+                                    fontSize: '12px',
+                                    color: 'var(--ink-soft)',
+                                    borderRadius: '4px'
+                                  }}
+                                  title="Sao chép mã"
+                                >
+                                  📋
+                                </button>
+                              </div>
+                            </div>
+                            <div style={{ textAlign: 'right' }}>
+                              <div style={{ fontSize: '10.5px', color: 'var(--ink-soft)', textTransform: 'uppercase' }}>Hạn dùng</div>
+                              <div style={{ fontSize: '12px', fontWeight: '600', color: 'var(--ink)', marginTop: '2px' }}>
+                                {v.expiryDate ? new Date(v.expiryDate).toLocaleDateString('vi-VN') : v.expiry || ''}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Nút hành động */}
+                          {!v.isUsed ? (
+                            <button
+                              type="button"
+                              onClick={() => handleUseVoucherNow(v)}
+                              style={{
+                                width: '100%',
+                                padding: '8px',
+                                backgroundColor: '#15803d',
+                                color: '#ffffff',
+                                border: 'none',
+                                borderRadius: '8px',
+                                fontSize: '12.5px',
+                                fontWeight: '700',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '6px',
+                                boxShadow: '0 2px 6px rgba(21, 128, 61, 0.2)',
+                                transition: 'all 0.2s'
+                              }}
+                            >
+                              <span>🛒 Dùng ngay khi thanh toán</span>
+                            </button>
+                          ) : (
+                            <div style={{
+                              textAlign: 'center',
+                              fontSize: '12px',
+                              color: 'var(--ink-soft)',
+                              padding: '6px',
+                              backgroundColor: 'var(--bg)',
+                              borderRadius: '6px'
+                            }}>
+                              Mã này đã được sử dụng cho đơn hàng trước
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 

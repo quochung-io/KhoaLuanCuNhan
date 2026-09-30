@@ -36,15 +36,16 @@ type Voucher = {
   code: string;
   title: string;
   description: string;
-  discountType: 'percent' | 'fixed';
+  discountType: 'percent' | 'fixed' | 'ship';
   discountValue: number;
   minOrder: number;
   maxDiscount?: number;
   expiryDate: string;
   tag: string;
+  isFromWallet?: boolean;
 };
 
-const VOUCHER_WALLET: Voucher[] = [
+const SYSTEM_VOUCHERS: Voucher[] = [
   {
     code: 'LANHNEW',
     title: 'Giảm 15% Đơn Đầu Tiên',
@@ -60,7 +61,7 @@ const VOUCHER_WALLET: Voucher[] = [
     code: 'FREESHIP30K',
     title: 'Miễn Phí Vận Chuyển 30.000₫',
     description: 'Trừ trực tiếp 30.000₫ phí giao hàng',
-    discountType: 'fixed',
+    discountType: 'ship',
     discountValue: 30000,
     minOrder: 150000,
     expiryDate: '30/11/2026',
@@ -124,6 +125,9 @@ export default function CheckoutPage() {
   const [customVoucherCode, setCustomVoucherCode] = useState('');
   const [voucherError, setVoucherError] = useState('');
   const [voucherSuccessMsg, setVoucherSuccessMsg] = useState('');
+  const [walletVouchers, setWalletVouchers] = useState<Voucher[]>([]);
+  const [loadingVouchers, setLoadingVouchers] = useState(false);
+  const [voucherModalTab, setVoucherModalTab] = useState<'wallet' | 'all'>('wallet');
 
   // Phương thức thanh toán (COD | BANK | MOMO)
   const [paymentMethod, setPaymentMethod] = useState<'COD' | 'BANK' | 'MOMO'>('COD');
@@ -262,7 +266,75 @@ export default function CheckoutPage() {
     }
 
     fetchAddresses(parsedUser.userId);
+    fetchUserVouchers(parsedUser.userId).then((loadedWallet: Voucher[]) => {
+      // Tự động nhận diện mã Voucher được chuyển từ trang Profile (/profile)
+      if (typeof window !== 'undefined') {
+        const searchParams = new URLSearchParams(window.location.search);
+        const urlCode = searchParams.get('voucher') || localStorage.getItem('pending_voucher_code');
+        if (urlCode) {
+          const cleanCode = urlCode.trim().toUpperCase();
+          const pool = [...(loadedWallet || []), ...SYSTEM_VOUCHERS];
+          const match = pool.find(v => v.code.toUpperCase() === cleanCode);
+          if (match) {
+            setSelectedVoucher(match);
+            setVoucherSuccessMsg(`Đã áp dụng mã "${match.code}" từ kho voucher của bạn!`);
+            localStorage.removeItem('pending_voucher_code');
+            setTimeout(() => setVoucherSuccessMsg(''), 4000);
+          }
+        }
+      }
+    });
   }, [router]);
+
+  const fetchUserVouchers = async (userId: number): Promise<Voucher[]> => {
+    setLoadingVouchers(true);
+    try {
+      const res = await fetch(`http://localhost:5023/api/loyalty/${userId}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.vouchers && Array.isArray(data.vouchers)) {
+          const mapped: Voucher[] = data.vouchers
+            .filter((v: any) => !v.isUsed)
+            .map((v: any) => {
+              let dType: 'percent' | 'fixed' | 'ship' = 'fixed';
+              const vType = (v.voucherType || '').toLowerCase();
+              if (vType === 'ship') dType = 'ship';
+              else if (vType === 'percent' || vType === 'discount') dType = 'percent';
+              else dType = 'fixed';
+
+              let tag = 'KHO VOUCHER';
+              if (dType === 'ship') tag = 'FREESHIP';
+              else if (v.code && v.code.startsWith('REWARD')) tag = 'ĐỔI TỪ ĐIỂM';
+              else if (v.code === 'WELCOME50') tag = 'TÂN THỦ';
+
+              return {
+                code: v.code,
+                title: v.title,
+                description: dType === 'ship'
+                  ? `Miễn giảm tối đa ${Number(v.discountValue).toLocaleString('vi-VN')}₫ phí giao hàng`
+                  : dType === 'percent'
+                  ? `Giảm ${v.discountValue}% giá trị tiền nông sản`
+                  : `Trừ trực tiếp ${Number(v.discountValue).toLocaleString('vi-VN')}₫ vào đơn hàng`,
+                discountType: dType,
+                discountValue: Number(v.discountValue) || 0,
+                minOrder: Number(v.minOrderAmount) || 0,
+                maxDiscount: dType === 'percent' ? 40000 : undefined,
+                expiryDate: v.expiryDate ? new Date(v.expiryDate).toLocaleDateString('vi-VN') : '31/12/2026',
+                tag: tag,
+                isFromWallet: true
+              };
+            });
+          setWalletVouchers(mapped);
+          return mapped;
+        }
+      }
+    } catch (err) {
+      console.error('Lỗi khi tải kho voucher của người dùng:', err);
+    } finally {
+      setLoadingVouchers(false);
+    }
+    return [];
+  };
 
   const fetchAddresses = async (userId: number) => {
     setIsLoadingAddresses(true);
@@ -336,8 +408,10 @@ export default function CheckoutPage() {
     if (selectedVoucher.discountType === 'percent') {
       const calculated = (subtotal * selectedVoucher.discountValue) / 100;
       return selectedVoucher.maxDiscount ? Math.min(calculated, selectedVoucher.maxDiscount) : calculated;
+    } else if (selectedVoucher.discountType === 'ship') {
+      return Math.min(shippingFee, selectedVoucher.discountValue);
     } else {
-      return selectedVoucher.discountValue;
+      return Math.min(subtotal, selectedVoucher.discountValue);
     }
   };
 
@@ -363,9 +437,10 @@ export default function CheckoutPage() {
       return;
     }
     const code = customVoucherCode.trim().toUpperCase();
-    const found = VOUCHER_WALLET.find(v => v.code === code);
+    const allPool = [...walletVouchers, ...SYSTEM_VOUCHERS];
+    const found = allPool.find(v => v.code.toUpperCase() === code);
     if (!found) {
-      setVoucherError(`Mã "${code}" không hợp lệ hoặc đã hết hạn.`);
+      setVoucherError(`Mã "${code}" không hợp lệ hoặc không có trong kho lưu trữ.`);
       return;
     }
     handleApplyVoucher(found);
@@ -1209,13 +1284,28 @@ export default function CheckoutPage() {
                 marginBottom: '18px'
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                  <span style={{ fontWeight: '600', fontSize: '13px', color: '#334155' }}>Mã giảm giá</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ fontWeight: '600', fontSize: '13px', color: '#334155' }}>Mã giảm giá</span>
+                    {walletVouchers.length > 0 && (
+                      <span style={{
+                        backgroundColor: '#E8F5E9',
+                        color: '#2E7D32',
+                        fontSize: '11px',
+                        fontWeight: '700',
+                        padding: '1px 6px',
+                        borderRadius: '999px',
+                        border: '1px solid #A5D6A7'
+                      }}>
+                        {walletVouchers.length} trong kho
+                      </span>
+                    )}
+                  </div>
                   <button
                     type="button"
                     onClick={() => setShowVoucherModal(true)}
                     style={{ background: 'none', border: 'none', color: '#15803d', fontSize: '12.5px', fontWeight: '600', cursor: 'pointer', padding: 0 }}
                   >
-                    Xem mã có sẵn →
+                    Xem kho voucher &amp; Ưu đãi →
                   </button>
                 </div>
 
@@ -1224,7 +1314,7 @@ export default function CheckoutPage() {
                     type="text"
                     value={customVoucherCode}
                     onChange={(e) => setCustomVoucherCode(e.target.value.toUpperCase())}
-                    placeholder="Nhập mã ưu đãi..."
+                    placeholder="Nhập mã ưu đãi hoặc mã trong kho..."
                     style={{
                       flex: 1,
                       padding: '8px 10px',
@@ -1253,6 +1343,25 @@ export default function CheckoutPage() {
                   </button>
                 </div>
 
+                {voucherSuccessMsg && (
+                  <div style={{
+                    backgroundColor: '#F0FDF4',
+                    color: '#15803d',
+                    border: '1px solid #BBF7D0',
+                    borderRadius: '6px',
+                    padding: '6px 10px',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    marginTop: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}>
+                    <span>✓</span>
+                    <span>{voucherSuccessMsg}</span>
+                  </div>
+                )}
+
                 {voucherError && (
                   <div style={{ color: '#dc2626', fontSize: '12px', marginTop: '6px' }}>
                     {voucherError}
@@ -1271,6 +1380,17 @@ export default function CheckoutPage() {
                     border: '1px solid #cbd5e1'
                   }}>
                     <div style={{ fontSize: '12.5px' }}>
+                      <span style={{
+                        backgroundColor: selectedVoucher.isFromWallet ? '#E8F5E9' : '#FEF3C7',
+                        color: selectedVoucher.isFromWallet ? '#1B5E20' : '#B45309',
+                        padding: '1px 6px',
+                        borderRadius: '4px',
+                        fontSize: '11px',
+                        fontWeight: '700',
+                        marginRight: '6px'
+                      }}>
+                        {selectedVoucher.isFromWallet ? 'Kho cá nhân' : 'Toàn sàn'}
+                      </span>
                       <strong style={{ color: '#15803d' }}>{selectedVoucher.code}</strong> - {selectedVoucher.title}
                     </div>
                     <button
@@ -1629,7 +1749,7 @@ export default function CheckoutPage() {
         </div>
       )}
 
-      {/* ── MODAL MÃ GIẢM GIÁ CÓ SẴN ── */}
+      {/* ── MODAL KHO VOUCHER & MÃ GIẢM GIÁ ── */}
       {showVoucherModal && (
         <div style={{
           position: 'fixed',
@@ -1637,7 +1757,8 @@ export default function CheckoutPage() {
           left: 0,
           right: 0,
           bottom: 0,
-          backgroundColor: 'rgba(15, 23, 42, 0.6)',
+          backgroundColor: 'rgba(15, 23, 42, 0.65)',
+          backdropFilter: 'blur(4px)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -1646,125 +1767,391 @@ export default function CheckoutPage() {
         }}>
           <div style={{
             backgroundColor: '#ffffff',
-            borderRadius: '12px',
+            borderRadius: '16px',
             width: '100%',
-            maxWidth: '480px',
-            padding: '22px',
-            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
-            maxHeight: '85vh',
-            overflowY: 'auto'
+            maxWidth: '520px',
+            padding: '24px',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+            maxHeight: '88vh',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden'
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid #f1f5f9', paddingBottom: '10px' }}>
-              <h3 style={{ margin: 0, fontSize: '16px', color: '#0f172a', fontWeight: '700' }}>
-                Mã giảm giá có sẵn
-              </h3>
+            {/* Header Modal */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', borderBottom: '1px solid #f1f5f9', paddingBottom: '12px' }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '17px', color: '#0f172a', fontWeight: '800' }}>
+                  Kho Voucher &amp; Mã Ưu Đãi
+                </h3>
+                <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
+                  Đồng bộ trực tiếp từ hồ sơ tài khoản LÀNH Farm
+                </div>
+              </div>
               <button
                 type="button"
                 onClick={() => setShowVoucherModal(false)}
-                style={{ background: 'none', border: 'none', fontSize: '18px', cursor: 'pointer', color: '#94a3b8' }}
+                style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: '#94a3b8', padding: '4px' }}
+                aria-label="Đóng modal"
               >
                 ✕
               </button>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {VOUCHER_WALLET.map(v => {
-                const isEligible = subtotal >= v.minOrder;
-                const isSelected = selectedVoucher?.code === v.code;
+            {/* Thanh chuyển Tab: Kho cá nhân vs Ưu đãi toàn sàn */}
+            <div style={{
+              display: 'flex',
+              backgroundColor: '#f1f5f9',
+              borderRadius: '8px',
+              padding: '3px',
+              marginBottom: '16px'
+            }}>
+              <button
+                type="button"
+                onClick={() => setVoucherModalTab('wallet')}
+                style={{
+                  flex: 1,
+                  padding: '8px 12px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  fontSize: '12.5px',
+                  fontWeight: voucherModalTab === 'wallet' ? '700' : '500',
+                  backgroundColor: voucherModalTab === 'wallet' ? '#ffffff' : 'transparent',
+                  color: voucherModalTab === 'wallet' ? '#15803d' : '#64748b',
+                  boxShadow: voucherModalTab === 'wallet' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px'
+                }}
+              >
+                <span>Kho của bạn</span>
+                <span style={{
+                  backgroundColor: voucherModalTab === 'wallet' ? '#E8F5E9' : '#e2e8f0',
+                  color: voucherModalTab === 'wallet' ? '#1B5E20' : '#475569',
+                  fontSize: '11px',
+                  fontWeight: '700',
+                  padding: '1px 6px',
+                  borderRadius: '999px'
+                }}>
+                  {walletVouchers.length}
+                </span>
+              </button>
 
-                return (
-                  <div
-                    key={v.code}
-                    style={{
-                      border: isSelected ? '1.5px solid #15803d' : '1px solid #e2e8f0',
-                      borderRadius: '8px',
-                      padding: '12px 14px',
-                      backgroundColor: isSelected ? '#f0fdf4' : (isEligible ? '#ffffff' : '#f8fafc'),
-                      opacity: isEligible ? 1 : 0.6,
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      gap: '12px'
-                    }}
-                  >
-                    <div style={{ flex: 1 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
-                        <span style={{
-                          backgroundColor: '#f1f5f9',
-                          color: '#0f172a',
-                          padding: '1px 6px',
-                          borderRadius: '4px',
-                          fontWeight: '700',
-                          fontSize: '11.5px'
-                        }}>
-                          {v.code}
-                        </span>
-                        <span style={{ fontSize: '13px', fontWeight: '600', color: '#0f172a' }}>
-                          {v.title}
-                        </span>
-                      </div>
-                      <div style={{ fontSize: '12px', color: '#64748b' }}>
-                        {v.description}
-                      </div>
-                      <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '2px' }}>
-                        Đơn tối thiểu {v.minOrder.toLocaleString('vi-VN')}₫ • HSD: {v.expiryDate}
-                      </div>
-                    </div>
-
-                    <div>
-                      {isSelected ? (
-                        <button
-                          type="button"
-                          onClick={handleRemoveVoucher}
-                          style={{
-                            padding: '6px 12px',
-                            borderRadius: '6px',
-                            border: '1px solid #fca5a5',
-                            backgroundColor: '#fef2f2',
-                            color: '#dc2626',
-                            fontWeight: '500',
-                            fontSize: '12px',
-                            cursor: 'pointer'
-                          }}
-                        >
-                          Bỏ chọn
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          disabled={!isEligible}
-                          onClick={() => handleApplyVoucher(v)}
-                          style={{
-                            padding: '6px 14px',
-                            borderRadius: '6px',
-                            border: 'none',
-                            backgroundColor: isEligible ? '#15803d' : '#cbd5e1',
-                            color: '#ffffff',
-                            fontWeight: '600',
-                            fontSize: '12px',
-                            cursor: isEligible ? 'pointer' : 'not-allowed'
-                          }}
-                        >
-                          Dùng
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
+              <button
+                type="button"
+                onClick={() => setVoucherModalTab('all')}
+                style={{
+                  flex: 1,
+                  padding: '8px 12px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  fontSize: '12.5px',
+                  fontWeight: voucherModalTab === 'all' ? '700' : '500',
+                  backgroundColor: voucherModalTab === 'all' ? '#ffffff' : 'transparent',
+                  color: voucherModalTab === 'all' ? '#15803d' : '#64748b',
+                  boxShadow: voucherModalTab === 'all' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px'
+                }}
+              >
+                <span>Mã toàn sàn</span>
+                <span style={{
+                  backgroundColor: voucherModalTab === 'all' ? '#E8F5E9' : '#e2e8f0',
+                  color: voucherModalTab === 'all' ? '#1B5E20' : '#475569',
+                  fontSize: '11px',
+                  fontWeight: '700',
+                  padding: '1px 6px',
+                  borderRadius: '999px'
+                }}>
+                  {SYSTEM_VOUCHERS.length}
+                </span>
+              </button>
             </div>
 
-            <div style={{ marginTop: '16px', borderTop: '1px solid #f1f5f9', paddingTop: '12px', textAlign: 'right' }}>
+            {/* Danh sách Voucher cuộn */}
+            <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '10px', paddingRight: '4px' }}>
+              {/* TAB 1: KHO CỦA BẠN */}
+              {voucherModalTab === 'wallet' && (
+                <>
+                  {loadingVouchers ? (
+                    <div style={{ textAlign: 'center', padding: '30px', color: '#64748b', fontSize: '13px' }}>
+                      Đang đồng bộ kho voucher từ máy chủ...
+                    </div>
+                  ) : walletVouchers.length === 0 ? (
+                    <div style={{
+                      textAlign: 'center',
+                      padding: '32px 20px',
+                      backgroundColor: '#f8fafc',
+                      borderRadius: '10px',
+                      border: '1px dashed #cbd5e1'
+                    }}>
+                      <div style={{ fontSize: '32px', marginBottom: '8px' }}>🎟️</div>
+                      <div style={{ fontSize: '14px', fontWeight: '700', color: '#334155', marginBottom: '4px' }}>
+                        Kho voucher của bạn đang trống
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '14px', lineHeight: '1.4' }}>
+                        Bạn có thể đổi điểm tích lũy lấy mã giảm giá hoặc nhận ưu đãi khi thăng hạng thành viên.
+                      </div>
+                      <Link
+                        href="/profile"
+                        style={{
+                          display: 'inline-block',
+                          padding: '6px 14px',
+                          backgroundColor: '#15803d',
+                          color: '#ffffff',
+                          borderRadius: '6px',
+                          fontSize: '12.5px',
+                          fontWeight: '600',
+                          textDecoration: 'none'
+                        }}
+                      >
+                        Đổi điểm nhận voucher ngay →
+                      </Link>
+                    </div>
+                  ) : (
+                    walletVouchers.map(v => {
+                      const isEligible = subtotal >= v.minOrder;
+                      const isSelected = selectedVoucher?.code === v.code;
+
+                      return (
+                        <div
+                          key={v.code}
+                          style={{
+                            border: isSelected ? '1.5px solid #15803d' : '1px solid #e2e8f0',
+                            borderRadius: '10px',
+                            padding: '12px 14px',
+                            backgroundColor: isSelected ? '#f0fdf4' : (isEligible ? '#ffffff' : '#f8fafc'),
+                            opacity: isEligible ? 1 : 0.65,
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            gap: '12px',
+                            transition: 'all 0.2s',
+                            boxShadow: isSelected ? '0 2px 8px rgba(21, 128, 61, 0.12)' : 'none'
+                          }}
+                        >
+                          <div style={{ flex: 1 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '3px' }}>
+                              <span style={{
+                                backgroundColor: '#E8F5E9',
+                                color: '#1B5E20',
+                                padding: '2px 8px',
+                                borderRadius: '4px',
+                                fontWeight: '800',
+                                fontSize: '11.5px',
+                                letterSpacing: '0.3px',
+                                border: '1px solid #C8E6C9'
+                              }}>
+                                {v.code}
+                              </span>
+                              <span style={{
+                                backgroundColor: v.discountType === 'ship' ? '#EBF8FF' : v.tag === 'ĐỔI TỪ ĐIỂM' ? '#F3E8FF' : '#FEF3C7',
+                                color: v.discountType === 'ship' ? '#2B6CB0' : v.tag === 'ĐỔI TỪ ĐIỂM' ? '#7E22CE' : '#B45309',
+                                fontSize: '10.5px',
+                                fontWeight: '700',
+                                padding: '1px 6px',
+                                borderRadius: '4px'
+                              }}>
+                                {v.tag}
+                              </span>
+                            </div>
+                            <div style={{ fontSize: '13px', fontWeight: '700', color: '#0f172a' }}>
+                              {v.title}
+                            </div>
+                            <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
+                              {v.description}
+                            </div>
+                            <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '3px' }}>
+                              Đơn từ {v.minOrder.toLocaleString('vi-VN')}₫ • HSD: {v.expiryDate}
+                              {!isEligible && (
+                                <span style={{ color: '#dc2626', marginLeft: '6px', fontWeight: '600' }}>
+                                  (Thiếu {(v.minOrder - subtotal).toLocaleString('vi-VN')}₫)
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          <div>
+                            {isSelected ? (
+                              <button
+                                type="button"
+                                onClick={handleRemoveVoucher}
+                                style={{
+                                  padding: '6px 12px',
+                                  borderRadius: '6px',
+                                  border: '1px solid #fca5a5',
+                                  backgroundColor: '#fef2f2',
+                                  color: '#dc2626',
+                                  fontWeight: '600',
+                                  fontSize: '12px',
+                                  cursor: 'pointer'
+                                }}
+                              >
+                                Bỏ chọn
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                disabled={!isEligible}
+                                onClick={() => handleApplyVoucher(v)}
+                                style={{
+                                  padding: '6px 14px',
+                                  borderRadius: '6px',
+                                  border: 'none',
+                                  backgroundColor: isEligible ? '#15803d' : '#cbd5e1',
+                                  color: '#ffffff',
+                                  fontWeight: '700',
+                                  fontSize: '12px',
+                                  cursor: isEligible ? 'pointer' : 'not-allowed'
+                                }}
+                              >
+                                Áp dụng
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </>
+              )}
+
+              {/* TAB 2: MÃ ƯU ĐÃI TOÀN SÀN */}
+              {voucherModalTab === 'all' && (
+                <>
+                  {SYSTEM_VOUCHERS.map(v => {
+                    const isEligible = subtotal >= v.minOrder;
+                    const isSelected = selectedVoucher?.code === v.code;
+
+                    return (
+                      <div
+                        key={v.code}
+                        style={{
+                          border: isSelected ? '1.5px solid #15803d' : '1px solid #e2e8f0',
+                          borderRadius: '10px',
+                          padding: '12px 14px',
+                          backgroundColor: isSelected ? '#f0fdf4' : (isEligible ? '#ffffff' : '#f8fafc'),
+                          opacity: isEligible ? 1 : 0.65,
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          gap: '12px',
+                          transition: 'all 0.2s',
+                          boxShadow: isSelected ? '0 2px 8px rgba(21, 128, 61, 0.12)' : 'none'
+                        }}
+                      >
+                        <div style={{ flex: 1 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '3px' }}>
+                            <span style={{
+                              backgroundColor: '#f1f5f9',
+                              color: '#0f172a',
+                              padding: '2px 8px',
+                              borderRadius: '4px',
+                              fontWeight: '800',
+                              fontSize: '11.5px',
+                              letterSpacing: '0.3px',
+                              border: '1px solid #cbd5e1'
+                            }}>
+                              {v.code}
+                            </span>
+                            <span style={{
+                              backgroundColor: '#FEF3C7',
+                              color: '#B45309',
+                              fontSize: '10.5px',
+                              fontWeight: '700',
+                              padding: '1px 6px',
+                              borderRadius: '4px'
+                            }}>
+                              {v.tag}
+                            </span>
+                          </div>
+                          <div style={{ fontSize: '13px', fontWeight: '700', color: '#0f172a' }}>
+                            {v.title}
+                          </div>
+                          <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
+                            {v.description}
+                          </div>
+                          <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '3px' }}>
+                            Đơn từ {v.minOrder.toLocaleString('vi-VN')}₫ • HSD: {v.expiryDate}
+                            {!isEligible && (
+                              <span style={{ color: '#dc2626', marginLeft: '6px', fontWeight: '600' }}>
+                                (Thiếu {(v.minOrder - subtotal).toLocaleString('vi-VN')}₫)
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <div>
+                          {isSelected ? (
+                            <button
+                              type="button"
+                              onClick={handleRemoveVoucher}
+                              style={{
+                                padding: '6px 12px',
+                                borderRadius: '6px',
+                                border: '1px solid #fca5a5',
+                                backgroundColor: '#fef2f2',
+                                color: '#dc2626',
+                                fontWeight: '600',
+                                fontSize: '12px',
+                                cursor: 'pointer'
+                              }}
+                            >
+                              Bỏ chọn
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              disabled={!isEligible}
+                              onClick={() => handleApplyVoucher(v)}
+                              style={{
+                                padding: '6px 14px',
+                                borderRadius: '6px',
+                                border: 'none',
+                                backgroundColor: isEligible ? '#15803d' : '#cbd5e1',
+                                color: '#ffffff',
+                                fontWeight: '700',
+                                fontSize: '12px',
+                                cursor: isEligible ? 'pointer' : 'not-allowed'
+                              }}
+                            >
+                              Áp dụng
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </>
+              )}
+            </div>
+
+            {/* Footer Modal */}
+            <div style={{ marginTop: '16px', borderTop: '1px solid #f1f5f9', paddingTop: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ fontSize: '12px', color: '#64748b' }}>
+                {selectedVoucher ? (
+                  <span>Đang chọn mã: <strong style={{ color: '#15803d' }}>{selectedVoucher.code}</strong></span>
+                ) : (
+                  <span>Chưa chọn mã giảm giá</span>
+                )}
+              </div>
               <button
                 type="button"
                 onClick={() => setShowVoucherModal(false)}
                 style={{
-                  padding: '8px 16px',
-                  borderRadius: '6px',
+                  padding: '8px 18px',
+                  borderRadius: '8px',
                   border: '1px solid #cbd5e1',
                   backgroundColor: '#ffffff',
                   color: '#475569',
                   fontSize: '13px',
+                  fontWeight: '600',
                   cursor: 'pointer'
                 }}
               >
