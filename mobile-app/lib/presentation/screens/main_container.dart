@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import '../../data/models/product_model.dart';
 import '../../data/models/cart_item_model.dart';
 import 'home/home_screen.dart';
+import 'combos/combos_screen.dart';
 import 'trace/trace_screen.dart';
-import 'cart/cart_screen.dart';
+import 'notifications/notifications_screen.dart';
 import 'profile/profile_screen.dart';
+import 'cart/cart_screen.dart';
 
 class MainContainer extends StatefulWidget {
   final Map<String, dynamic>? user;
@@ -18,6 +20,8 @@ class MainContainerState extends State<MainContainer> {
   int _currentIndex = 0;
   final List<CartItem> _cart = [];
 
+  int get _cartCount => _cart.fold<int>(0, (sum, item) => sum + item.qty);
+
   void _addToCart(Product product) {
     setState(() {
       final index = _cart.indexWhere((item) => item.product.id == product.id);
@@ -29,7 +33,7 @@ class MainContainerState extends State<MainContainer> {
     });
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Đã thêm ${product.name} vào giỏ hàng'),
+        content: Text('Đã thêm ${product.name} vào giỏ hàng (+1)'),
         duration: const Duration(seconds: 1),
         backgroundColor: const Color(0xFF2E7D32),
         behavior: SnackBarBehavior.floating,
@@ -55,28 +59,50 @@ class MainContainerState extends State<MainContainer> {
     });
   }
 
+  void _openCart() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (ctx) => CartScreen(
+          cartItems: _cart,
+          onUpdateQty: _updateQty,
+          onCheckoutSuccess: _clearCart,
+        ),
+      ),
+    );
+  }
+
   String? _scannedLotCode;
   void navigateToTrace(String lotCode) {
     setState(() {
       _scannedLotCode = lotCode;
-      _currentIndex = 1;
+      _currentIndex = 2; // Index của tab Truy Xuất
     });
   }
 
   @override
   Widget build(BuildContext context) {
     final List<Widget> screens = [
-      HomeScreen(onAddToCart: _addToCart),
+      HomeScreen(
+        onAddToCart: _addToCart,
+        onOpenCart: _openCart,
+        cartCount: _cartCount,
+      ),
+      CombosScreen(
+        onAddToCart: _addToCart,
+      ),
       TraceScreen(
         initialLotCode: _scannedLotCode,
         onClearCode: () => _scannedLotCode = null,
       ),
-      CartScreen(
+      const NotificationsScreen(),
+      ProfileScreen(
+        user: widget.user,
         cartItems: _cart,
-        onUpdateQty: _updateQty,
-        onCheckoutSuccess: _clearCart,
+        onUpdateCartQty: _updateQty,
+        onClearCart: _clearCart,
+        onOpenCart: _openCart,
       ),
-      ProfileScreen(user: widget.user),
     ];
 
     return Scaffold(
@@ -88,7 +114,7 @@ class MainContainerState extends State<MainContainer> {
         decoration: BoxDecoration(
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, -2),
             ),
@@ -106,40 +132,49 @@ class MainContainerState extends State<MainContainer> {
           selectedItemColor: const Color(0xFF2E7D32),
           unselectedItemColor: const Color(0xFF8D9E90),
           selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
-          unselectedLabelStyle: const TextStyle(fontSize: 11),
+          unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 11),
           items: [
             const BottomNavigationBarItem(
-              icon: Icon(Icons.shopping_bag_outlined),
-              activeIcon: Icon(Icons.shopping_bag),
-              label: 'Cửa hàng',
+              icon: Icon(Icons.home_outlined),
+              activeIcon: Icon(Icons.home),
+              label: 'Trang chủ',
             ),
             const BottomNavigationBarItem(
-              icon: Icon(Icons.qr_code_scanner_outlined),
-              activeIcon: Icon(Icons.qr_code_scanner),
+              icon: Icon(Icons.card_giftcard_outlined),
+              activeIcon: Icon(Icons.card_giftcard),
+              label: 'Gói Combo',
+            ),
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.qr_code_scanner),
+              activeIcon: Icon(Icons.qr_code_scanner_outlined),
               label: 'Truy xuất',
             ),
-            BottomNavigationBarItem(
-              icon: Badge(
-                label: Text(
-                  _cart.fold<int>(0, (sum, item) => sum + item.qty).toString(),
-                  style: const TextStyle(color: Colors.white, fontSize: 10),
-                ),
-                isLabelVisible: _cart.isNotEmpty,
-                child: const Icon(Icons.shopping_cart_outlined),
-              ),
-              activeIcon: Badge(
-                label: Text(
-                  _cart.fold<int>(0, (sum, item) => sum + item.qty).toString(),
-                  style: const TextStyle(color: Colors.white, fontSize: 10),
-                ),
-                isLabelVisible: _cart.isNotEmpty,
-                child: const Icon(Icons.shopping_cart),
-              ),
-              label: 'Giỏ hàng',
-            ),
             const BottomNavigationBarItem(
-              icon: Icon(Icons.person_outline),
-              activeIcon: Icon(Icons.person),
+              icon: Icon(Icons.notifications_none_outlined),
+              activeIcon: Icon(Icons.notifications),
+              label: 'Thông báo',
+            ),
+            BottomNavigationBarItem(
+              icon: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  const Icon(Icons.person_outline),
+                  if (_cartCount > 0)
+                    Positioned(
+                      top: -2,
+                      right: -4,
+                      child: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFE53935),
+                          shape: BoxShape.circle,
+                        ),
+                        constraints: const BoxConstraints(minWidth: 8, minHeight: 8),
+                      ),
+                    ),
+                ],
+              ),
+              activeIcon: const Icon(Icons.person),
               label: 'Cá nhân',
             ),
           ],

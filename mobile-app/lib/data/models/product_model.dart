@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 class Product {
   final int id;
@@ -14,6 +14,9 @@ class Product {
   final Color color;
   final String lot;
   final String description;
+  final String? imageUrl;
+  final String? originFarm;
+  final int? stockQuantity;
   final List<String> reviewList;
 
   Product({
@@ -30,6 +33,9 @@ class Product {
     required this.color,
     required this.lot,
     required this.description,
+    this.imageUrl,
+    this.originFarm,
+    this.stockQuantity,
     this.reviewList = const [
       'Sản phẩm rất tươi ngon, giao hàng đúng hẹn!',
       'Chuẩn VietGAP, bao bì đóng gói sạch sẽ.',

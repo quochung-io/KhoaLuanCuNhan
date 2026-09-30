@@ -1,7 +1,8 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/theme.dart';
 import '../../../data/api_service.dart';
+import 'login_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -25,6 +26,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _isSendingOtp = false;
   String _otpMethod = 'EMAIL'; // 'EMAIL' hoặc 'SMS'
   String? _serverGeneratedOtp;
+
+  String? _emailError;
+  String? _phoneError;
+
+  @override
+  void initState() {
+    super.initState();
+    _emailController.addListener(() {
+      if (_emailError != null) {
+        setState(() {
+          _emailError = null;
+        });
+      }
+    });
+    _phoneController.addListener(() {
+      if (_phoneError != null) {
+        setState(() {
+          _phoneError = null;
+        });
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -57,12 +80,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.toString().replaceAll('Exception: ', '')),
-          backgroundColor: Colors.red,
-        ),
-      );
+      final errorMsg = e.toString().replaceAll('Exception: ', '');
+      if (errorMsg.toLowerCase().contains('email') && (errorMsg.toLowerCase().contains('đã được') || errorMsg.toLowerCase().contains('đã tồn tại'))) {
+        Navigator.pop(context); // Đóng modal OTP
+        setState(() {
+          _emailError = 'Email này đã được đăng ký tài khoản!';
+        });
+        _showAccountExistsDialog(email: recipient, message: errorMsg);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMsg),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     } finally {
       setDialogState(() {
         _isSendingOtp = false;
@@ -271,6 +303,96 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
+  // Hộp thoại cảnh báo tài khoản / email đã tồn tại với giao diện thân thiện
+  void _showAccountExistsDialog({required String email, required String message}) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.amber.shade100,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.warning_amber_rounded, color: Colors.amber.shade900, size: 26),
+            ),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Text(
+                'Tài khoản đã tồn tại',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              message,
+              style: const TextStyle(fontSize: 14, height: 1.4, color: Colors.black87),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F8F1),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFFC8E6C9)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.email_outlined, color: LanhTheme.primaryColor, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      email,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF1B3A20),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'Nếu bạn đã sở hữu tài khoản này, vui lòng Đăng nhập ngay. Hoặc nhập một địa chỉ email khác để tiếp tục đăng ký.',
+              style: TextStyle(fontSize: 12.5, color: Colors.grey),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Đổi email khác', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => LoginScreen(initialEmail: email)),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: LanhTheme.primaryColor,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: const Text('Đăng nhập ngay'),
+          ),
+        ],
+      ),
+    );
+  }
+
   // Thực hiện gọi API đăng ký sau khi xác thực OTP
   Future<void> _executeRegister(BuildContext dialogContext) async {
     final otp = _otpController.text.trim();
@@ -308,12 +430,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
       Navigator.pop(context); // Quay về trang đăng nhập
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.toString().replaceAll('Exception: ', '')),
-          backgroundColor: Colors.red,
-        ),
-      );
+      final errorMsg = e.toString().replaceAll('Exception: ', '');
+      if (errorMsg.toLowerCase().contains('email') && (errorMsg.toLowerCase().contains('đã tồn tại') || errorMsg.toLowerCase().contains('đã được'))) {
+        setState(() {
+          _emailError = 'Email này đã được đăng ký tài khoản!';
+        });
+        _showAccountExistsDialog(email: _emailController.text.trim(), message: errorMsg);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMsg),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     } finally {
       if (mounted) {
         setState(() {
@@ -323,9 +453,78 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
   }
 
-  void _onRegisterPressed() {
-    if (_formKey.currentState!.validate()) {
+  // Xử lý khi nhấn nút Đăng ký: Kiểm tra trùng lặp email/sđt trên server trước khi gửi OTP
+  Future<void> _onRegisterPressed() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    final email = _emailController.text.trim();
+    final phone = _phoneController.text.trim();
+    final fullName = _nameController.text.trim();
+
+    setState(() {
+      _isLoading = true;
+      _emailError = null;
+      _phoneError = null;
+    });
+
+    try {
+      // Gọi API Backend kiểm tra tính duy nhất
+      await ApiService.checkUnique(
+        fullName: fullName,
+        email: email,
+        phone: phone,
+      );
+
+      // Nếu thông tin hợp lệ (chưa bị trùng), mở tiếp Dialog OTP xác thực
+      if (!mounted) return;
       _openOtpVerificationDialog();
+    } catch (e) {
+      if (!mounted) return;
+      final errorMsg = e.toString().replaceAll('Exception: ', '');
+
+      // Nếu lỗi do Email đã tồn tại
+      if (errorMsg.toLowerCase().contains('email')) {
+        setState(() {
+          _emailError = 'Email này đã được đăng ký tài khoản!';
+        });
+        _showAccountExistsDialog(email: email, message: errorMsg);
+      } 
+      // Nếu lỗi do Số điện thoại đã tồn tại
+      else if (errorMsg.toLowerCase().contains('số điện thoại') || errorMsg.toLowerCase().contains('phone')) {
+        setState(() {
+          _phoneError = 'Số điện thoại này đã được đăng ký!';
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.warning_amber_rounded, color: Colors.white),
+                const SizedBox(width: 8),
+                Expanded(child: Text(errorMsg)),
+              ],
+            ),
+            backgroundColor: Colors.red.shade700,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      } 
+      // Lỗi khác (Ví dụ tên người dùng trùng...)
+      else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMsg),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -410,6 +609,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   decoration: InputDecoration(
                     hintText: 'Nhập email (VD: user@gmail.com)',
                     prefixIcon: const Icon(Icons.email_outlined, color: LanhTheme.primaryColor),
+                    errorText: _emailError,
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -446,6 +646,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     hintText: 'Nhập số điện thoại (10 chữ số)',
                     counterText: '',
                     prefixIcon: const Icon(Icons.phone_outlined, color: LanhTheme.primaryColor),
+                    errorText: _phoneError,
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
