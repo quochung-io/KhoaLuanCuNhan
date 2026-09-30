@@ -30,6 +30,8 @@ type Product = {
   imageUrl?: string;
   isOutOfStock?: boolean;
   availableStock?: number;
+  discountPercent?: number;
+  originalPrice?: number;
 };
 
 const initialProducts: Product[] = [
@@ -466,7 +468,9 @@ function AllProductsInner() {
               lot: 'LOT#VN-' + regCode + '-' + (1000 + Number(item.productId)),
               imageUrl: imageUrl || undefined,
               isOutOfStock: Boolean(item.isOutOfStock),
-              availableStock: Number(item.availableStock) || 0
+              availableStock: Number(item.availableStock) || 0,
+              discountPercent: item.discountPercent ? Number(item.discountPercent) : undefined,
+              originalPrice: item.originalPrice ? Number(item.originalPrice) : undefined
             };
           });
           setProducts(mapped);
@@ -1088,6 +1092,46 @@ function AllProductsInner() {
               {sortedProducts.map(p => (
                 <div key={p.id} className="prod-card" style={{ cursor: 'pointer' }} onClick={() => openQuickView(p)}>
                   <div className="prod-media" style={{ background: 'var(--green-100)', position: 'relative' }}>
+                    {/* THÔNG BÁO GIẢM GIÁ NỔI BẬT TRÊN ẢNH SẢN PHẨM */}
+                    {Boolean(p.discountPercent && p.discountPercent > 0) && (
+                      <div style={{
+                        position: 'absolute',
+                        top: '8px',
+                        left: '8px',
+                        zIndex: 4,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'flex-start',
+                        gap: '3px'
+                      }}>
+                        <span style={{
+                          backgroundColor: '#DC2626',
+                          color: '#FFFFFF',
+                          fontSize: '11px',
+                          fontWeight: 800,
+                          padding: '3px 8px',
+                          borderRadius: '6px',
+                          boxShadow: '0 2px 6px rgba(220, 38, 38, 0.4)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '3px',
+                          letterSpacing: '0.2px'
+                        }}>
+                          ⚡ GIẢM {p.discountPercent}%
+                        </span>
+                        <span style={{
+                          backgroundColor: 'rgba(254, 243, 199, 0.95)',
+                          color: '#B45309',
+                          fontSize: '9.5px',
+                          fontWeight: 700,
+                          padding: '1px 5px',
+                          borderRadius: '4px',
+                          border: '1px solid #FCD34D'
+                        }}>
+                          XẢ CẬN DATE
+                        </span>
+                      </div>
+                    )}
                     <div style={{ display: 'block', width: '100%', height: '100%' }}>
                       {p.imageUrl ? (
                         <img 
@@ -1130,6 +1174,27 @@ function AllProductsInner() {
                     <span className="prod-name" style={{ cursor: 'pointer', transition: 'color 0.2s', opacity: p.isOutOfStock ? 0.7 : 1 }}>
                       {p.name}
                     </span>
+
+                    {/* THÔNG BÁO XẢ HÀNG TRÊN SẢN PHẨM */}
+                    {Boolean(p.discountPercent && p.discountPercent > 0) && (
+                      <div style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        backgroundColor: '#FEF2F2',
+                        color: '#DC2626',
+                        padding: '2px 7px',
+                        borderRadius: '4px',
+                        fontSize: '11px',
+                        fontWeight: 700,
+                        marginTop: '3px',
+                        border: '1px solid #FECDD3'
+                      }}>
+                        <span>🔥</span>
+                        <span>Xả nông sản cận date (-{p.discountPercent}%)</span>
+                      </div>
+                    )}
+
                     <div className="stars">
                       {p.reviews > 0 ? (
                         <>
@@ -1140,9 +1205,16 @@ function AllProductsInner() {
                       )}
                     </div>
                     <div className="price-row">
-                      <span className="price" style={{ color: p.isOutOfStock ? '#DC2626' : undefined }}>
-                        {p.isOutOfStock ? 'Hết hàng' : p.price}<span>{p.isOutOfStock ? '' : p.unit}</span>
-                      </span>
+                      <div>
+                        <span className="price" style={{ color: p.isOutOfStock ? '#DC2626' : p.discountPercent ? '#DC2626' : undefined }}>
+                          {p.isOutOfStock ? 'Hết hàng' : p.price}<span>{p.isOutOfStock ? '' : p.unit}</span>
+                        </span>
+                        {!p.isOutOfStock && Boolean(p.discountPercent && p.originalPrice && p.originalPrice > (p.rawPrice || 0)) && (
+                          <div style={{ fontSize: '11.5px', color: '#94A3B8', textDecoration: 'line-through', marginTop: '-2px' }}>
+                            {p.originalPrice?.toLocaleString('vi-VN')}₫
+                          </div>
+                        )}
+                      </div>
                       <button 
                         disabled={p.isOutOfStock}
                         className={`add-btn ${addedItem === p.id ? 'added' : ''} ${p.isOutOfStock ? 'disabled' : ''}`} 
@@ -1305,13 +1377,41 @@ function AllProductsInner() {
                 )}
 
                 {/* Tag nhãn trên ảnh */}
-                <div style={{ position: 'absolute', top: '16px', left: '16px', display: 'flex', gap: '6px' }}>
-                  <span style={{ backgroundColor: 'var(--green-700)', color: '#FFFFFF', padding: '4px 10px', borderRadius: '6px', fontSize: '11.5px', fontWeight: 'bold' }}>
-                    {quickViewProduct.category}
-                  </span>
-                  <span style={{ backgroundColor: '#FFFFFF', color: 'var(--green-900)', border: '1px solid var(--green-700)', padding: '4px 10px', borderRadius: '6px', fontSize: '11.5px', fontWeight: 'bold' }}>
-                    {quickViewProduct.cert}
-                  </span>
+                <div style={{ position: 'absolute', top: '16px', left: '16px', display: 'flex', flexDirection: 'column', gap: '6px', zIndex: 5 }}>
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    <span style={{ backgroundColor: 'var(--green-700)', color: '#FFFFFF', padding: '4px 10px', borderRadius: '6px', fontSize: '11.5px', fontWeight: 'bold' }}>
+                      {quickViewProduct.category}
+                    </span>
+                    <span style={{ backgroundColor: '#FFFFFF', color: 'var(--green-900)', border: '1px solid var(--green-700)', padding: '4px 10px', borderRadius: '6px', fontSize: '11.5px', fontWeight: 'bold' }}>
+                      {quickViewProduct.cert}
+                    </span>
+                  </div>
+                  {Boolean(quickViewProduct.discountPercent && quickViewProduct.discountPercent > 0) && (
+                    <div style={{ display: 'flex', gap: '6px' }}>
+                      <span style={{
+                        backgroundColor: '#DC2626',
+                        color: '#FFFFFF',
+                        padding: '4px 10px',
+                        borderRadius: '6px',
+                        fontSize: '11.5px',
+                        fontWeight: 800,
+                        boxShadow: '0 2px 6px rgba(220, 38, 38, 0.4)'
+                      }}>
+                        ⚡ GIẢM {quickViewProduct.discountPercent}%
+                      </span>
+                      <span style={{
+                        backgroundColor: 'rgba(254, 243, 199, 0.95)',
+                        color: '#B45309',
+                        padding: '3px 8px',
+                        borderRadius: '6px',
+                        fontSize: '11px',
+                        fontWeight: 700,
+                        border: '1px solid #FCD34D'
+                      }}>
+                        XẢ CẬN DATE
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -1331,6 +1431,30 @@ function AllProductsInner() {
                   <h2 style={{ fontSize: '24px', fontWeight: '800', color: 'var(--ink)', margin: '0 0 10px 0', lineHeight: '1.3' }}>
                     {quickViewProduct.name}
                   </h2>
+
+                  {/* THÔNG BÁO XẢ NÔNG SẢN CẬN DATE DƯỚI TÊN */}
+                  {Boolean(quickViewProduct.discountPercent && quickViewProduct.discountPercent > 0) && (
+                    <div style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      backgroundColor: '#FEF2F2',
+                      border: '1.5px solid #FCA5A5',
+                      padding: '8px 12px',
+                      borderRadius: '8px',
+                      marginBottom: '12px'
+                    }}>
+                      <span style={{ fontSize: '16px' }}>⚡</span>
+                      <div>
+                        <div style={{ fontSize: '12.5px', fontWeight: 800, color: '#B91C1C' }}>
+                          KHUYẾN MÃI XẢ KHO CẬN DATE FEFO (-{quickViewProduct.discountPercent}%)
+                        </div>
+                        <div style={{ fontSize: '11.5px', color: '#7F1D1D' }}>
+                          Lô hàng sắp hết hạn sử dụng. Cam kết chất lượng và an toàn vệ sinh thực phẩm!
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
                     {quickViewProduct.reviews > 0 ? (
@@ -1354,14 +1478,32 @@ function AllProductsInner() {
                     marginBottom: '14px',
                     display: 'flex',
                     alignItems: 'baseline',
-                    gap: '8px'
+                    gap: '10px',
+                    flexWrap: 'wrap'
                   }}>
-                    <span style={{ fontSize: '26px', fontWeight: '800', color: 'var(--green-900)' }}>
+                    <span style={{ fontSize: '26px', fontWeight: '800', color: quickViewProduct.discountPercent ? '#DC2626' : 'var(--green-900)' }}>
                       {quickViewProduct.price}
                     </span>
                     <span style={{ fontSize: '14px', color: 'var(--ink-soft)' }}>
                       {quickViewProduct.unit}
                     </span>
+                    {Boolean(quickViewProduct.discountPercent && quickViewProduct.originalPrice && quickViewProduct.originalPrice > (quickViewProduct.rawPrice || 0)) && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontSize: '16px', color: '#94A3B8', textDecoration: 'line-through' }}>
+                          {quickViewProduct.originalPrice?.toLocaleString('vi-VN')}₫
+                        </span>
+                        <span style={{
+                          backgroundColor: '#DC2626',
+                          color: '#FFFFFF',
+                          fontSize: '11px',
+                          fontWeight: 700,
+                          padding: '2px 6px',
+                          borderRadius: '4px'
+                        }}>
+                          Tiết kiệm {((quickViewProduct.originalPrice || 0) - (quickViewProduct.rawPrice || 0)).toLocaleString('vi-VN')}₫
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   <div style={{ backgroundColor: '#F0FDF4', border: '1px dashed #86EFAC', borderRadius: '8px', padding: '9px 12px', fontSize: '12.5px', color: '#166534', marginBottom: '16px', lineHeight: '1.5' }}>

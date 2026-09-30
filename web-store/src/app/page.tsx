@@ -34,6 +34,8 @@ type Product = {
   isRecommended?: boolean;
   recommendationReason?: string;
   recommendationScore?: number;
+  discountPercent?: number;
+  originalPrice?: number;
 };
 
 const initialProducts: Product[] = [];
@@ -220,15 +222,25 @@ export default function LanhLandingPage() {
       .then(data => {
         if (Array.isArray(data) && data.length > 0) {
           setForYouRecommendations(data);
-          // Tự động tái xếp hạng thông minh danh mục Thu Hoạch Trong Ngày
+          // Tự động tái xếp hạng thông minh danh mục Thu Hoạch Trong Ngày (ưu tiên hàng đầu cho các sản phẩm cận date đang giảm giá FEFO)
           setProducts(prevProducts => {
             if (!prevProducts || prevProducts.length === 0) return prevProducts;
             const recMap = new Map(data.map(item => [item.productId, item]));
             
+            const clearanceItems: Product[] = [];
             const recItems: Product[] = [];
             const otherItems: Product[] = [];
 
+            prevProducts.forEach(p => {
+              if (p.discountPercent && p.discountPercent > 0) {
+                clearanceItems.push(p);
+              }
+            });
+
+            const clearanceIds = new Set(clearanceItems.map(p => p.id));
+
             data.forEach(rec => {
+              if (clearanceIds.has(rec.productId)) return;
               const matched = prevProducts.find(p => p.id === rec.productId);
               if (matched) {
                 recItems.push({
@@ -241,7 +253,7 @@ export default function LanhLandingPage() {
             });
 
             prevProducts.forEach(p => {
-              if (!recMap.has(p.id)) {
+              if (!clearanceIds.has(p.id) && !recMap.has(p.id)) {
                 otherItems.push({
                   ...p,
                   isRecommended: false
@@ -249,7 +261,7 @@ export default function LanhLandingPage() {
               }
             });
 
-            return [...recItems, ...otherItems];
+            return [...clearanceItems, ...recItems, ...otherItems];
           });
         }
       })
@@ -728,16 +740,21 @@ export default function LanhLandingPage() {
               lot: 'LOT#VN-' + regCode + '-' + (1000 + Number(item.productId)),
               imageUrl: imageUrl || undefined,
               isOutOfStock: Boolean(item.isOutOfStock),
-              availableStock: Number(item.availableStock) || 0
+              availableStock: Number(item.availableStock) || 0,
+              discountPercent: item.discountPercent ? Number(item.discountPercent) : undefined,
+              originalPrice: item.originalPrice ? Number(item.originalPrice) : undefined
             };
           });
+          const clearanceItems = mapped.filter(p => (p.discountPercent || 0) > 0);
+          const nonClearanceItems = mapped.filter(p => !(p.discountPercent && p.discountPercent > 0));
+
           if (forYouRecommendations && forYouRecommendations.length > 0) {
             const recMap = new Map(forYouRecommendations.map(item => [item.productId, item]));
             const recItems: Product[] = [];
             const otherItems: Product[] = [];
 
             forYouRecommendations.forEach(rec => {
-              const matched = mapped.find(p => p.id === rec.productId);
+              const matched = nonClearanceItems.find(p => p.id === rec.productId);
               if (matched) {
                 recItems.push({
                   ...matched,
@@ -748,15 +765,15 @@ export default function LanhLandingPage() {
               }
             });
 
-            mapped.forEach(p => {
+            nonClearanceItems.forEach(p => {
               if (!recMap.has(p.id)) {
                 otherItems.push({ ...p, isRecommended: false });
               }
             });
 
-            setProducts([...recItems, ...otherItems]);
+            setProducts([...clearanceItems, ...recItems, ...otherItems]);
           } else {
-            setProducts(mapped);
+            setProducts([...clearanceItems, ...nonClearanceItems]);
           }
         }
       })
@@ -1470,6 +1487,213 @@ export default function LanhLandingPage() {
           </div>
         </section>
 
+        {/* ── 1.5. FLASH SALE XẢ KHO NÔNG SẢN CẬN DATE (ÁP DỤNG THUẬT TOÁN FEFO TỰ ĐỘNG) ── */}
+        {products.some(p => p.discountPercent && p.discountPercent > 0) && (
+          <section className="section" style={{
+            paddingTop: '36px',
+            paddingBottom: '36px',
+            backgroundColor: '#FFF7ED',
+            borderBottom: '1px solid #FED7AA'
+          }}>
+            <div className="wrap">
+              <div style={{
+                background: 'linear-gradient(135deg, #FEF2F2 0%, #FFFBEB 50%, #F0FDF4 100%)',
+                borderRadius: '24px',
+                padding: '28px 32px',
+                border: '1.5px solid #FCA5A5',
+                boxShadow: '0 10px 30px rgba(239, 68, 68, 0.08)'
+              }}>
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '22px',
+                  flexWrap: 'wrap',
+                  gap: '14px'
+                }}>
+                  <div>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', backgroundColor: '#DC2626', color: '#FFFFFF', padding: '4px 12px', borderRadius: '999px', fontSize: '12px', fontWeight: 800, letterSpacing: '0.5px' }}>
+                      <span>⚡ FLASH SALE CẬN DATE</span>
+                      <span>•</span>
+                      <span>GIẢM ĐẾN 50%</span>
+                    </div>
+                    <h2 style={{ fontSize: '26px', fontWeight: 900, color: '#991B1B', margin: '8px 0 4px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      🔥 Giờ Vàng Xả Kho Nông Sản Cận Date (FEFO)
+                    </h2>
+                    <p style={{ margin: 0, fontSize: '13.5px', color: '#7F1D1D' }}>
+                      Thuật toán FEFO tự động giảm giá sâu các lô hàng sắp đến hạn dùng. Cam kết chuẩn VietGAP, tươi ngon và an toàn tuyệt đối!
+                    </p>
+                  </div>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    backgroundColor: '#FFFFFF',
+                    padding: '8px 16px',
+                    borderRadius: '12px',
+                    border: '1px solid #FECDD3',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+                  }}>
+                    <span style={{ fontSize: '12.5px', fontWeight: 700, color: '#B91C1C' }}>Kết thúc sau:</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <span style={{ backgroundColor: '#DC2626', color: '#fff', padding: '3px 6px', borderRadius: '4px', fontWeight: 800, fontSize: '13px' }}>05</span>
+                      <span style={{ fontWeight: 800, color: '#DC2626' }}>:</span>
+                      <span style={{ backgroundColor: '#DC2626', color: '#fff', padding: '3px 6px', borderRadius: '4px', fontWeight: 800, fontSize: '13px' }}>42</span>
+                      <span style={{ fontWeight: 800, color: '#DC2626' }}>:</span>
+                      <span style={{ backgroundColor: '#DC2626', color: '#fff', padding: '3px 6px', borderRadius: '4px', fontWeight: 800, fontSize: '13px' }}>19</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Grid các sản phẩm Flash Sale Cận Date */}
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+                  gap: '20px'
+                }}>
+                  {products.filter(p => p.discountPercent && p.discountPercent > 0).map(p => (
+                    <div
+                      key={p.id}
+                      onClick={() => openQuickView(p)}
+                      style={{
+                        backgroundColor: '#FFFFFF',
+                        borderRadius: '16px',
+                        overflow: 'hidden',
+                        border: '1.5px solid #F87171',
+                        boxShadow: '0 6px 16px rgba(220, 38, 38, 0.12)',
+                        cursor: 'pointer',
+                        transition: 'transform 0.2s, box-shadow 0.2s',
+                        display: 'flex',
+                        flexDirection: 'column'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'translateY(-4px)';
+                        e.currentTarget.style.boxShadow = '0 10px 24px rgba(220, 38, 38, 0.2)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'none';
+                        e.currentTarget.style.boxShadow = '0 6px 16px rgba(220, 38, 38, 0.12)';
+                      }}
+                    >
+                      {/* Ảnh và huy hiệu Flash Sale */}
+                      <div style={{ position: 'relative', height: '180px', backgroundColor: '#FEE2E2', overflow: 'hidden' }}>
+                        <div style={{
+                          position: 'absolute',
+                          top: '10px',
+                          left: '10px',
+                          zIndex: 3,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '4px'
+                        }}>
+                          <span style={{
+                            backgroundColor: '#DC2626',
+                            color: '#FFFFFF',
+                            fontSize: '12px',
+                            fontWeight: 900,
+                            padding: '4px 10px',
+                            borderRadius: '6px',
+                            boxShadow: '0 2px 8px rgba(220, 38, 38, 0.5)'
+                          }}>
+                            ⚡ GIẢM {p.discountPercent}%
+                          </span>
+                          <span style={{
+                            backgroundColor: '#FEF3C7',
+                            color: '#92400E',
+                            fontSize: '10px',
+                            fontWeight: 800,
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                            border: '1px solid #FCD34D'
+                          }}>
+                            XẢ CẬN DATE
+                          </span>
+                        </div>
+                        {p.imageUrl ? (
+                          <img
+                            src={p.imageUrl}
+                            alt={p.name}
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600&auto=format&fit=crop&q=80';
+                            }}
+                          />
+                        ) : (
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+                            {ICONS[p.icon] || ICONS['leaf']}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Thông tin sản phẩm */}
+                      <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'space-between' }}>
+                        <div>
+                          <div style={{ fontSize: '11px', color: '#991B1B', fontWeight: 700, textTransform: 'uppercase', marginBottom: '4px' }}>
+                            {p.category} • {p.region}
+                          </div>
+                          <h4 style={{ fontSize: '15px', fontWeight: 800, color: 'var(--ink)', margin: '0 0 8px 0', lineHeight: '1.3' }}>
+                            {p.name}
+                          </h4>
+                          <div style={{
+                            backgroundColor: '#FEF2F2',
+                            border: '1px dashed #FCA5A5',
+                            padding: '6px 8px',
+                            borderRadius: '6px',
+                            fontSize: '11.5px',
+                            color: '#991B1B',
+                            fontWeight: 600,
+                            marginBottom: '10px'
+                          }}>
+                            🔥 Xả kho FEFO: Tiết kiệm ngay {((p.originalPrice || 0) - (p.rawPrice || 0)).toLocaleString('vi-VN')}₫
+                          </div>
+                        </div>
+
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '10px' }}>
+                            <span style={{ fontSize: '20px', fontWeight: 900, color: '#DC2626' }}>
+                              {p.price}
+                            </span>
+                            <span style={{ fontSize: '12px', color: 'var(--ink-soft)' }}>{p.unit}</span>
+                            {p.originalPrice && (
+                              <span style={{ fontSize: '13px', color: '#94A3B8', textDecoration: 'line-through' }}>
+                                {p.originalPrice.toLocaleString('vi-VN')}₫
+                              </span>
+                            )}
+                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              addToCart(p, 1);
+                            }}
+                            style={{
+                              width: '100%',
+                              backgroundColor: '#DC2626',
+                              color: '#FFFFFF',
+                              border: 'none',
+                              padding: '10px',
+                              borderRadius: '8px',
+                              fontSize: '13px',
+                              fontWeight: 800,
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '6px',
+                              boxShadow: '0 3px 10px rgba(220, 38, 38, 0.3)'
+                            }}
+                          >
+                            <span>🛒 Thêm vào giỏ</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+
         {/* ── 2. SẢN PHẨM NỔI BẬT & THU HOẠCH TRONG NGÀY (Tích hợp thuật toán gợi ý ngữ cảnh CARS) ── */}
         <section className="section" style={{ paddingTop: '50px', paddingBottom: '50px' }}>
           <div className="wrap">
@@ -1522,6 +1746,46 @@ export default function LanhLandingPage() {
                   }}
                 >
                   <div className="prod-media" style={{ background: 'var(--green-100)', position: 'relative' }}>
+                    {/* THÔNG BÁO GIẢM GIÁ NỔI BẬT TRÊN ẢNH SẢN PHẨM */}
+                    {Boolean(p.discountPercent && p.discountPercent > 0) && (
+                      <div style={{
+                        position: 'absolute',
+                        top: '8px',
+                        left: '8px',
+                        zIndex: 4,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'flex-start',
+                        gap: '3px'
+                      }}>
+                        <span style={{
+                          backgroundColor: '#DC2626',
+                          color: '#FFFFFF',
+                          fontSize: '11px',
+                          fontWeight: 800,
+                          padding: '3px 8px',
+                          borderRadius: '6px',
+                          boxShadow: '0 2px 6px rgba(220, 38, 38, 0.4)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '3px',
+                          letterSpacing: '0.2px'
+                        }}>
+                          ⚡ GIẢM {p.discountPercent}%
+                        </span>
+                        <span style={{
+                          backgroundColor: 'rgba(254, 243, 199, 0.95)',
+                          color: '#B45309',
+                          fontSize: '9.5px',
+                          fontWeight: 700,
+                          padding: '1px 5px',
+                          borderRadius: '4px',
+                          border: '1px solid #FCD34D'
+                        }}>
+                          XẢ CẬN DATE
+                        </span>
+                      </div>
+                    )}
                     <div style={{ display: 'block', width: '100%', height: '100%' }}>
                       {p.imageUrl ? (
                         <img 
@@ -1574,6 +1838,27 @@ export default function LanhLandingPage() {
                     <span className="prod-name" style={{ cursor: 'pointer', transition: 'color 0.2s', opacity: p.isOutOfStock ? 0.7 : 1 }}>
                       {p.name}
                     </span>
+
+                    {/* THÔNG BÁO XẢ HÀNG TRÊN SẢN PHẨM */}
+                    {Boolean(p.discountPercent && p.discountPercent > 0) && (
+                      <div style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        backgroundColor: '#FEF2F2',
+                        color: '#DC2626',
+                        padding: '2px 7px',
+                        borderRadius: '4px',
+                        fontSize: '11px',
+                        fontWeight: 700,
+                        marginTop: '3px',
+                        border: '1px solid #FECDD3'
+                      }}>
+                        <span>🔥</span>
+                        <span>Xả nông sản cận date (-{p.discountPercent}%)</span>
+                      </div>
+                    )}
+
                     <div 
                       className="stars" 
                       onClick={(e) => {
@@ -1593,9 +1878,16 @@ export default function LanhLandingPage() {
                       )}
                     </div>
                     <div className="price-row">
-                      <span className="price" style={{ color: p.isOutOfStock ? '#DC2626' : undefined }}>
-                        {p.isOutOfStock ? 'Hết hàng' : p.price}<span>{p.isOutOfStock ? '' : p.unit}</span>
-                      </span>
+                      <div>
+                        <span className="price" style={{ color: p.isOutOfStock ? '#DC2626' : p.discountPercent ? '#DC2626' : undefined }}>
+                          {p.isOutOfStock ? 'Hết hàng' : p.price}<span>{p.isOutOfStock ? '' : p.unit}</span>
+                        </span>
+                        {!p.isOutOfStock && Boolean(p.discountPercent && p.originalPrice && p.originalPrice > (p.rawPrice || 0)) && (
+                          <div style={{ fontSize: '11.5px', color: '#94A3B8', textDecoration: 'line-through', marginTop: '-2px' }}>
+                            {p.originalPrice?.toLocaleString('vi-VN')}₫
+                          </div>
+                        )}
+                      </div>
                       <button 
                         disabled={p.isOutOfStock}
                         className={`add-btn ${addedItem === p.id ? 'added' : ''} ${p.isOutOfStock ? 'disabled' : ''}`} 
