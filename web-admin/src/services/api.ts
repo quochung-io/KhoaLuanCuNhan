@@ -127,6 +127,9 @@ export const reportService = {
   getSoldDrilldown: (params?: any) => api.get('/reports/products/drilldown/sold', { params }),
   getInventoryDrilldown: () => api.get('/reports/products/drilldown/inventory'),
   getReturnsDrilldown: (params?: any) => api.get('/reports/products/drilldown/returns', { params }),
+  getExpiredSummary: (params?: any) => api.get('/reports/products/expired-summary', { params }),
+  getExpiredDrilldown: (params?: any) => api.get('/reports/products/drilldown/expired', { params }),
+  exportExpiredReports: (params?: any) => api.get('/reports/products/export-expired', { params, responseType: 'blob' }),
 };
 
 export const returnTicketService = {

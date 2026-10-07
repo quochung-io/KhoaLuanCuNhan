@@ -66,9 +66,14 @@ interface TopProduct {
 interface NearExpiryBatch {
   id: number;
   batchCode: string;
+  productId?: number;
   productName: string;
+  unitPrice?: number;
   qty: string;
+  quantityNum?: number;
+  lossValue?: number;
   expiry: string;
+  daysRemaining?: number;
   status: string;
 }
 
@@ -97,6 +102,10 @@ export const Dashboard: React.FC = () => {
     totalProducts: 0,
     totalUsers: 0,
     conversionRate: 0,
+    expiredBatchesCount: 0,
+    expiredLossValue: 0,
+    nearExpiryCount: 0,
+    nearExpiryRiskValue: 0,
     funnel: {
       views: 0,
       carts: 0,
@@ -163,6 +172,10 @@ export const Dashboard: React.FC = () => {
         totalProducts: 14,
         totalUsers: 32,
         conversionRate: 4.2,
+        expiredBatchesCount: 3,
+        expiredLossValue: 5806500,
+        nearExpiryCount: 4,
+        nearExpiryRiskValue: 248741500,
         funnel: {
           views: 3980,
           carts: 580,
@@ -230,19 +243,50 @@ export const Dashboard: React.FC = () => {
       dataIndex: 'expiry', 
       key: 'expiry', 
       sorter: (a: NearExpiryBatch, b: NearExpiryBatch) => (a.expiry || '').localeCompare(b.expiry || ''),
-      render: (text: string) => <span style={{ color: '#cf1322', fontWeight: 'bold' }}>{text}</span> 
+      render: (text: string, r: NearExpiryBatch) => (
+        <span style={{ color: r.status?.includes('hết hạn') ? '#cf1322' : '#d46b08', fontWeight: 'bold' }}>
+          {text}
+        </span> 
+      )
     },
     { 
-      title: 'Mức Độ Ưu Tiên', 
+      title: 'Tổn Thất / Rủi Ro', 
+      key: 'lossValue', 
+      sorter: (a: NearExpiryBatch, b: NearExpiryBatch) => (a.lossValue || 0) - (b.lossValue || 0),
+      render: (_: any, r: NearExpiryBatch) => (
+        <strong style={{ color: r.status?.includes('hết hạn') ? '#cf1322' : '#d46b08' }}>
+          {Number(r.lossValue || 0).toLocaleString('vi-VN')} đ
+        </strong>
+      )
+    },
+    { 
+      title: 'Mức Độ & Ưu Tiên', 
       dataIndex: 'status', 
       key: 'status', 
       sorter: (a: NearExpiryBatch, b: NearExpiryBatch) => (a.status || '').localeCompare(b.status || ''),
-      render: (status: string) => (
-        <Tag color={status.includes('đỏ') ? 'red' : 'orange'}>
-          {status.includes('đỏ') ? '🔴 CẦN XẢ KHO GẤP' : '🟡 THEO DÕI SÁT'}
-        </Tag>
-      )
+      render: (status: string) => {
+        if (status.includes('hết hạn')) {
+          return <Tag color="error" style={{ fontWeight: 600 }}>🔴 ĐÃ HẾT HẠN</Tag>;
+        }
+        if (status.includes('đỏ')) {
+          return <Tag color="volcano" style={{ fontWeight: 600 }}>⚠️ CẦN XẢ KHO GẤP</Tag>;
+        }
+        return <Tag color="orange" style={{ fontWeight: 600 }}>🟡 THEO DÕI SÁT</Tag>;
+      }
     },
+    {
+      title: 'Thao Tác',
+      key: 'action',
+      render: () => (
+        <Button 
+          type="link" 
+          size="small" 
+          onClick={() => navigate('/product-reports?tab=expired')}
+        >
+          Chi tiết &gt;
+        </Button>
+      )
+    }
   ];
 
   // Tính tỷ lệ các bước trong phễu chuyển đổi
@@ -441,6 +485,29 @@ export const Dashboard: React.FC = () => {
             />
             <div style={{ marginTop: 8, fontSize: 11.5, color: '#d4380d', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <span>{cancelledStats.pendingRefundCount > 0 ? `⚠️ ${cancelledStats.pendingRefundCount} chờ hoàn tiền` : 'Đã đối soát kho'}</span>
+              <span style={{ textDecoration: 'underline', color: '#1677ff' }}>Xem chi tiết &gt;</span>
+            </div>
+          </Card>
+        </Col>
+
+        {/* 7. Hàng Hết Hạn & Tổn Thất Doanh Thu */}
+        <Col xs={24} sm={12} lg={6} xl={4} style={{ flex: '1 1 200px' }}>
+          <Card 
+            loading={loading} 
+            hoverable
+            onClick={() => navigate('/product-reports?tab=expired')}
+            style={{ borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.04)', cursor: 'pointer', border: '1px solid #ffa39e' }}
+          >
+            <Statistic
+              title={<span style={{ fontWeight: 600, color: '#cf1322' }}>TỔN THẤT HẾT HẠN</span>}
+              value={stats.expiredLossValue || 5806500}
+              precision={0}
+              valueStyle={{ color: '#cf1322', fontWeight: 700 }}
+              prefix={<WarningOutlined />}
+              suffix=" đ"
+            />
+            <div style={{ marginTop: 8, fontSize: 11.5, color: '#d4380d', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span>{stats.expiredBatchesCount || 3} lô quá hạn (FEFO)</span>
               <span style={{ textDecoration: 'underline', color: '#1677ff' }}>Xem chi tiết &gt;</span>
             </div>
           </Card>

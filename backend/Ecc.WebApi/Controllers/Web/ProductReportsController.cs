@@ -202,6 +202,36 @@ public class ProductReportsController : ControllerBase
             decimal returnedRevenue = returnedOrders.Sum(o => o.TotalAmount);
             decimal returnedQuantity = returnedOrders.SelectMany(o => o.OrderItems).Sum(oi => oi.Quantity);
 
+            // 4.1. Lấy thống kê Lô hàng hết hạn & Giá trị tổn thất (Expired Loss)
+            var allExpiredBatches = await _context.ProductBatches
+                .Include(b => b.Product)
+                .Where(b => b.ExpiryDate < today || b.Status == "Expired")
+                .ToListAsync();
+
+            int totalExpiredBatches = allExpiredBatches.Count;
+            decimal totalExpiredQuantity = allExpiredBatches.Sum(b => b.InitialQuantity);
+            decimal totalExpiredLossValue = allExpiredBatches.Sum(b => b.InitialQuantity * (b.Product?.Price ?? 0));
+
+            // Lô cận hạn (Near Expiry <= 30 ngày)
+            var nearExpiryBatches = await _context.ProductBatches
+                .Include(b => b.Product)
+                .Where(b => b.ExpiryDate >= today && b.ExpiryDate <= today.AddDays(30) && b.InitialQuantity > 0 && b.Status != "Expired")
+                .ToListAsync();
+            int nearExpiryBatchesCount = nearExpiryBatches.Count;
+            decimal nearExpiryLossRisk = nearExpiryBatches.Sum(b => b.InitialQuantity * (b.Product?.Price ?? 0));
+
+            // Doanh thu xả kho giải cứu (Clearance Revenue) trong kỳ
+            var clearanceRevenue = await _context.OrderItems
+                .Include(oi => oi.Order)
+                .Include(oi => oi.Product)
+                .Where(oi => oi.Order != null 
+                          && oi.Order.CreatedAt >= cStart 
+                          && oi.Order.CreatedAt <= cEnd 
+                          && oi.Order.OrderStatus != "Cancelled" 
+                          && oi.Order.OrderStatus != "Returned"
+                          && (oi.DiscountAmount > 0 || (oi.Product != null && oi.Product.DiscountPercent > 0)))
+                .SumAsync(oi => (decimal?)oi.TotalAmount) ?? 0;
+
             // 5. Query sản phẩm và áp dụng bộ lọc (Category, Supplier, Status)
             var productsQuery = _context.Products
                 .Include(p => p.Category)
@@ -494,7 +524,16 @@ public class ProductReportsController : ControllerBase
                     returnedOrdersCount,
                     returnedRevenue,
                     returnedQuantity,
-                    totalProductsCount = allProductsList.Count
+                    totalProductsCount = allProductsList.Count,
+                    totalExpiredBatches,
+                    totalExpiredQuantity,
+                    totalExpiredLossValue,
+                    nearExpiryBatchesCount,
+                    nearExpiryLossRisk,
+                    clearanceRevenue,
+                    lossRate = (totalRevenue + totalExpiredLossValue) > 0 
+                        ? Math.Round((totalExpiredLossValue / (totalRevenue + totalExpiredLossValue)) * 100, 2) 
+                        : 0
                 },
                 topSelling,
                 topRevenue,
@@ -940,6 +979,370 @@ public class ProductReportsController : ControllerBase
         {
             _logger.LogError(ex, "Lỗi khi lấy chi tiết hoàn kho.");
             return StatusCode(500, new { message = $"Lỗi: {ex.Message}" });
+        }
+    }
+
+    // ── BÁO CÁO CHUYÊN SÂU: HÀNG HẾT HẠN & HAO HỤT DOANH THU ──
+    [HttpGet("expired-summary")]
+    public async Task<IActionResult> GetExpiredSummary(
+        [FromQuery] string? timeRange = "thisMonth",
+        [FromQuery] DateTime? startDate = null,
+        [FromQuery] DateTime? endDate = null,
+        [FromQuery] int? categoryId = null,
+        [FromQuery] long? supplierId = null,
+        [FromQuery] string? search = null)
+    {
+        try
+        {
+            var (cStart, cEnd, _, _, label) = ResolveDateRanges(timeRange, startDate, endDate);
+            var today = DateTime.Today;
+
+            var batchesQuery = _context.ProductBatches
+                .Include(b => b.Product)
+                    .ThenInclude(p => p.Category)
+                .AsQueryable();
+
+            if (categoryId.HasValue && categoryId.Value > 0)
+            {
+                batchesQuery = batchesQuery.Where(b => b.Product != null && b.Product.CategoryId == categoryId.Value);
+            }
+
+            if (supplierId.HasValue && supplierId.Value > 0)
+            {
+                batchesQuery = batchesQuery.Where(b => b.Product != null && b.Product.SupplierId == supplierId.Value);
+            }
+
+            var allBatches = await batchesQuery.OrderBy(b => b.ExpiryDate).ToListAsync();
+            var suppliers = await _context.Suppliers.ToDictionaryAsync(s => s.SupplierId, s => s.SupplierName);
+            var users = await _context.Users.ToDictionaryAsync(u => u.UserId, u => u.FullName);
+            var farms = await _context.Farms.ToDictionaryAsync(f => f.FarmId, f => f.FarmName);
+
+            // Doanh thu xả kho giải cứu cận date trong kỳ
+            var clearanceRevenue = await _context.OrderItems
+                .Include(oi => oi.Order)
+                .Include(oi => oi.Product)
+                .Where(oi => oi.Order != null 
+                          && oi.Order.CreatedAt >= cStart 
+                          && oi.Order.CreatedAt <= cEnd 
+                          && oi.Order.OrderStatus != "Cancelled" 
+                          && oi.Order.OrderStatus != "Returned"
+                          && (oi.DiscountAmount > 0 || (oi.Product != null && oi.Product.DiscountPercent > 0)))
+                .SumAsync(oi => (decimal?)oi.TotalAmount) ?? 0;
+
+            // Doanh thu bán hàng tổng kỳ (để so sánh tỷ lệ thất thoát)
+            var totalRevenue = await _context.Orders
+                .Where(o => o.CreatedAt >= cStart 
+                         && o.CreatedAt <= cEnd 
+                         && o.OrderStatus != "Cancelled" 
+                         && o.OrderStatus != "Returned")
+                .SumAsync(o => (decimal?)o.TotalAmount) ?? 0;
+
+            var list = allBatches.Select(b =>
+            {
+                var p = b.Product;
+                int daysDiff = (b.ExpiryDate.Date - today).Days;
+                bool isExpired = daysDiff < 0 || b.Status == "Expired";
+                bool isNearExpiry = daysDiff >= 0 && daysDiff <= 30;
+
+                string supplierName = "Hợp tác xã Nông sản Việt";
+                if (p != null)
+                {
+                    if (suppliers.TryGetValue(p.SupplierId, out var sn) && !string.IsNullOrWhiteSpace(sn)) supplierName = sn;
+                    else if (users.TryGetValue(p.SupplierId, out var un) && !string.IsNullOrWhiteSpace(un)) supplierName = un;
+                }
+
+                string farmName = farms.TryGetValue(b.FarmId, out var fn) ? fn : "Trang trại địa phương";
+                decimal price = p?.Price ?? 0;
+                decimal originalPrice = p?.OriginalPrice ?? price;
+                decimal lossValue = b.InitialQuantity * price;
+
+                string urgency;
+                if (isExpired) urgency = "Expired";
+                else if (daysDiff <= 3) urgency = "Urgent";
+                else if (daysDiff <= 7) urgency = "Warning";
+                else urgency = "Normal";
+
+                return new
+                {
+                    batchId = b.BatchId,
+                    batchCode = b.BatchCode,
+                    productId = b.ProductId,
+                    sku = $"SKU-PRD-{b.ProductId:D5}",
+                    productName = p?.ProductName ?? "Sản phẩm",
+                    categoryName = p?.Category?.CategoryName ?? "Chưa phân loại",
+                    supplierName,
+                    farmName,
+                    unit = b.Unit,
+                    price,
+                    originalPrice,
+                    harvestDate = b.HarvestDate,
+                    expiryDate = b.ExpiryDate,
+                    daysRemaining = daysDiff,
+                    daysExpired = daysDiff < 0 ? Math.Abs(daysDiff) : 0,
+                    quantity = b.InitialQuantity,
+                    lossValue,
+                    status = isExpired ? "Expired" : (b.Status ?? "Active"),
+                    isExpired,
+                    isNearExpiry,
+                    isWrittenOff = b.InitialQuantity <= 0 && isExpired,
+                    urgency
+                };
+            }).ToList();
+
+            // Lọc tìm kiếm nếu có
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var rawSearch = search.Trim();
+                var sLower = rawSearch.ToLower();
+                var sNorm = NormalizeSearchText(rawSearch);
+                var cleanIdStr = Regex.Replace(sLower, @"^(#|id\s*:?\s*|sp\s*:?\s*|mã\s*:?\s*)", "").Trim();
+                long.TryParse(cleanIdStr, out var parsedId);
+
+                list = list.Where(item =>
+                {
+                    if (parsedId > 0 && item.productId == parsedId) return true;
+                    if (item.batchCode.ToLower().Contains(sLower)) return true;
+                    if (item.productName.ToLower().Contains(sLower) || NormalizeSearchText(item.productName).Contains(sNorm)) return true;
+                    if (item.categoryName.ToLower().Contains(sLower) || NormalizeSearchText(item.categoryName).Contains(sNorm)) return true;
+                    if (item.supplierName.ToLower().Contains(sLower) || NormalizeSearchText(item.supplierName).Contains(sNorm)) return true;
+                    return false;
+                }).ToList();
+            }
+
+            // Phân nhóm
+            var expiredList = list.Where(x => x.isExpired).ToList();
+            var nearExpiryList = list.Where(x => x.isNearExpiry).ToList();
+
+            decimal totalExpiredLossValue = expiredList.Sum(x => x.lossValue);
+            decimal totalExpiredQuantity = expiredList.Sum(x => x.quantity);
+            int totalExpiredBatches = expiredList.Count;
+            int totalWrittenOffBatches = expiredList.Count(x => x.isWrittenOff);
+
+            decimal nearExpiryLossRisk = nearExpiryList.Sum(x => x.lossValue);
+            int nearExpiryBatchesCount = nearExpiryList.Count;
+
+            decimal lossRate = (totalRevenue + totalExpiredLossValue) > 0
+                ? Math.Round((totalExpiredLossValue / (totalRevenue + totalExpiredLossValue)) * 100, 2)
+                : 0;
+
+            // Phân bổ tổn thất theo Danh mục hàng hóa (Category Loss Distribution)
+            var categoryLossDistribution = expiredList
+                .GroupBy(x => x.categoryName)
+                .Select(g => new
+                {
+                    categoryName = g.Key,
+                    expiredBatchesCount = g.Count(),
+                    expiredQuantity = g.Sum(x => x.quantity),
+                    lossValue = g.Sum(x => x.lossValue),
+                    percentage = totalExpiredLossValue > 0 ? Math.Round((g.Sum(x => x.lossValue) / totalExpiredLossValue) * 100, 1) : 0
+                })
+                .OrderByDescending(c => c.lossValue)
+                .ToList();
+
+            // Phân bổ tổn thất theo Nhà cung cấp
+            var supplierLossDistribution = expiredList
+                .GroupBy(x => x.supplierName)
+                .Select(g => new
+                {
+                    supplierName = g.Key,
+                    expiredBatchesCount = g.Count(),
+                    lossValue = g.Sum(x => x.lossValue)
+                })
+                .OrderByDescending(s => s.lossValue)
+                .ToList();
+
+            return Ok(new
+            {
+                periodLabel = label,
+                summary = new
+                {
+                    totalExpiredBatches,
+                    totalExpiredQuantity,
+                    totalExpiredLossValue,
+                    totalWrittenOffBatches,
+                    nearExpiryBatchesCount,
+                    nearExpiryLossRisk,
+                    clearanceRevenue,
+                    totalRevenue,
+                    lossRate,
+                    totalBatchesScanned = allBatches.Count
+                },
+                categoryLossDistribution,
+                supplierLossDistribution,
+                expiredBatches = expiredList,
+                nearExpiryBatches = nearExpiryList,
+                allItems = list
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Lỗi khi tạo báo cáo hàng hết hạn.");
+            return StatusCode(500, new { message = $"Lỗi: {ex.Message}" });
+        }
+    }
+
+    // ── DRILLDOWN 5: CHI TIẾT TỔN THẤT HÀNG HẾT HẠN (DRAWER) ──
+    [HttpGet("drilldown/expired")]
+    public async Task<IActionResult> GetExpiredDrilldown(
+        [FromQuery] string? timeRange = "thisMonth",
+        [FromQuery] DateTime? startDate = null,
+        [FromQuery] DateTime? endDate = null)
+    {
+        try
+        {
+            var (cStart, cEnd, _, _, label) = ResolveDateRanges(timeRange, startDate, endDate);
+            var today = DateTime.Today;
+
+            var batches = await _context.ProductBatches
+                .Include(b => b.Product)
+                    .ThenInclude(p => p.Category)
+                .Where(b => b.ExpiryDate < today || b.Status == "Expired")
+                .OrderBy(b => b.ExpiryDate)
+                .ToListAsync();
+
+            var suppliers = await _context.Suppliers.ToDictionaryAsync(s => s.SupplierId, s => s.SupplierName);
+            var users = await _context.Users.ToDictionaryAsync(u => u.UserId, u => u.FullName);
+            var farms = await _context.Farms.ToDictionaryAsync(f => f.FarmId, f => f.FarmName);
+
+            var list = batches.Select(b =>
+            {
+                var p = b.Product;
+                int daysDiff = (b.ExpiryDate.Date - today).Days;
+
+                string supplierName = "Hợp tác xã Nông sản Việt";
+                if (p != null)
+                {
+                    if (suppliers.TryGetValue(p.SupplierId, out var sn) && !string.IsNullOrWhiteSpace(sn)) supplierName = sn;
+                    else if (users.TryGetValue(p.SupplierId, out var un) && !string.IsNullOrWhiteSpace(un)) supplierName = un;
+                }
+
+                decimal price = p?.Price ?? 0;
+                decimal lossValue = b.InitialQuantity * price;
+
+                return new
+                {
+                    batchId = b.BatchId,
+                    batchCode = b.BatchCode,
+                    productId = b.ProductId,
+                    sku = $"SKU-PRD-{b.ProductId:D5}",
+                    productName = p?.ProductName ?? "Sản phẩm",
+                    categoryName = p?.Category?.CategoryName ?? "Chưa phân loại",
+                    supplierName,
+                    farmName = farms.TryGetValue(b.FarmId, out var fn) ? fn : "Trang trại địa phương",
+                    unit = b.Unit,
+                    price,
+                    harvestDate = b.HarvestDate,
+                    expiryDate = b.ExpiryDate,
+                    daysExpired = Math.Abs(daysDiff),
+                    stock = b.InitialQuantity,
+                    lossValue,
+                    status = b.Status ?? "Expired",
+                    isWrittenOff = b.InitialQuantity <= 0
+                };
+            }).ToList();
+
+            decimal totalExpiredLossValue = list.Sum(x => x.lossValue);
+            decimal totalExpiredQuantity = list.Sum(x => x.stock);
+            int totalExpiredBatches = list.Count;
+
+            // Doanh thu cứu vãn / xả kho cận hạn FEFO trong kỳ
+            var clearanceRevenue = await _context.OrderItems
+                .Include(oi => oi.Order)
+                .Include(oi => oi.Product)
+                .Where(oi => oi.Order != null 
+                          && oi.Order.CreatedAt >= cStart 
+                          && oi.Order.CreatedAt <= cEnd 
+                          && oi.Order.OrderStatus != "Cancelled" 
+                          && oi.Order.OrderStatus != "Returned"
+                          && (oi.DiscountAmount > 0 || (oi.Product != null && oi.Product.DiscountPercent > 0)))
+                .SumAsync(oi => (decimal?)oi.TotalAmount) ?? 0;
+
+            return Ok(new
+            {
+                periodLabel = label,
+                totalExpiredBatches,
+                totalExpiredQuantity,
+                totalExpiredLossValue,
+                clearanceRevenue,
+                batches = list
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Lỗi khi lấy drilldown hàng hết hạn.");
+            return StatusCode(500, new { message = $"Lỗi: {ex.Message}" });
+        }
+    }
+
+    // ── XUẤT CSV BÁO CÁO HÀNG HẾT HẠN & HAO HỤT DOANH THU ──
+    [HttpGet("export-expired")]
+    public async Task<IActionResult> ExportExpiredProductReport(
+        [FromQuery] string? timeRange = "thisMonth",
+        [FromQuery] DateTime? startDate = null,
+        [FromQuery] DateTime? endDate = null,
+        [FromQuery] int? categoryId = null,
+        [FromQuery] long? supplierId = null,
+        [FromQuery] string? search = null)
+    {
+        try
+        {
+            var today = DateTime.Today;
+            var query = _context.ProductBatches
+                .Include(b => b.Product)
+                    .ThenInclude(p => p.Category)
+                .Where(b => b.ExpiryDate < today || b.Status == "Expired")
+                .AsQueryable();
+
+            if (categoryId.HasValue && categoryId.Value > 0)
+                query = query.Where(b => b.Product != null && b.Product.CategoryId == categoryId.Value);
+
+            if (supplierId.HasValue && supplierId.Value > 0)
+                query = query.Where(b => b.Product != null && b.Product.SupplierId == supplierId.Value);
+
+            var batches = await query.OrderBy(b => b.ExpiryDate).ToListAsync();
+            var suppliers = await _context.Suppliers.ToDictionaryAsync(s => s.SupplierId, s => s.SupplierName);
+            var users = await _context.Users.ToDictionaryAsync(u => u.UserId, u => u.FullName);
+
+            var csvBuilder = new StringBuilder();
+            csvBuilder.AppendLine("Mã Lô,Mã SKU,Tên Sản Phẩm,Danh Mục,Nhà Cung Cấp,Hạn Sử Dụng,Số Ngày Quá Hạn,Số Lượng Hết Hạn,Đơn Vị,Đơn Giá (VNĐ),Giá Trị Tổn Thất (VNĐ),Trạng Thái");
+
+            foreach (var b in batches)
+            {
+                var p = b.Product;
+                string sku = $"SKU-PRD-{b.ProductId:D5}";
+                string safeName = $"\"{(p?.ProductName ?? "Sản phẩm").Replace("\"", "\"\"")}\"";
+                string safeCat = $"\"{(p?.Category?.CategoryName ?? "N/A").Replace("\"", "\"\"")}\"";
+
+                string sName = "Hợp tác xã Nông sản Việt";
+                if (p != null)
+                {
+                    if (suppliers.TryGetValue(p.SupplierId, out var sn)) sName = sn;
+                    else if (users.TryGetValue(p.SupplierId, out var un)) sName = un;
+                }
+                string safeSup = $"\"{sName.Replace("\"", "\"\"")}\"";
+
+                int daysDiff = (b.ExpiryDate.Date - today).Days;
+                int daysExpired = Math.Abs(daysDiff);
+                decimal price = p?.Price ?? 0;
+                decimal lossValue = b.InitialQuantity * price;
+                string statusText = b.InitialQuantity <= 0 ? "Đã xuất hủy" : "Quá hạn tồn kho";
+
+                csvBuilder.AppendLine($"{b.BatchCode},{sku},{safeName},{safeCat},{safeSup},{b.ExpiryDate:dd/MM/yyyy},{daysExpired},{b.InitialQuantity},{b.Unit},{price},{lossValue},{statusText}");
+            }
+
+            var preamble = Encoding.UTF8.GetPreamble();
+            var csvBytes = Encoding.UTF8.GetBytes(csvBuilder.ToString());
+            var finalBytes = new byte[preamble.Length + csvBytes.Length];
+            Buffer.BlockCopy(preamble, 0, finalBytes, 0, preamble.Length);
+            Buffer.BlockCopy(csvBytes, 0, finalBytes, preamble.Length, csvBytes.Length);
+
+            var fileName = $"BaoCao_HangHetHan_HaoHut_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
+            return File(finalBytes, "text/csv; charset=utf-8", fileName);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Lỗi khi xuất file báo cáo hàng hết hạn.");
+            return StatusCode(500, new { message = $"Lỗi khi xuất file: {ex.Message}" });
         }
     }
 

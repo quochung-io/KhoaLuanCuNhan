@@ -170,6 +170,21 @@ public class OrdersController : ControllerBase
 
         var conversionRate = totalViews > 0 ? Math.Round((double)totalOrders / totalViews * 100, 2) : 3.8;
 
+        // Thống kê Lô hàng hết hạn & Giá trị tổn thất (FEFO Waste Loss)
+        var expiredBatches = await _context.ProductBatches
+            .Include(b => b.Product)
+            .Where(b => b.ExpiryDate < today || b.Status == "Expired")
+            .ToListAsync();
+        var expiredBatchesCount = expiredBatches.Count;
+        var expiredLossValue = expiredBatches.Sum(b => b.InitialQuantity * (b.Product?.Price ?? 0));
+
+        var nearExpiryBatches = await _context.ProductBatches
+            .Include(b => b.Product)
+            .Where(b => b.ExpiryDate >= today && b.ExpiryDate <= today.AddDays(7) && b.InitialQuantity > 0 && b.Status != "Expired")
+            .ToListAsync();
+        var nearExpiryCount = nearExpiryBatches.Count;
+        var nearExpiryRiskValue = nearExpiryBatches.Sum(b => b.InitialQuantity * (b.Product?.Price ?? 0));
+
         return Ok(new
         {
             totalRevenue = totalRevenue > 0 ? totalRevenue : allTimeRevenue,
@@ -183,6 +198,10 @@ public class OrdersController : ControllerBase
             totalProducts,
             totalUsers,
             conversionRate,
+            expiredBatchesCount,
+            expiredLossValue,
+            nearExpiryCount,
+            nearExpiryRiskValue,
             funnel = new
             {
                 views = totalViews,
@@ -343,7 +362,7 @@ public class OrdersController : ControllerBase
         return Ok(topProducts);
     }
 
-    // ── 4. Danh sách lô hàng sắp hết hạn (Cảnh báo FEFO) ───────
+    // ── 4. Danh sách lô hàng sắp hết hạn & quá hạn (Cảnh báo FEFO & Tổn thất) ───────
     [HttpGet("stats/near-expiry")]
     public async Task<IActionResult> GetNearExpiryBatches()
     {
@@ -352,18 +371,27 @@ public class OrdersController : ControllerBase
 
         var batches = await _context.ProductBatches
             .Include(b => b.Product)
-            .Where(b => b.ExpiryDate >= today && b.ExpiryDate <= limitDate)
+            .Where(b => (b.ExpiryDate <= limitDate || b.Status == "Expired") && b.InitialQuantity >= 0)
             .OrderBy(b => b.ExpiryDate)
             .Select(b => new
             {
                 id = b.BatchId,
                 batchCode = b.BatchCode,
+                productId = b.ProductId,
                 productName = b.Product != null ? b.Product.ProductName : "Không rõ",
+                unitPrice = b.Product != null ? b.Product.Price : 0,
+                quantityNum = b.InitialQuantity,
                 qty = $"{b.InitialQuantity} {b.Unit}",
-                expiry = $"Còn {(b.ExpiryDate - today).Days} ngày",
-                status = (b.ExpiryDate - today).Days <= 3 ? "Cảnh báo đỏ" : "Cảnh báo vàng"
+                lossValue = b.InitialQuantity * (b.Product != null ? b.Product.Price : 0),
+                expiry = (b.ExpiryDate.Date - today).Days < 0 
+                    ? $"Đã quá hạn {Math.Abs((b.ExpiryDate.Date - today).Days)} ngày" 
+                    : $"Còn {(b.ExpiryDate.Date - today).Days} ngày",
+                daysRemaining = (b.ExpiryDate.Date - today).Days,
+                status = (b.ExpiryDate.Date - today).Days < 0 || b.Status == "Expired" 
+                    ? "Đã hết hạn" 
+                    : ((b.ExpiryDate.Date - today).Days <= 3 ? "Cảnh báo đỏ" : "Cảnh báo vàng")
             })
-            .Take(5)
+            .Take(8)
             .ToListAsync();
 
         return Ok(batches);
