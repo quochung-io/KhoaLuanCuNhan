@@ -128,3 +128,13 @@ export const reportService = {
   getInventoryDrilldown: () => api.get('/reports/products/drilldown/inventory'),
   getReturnsDrilldown: (params?: any) => api.get('/reports/products/drilldown/returns', { params }),
 };
+
+export const returnTicketService = {
+  getAll: () => api.get('/return-tickets'),
+  getStats: () => api.get('/return-tickets/stats'),
+  getById: (id: string) => api.get(`/return-tickets/${id}`),
+  approve: (id: string, adminNotes?: string) => 
+    api.post(`/return-tickets/${id}/approve${adminNotes ? `?adminNotes=${encodeURIComponent(adminNotes)}` : ''}`),
+  reject: (id: string, reason?: string) => 
+    api.post(`/return-tickets/${id}/reject`, { reason }),
+};

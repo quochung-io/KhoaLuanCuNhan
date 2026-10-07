@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ProductQuickViewModal, QuickViewProductData } from '@/components/product/ProductQuickViewModal';
 import SearchBar from '@/components/layout/SearchBar';
+import SmartClaimModal from '@/components/orders/SmartClaimModal';
 
 interface OrderItem {
   orderItemId: number;
@@ -28,6 +29,7 @@ interface Order {
   paymentStatus: string;
   orderStatus: string;
   createdAt: string;
+  updatedAt?: string;
   address?: {
     receiverName: string;
     phone: string;
@@ -76,6 +78,64 @@ export default function CustomerOrdersPage() {
   const [isPayQrExpired, setIsPayQrExpired] = useState<boolean>(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [quickViewProduct, setQuickViewProduct] = useState<{ id: number; data?: QuickViewProductData } | null>(null);
+
+  // Quản lý khiếu nại & đổi trả nông sản theo Thời Gian Vàng
+  const [claimTarget, setClaimTarget] = useState<{ order: Order; item: OrderItem } | null>(null);
+  const [orderToPickClaim, setOrderToPickClaim] = useState<Order | null>(null);
+  const [userClaims, setUserClaims] = useState<any[]>([]);
+
+  // Hàm xác định nhóm sản phẩm và tính toán thời gian vàng
+  const getProductGoldenWindow = (order: Order, item: OrderItem) => {
+    const name = (item.product?.productName || '').toLowerCase();
+
+    // 1. Phân loại 3 nhóm sản phẩm
+    let categoryType: 'FRESH_SHORTS' | 'COOL_LONGS' | 'PREMIUM_PREORDER' = 'FRESH_SHORTS';
+    let allowedHours = 3;
+    let typeName = 'Hàng tươi sống / Ăn liền';
+
+    if (name.includes('sầu riêng') || name.includes('cherry') || name.includes('nho mẫu đơn') || 
+        name.includes('dưa lưới huỳnh long') || name.includes('nhập khẩu') || name.includes('cao cấp')) {
+      categoryType = 'PREMIUM_PREORDER';
+      allowedHours = 12;
+      typeName = 'Hàng cao cấp / Đặt trước';
+    } else if (name.includes('khoai') || name.includes('bí') || name.includes('cà rốt') || 
+               name.includes('hành') || name.includes('tỏi') || name.includes('đông lạnh') || 
+               name.includes('đồ khô') || name.includes('sấy') || name.includes('gạo') || name.includes('hạt')) {
+      categoryType = 'COOL_LONGS';
+      allowedHours = 24;
+      typeName = 'Hàng củ quả / Đông lạnh';
+    }
+
+    // 2. Mốc thời gian nhận hàng delivered_at
+    const deliveredAt = order.updatedAt ? new Date(order.updatedAt).getTime() : new Date(order.createdAt).getTime();
+    const deadline = deliveredAt + allowedHours * 3600 * 1000;
+    const diffMs = deadline - Date.now();
+    const isEligible = diffMs > 0;
+
+    let remainingStr = '';
+    if (isEligible) {
+      const hours = Math.floor(diffMs / (3600 * 1000));
+      const mins = Math.floor((diffMs % (3600 * 1000)) / (60 * 1000));
+      remainingStr = hours > 0 ? `Còn ${hours}h ${mins}p` : `Còn ${mins}p`;
+    } else {
+      remainingStr = 'Quá hạn vàng';
+    }
+
+    // 3. Kiểm tra sản phẩm đã gửi khiếu nại trước đó chưa
+    const existingClaim = userClaims.find(
+      c => (c.orderId === order.orderId || c.orderCode === order.orderCode) && c.productId === item.productId
+    );
+
+    return {
+      categoryType,
+      allowedHours,
+      typeName,
+      isEligible,
+      remainingStr,
+      existingClaim,
+      deadline: new Date(deadline)
+    };
+  };
 
   const openProductQuickView = (productId: number, item?: any) => {
     if (!productId) return;
@@ -763,7 +823,9 @@ export default function CustomerOrdersPage() {
   // Lọc đơn hàng theo Tab và Query tìm kiếm
   const filteredOrders = orders.filter(order => {
     const unified = getOrderUnifiedStatus(order);
-    const matchesTab = orderFilterStatus === 'all' || unified.key === orderFilterStatus;
+    const hasClaimInOrder = userClaims.some(c => c.orderId === order.orderId || c.orderCode === order.orderCode);
+    const matchesTab = orderFilterStatus === 'all' 
+      || (orderFilterStatus === 'returned' ? (unified.key === 'returned' || hasClaimInOrder) : unified.key === orderFilterStatus);
     
     if (!matchesTab) return false;
     if (!searchOrderQuery.trim()) return true;
@@ -786,6 +848,26 @@ export default function CustomerOrdersPage() {
     const parsedUser = JSON.parse(storedUser);
     setCurrentUser(parsedUser);
     loadOrders(parsedUser.userId);
+
+    // Load danh sách khiếu nại nông sản tươi sống đã lưu
+    try {
+      const localClaims = JSON.parse(localStorage.getItem('user_fresh_claims') || '[]');
+      setUserClaims(localClaims);
+      // Đồng bộ từ Backend API
+      fetch(`http://localhost:5023/api/return-tickets/customer/${parsedUser.userId}`)
+        .then(res => res.ok ? res.json() : [])
+        .then(apiTickets => {
+          if (Array.isArray(apiTickets) && apiTickets.length > 0) {
+            const merged = [...apiTickets];
+            localClaims.forEach((lc: any) => {
+              if (!merged.some(m => m.ticketId === lc.ticketId)) merged.push(lc);
+            });
+            setUserClaims(merged);
+            localStorage.setItem('user_fresh_claims', JSON.stringify(merged));
+          }
+        })
+        .catch(() => {});
+    } catch (e) {}
 
     // Fetch số điểm thực
     fetch(`http://localhost:5023/api/loyalty/${parsedUser.userId}`)
@@ -1184,7 +1266,7 @@ export default function CustomerOrdersPage() {
               { key: 'shipping', label: 'Đang giao hàng', count: orders.filter(o => getOrderUnifiedStatus(o).key === 'shipping').length },
               { key: 'completed', label: 'Hoàn tất', count: orders.filter(o => getOrderUnifiedStatus(o).key === 'completed').length },
               { key: 'cancelled', label: 'Đã hủy', count: orders.filter(o => getOrderUnifiedStatus(o).key === 'cancelled').length },
-              { key: 'returned', label: 'Trả hàng', count: orders.filter(o => getOrderUnifiedStatus(o).key === 'returned').length }
+              { key: 'returned', label: 'Trả hàng / Khiếu nại', count: orders.filter(o => getOrderUnifiedStatus(o).key === 'returned' || userClaims.some(c => c.orderId === o.orderId || c.orderCode === o.orderCode)).length }
             ].map(tab => (
               <button
                 key={tab.key}
@@ -1469,10 +1551,84 @@ export default function CustomerOrdersPage() {
                             </div>
                           </div>
 
-                          <div style={{ textAlign: 'right' }}>
+                          <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' }}>
                             <span style={{ fontWeight: '700', color: 'var(--ink)', fontSize: '14.5px' }}>
                               {toVND(item.totalAmount)}
                             </span>
+
+                            {/* Nút Khiếu nại & Đổi trả theo Thời Gian Vàng */}
+                            {(() => {
+                              const oStatus = (order.orderStatus || '').toLowerCase();
+                              if (oStatus !== 'completed' && oStatus !== 'delivered' && oStatus !== 'returned') return null;
+
+                              const gw = getProductGoldenWindow(order, item);
+
+                              // Đã có ticket khiếu nại
+                              if (gw.existingClaim) {
+                                const st = gw.existingClaim.status;
+                                return (
+                                  <span style={{
+                                    fontSize: '11px',
+                                    fontWeight: 700,
+                                    padding: '3px 8px',
+                                    borderRadius: '6px',
+                                    backgroundColor: st === 'APPROVED' ? '#DCFCE7' : st === 'REJECTED' ? '#FEE2E2' : '#FEF3C7',
+                                    color: st === 'APPROVED' ? '#15803D' : st === 'REJECTED' ? '#DC2626' : '#B45309',
+                                    border: '1px solid ' + (st === 'APPROVED' ? '#86EFAC' : st === 'REJECTED' ? '#FECDD3' : '#FDE68A')
+                                  }}>
+                                    {st === 'APPROVED' ? '✓ Đã bồi hoàn' : st === 'REJECTED' ? '✕ Đã từ chối' : '⏳ Đang thẩm định'}
+                                  </span>
+                                );
+                              }
+
+                              // Còn thời gian vàng
+                              if (gw.isEligible) {
+                                return (
+                                  <button
+                                    type="button"
+                                    onClick={() => setClaimTarget({ order, item })}
+                                    title={`Bạn có thể khiếu nại sản phẩm này trong vòng ${gw.allowedHours}h sau nhận hàng`}
+                                    style={{
+                                      padding: '4px 10px',
+                                      backgroundColor: '#FFF7ED',
+                                      border: '1px solid #FDBA74',
+                                      borderRadius: '6px',
+                                      color: '#C2410C',
+                                      fontSize: '11.5px',
+                                      fontWeight: 700,
+                                      cursor: 'pointer',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '4px',
+                                      transition: 'all 0.15s'
+                                    }}
+                                  >
+                                    <span>⚡ Đổi trả ({gw.remainingStr})</span>
+                                  </button>
+                                );
+                              }
+
+                              // Quá hạn vàng (cho phép bấm để gửi yêu cầu thẩm định)
+                              return (
+                                <button
+                                  type="button"
+                                  onClick={() => setClaimTarget({ order, item })}
+                                  title={`Đã quá thời gian vàng ${gw.allowedHours}h. Bấm để gửi yêu cầu thẩm định.`}
+                                  style={{
+                                    padding: '4px 8px',
+                                    backgroundColor: '#F8FAFC',
+                                    border: '1px solid #CBD5E1',
+                                    borderRadius: '6px',
+                                    color: '#64748B',
+                                    fontSize: '11px',
+                                    fontWeight: 600,
+                                    cursor: 'pointer'
+                                  }}
+                                >
+                                  Đổi trả (Thẩm định)
+                                </button>
+                              );
+                            })()}
                           </div>
                         </div>
                       ))}
@@ -1505,6 +1661,71 @@ export default function CustomerOrdersPage() {
                             {toVND(order.totalAmount)}
                           </div>
                         </div>
+
+                        {/* NÚT TRẢ HÀNG / KHIẾU NẠI Ở MỖI ĐƠN HÀNG */}
+                        {(() => {
+                          const oStatus = (order.orderStatus || '').toLowerCase();
+                          if (oStatus === 'cancelled') return null;
+
+                          const claimsInOrder = userClaims.filter(c => c.orderId === order.orderId || c.orderCode === order.orderCode);
+                          if (claimsInOrder.length > 0) {
+                            return (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const first = claimsInOrder[0];
+                                  showToast(`Đơn hàng #${order.orderCode} đã có khiếu nại: ${first.status === 'APPROVED' ? 'Đã duyệt bồi hoàn' : first.status === 'REJECTED' ? 'Đã từ chối' : 'Đang chờ thẩm định'}`, 'success');
+                                }}
+                                style={{
+                                  padding: '9px 15px',
+                                  borderRadius: '8px',
+                                  border: '1.5px solid #86EFAC',
+                                  backgroundColor: '#F0FDF4',
+                                  color: '#15803D',
+                                  fontWeight: '700',
+                                  fontSize: '12.5px',
+                                  cursor: 'pointer',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '6px',
+                                  boxShadow: '0 2px 6px rgba(22,163,74,0.1)'
+                                }}
+                              >
+                                <span>✓ Đã khiếu nại ({claimsInOrder.length})</span>
+                              </button>
+                            );
+                          }
+
+                          return (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (order.orderItems.length === 1) {
+                                  setClaimTarget({ order, item: order.orderItems[0] });
+                                } else {
+                                  setOrderToPickClaim(order);
+                                }
+                              }}
+                              style={{
+                                padding: '9px 15px',
+                                borderRadius: '8px',
+                                border: '1.5px solid #EA580C',
+                                backgroundColor: '#FFF7ED',
+                                color: '#C2410C',
+                                fontWeight: '800',
+                                fontSize: '12.5px',
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                boxShadow: '0 2px 8px rgba(234,88,12,0.18)',
+                                transition: 'all 0.15s'
+                              }}
+                            >
+                              <span>⚡ Trả hàng / Khiếu nại</span>
+                            </button>
+                          );
+                        })()}
 
                         {/* Nút Hủy Đơn Hàng (Chỉ hiển thị khi đơn Chờ xác nhận và trong vòng 30 phút) */}
                         {(() => {
@@ -2169,8 +2390,58 @@ export default function CustomerOrdersPage() {
                         </div>
                       </div>
                     </div>
-                    <div style={{ fontWeight: '700', fontSize: '14px', color: 'var(--ink)' }}>
-                      {toVND(item.totalAmount)}
+                    <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' }}>
+                      <span style={{ fontWeight: '700', fontSize: '14px', color: 'var(--ink)' }}>
+                        {toVND(item.totalAmount)}
+                      </span>
+                      {(() => {
+                        const oStatus = (selectedOrderDetails.orderStatus || '').toLowerCase();
+                        if (oStatus !== 'completed' && oStatus !== 'delivered' && oStatus !== 'returned') return null;
+
+                        const gw = getProductGoldenWindow(selectedOrderDetails, item);
+                        if (gw.existingClaim) {
+                          const st = gw.existingClaim.status;
+                          return (
+                            <span style={{
+                              fontSize: '11px',
+                              fontWeight: 700,
+                              padding: '2px 7px',
+                              borderRadius: '6px',
+                              backgroundColor: st === 'APPROVED' ? '#DCFCE7' : st === 'REJECTED' ? '#FEE2E2' : '#FEF3C7',
+                              color: st === 'APPROVED' ? '#15803D' : st === 'REJECTED' ? '#DC2626' : '#B45309'
+                            }}>
+                              {st === 'APPROVED' ? '✓ Đã bồi hoàn' : st === 'REJECTED' ? '✕ Từ chối' : '⏳ Đang thẩm định'}
+                            </span>
+                          );
+                        }
+
+                        if (gw.isEligible) {
+                          return (
+                            <button
+                              type="button"
+                              onClick={() => setClaimTarget({ order: selectedOrderDetails, item })}
+                              style={{
+                                padding: '3px 8px',
+                                backgroundColor: '#FFF7ED',
+                                border: '1px solid #FDBA74',
+                                borderRadius: '6px',
+                                color: '#C2410C',
+                                fontSize: '11px',
+                                fontWeight: 700,
+                                cursor: 'pointer'
+                              }}
+                            >
+                              ⚡ Đổi trả ({gw.remainingStr})
+                            </button>
+                          );
+                        }
+
+                        return (
+                          <span style={{ fontSize: '10.5px', color: '#94A3B8', fontStyle: 'italic' }}>
+                            Hết hạn đổi trả
+                          </span>
+                        );
+                      })()}
                     </div>
                   </div>
                 ))}
@@ -2243,6 +2514,37 @@ export default function CustomerOrdersPage() {
                     }}
                   >
                     Thanh toán ngay
+                  </button>
+                )}
+
+                {/* Nút Trả hàng / Khiếu nại trong chi tiết đơn */}
+                {selectedOrderDetails.orderStatus?.toLowerCase() !== 'cancelled' && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const ord = selectedOrderDetails;
+                      setSelectedOrderDetails(null);
+                      if (ord.orderItems.length === 1) {
+                        setClaimTarget({ order: ord, item: ord.orderItems[0] });
+                      } else {
+                        setOrderToPickClaim(ord);
+                      }
+                    }}
+                    style={{
+                      padding: '10px 18px',
+                      backgroundColor: '#FFF7ED',
+                      color: '#C2410C',
+                      border: '1.5px solid #EA580C',
+                      borderRadius: '6px',
+                      fontSize: '13.5px',
+                      fontWeight: '800',
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px'
+                    }}
+                  >
+                    <span>⚡ Trả hàng / Khiếu nại</span>
                   </button>
                 )}
 
@@ -2435,6 +2737,145 @@ export default function CustomerOrdersPage() {
           setQuickViewProduct(null);
         }}
       />
+
+      {/* Modal Chọn Sản phẩm cần Đổi trả / Khiếu nại khi đơn có nhiều món */}
+      {orderToPickClaim && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(15, 23, 42, 0.75)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 10500,
+            padding: '16px',
+            backdropFilter: 'blur(5px)'
+          }}
+          onClick={() => setOrderToPickClaim(null)}
+        >
+          <div
+            style={{
+              backgroundColor: '#ffffff',
+              borderRadius: '20px',
+              width: '100%',
+              maxWidth: '520px',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              padding: '24px',
+              boxShadow: '0 25px 50px -12px rgba(0,0,0,0.3)',
+              position: 'relative'
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid var(--line)', paddingBottom: '14px', marginBottom: '16px' }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 800, color: 'var(--ink)' }}>
+                  Chọn sản phẩm cần Đổi trả
+                </h3>
+                <p style={{ margin: '3px 0 0 0', fontSize: '12.5px', color: 'var(--ink-soft)' }}>
+                  Đơn hàng #{orderToPickClaim.orderCode} ({orderToPickClaim.orderItems.length} sản phẩm)
+                </p>
+              </div>
+              <button
+                onClick={() => setOrderToPickClaim(null)}
+                style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: 'var(--ink-soft)' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <p style={{ fontSize: '13px', color: '#64748B', margin: '0 0 16px 0' }}>
+              Vui lòng chọn mặt hàng nông sản bạn gặp vấn đề chất lượng để gửi minh chứng đổi trả:
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {orderToPickClaim.orderItems.map((item, idx) => {
+                const gw = getProductGoldenWindow(orderToPickClaim, item);
+                return (
+                  <div
+                    key={item.orderItemId || idx}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '12px 14px',
+                      borderRadius: '12px',
+                      border: '1.5px solid #E2E8F0',
+                      backgroundColor: '#F8FAFC',
+                      gap: '12px'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
+                      <img
+                        src={getProductImage(item)}
+                        alt={item.product?.productName}
+                        style={{ width: '48px', height: '48px', borderRadius: '8px', objectFit: 'cover' }}
+                      />
+                      <div>
+                        <div style={{ fontWeight: 700, fontSize: '13.5px', color: '#0F172A' }}>
+                          {item.product?.productName || 'Nông sản LÀNH'}
+                        </div>
+                        <div style={{ fontSize: '12px', color: '#64748B' }}>
+                          {toVND(item.unitPrice)} × {item.quantity}
+                        </div>
+                        <span style={{ fontSize: '10.5px', fontWeight: 700, color: '#C2410C', backgroundColor: '#FFF7ED', padding: '1px 6px', borderRadius: '4px', border: '1px solid #FFEDD5', marginTop: '2px', display: 'inline-block' }}>
+                          {gw.typeName}
+                        </span>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const ord = orderToPickClaim;
+                        setOrderToPickClaim(null);
+                        setClaimTarget({ order: ord, item });
+                      }}
+                      style={{
+                        padding: '8px 14px',
+                        backgroundColor: '#EA580C',
+                        color: '#ffffff',
+                        border: 'none',
+                        borderRadius: '8px',
+                        fontWeight: 700,
+                        fontSize: '12.5px',
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap',
+                        boxShadow: '0 2px 6px rgba(234,88,12,0.2)'
+                      }}
+                    >
+                      Khiếu nại món này
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Khiếu nại & Đổi trả Nông sản Tươi sống Thông Minh */}
+      {claimTarget && (
+        <SmartClaimModal
+          order={claimTarget.order}
+          product={{
+            productId: claimTarget.item.productId,
+            productName: claimTarget.item.product?.productName || 'Nông sản LÀNH',
+            imageUrl: getProductImage(claimTarget.item),
+            unitPrice: claimTarget.item.unitPrice,
+            quantity: claimTarget.item.quantity,
+            unit: claimTarget.item.product?.unit
+          }}
+          currentUser={currentUser}
+          onClose={() => setClaimTarget(null)}
+          onSuccess={(ticket) => {
+            setUserClaims(prev => [ticket, ...prev]);
+            setClaimTarget(null);
+            showToast('Gửi yêu cầu khiếu nại thành công! Hệ thống Zero-Waste sẽ giải quyết bồi hoàn sớm nhất.', 'success');
+          }}
+        />
+      )}
     </>
   );
 }

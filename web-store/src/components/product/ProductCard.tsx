@@ -48,17 +48,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             }}>
               ⚡ GIẢM {(product as any).discountPercent}%
             </span>
-            <span style={{
-              backgroundColor: 'rgba(254, 243, 199, 0.95)',
-              color: '#B45309',
-              fontSize: '9.5px',
-              fontWeight: 700,
-              padding: '1px 5px',
-              borderRadius: '4px',
-              border: '1px solid #FCD34D'
-            }}>
-              XẢ CẬN DATE
-            </span>
           </div>
         )}
         {ICONS[product.icon]}
@@ -83,26 +72,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           Xuất xứ: {product.region}
         </span>
         <span className="prod-name">{product.name}</span>
-        
-        {/* THÔNG BÁO TRÊN SẢN PHẨM */}
-        {(product as any).discountPercent > 0 && (
-          <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '4px',
-            backgroundColor: '#FEF2F2',
-            color: '#DC2626',
-            padding: '2px 7px',
-            borderRadius: '4px',
-            fontSize: '11px',
-            fontWeight: 700,
-            marginTop: '3px',
-            border: '1px solid #FECDD3'
-          }}>
-            <span>🔥</span>
-            <span>Xả nông sản cận date (-{(product as any).discountPercent}%)</span>
-          </div>
-        )}
 
         <div className="stars">
           {product.reviews > 0 ? (

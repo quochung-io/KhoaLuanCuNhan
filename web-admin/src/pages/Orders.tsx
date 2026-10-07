@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Table, Button, Space, Modal, Form, Select, Tag, message, Card, Tooltip, Steps, Input, DatePicker, Row, Col } from 'antd';
-import { EditOutlined, EyeOutlined, SearchOutlined, ReloadOutlined, ShoppingOutlined } from '@ant-design/icons';
+import { EditOutlined, EyeOutlined, SearchOutlined, ReloadOutlined, ShoppingOutlined, CloseCircleOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { orderService } from '../services/api';
 
@@ -40,6 +41,7 @@ interface Order {
 }
 
 export const Orders: React.FC = () => {
+  const navigate = useNavigate();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -400,6 +402,16 @@ export const Orders: React.FC = () => {
             <ShoppingOutlined style={{ color: '#2e7d32', fontSize: '20px' }} />
             <span>Quản Lý Đơn Hàng & Vận Hành Chuỗi Cung Ứng</span>
           </div>
+        }
+        extra={
+          <Button 
+            danger 
+            icon={<CloseCircleOutlined />} 
+            onClick={() => navigate('/cancelled-orders')}
+            style={{ fontWeight: 600, borderRadius: 6 }}
+          >
+            Quản Lý Đơn Hủy & Đổi Trả ({orders.filter(o => ['cancelled', 'returned'].includes(o.orderStatus?.toLowerCase())).length})
+          </Button>
         }
       >
         {/* KHUNG TÌM KIẾM & BỘ LỌC ĐƠN HÀNG VẬN HÀNH */}
