@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ProductQuickViewModal, QuickViewProductData } from '@/components/product/ProductQuickViewModal';
 import SearchBar from '@/components/layout/SearchBar';
+import SmartClaimModal from '@/components/orders/SmartClaimModal';
 
 interface OrderItem {
   orderItemId: number;
@@ -28,6 +29,7 @@ interface Order {
   paymentStatus: string;
   orderStatus: string;
   createdAt: string;
+  updatedAt?: string;
   address?: {
     receiverName: string;
     phone: string;
@@ -76,6 +78,61 @@ export default function CustomerOrdersPage() {
   const [isPayQrExpired, setIsPayQrExpired] = useState<boolean>(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [quickViewProduct, setQuickViewProduct] = useState<{ id: number; data?: QuickViewProductData } | null>(null);
+
+  // Quản lý khiếu nại & đổi trả nông sản theo Thời Gian Vàng
+  const [claimTarget, setClaimTarget] = useState<{ order: Order; item: OrderItem } | null>(null);
+  const [userClaims, setUserClaims] = useState<any[]>([]);
+
+  // Hàm xác định nhóm sản phẩm và tính toán thời gian vàng
+  const getProductGoldenWindow = (order: Order, item: OrderItem) => {
+    const name = (item.product?.productName || '').toLowerCase();
+
+    // 1. Phân loại 3 nhóm sản phẩm
+    let categoryType: 'FRESH_SHORTS' | 'COOL_LONGS' | 'PREMIUM_PREORDER' = 'FRESH_SHORTS';
+    let allowedHours = 3;
+    let typeName = 'Hàng tươi sống / Ăn liền';
+
+    if (name.includes('sầu riêng') || name.includes('cherry') || name.includes('nho mẫu đơn') || 
+        name.includes('dưa lưới huỳnh long') || name.includes('nhập khẩu') || name.includes('cao cấp')) {
+      categoryType = 'PREMIUM_PREORDER';
+      allowedHours = 12;
+      typeName = 'Hàng cao cấp / Đặt trước';
+    } else if (name.includes('khoai') || name.includes('bí') || name.includes('cà rốt') || 
+               name.includes('hành') || name.includes('tỏi') || name.includes('đông lạnh') || 
+               name.includes('đồ khô') || name.includes('sấy') || name.includes('gạo') || name.includes('hạt')) {
+      categoryType = 'COOL_LONGS';
+      allowedHours = 24;
+      typeName = 'Hàng củ quả / Đông lạnh';
+    }
+
+    // 2. Mốc thời gian nhận hàng delivered_at
+    const deliveredAt = order.updatedAt ? new Date(order.updatedAt).getTime() : new Date(order.createdAt).getTime();
+    const deadline = deliveredAt + allowedHours * 3600 * 1000;
+    const diffMs = deadline - Date.now();
+    const isEligible = diffMs > 0;
+
+    let remainingStr = '';
+    if (isEligible) {
+      const hours = Math.floor(diffMs / (3600 * 1000));
+      const mins = Math.floor((diffMs % (3600 * 1000)) / (60 * 1000));
+      remainingStr = hours > 0 ? `Còn ${hours}h ${mins}p` : `Còn ${mins}p`;
+    }
+
+    // 3. Kiểm tra sản phẩm đã gửi khiếu nại trước đó chưa
+    const existingClaim = userClaims.find(
+      c => (c.orderId === order.orderId || c.orderCode === order.orderCode) && c.productId === item.productId
+    );
+
+    return {
+      categoryType,
+      allowedHours,
+      typeName,
+      isEligible,
+      remainingStr,
+      existingClaim,
+      deadline: new Date(deadline)
+    };
+  };
 
   const openProductQuickView = (productId: number, item?: any) => {
     if (!productId) return;
@@ -763,7 +820,9 @@ export default function CustomerOrdersPage() {
   // Lọc đơn hàng theo Tab và Query tìm kiếm
   const filteredOrders = orders.filter(order => {
     const unified = getOrderUnifiedStatus(order);
-    const matchesTab = orderFilterStatus === 'all' || unified.key === orderFilterStatus;
+    const hasClaimInOrder = userClaims.some(c => c.orderId === order.orderId || c.orderCode === order.orderCode);
+    const matchesTab = orderFilterStatus === 'all' 
+      || (orderFilterStatus === 'returned' ? (unified.key === 'returned' || hasClaimInOrder) : unified.key === orderFilterStatus);
     
     if (!matchesTab) return false;
     if (!searchOrderQuery.trim()) return true;
@@ -786,6 +845,26 @@ export default function CustomerOrdersPage() {
     const parsedUser = JSON.parse(storedUser);
     setCurrentUser(parsedUser);
     loadOrders(parsedUser.userId);
+
+    // Load danh sách khiếu nại nông sản tươi sống đã lưu
+    try {
+      const localClaims = JSON.parse(localStorage.getItem('user_fresh_claims') || '[]');
+      setUserClaims(localClaims);
+      // Đồng bộ từ Backend API
+      fetch(`http://localhost:5023/api/return-tickets/customer/${parsedUser.userId}`)
+        .then(res => res.ok ? res.json() : [])
+        .then(apiTickets => {
+          if (Array.isArray(apiTickets) && apiTickets.length > 0) {
+            const merged = [...apiTickets];
+            localClaims.forEach((lc: any) => {
+              if (!merged.some(m => m.ticketId === lc.ticketId)) merged.push(lc);
+            });
+            setUserClaims(merged);
+            localStorage.setItem('user_fresh_claims', JSON.stringify(merged));
+          }
+        })
+        .catch(() => {});
+    } catch (e) {}
 
     // Fetch số điểm thực
     fetch(`http://localhost:5023/api/loyalty/${parsedUser.userId}`)
@@ -1184,7 +1263,7 @@ export default function CustomerOrdersPage() {
               { key: 'shipping', label: 'Đang giao hàng', count: orders.filter(o => getOrderUnifiedStatus(o).key === 'shipping').length },
               { key: 'completed', label: 'Hoàn tất', count: orders.filter(o => getOrderUnifiedStatus(o).key === 'completed').length },
               { key: 'cancelled', label: 'Đã hủy', count: orders.filter(o => getOrderUnifiedStatus(o).key === 'cancelled').length },
-              { key: 'returned', label: 'Trả hàng', count: orders.filter(o => getOrderUnifiedStatus(o).key === 'returned').length }
+              { key: 'returned', label: 'Trả hàng / Khiếu nại', count: orders.filter(o => getOrderUnifiedStatus(o).key === 'returned' || userClaims.some(c => c.orderId === o.orderId || c.orderCode === o.orderCode)).length }
             ].map(tab => (
               <button
                 key={tab.key}
@@ -1469,10 +1548,84 @@ export default function CustomerOrdersPage() {
                             </div>
                           </div>
 
-                          <div style={{ textAlign: 'right' }}>
+                          <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' }}>
                             <span style={{ fontWeight: '700', color: 'var(--ink)', fontSize: '14.5px' }}>
                               {toVND(item.totalAmount)}
                             </span>
+
+                            {/* Nút Khiếu nại & Đổi trả theo Thời Gian Vàng */}
+                            {(() => {
+                              const oStatus = (order.orderStatus || '').toLowerCase();
+                              if (oStatus !== 'completed' && oStatus !== 'delivered' && oStatus !== 'returned') return null;
+
+                              const gw = getProductGoldenWindow(order, item);
+
+                              // Đã có ticket khiếu nại
+                              if (gw.existingClaim) {
+                                const st = gw.existingClaim.status;
+                                return (
+                                  <span style={{
+                                    fontSize: '11px',
+                                    fontWeight: 700,
+                                    padding: '3px 8px',
+                                    borderRadius: '6px',
+                                    backgroundColor: st === 'APPROVED' ? '#DCFCE7' : st === 'REJECTED' ? '#FEE2E2' : '#FEF3C7',
+                                    color: st === 'APPROVED' ? '#15803D' : st === 'REJECTED' ? '#DC2626' : '#B45309',
+                                    border: '1px solid ' + (st === 'APPROVED' ? '#86EFAC' : st === 'REJECTED' ? '#FECDD3' : '#FDE68A')
+                                  }}>
+                                    {st === 'APPROVED' ? '✓ Đã bồi hoàn' : st === 'REJECTED' ? '✕ Đã từ chối' : '⏳ Đang thẩm định'}
+                                  </span>
+                                );
+                              }
+
+                              // Còn thời gian vàng
+                              if (gw.isEligible) {
+                                return (
+                                  <button
+                                    type="button"
+                                    onClick={() => setClaimTarget({ order, item })}
+                                    title={`Bạn có thể khiếu nại sản phẩm này trong vòng ${gw.allowedHours}h sau nhận hàng`}
+                                    style={{
+                                      padding: '4px 10px',
+                                      backgroundColor: '#FFF7ED',
+                                      border: '1px solid #FDBA74',
+                                      borderRadius: '6px',
+                                      color: '#C2410C',
+                                      fontSize: '11.5px',
+                                      fontWeight: 700,
+                                      cursor: 'pointer',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '4px',
+                                      transition: 'all 0.15s'
+                                    }}
+                                  >
+                                    <span>⚡ Đổi trả ({gw.remainingStr})</span>
+                                  </button>
+                                );
+                              }
+
+                              // Quá hạn
+                              return (
+                                <button
+                                  type="button"
+                                  disabled
+                                  title={`Đã quá thời gian khiếu nại quy định (${gw.allowedHours}h sau khi nhận đối với ${gw.typeName})`}
+                                  style={{
+                                    padding: '4px 8px',
+                                    backgroundColor: '#F1F5F9',
+                                    border: '1px solid #E2E8F0',
+                                    borderRadius: '6px',
+                                    color: '#94A3B8',
+                                    fontSize: '11px',
+                                    fontWeight: 600,
+                                    cursor: 'not-allowed'
+                                  }}
+                                >
+                                  Đổi trả (Hết hạn)
+                                </button>
+                              );
+                            })()}
                           </div>
                         </div>
                       ))}
@@ -2169,8 +2322,58 @@ export default function CustomerOrdersPage() {
                         </div>
                       </div>
                     </div>
-                    <div style={{ fontWeight: '700', fontSize: '14px', color: 'var(--ink)' }}>
-                      {toVND(item.totalAmount)}
+                    <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' }}>
+                      <span style={{ fontWeight: '700', fontSize: '14px', color: 'var(--ink)' }}>
+                        {toVND(item.totalAmount)}
+                      </span>
+                      {(() => {
+                        const oStatus = (selectedOrderDetails.orderStatus || '').toLowerCase();
+                        if (oStatus !== 'completed' && oStatus !== 'delivered' && oStatus !== 'returned') return null;
+
+                        const gw = getProductGoldenWindow(selectedOrderDetails, item);
+                        if (gw.existingClaim) {
+                          const st = gw.existingClaim.status;
+                          return (
+                            <span style={{
+                              fontSize: '11px',
+                              fontWeight: 700,
+                              padding: '2px 7px',
+                              borderRadius: '6px',
+                              backgroundColor: st === 'APPROVED' ? '#DCFCE7' : st === 'REJECTED' ? '#FEE2E2' : '#FEF3C7',
+                              color: st === 'APPROVED' ? '#15803D' : st === 'REJECTED' ? '#DC2626' : '#B45309'
+                            }}>
+                              {st === 'APPROVED' ? '✓ Đã bồi hoàn' : st === 'REJECTED' ? '✕ Từ chối' : '⏳ Đang thẩm định'}
+                            </span>
+                          );
+                        }
+
+                        if (gw.isEligible) {
+                          return (
+                            <button
+                              type="button"
+                              onClick={() => setClaimTarget({ order: selectedOrderDetails, item })}
+                              style={{
+                                padding: '3px 8px',
+                                backgroundColor: '#FFF7ED',
+                                border: '1px solid #FDBA74',
+                                borderRadius: '6px',
+                                color: '#C2410C',
+                                fontSize: '11px',
+                                fontWeight: 700,
+                                cursor: 'pointer'
+                              }}
+                            >
+                              ⚡ Đổi trả ({gw.remainingStr})
+                            </button>
+                          );
+                        }
+
+                        return (
+                          <span style={{ fontSize: '10.5px', color: '#94A3B8', fontStyle: 'italic' }}>
+                            Hết hạn đổi trả
+                          </span>
+                        );
+                      })()}
                     </div>
                   </div>
                 ))}
@@ -2435,6 +2638,28 @@ export default function CustomerOrdersPage() {
           setQuickViewProduct(null);
         }}
       />
+
+      {/* Modal Khiếu nại & Đổi trả Nông sản Tươi sống Thông Minh */}
+      {claimTarget && (
+        <SmartClaimModal
+          order={claimTarget.order}
+          product={{
+            productId: claimTarget.item.productId,
+            productName: claimTarget.item.product?.productName || 'Nông sản LÀNH',
+            imageUrl: getProductImage(claimTarget.item),
+            unitPrice: claimTarget.item.unitPrice,
+            quantity: claimTarget.item.quantity,
+            unit: claimTarget.item.product?.unit
+          }}
+          currentUser={currentUser}
+          onClose={() => setClaimTarget(null)}
+          onSuccess={(ticket) => {
+            setUserClaims(prev => [ticket, ...prev]);
+            setClaimTarget(null);
+            showToast('Gửi yêu cầu khiếu nại thành công! Hệ thống Zero-Waste sẽ giải quyết bồi hoàn sớm nhất.', 'success');
+          }}
+        />
+      )}
     </>
   );
 }
