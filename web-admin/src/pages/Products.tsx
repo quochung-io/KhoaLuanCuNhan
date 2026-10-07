@@ -1112,13 +1112,21 @@ export const Products: React.FC = () => {
   ];
 
   return (
-    <div style={{ padding: 24 }}>
-      <Card title={
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <ShopOutlined style={{ fontSize: '20px', color: '#2e7d32' }} />
-          <span>Quản Lý Sản Phẩm Nông Sản & Gói Combo (Định Kỳ & Theo Chương Trình)</span>
-        </div>
-      }>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <Card 
+        style={{ borderRadius: 14 }}
+        title={
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ width: 34, height: 34, borderRadius: 10, background: '#f0fdf4', color: '#16a34a', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>
+              <ShopOutlined />
+            </div>
+            <div>
+              <span style={{ fontSize: 16, fontWeight: 700, color: '#0f172a' }}>Quản Lý Sản Phẩm Nông Sản & Gói Combo Tự Chọn</span>
+              <div style={{ fontSize: 12, color: '#64748b', fontWeight: 400 }}>Quản lý định giá, chuẩn VietGAP, tồn kho và combo khép kín theo nông trại</div>
+            </div>
+          </div>
+        }
+      >
         <Tabs 
           defaultActiveKey="single"
           items={[

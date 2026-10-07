@@ -395,12 +395,18 @@ export const Orders: React.FC = () => {
   ];
 
   return (
-    <div style={{ padding: 24 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <Card 
+        style={{ borderRadius: 14 }}
         title={
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <ShoppingOutlined style={{ color: '#2e7d32', fontSize: '20px' }} />
-            <span>Quản Lý Đơn Hàng & Vận Hành Chuỗi Cung Ứng</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ width: 34, height: 34, borderRadius: 10, background: '#f0fdf4', color: '#16a34a', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>
+              <ShoppingOutlined />
+            </div>
+            <div>
+              <span style={{ fontSize: 16, fontWeight: 700, color: '#0f172a' }}>Quản Lý Đơn Hàng & Vận Hành Chuỗi Cung Ứng</span>
+              <div style={{ fontSize: 12, color: '#64748b', fontWeight: 400 }}>Theo dõi tiếp nhận đơn, xuất kho vận chuyển và thu hộ COD</div>
+            </div>
           </div>
         }
         extra={
@@ -408,9 +414,9 @@ export const Orders: React.FC = () => {
             danger 
             icon={<CloseCircleOutlined />} 
             onClick={() => navigate('/cancelled-orders')}
-            style={{ fontWeight: 600, borderRadius: 6 }}
+            style={{ fontWeight: 600, borderRadius: 8 }}
           >
-            Quản Lý Đơn Hủy & Đổi Trả ({orders.filter(o => ['cancelled', 'returned'].includes(o.orderStatus?.toLowerCase())).length})
+            Đơn Hủy & Đổi Trả ({orders.filter(o => ['cancelled', 'returned'].includes(o.orderStatus?.toLowerCase())).length})
           </Button>
         }
       >
@@ -418,9 +424,9 @@ export const Orders: React.FC = () => {
         <div style={{ 
           background: '#f8fafc', 
           border: '1px solid #e2e8f0', 
-          borderRadius: '10px', 
-          padding: '16px', 
-          marginBottom: '16px' 
+          borderRadius: 12, 
+          padding: '16px 20px', 
+          marginBottom: '20px' 
         }}>
           <Row gutter={[12, 12]} align="middle">
             {/* 1. Mã đơn */}

@@ -452,7 +452,7 @@ export const Users: React.FC = () => {
   ];
 
   return (
-    <div style={{ padding: 24 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <Tabs
         defaultActiveKey="suppliers"
         items={[

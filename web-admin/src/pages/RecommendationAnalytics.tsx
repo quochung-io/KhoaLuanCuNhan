@@ -316,32 +316,48 @@ export const RecommendationAnalytics: React.FC = () => {
   ];
 
   return (
-    <div style={{ paddingBottom: 24 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       {/* Tiêu đề & Giới thiệu đồ án */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
+      <div 
+        style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center', 
+          flexWrap: 'wrap', 
+          gap: 16,
+          backgroundColor: '#ffffff',
+          padding: '18px 24px',
+          borderRadius: 14,
+          border: '1px solid #e2e8f0',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
+        }}
+      >
         <div>
-          <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 10, fontSize: 22, color: '#1B5E20' }}>
-            <ThunderboltOutlined style={{ color: '#2E7D32' }} />
-            Bảng Theo Dõi &amp; Đánh Giá Hiệu Quả Mô Hình Gợi Ý AI (Top-K Recommendations)
+          <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 10, fontSize: 18, fontWeight: 800, color: '#0f172a' }}>
+            <div style={{ width: 34, height: 34, borderRadius: 10, background: '#f0fdf4', color: '#16a34a', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>
+              <ThunderboltOutlined />
+            </div>
+            Theo Dõi & Đánh Giá Hiệu Quả Gợi Ý AI (Top-K Recommendations)
           </h2>
-          <p style={{ margin: '6px 0 0 0', color: '#555', fontSize: 13.5 }}>
-            Hệ thống thu thập dữ liệu hành vi thời gian thực kết hợp đặc thù nông sản (mùa vụ, độ tươi, hạn dùng, vị trí giao hàng) để xếp hạng Top-K đề xuất tối ưu.
+          <p style={{ margin: '4px 0 0 0', color: '#64748b', fontSize: 13 }}>
+            Thu thập dữ liệu hành vi thời gian thực kết hợp mùa vụ, độ tươi FEFO và vị trí nông trại để tối ưu hóa đề xuất mua hàng.
           </p>
         </div>
-        <Space>
+        <Space wrap>
           <Button 
             icon={<ReloadOutlined />} 
             onClick={fetchAnalytics} 
             loading={loading}
+            style={{ fontWeight: 600 }}
           >
             Làm mới số liệu
           </Button>
           <Button 
             type="primary" 
-            style={{ backgroundColor: '#2E7D32' }}
             icon={<ExperimentOutlined />}
             loading={testingTracking}
             onClick={() => handleTestBehavior('RECOMMENDATION_CLICK')}
+            style={{ fontWeight: 600 }}
           >
             Mô phỏng Click Gợi ý
           </Button>

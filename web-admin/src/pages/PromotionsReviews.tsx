@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Table, Button, Space, Tag, message, Card, Tabs, Rate } from 'antd';
-import { CheckOutlined, CloseOutlined, PlusOutlined } from '@ant-design/icons';
+import { CheckOutlined, CloseOutlined, PlusOutlined, PercentageOutlined, StarOutlined } from '@ant-design/icons';
 
 // Mock data cho Khuyến mãi
 const mockPromotions = [
@@ -22,7 +22,7 @@ export const PromotionsReviews: React.FC = () => {
 
   const handleApproveReview = (id: number) => {
     setReviews(prev => prev.map(r => r.id === id ? { ...r, status: 'approved' } : r));
-    message.success('Đã phê duyệt đánh giá này hiển thị công khai.');
+    message.success('Đã phê duyệt đánh giá này hiển thị công khai trên website & ứng dụng.');
   };
 
   const handleRejectReview = (id: number) => {
@@ -31,27 +31,34 @@ export const PromotionsReviews: React.FC = () => {
   };
 
   const promoColumns = [
-    { title: 'ID', dataIndex: 'id', key: 'id', width: 60 },
-    { title: 'Mã Code', dataIndex: 'code', key: 'code', render: (text: string) => <strong style={{ color: '#1890ff' }}>{text}</strong> },
-    { title: 'Tên Chương Trình', dataIndex: 'name', key: 'name' },
-    { title: 'Mức Giảm', dataIndex: 'discount', key: 'discount' },
-    { title: 'Ngày Bắt Đầu', dataIndex: 'startDate', key: 'startDate' },
-    { title: 'Ngày Kết Thúc', dataIndex: 'endDate', key: 'endDate' },
+    { title: 'ID', dataIndex: 'id', key: 'id', width: 70, render: (id: number) => <Tag color="default">#{id}</Tag> },
+    { 
+      title: 'Mã Voucher', 
+      dataIndex: 'code', 
+      key: 'code', 
+      render: (text: string) => <Tag color="blue" style={{ fontWeight: 700, fontSize: 13, padding: '3px 10px' }}>{text}</Tag> 
+    },
+    { title: 'Tên Chương Trình', dataIndex: 'name', key: 'name', render: (t: string) => <span style={{ fontWeight: 600 }}>{t}</span> },
+    { title: 'Mức Giảm', dataIndex: 'discount', key: 'discount', render: (d: string) => <span style={{ color: '#16a34a', fontWeight: 700 }}>{d}</span> },
+    { title: 'Ngày Bắt Đầu', dataIndex: 'startDate', key: 'startDate', render: (d: string) => <span style={{ color: '#64748b' }}>{d}</span> },
+    { title: 'Ngày Kết Thúc', dataIndex: 'endDate', key: 'endDate', render: (d: string) => <span style={{ color: '#64748b' }}>{d}</span> },
     { 
       title: 'Trạng Thái', 
       dataIndex: 'status', 
       key: 'status', 
       render: (status: string) => (
-        <Tag color={status === 'active' ? 'green' : 'red'}>{status === 'active' ? 'ĐANG CHẠY' : 'HẾT HẠN'}</Tag>
+        <Tag color={status === 'active' ? 'success' : 'error'} style={{ borderRadius: 999 }}>
+          {status === 'active' ? 'ĐANG ÁP DỤNG' : 'HẾT HIỆU LỰC'}
+        </Tag>
       ) 
     },
   ];
 
   const reviewColumns = [
-    { title: 'ID', dataIndex: 'id', key: 'id', width: 60 },
-    { title: 'Khách hàng', dataIndex: 'customerName', key: 'customerName' },
-    { title: 'Sản phẩm', dataIndex: 'productName', key: 'productName' },
-    { title: 'Đánh giá', dataIndex: 'rating', key: 'rating', render: (val: number) => <Rate disabled defaultValue={val} style={{ fontSize: 14 }} /> },
+    { title: 'ID', dataIndex: 'id', key: 'id', width: 70, render: (id: number) => <Tag color="default">#{id}</Tag> },
+    { title: 'Khách hàng', dataIndex: 'customerName', key: 'customerName', render: (n: string) => <strong>{n}</strong> },
+    { title: 'Sản phẩm', dataIndex: 'productName', key: 'productName', render: (p: string) => <span style={{ color: '#16a34a', fontWeight: 600 }}>{p}</span> },
+    { title: 'Đánh giá', dataIndex: 'rating', key: 'rating', render: (val: number) => <Rate disabled defaultValue={val} style={{ fontSize: 13 }} /> },
     { title: 'Nội dung bình luận', dataIndex: 'comment', key: 'comment' },
     { 
       title: 'Trạng thái', 
@@ -61,7 +68,11 @@ export const PromotionsReviews: React.FC = () => {
         let color = 'gold';
         if (status === 'approved') color = 'green';
         if (status === 'rejected') color = 'red';
-        return <Tag color={color}>{status.toUpperCase()}</Tag>;
+        return (
+          <Tag color={color} style={{ borderRadius: 999 }}>
+            {status === 'approved' ? 'ĐÃ DUYỆT' : status === 'rejected' ? 'ĐÃ ẨN' : 'CHỜ DUYỆT'}
+          </Tag>
+        );
       }
     },
     { 
@@ -71,8 +82,12 @@ export const PromotionsReviews: React.FC = () => {
         <Space size="small">
           {record.status === 'pending' && (
             <>
-              <Button icon={<CheckOutlined />} type="primary" style={{ backgroundColor: 'green', borderColor: 'green' }} onClick={() => handleApproveReview(record.id)}>Duyệt</Button>
-              <Button icon={<CloseOutlined />} danger onClick={() => handleRejectReview(record.id)}>Từ chối</Button>
+              <Button size="small" icon={<CheckOutlined />} type="primary" onClick={() => handleApproveReview(record.id)}>
+                Duyệt
+              </Button>
+              <Button size="small" icon={<CloseOutlined />} danger onClick={() => handleRejectReview(record.id)}>
+                Ẩn
+              </Button>
             </>
           )}
         </Space>
@@ -81,31 +96,67 @@ export const PromotionsReviews: React.FC = () => {
   ];
 
   return (
-    <div style={{ padding: 24 }}>
-      <Card title="Quản Lý Khuyến Mãi & Duyệt Đánh Giá Khách Hàng">
-        <Tabs defaultActiveKey="1">
-          <Tabs.TabPane tab="Chương Trình Khuyến Mãi" key="1">
-            <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'flex-end' }}>
-              <Button type="primary" icon={<PlusOutlined />} onClick={() => message.info('Chức năng thêm mới mã khuyến mãi đang được khởi tạo.')}>
-                Thêm Mã Khuyến Mãi
-              </Button>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <Card 
+        style={{ borderRadius: 14 }}
+        title={
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ width: 34, height: 34, borderRadius: 10, background: '#f0fdf4', color: '#16a34a', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>
+              <PercentageOutlined />
             </div>
-            <Table 
-              columns={promoColumns} 
-              dataSource={promotions} 
-              rowKey="id"
-              pagination={{ pageSize: 5 }}
-            />
-          </Tabs.TabPane>
-          <Tabs.TabPane tab="Duyệt Đánh Giá Sản Phẩm" key="2">
-            <Table 
-              columns={reviewColumns} 
-              dataSource={reviews} 
-              rowKey="id"
-              pagination={{ pageSize: 5 }}
-            />
-          </Tabs.TabPane>
-        </Tabs>
+            <div>
+              <span style={{ fontSize: 16, fontWeight: 700, color: '#0f172a' }}>Quản Lý Khuyến Mãi & Duyệt Đánh Giá Khách Hàng</span>
+              <div style={{ fontSize: 12, color: '#64748b', fontWeight: 400 }}>Tạo mã coupon kích cầu và kiểm duyệt phản hồi trải nghiệm mua hàng</div>
+            </div>
+          </div>
+        }
+      >
+        <Tabs 
+          defaultActiveKey="1"
+          items={[
+            {
+              key: '1',
+              label: (
+                <Space>
+                  <PercentageOutlined />
+                  <span>Chương Trình Khuyến Mãi ({promotions.length})</span>
+                </Space>
+              ),
+              children: (
+                <div>
+                  <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'flex-end' }}>
+                    <Button type="primary" icon={<PlusOutlined />} onClick={() => message.info('Chức năng thêm mới mã khuyến mãi đang được tích hợp.')}>
+                      Thêm Mã Khuyến Mãi Mới
+                    </Button>
+                  </div>
+                  <Table 
+                    columns={promoColumns} 
+                    dataSource={promotions} 
+                    rowKey="id"
+                    pagination={{ pageSize: 5 }}
+                  />
+                </div>
+              )
+            },
+            {
+              key: '2',
+              label: (
+                <Space>
+                  <StarOutlined />
+                  <span>Duyệt Đánh Giá & Phản Hồi ({reviews.length})</span>
+                </Space>
+              ),
+              children: (
+                <Table 
+                  columns={reviewColumns} 
+                  dataSource={reviews} 
+                  rowKey="id"
+                  pagination={{ pageSize: 5 }}
+                />
+              )
+            }
+          ]}
+        />
       </Card>
     </div>
   );

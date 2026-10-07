@@ -789,9 +789,9 @@ export const Batches: React.FC = () => {
   ];
 
   return (
-    <div style={{ padding: 24 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       {/* ── THỐNG KÊ MA TRẬN FEFO TRAFFIC LIGHT (ĐÈN GIAO THÔNG) ── */}
-      <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
+      <Row gutter={[16, 16]}>
         {/* Thẻ 1: Lô An Toàn */}
         <Col xs={24} sm={12} md={6}>
           <Card 
@@ -965,10 +965,16 @@ export const Batches: React.FC = () => {
 
       {/* ── CARD BẢNG DỮ LIỆU & TÌM KIẾM ── */}
       <Card 
+        style={{ borderRadius: 14 }}
         title={
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <SafetyCertificateOutlined style={{ color: '#2e7d32', fontSize: '20px' }} />
-            <span>Quản Lý Lô Hàng Nông Sản & Kiểm Soát Hạn Dùng FEFO</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ width: 34, height: 34, borderRadius: 10, background: '#f0fdf4', color: '#16a34a', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>
+              <SafetyCertificateOutlined />
+            </div>
+            <div>
+              <span style={{ fontSize: 16, fontWeight: 700, color: '#0f172a' }}>Quản Lý Lô Hàng Nông Sản & Kiểm Soát Hạn Dùng FEFO</span>
+              <div style={{ fontSize: 12, color: '#64748b', fontWeight: 400 }}>Thuật toán First-Expired, First-Out đảm bảo nông sản luôn tươi mới</div>
+            </div>
           </div>
         }
         extra={

@@ -93,13 +93,39 @@ export const Register: React.FC = () => {
       justifyContent: 'center',
       alignItems: 'center',
       minHeight: '100vh',
-      backgroundColor: '#f0f2f5',
-      padding: '20px 0'
+      background: 'linear-gradient(135deg, #064e3b 0%, #0f172a 100%)',
+      padding: '40px 20px'
     }}>
-      <Card style={{ width: 450, boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
-        <div style={{ textAlign: 'center', marginBottom: 24 }}>
-          <h2 style={{ color: '#1890ff', margin: 0 }}>HỆ THỐNG ECC</h2>
-          <p style={{ color: '#8c8c8c', margin: '5px 0 0 0' }}>Đăng ký tài khoản quản trị</p>
+      <Card 
+        style={{ 
+          width: 460, 
+          borderRadius: 20, 
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          background: '#ffffff'
+        }}
+        styles={{ body: { padding: '36px 32px' } }}
+      >
+        <div style={{ textAlign: 'center', marginBottom: 28 }}>
+          <div
+            style={{
+              width: 52,
+              height: 52,
+              borderRadius: 14,
+              background: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
+              color: '#ffffff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: 26,
+              margin: '0 auto 12px auto',
+              boxShadow: '0 8px 16px rgba(22, 163, 74, 0.3)',
+            }}
+          >
+            🌱
+          </div>
+          <h2 style={{ color: '#0f172a', margin: 0, fontSize: 22, fontWeight: 800 }}>ECC AGRI-CHAIN</h2>
+          <p style={{ color: '#64748b', margin: '4px 0 0 0', fontSize: 13 }}>Đăng ký tài khoản Quản trị / Đối tác HTX</p>
         </div>
 
         <Form

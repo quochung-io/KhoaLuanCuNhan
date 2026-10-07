@@ -4,7 +4,6 @@ import {
   Card, 
   Col, 
   Row, 
-  Statistic, 
   Table, 
   Tag, 
   Alert, 
@@ -13,7 +12,6 @@ import {
   Segmented, 
   Button, 
   Space, 
-  Badge, 
   Tooltip as AntTooltip,
   Typography,
   Input,
@@ -23,7 +21,6 @@ import {
   ArrowUpOutlined, 
   ArrowDownOutlined,
   ShoppingCartOutlined, 
-  InboxOutlined, 
   WarningOutlined, 
   ReloadOutlined,
   DollarOutlined,
@@ -48,7 +45,7 @@ import {
 import dayjs from 'dayjs';
 import { orderService } from '../services/api';
 
-const { Text, Title } = Typography;
+const { Text } = Typography;
 
 interface RevenuePoint {
   name: string;
@@ -300,44 +297,50 @@ export const Dashboard: React.FC = () => {
   const successRate = Math.min(100, Math.round((fCompleted / fViews) * 100));
 
   return (
-    <div style={{ padding: 24, backgroundColor: '#f0f2f5', minHeight: '100vh' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       {/* ── HEADER ĐIỀU KHIỂN THỜI GIAN THẬT & BỘ LỌC CHU KỲ ── */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        flexWrap: 'wrap', 
-        gap: 16,
-        marginBottom: 20,
-        backgroundColor: '#FFFFFF',
-        padding: '16px 20px',
-        borderRadius: 12,
-        boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
-      }}>
+      <div 
+        style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center', 
+          flexWrap: 'wrap', 
+          gap: 16,
+          backgroundColor: '#ffffff',
+          padding: '18px 24px',
+          borderRadius: 14,
+          border: '1px solid #e2e8f0',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
+        }}
+      >
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <Title level={4} style={{ margin: 0, color: '#1f1f1f' }}>
-              Dashboard Tổng Quan Điều Hành Hệ Thống ECC
-            </Title>
-            <Badge status="processing" text={<span style={{ color: '#52c41a', fontWeight: 600 }}>Thời gian thực (Live)</span>} />
+            <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: '#0f172a' }}>
+              Trung Tâm Giám Sát & Điều Hành Nông Sản ECC
+            </h2>
+            <Tag color="success" style={{ margin: 0, borderRadius: 999, padding: '2px 10px', fontSize: 11 }}>
+              <span style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: '#16a34a', marginRight: 6 }} />
+              Dữ liệu trực tiếp (Live)
+            </Tag>
           </div>
-          <Text type="secondary" style={{ fontSize: 13 }}>
-            Phân tích số liệu kinh doanh chuỗi cung ứng nông sản sạch & hiệu quả vận hành
-          </Text>
+          <div style={{ color: '#64748b', fontSize: 13, marginTop: 4 }}>
+            Theo dõi dòng tiền GMV, tỷ lệ chuyển đổi, thuật toán FEFO và các điểm nghẽn chuỗi cung ứng
+          </div>
         </div>
 
-        <Space wrap>
-          {/* Bộ chọn chu kỳ nhanh: Ngày / 7 ngày / 30 ngày / Tháng / Năm */}
+        <Space wrap size="middle">
+          {/* Bộ chọn chu kỳ nhanh */}
           <Segmented
             value={timeRange}
             onChange={(val) => setTimeRange(val as string)}
             options={[
-              { label: 'Hôm nay (24h)', value: 'today' },
+              { label: 'Hôm nay', value: 'today' },
               { label: '7 ngày qua', value: '7days' },
               { label: '30 ngày qua', value: '30days' },
               { label: 'Tháng này', value: 'thismonth' },
               { label: 'Năm nay', value: 'thisyear' },
             ]}
+            style={{ background: '#f1f5f9', padding: 3, borderRadius: 8, fontWeight: 600 }}
           />
 
           <AntTooltip title={`Dữ liệu tự động đồng bộ. Lần cập nhật gần nhất: ${lastUpdated}`}>
@@ -345,6 +348,7 @@ export const Dashboard: React.FC = () => {
               icon={<ReloadOutlined spin={loading} />} 
               onClick={() => loadDashboardData(timeRange)}
               loading={loading}
+              style={{ fontWeight: 600, borderColor: '#cbd5e1' }}
             >
               Làm mới ({lastUpdated})
             </Button>
@@ -355,35 +359,64 @@ export const Dashboard: React.FC = () => {
       {/* Thông báo cảnh báo sớm nếu có lô hàng sắp hết hạn */}
       {nearExpiry.length > 0 && (
         <Alert
-          message={<b>Cảnh báo nông sản cận hạn sử dụng (Thuật toán FEFO)</b>}
-          description={`Phát hiện ${nearExpiry.length} lô hàng nông sản sắp đến hạn sử dụng trong thời gian tới. Khuyến nghị Ban Quản Trị lên chương trình Flash Sale hoặc combo giải cứu xả kho ngay.`}
+          message={<span style={{ fontWeight: 700, color: '#9a3412' }}>Cảnh báo nông sản cận hạn sử dụng (Thuật toán FEFO)</span>}
+          description={
+            <div style={{ color: '#c2410c', fontSize: 13, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+              <span>Phát hiện <b>{nearExpiry.length}</b> lô hàng nông sản sắp đến hạn sử dụng. Khuyến nghị Quản Trị Viên khởi tạo chương trình Flash Sale hoặc gói Combo xả kho sớm.</span>
+              <Button size="small" type="primary" danger onClick={() => navigate('/product-reports?tab=expired')} style={{ fontWeight: 600 }}>
+                Xem danh sách lô &gt;
+              </Button>
+            </div>
+          }
           type="warning"
           showIcon
-          icon={<WarningOutlined style={{ color: '#fa8c16' }} />}
-          style={{ marginBottom: 20, borderRadius: 8, border: '1px solid #ffe58f' }}
+          icon={<WarningOutlined style={{ color: '#ea580c', fontSize: 18 }} />}
+          style={{ borderRadius: 12, border: '1px solid #fed7aa', background: '#fff7ed' }}
         />
       )}
 
-      {/* ── 5 THẺ CHỈ SỐ KPI CỐT LÕI (CHỈ SỐ THƯƠNG MẠI ĐIỆN TỬ HIỆN ĐẠI) ── */}
-      <Row gutter={[16, 16]} style={{ marginBottom: 20 }}>
+      {/* ── 6 THẺ CHỈ SỐ KPI CỐT LÕI (CHỈ SỐ THƯƠNG MẠI ĐIỆN TỬ HIỆN ĐẠI) ── */}
+      <Row gutter={[16, 16]}>
         {/* 1. Tổng Doanh Thu */}
-        <Col xs={24} sm={12} lg={6} xl={4} style={{ flex: '1 1 200px' }}>
-          <Card loading={loading} style={{ borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
-            <Statistic
-              title={<span style={{ fontWeight: 600, color: '#595959' }}>TỔNG DOANH THU (GMV)</span>}
-              value={stats.totalRevenue}
-              precision={0}
-              valueStyle={{ color: '#2e7d32', fontWeight: 700 }}
-              prefix={<DollarOutlined />}
-              suffix=" đ"
-            />
-            <div style={{ marginTop: 8, fontSize: 12.5, display: 'flex', alignItems: 'center', gap: 6 }}>
+        <Col xs={24} sm={12} lg={8} xl={4} style={{ flex: '1 1 200px' }}>
+          <Card 
+            loading={loading} 
+            className="kpi-card" 
+            style={{ borderRadius: 14, height: '100%' }}
+            styles={{ body: { padding: '18px 20px' } }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Tổng Doanh Thu (GMV)
+                </div>
+                <div style={{ fontSize: 22, fontWeight: 800, color: '#16a34a', marginTop: 8, letterSpacing: '-0.5px' }}>
+                  {stats.totalRevenue.toLocaleString('vi-VN')} <span style={{ fontSize: 14 }}>₫</span>
+                </div>
+              </div>
+              <div 
+                style={{ 
+                  width: 42, 
+                  height: 42, 
+                  borderRadius: 12, 
+                  background: '#f0fdf4', 
+                  color: '#16a34a', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  fontSize: 20
+                }}
+              >
+                <DollarOutlined />
+              </div>
+            </div>
+            <div style={{ marginTop: 12, fontSize: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
               {stats.revenueGrowthRate >= 0 ? (
-                <Tag color="success" style={{ margin: 0, borderRadius: 999 }}>
+                <Tag color="success" style={{ margin: 0, borderRadius: 999, padding: '1px 8px' }}>
                   <ArrowUpOutlined /> +{stats.revenueGrowthRate}%
                 </Tag>
               ) : (
-                <Tag color="error" style={{ margin: 0, borderRadius: 999 }}>
+                <Tag color="error" style={{ margin: 0, borderRadius: 999, padding: '1px 8px' }}>
                   <ArrowDownOutlined /> {stats.revenueGrowthRate}%
                 </Tag>
               )}
@@ -393,39 +426,84 @@ export const Dashboard: React.FC = () => {
         </Col>
 
         {/* 2. Giá trị đơn trung bình (AOV) */}
-        <Col xs={24} sm={12} lg={6} xl={4} style={{ flex: '1 1 200px' }}>
-          <Card loading={loading} style={{ borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
-            <Statistic
-              title={<span style={{ fontWeight: 600, color: '#595959' }}>GIÁ TRỊ ĐƠN TB (AOV)</span>}
-              value={stats.aov}
-              precision={0}
-              valueStyle={{ color: '#0958d9', fontWeight: 700 }}
-              prefix={<RiseOutlined />}
-              suffix=" đ"
-            />
-            <div style={{ marginTop: 8, fontSize: 12, color: '#8c8c8c' }}>
-              Hiệu quả giỏ hàng mỗi khách
+        <Col xs={24} sm={12} lg={8} xl={4} style={{ flex: '1 1 200px' }}>
+          <Card 
+            loading={loading} 
+            className="kpi-card" 
+            style={{ borderRadius: 14, height: '100%' }}
+            styles={{ body: { padding: '18px 20px' } }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Giá Trị Đơn TB (AOV)
+                </div>
+                <div style={{ fontSize: 22, fontWeight: 800, color: '#0284c7', marginTop: 8, letterSpacing: '-0.5px' }}>
+                  {stats.aov.toLocaleString('vi-VN')} <span style={{ fontSize: 14 }}>₫</span>
+                </div>
+              </div>
+              <div 
+                style={{ 
+                  width: 42, 
+                  height: 42, 
+                  borderRadius: 12, 
+                  background: '#f0f9ff', 
+                  color: '#0284c7', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  fontSize: 20
+                }}
+              >
+                <RiseOutlined />
+              </div>
+            </div>
+            <div style={{ marginTop: 14, fontSize: 12, color: '#64748b' }}>
+              Hiệu suất giỏ hàng mỗi khách
             </div>
           </Card>
         </Col>
 
         {/* 3. Tổng Đơn Hàng */}
-        <Col xs={24} sm={12} lg={6} xl={4} style={{ flex: '1 1 200px' }}>
-          <Card loading={loading} style={{ borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
-            <Statistic
-              title={<span style={{ fontWeight: 600, color: '#595959' }}>TỔNG ĐƠN HÀNG</span>}
-              value={stats.totalOrders}
-              valueStyle={{ color: '#1677ff', fontWeight: 700 }}
-              prefix={<ShoppingCartOutlined />}
-              suffix=" đơn"
-            />
-            <div style={{ marginTop: 8, fontSize: 12.5, display: 'flex', alignItems: 'center', gap: 6 }}>
+        <Col xs={24} sm={12} lg={8} xl={4} style={{ flex: '1 1 200px' }}>
+          <Card 
+            loading={loading} 
+            className="kpi-card" 
+            style={{ borderRadius: 14, height: '100%' }}
+            styles={{ body: { padding: '18px 20px' } }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Tổng Đơn Hàng
+                </div>
+                <div style={{ fontSize: 22, fontWeight: 800, color: '#2563eb', marginTop: 8, letterSpacing: '-0.5px' }}>
+                  {stats.totalOrders} <span style={{ fontSize: 14 }}>đơn</span>
+                </div>
+              </div>
+              <div 
+                style={{ 
+                  width: 42, 
+                  height: 42, 
+                  borderRadius: 12, 
+                  background: '#eff6ff', 
+                  color: '#2563eb', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  fontSize: 20
+                }}
+              >
+                <ShoppingCartOutlined />
+              </div>
+            </div>
+            <div style={{ marginTop: 12, fontSize: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
               {stats.ordersGrowthRate >= 0 ? (
-                <Tag color="cyan" style={{ margin: 0, borderRadius: 999 }}>
+                <Tag color="processing" style={{ margin: 0, borderRadius: 999, padding: '1px 8px' }}>
                   <ArrowUpOutlined /> +{stats.ordersGrowthRate}%
                 </Tag>
               ) : (
-                <Tag color="error" style={{ margin: 0, borderRadius: 999 }}>
+                <Tag color="error" style={{ margin: 0, borderRadius: 999, padding: '1px 8px' }}>
                   <ArrowDownOutlined /> {stats.ordersGrowthRate}%
                 </Tag>
               )}
@@ -435,93 +513,138 @@ export const Dashboard: React.FC = () => {
         </Col>
 
         {/* 4. Tỷ lệ chuyển đổi mua hàng (Conversion Rate) */}
-        <Col xs={24} sm={12} lg={6} xl={4} style={{ flex: '1 1 200px' }}>
-          <Card loading={loading} style={{ borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
-            <Statistic
-              title={<span style={{ fontWeight: 600, color: '#595959' }}>TỶ LỆ CHUYỂN ĐỔI (CR)</span>}
-              value={stats.conversionRate}
-              precision={1}
-              valueStyle={{ color: '#722ed1', fontWeight: 700 }}
-              prefix={<ThunderboltOutlined />}
-              suffix="%"
-            />
+        <Col xs={24} sm={12} lg={8} xl={4} style={{ flex: '1 1 200px' }}>
+          <Card 
+            loading={loading} 
+            className="kpi-card" 
+            style={{ borderRadius: 14, height: '100%' }}
+            styles={{ body: { padding: '18px 20px' } }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Tỷ Lệ Chuyển Đổi (CR)
+                </div>
+                <div style={{ fontSize: 22, fontWeight: 800, color: '#7c3aed', marginTop: 8, letterSpacing: '-0.5px' }}>
+                  {stats.conversionRate.toFixed(1)} <span style={{ fontSize: 14 }}>%</span>
+                </div>
+              </div>
+              <div 
+                style={{ 
+                  width: 42, 
+                  height: 42, 
+                  borderRadius: 12, 
+                  background: '#f5f3ff', 
+                  color: '#7c3aed', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  fontSize: 20
+                }}
+              >
+                <ThunderboltOutlined />
+              </div>
+            </div>
             <div style={{ marginTop: 8 }}>
-              <Progress percent={Math.min(100, Math.round((stats.conversionRate / 5) * 100))} size="small" strokeColor="#722ed1" showInfo={false} />
-              <div style={{ fontSize: 11, color: '#8c8c8c', marginTop: 3 }}>Mục tiêu ngành: &gt; 3.0%</div>
+              <Progress percent={Math.min(100, Math.round((stats.conversionRate / 5) * 100))} size="small" strokeColor="#7c3aed" showInfo={false} />
+              <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 3 }}>Mục tiêu sàn: &gt; 3.0%</div>
             </div>
           </Card>
         </Col>
 
-        {/* 5. Nông Sản & Thành Viên */}
-        <Col xs={24} sm={12} lg={6} xl={4} style={{ flex: '1 1 200px' }}>
-          <Card loading={loading} style={{ borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
-            <Statistic
-              title={<span style={{ fontWeight: 600, color: '#595959' }}>QUY MÔ SẢN PHẨM / USER</span>}
-              value={stats.totalProducts}
-              valueStyle={{ color: '#d46b08', fontWeight: 700 }}
-              prefix={<InboxOutlined />}
-              suffix={` / ${stats.totalUsers} TV`}
-            />
-            <div style={{ marginTop: 8, fontSize: 12, color: '#52c41a' }}>
-              <CheckCircleOutlined /> Đang vận hành ổn định
-            </div>
-          </Card>
-        </Col>
-
-        {/* 6. Đơn Hủy & Đổi Trả */}
-        <Col xs={24} sm={12} lg={6} xl={4} style={{ flex: '1 1 200px' }}>
+        {/* 5. Đơn Hủy & Đổi Trả */}
+        <Col xs={24} sm={12} lg={8} xl={4} style={{ flex: '1 1 200px' }}>
           <Card 
             loading={loading} 
             hoverable
             onClick={() => navigate('/cancelled-orders')}
-            style={{ borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.04)', cursor: 'pointer', border: '1px solid #ffccc7' }}
+            className="kpi-card"
+            style={{ borderRadius: 14, height: '100%', cursor: 'pointer', border: '1px solid #fecaca' }}
+            styles={{ body: { padding: '18px 20px' } }}
           >
-            <Statistic
-              title={<span style={{ fontWeight: 600, color: '#cf1322' }}>ĐƠN HỦY &amp; ĐỔI TRẢ</span>}
-              value={cancelledStats.cancelledCount}
-              valueStyle={{ color: '#cf1322', fontWeight: 700 }}
-              prefix={<CloseCircleOutlined />}
-              suffix=" đơn"
-            />
-            <div style={{ marginTop: 8, fontSize: 11.5, color: '#d4380d', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span>{cancelledStats.pendingRefundCount > 0 ? `⚠️ ${cancelledStats.pendingRefundCount} chờ hoàn tiền` : 'Đã đối soát kho'}</span>
-              <span style={{ textDecoration: 'underline', color: '#1677ff' }}>Xem chi tiết &gt;</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#dc2626', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Đơn Hủy & Đổi Trả
+                </div>
+                <div style={{ fontSize: 22, fontWeight: 800, color: '#dc2626', marginTop: 8, letterSpacing: '-0.5px' }}>
+                  {cancelledStats.cancelledCount} <span style={{ fontSize: 14 }}>đơn</span>
+                </div>
+              </div>
+              <div 
+                style={{ 
+                  width: 42, 
+                  height: 42, 
+                  borderRadius: 12, 
+                  background: '#fef2f2', 
+                  color: '#dc2626', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  fontSize: 20
+                }}
+              >
+                <CloseCircleOutlined />
+              </div>
+            </div>
+            <div style={{ marginTop: 12, fontSize: 12, color: '#b91c1c', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span>{cancelledStats.pendingRefundCount > 0 ? `⚠️ ${cancelledStats.pendingRefundCount} chờ hoàn ví` : 'Đã đối soát kho'}</span>
+              <span style={{ fontWeight: 600, color: '#2563eb' }}>Xem &gt;</span>
             </div>
           </Card>
         </Col>
 
-        {/* 7. Hàng Hết Hạn & Tổn Thất Doanh Thu */}
-        <Col xs={24} sm={12} lg={6} xl={4} style={{ flex: '1 1 200px' }}>
+        {/* 6. Hàng Hết Hạn & Tổn Thất Doanh Thu */}
+        <Col xs={24} sm={12} lg={8} xl={4} style={{ flex: '1 1 200px' }}>
           <Card 
             loading={loading} 
             hoverable
             onClick={() => navigate('/product-reports?tab=expired')}
-            style={{ borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.04)', cursor: 'pointer', border: '1px solid #ffa39e' }}
+            className="kpi-card"
+            style={{ borderRadius: 14, height: '100%', cursor: 'pointer', border: '1px solid #fed7aa' }}
+            styles={{ body: { padding: '18px 20px' } }}
           >
-            <Statistic
-              title={<span style={{ fontWeight: 600, color: '#cf1322' }}>TỔN THẤT HẾT HẠN</span>}
-              value={stats.expiredLossValue || 5806500}
-              precision={0}
-              valueStyle={{ color: '#cf1322', fontWeight: 700 }}
-              prefix={<WarningOutlined />}
-              suffix=" đ"
-            />
-            <div style={{ marginTop: 8, fontSize: 11.5, color: '#d4380d', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#c2410c', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Tổn Thất Hết Hạn
+                </div>
+                <div style={{ fontSize: 22, fontWeight: 800, color: '#c2410c', marginTop: 8, letterSpacing: '-0.5px' }}>
+                  {(stats.expiredLossValue || 5806500).toLocaleString('vi-VN')} <span style={{ fontSize: 14 }}>₫</span>
+                </div>
+              </div>
+              <div 
+                style={{ 
+                  width: 42, 
+                  height: 42, 
+                  borderRadius: 12, 
+                  background: '#fff7ed', 
+                  color: '#ea580c', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  fontSize: 20
+                }}
+              >
+                <WarningOutlined />
+              </div>
+            </div>
+            <div style={{ marginTop: 12, fontSize: 12, color: '#9a3412', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <span>{stats.expiredBatchesCount || 3} lô quá hạn (FEFO)</span>
-              <span style={{ textDecoration: 'underline', color: '#1677ff' }}>Xem chi tiết &gt;</span>
+              <span style={{ fontWeight: 600, color: '#2563eb' }}>Chi tiết &gt;</span>
             </div>
           </Card>
         </Col>
       </Row>
 
       {/* ── KHU VỰC BIỂU ĐỒ DOANH THU & PHỄU CHUYỂN ĐỔI E-COMMERCE ── */}
-      <Row gutter={[16, 16]} style={{ marginBottom: 20 }}>
+      <Row gutter={[16, 16]}>
         {/* Biểu đồ xu hướng Area Gradient */}
         <Col xs={24} lg={15}>
           <Card 
             title={
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
-                <span>Xu Hướng Doanh Thu &amp; Lượng Đơn Hàng</span>
+                <span style={{ fontSize: 15, fontWeight: 700 }}>Xu Hướng Doanh Thu & Lượng Đơn Mua</span>
                 <Segmented
                   size="small"
                   value={chartMetric}
@@ -531,39 +654,43 @@ export const Dashboard: React.FC = () => {
                     { label: 'Doanh thu', value: 'revenue' },
                     { label: 'Số đơn', value: 'orders' }
                   ]}
+                  style={{ background: '#f1f5f9', fontWeight: 600 }}
                 />
               </div>
             } 
             loading={loading}
-            style={{ borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
+            style={{ borderRadius: 14 }}
           >
             <div style={{ width: '100%', height: 340 }}>
               <ResponsiveContainer width="100%" height={340}>
                 <AreaChart data={revenueData} margin={{ top: 15, right: 15, left: 10, bottom: 5 }}>
                   <defs>
                     <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#2e7d32" stopOpacity={0.45}/>
-                      <stop offset="95%" stopColor="#2e7d32" stopOpacity={0.02}/>
+                      <stop offset="5%" stopColor="#16a34a" stopOpacity={0.45}/>
+                      <stop offset="95%" stopColor="#16a34a" stopOpacity={0.02}/>
                     </linearGradient>
                     <linearGradient id="colorOrders" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#1677ff" stopOpacity={0.4}/>
-                      <stop offset="95%" stopColor="#1677ff" stopOpacity={0.02}/>
+                      <stop offset="5%" stopColor="#0284c7" stopOpacity={0.4}/>
+                      <stop offset="95%" stopColor="#0284c7" stopOpacity={0.02}/>
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                  <XAxis dataKey="name" tickLine={false} />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                  <XAxis dataKey="name" tickLine={false} stroke="#94a3b8" />
                   <YAxis 
                     yAxisId="left" 
                     tickLine={false} 
+                    stroke="#94a3b8"
                     tickFormatter={(v) => v >= 1000000 ? `${(v / 1000000).toFixed(1)}tr` : (v >= 1000 ? `${(v / 1000).toFixed(0)}k` : `${v}`)} 
                   />
                   <YAxis 
                     yAxisId="right" 
                     orientation="right" 
                     tickLine={false}
+                    stroke="#94a3b8"
                     allowDecimals={false}
                   />
                   <Tooltip 
+                    contentStyle={{ borderRadius: 8, border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}
                     formatter={(value: any, name: any) => [
                       String(name).toLowerCase().includes('doanh thu') 
                         ? `${Number(value).toLocaleString('vi-VN')} ₫` 
@@ -577,12 +704,12 @@ export const Dashboard: React.FC = () => {
                       yAxisId="left" 
                       type="monotone" 
                       dataKey="revenue" 
-                      stroke="#2e7d32" 
+                      stroke="#16a34a" 
                       strokeWidth={2.5}
                       fillOpacity={1} 
                       fill="url(#colorRevenue)" 
                       name="Doanh Thu (₫)" 
-                      dot={{ r: 3, fill: '#2e7d32' }}
+                      dot={{ r: 3, fill: '#16a34a' }}
                       activeDot={{ r: 6 }}
                     />
                   )}
@@ -591,12 +718,12 @@ export const Dashboard: React.FC = () => {
                       yAxisId="right" 
                       type="monotone" 
                       dataKey="orders" 
-                      stroke="#1677ff" 
+                      stroke="#0284c7" 
                       strokeWidth={2}
                       fillOpacity={1} 
                       fill="url(#colorOrders)" 
                       name="Số Đơn Hàng" 
-                      dot={{ r: 3, fill: '#1677ff' }}
+                      dot={{ r: 3, fill: '#0284c7' }}
                       activeDot={{ r: 6 }}
                     />
                   )}
@@ -609,52 +736,52 @@ export const Dashboard: React.FC = () => {
         {/* Phễu Chuyển Đổi Mua Hàng (E-Commerce Funnel) */}
         <Col xs={24} lg={9}>
           <Card 
-            title="Phễu Chuyển Đổi Mua Sắm (Funnel)" 
+            title={<span style={{ fontSize: 15, fontWeight: 700 }}>Phễu Chuyển Đổi Mua Sắm (Funnel)</span>} 
             loading={loading}
-            style={{ borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
+            style={{ borderRadius: 14 }}
             extra={<Tag color="purple">Hiệu Suất Sàn</Tag>}
           >
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               {/* Bước 1: Lượt xem */}
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                  <span><EyeOutlined style={{ color: '#1677ff', marginRight: 6 }} /> <b>1. Lượt xem sản phẩm</b></span>
+                  <span><EyeOutlined style={{ color: '#0284c7', marginRight: 6 }} /> <b>1. Lượt xem sản phẩm</b></span>
                   <b>{fViews.toLocaleString('vi-VN')}</b>
                 </div>
-                <Progress percent={100} strokeColor="#1677ff" showInfo={false} />
+                <Progress percent={100} strokeColor="#0284c7" showInfo={false} />
               </div>
 
               {/* Bước 2: Thêm giỏ hàng */}
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                  <span><ShoppingCartOutlined style={{ color: '#722ed1', marginRight: 6 }} /> <b>2. Thêm vào giỏ</b></span>
+                  <span><ShoppingCartOutlined style={{ color: '#7c3aed', marginRight: 6 }} /> <b>2. Thêm vào giỏ</b></span>
                   <span><b>{fCarts.toLocaleString('vi-VN')}</b> <Text type="secondary">({cartRate}%)</Text></span>
                 </div>
-                <Progress percent={cartRate} strokeColor="#722ed1" showInfo={false} />
+                <Progress percent={cartRate} strokeColor="#7c3aed" showInfo={false} />
               </div>
 
               {/* Bước 3: Đặt hàng */}
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                  <span><DollarOutlined style={{ color: '#fa8c16', marginRight: 6 }} /> <b>3. Đặt hàng (Checkout)</b></span>
+                  <span><DollarOutlined style={{ color: '#f59e0b', marginRight: 6 }} /> <b>3. Đặt hàng (Checkout)</b></span>
                   <span><b>{fCheckouts.toLocaleString('vi-VN')}</b> <Text type="secondary">({checkoutRate}%)</Text></span>
                 </div>
-                <Progress percent={checkoutRate} strokeColor="#fa8c16" showInfo={false} />
+                <Progress percent={checkoutRate} strokeColor="#f59e0b" showInfo={false} />
               </div>
 
               {/* Bước 4: Hoàn tất */}
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                  <span><CheckCircleOutlined style={{ color: '#52c41a', marginRight: 6 }} /> <b>4. Giao &amp; Thanh toán thành công</b></span>
-                  <span><b style={{ color: '#52c41a' }}>{fCompleted.toLocaleString('vi-VN')}</b> <Text type="secondary">({successRate}%)</Text></span>
+                  <span><CheckCircleOutlined style={{ color: '#16a34a', marginRight: 6 }} /> <b>4. Giao hàng thành công</b></span>
+                  <span><b style={{ color: '#16a34a' }}>{fCompleted.toLocaleString('vi-VN')}</b> <Text type="secondary">({successRate}%)</Text></span>
                 </div>
-                <Progress percent={successRate} strokeColor="#52c41a" showInfo={false} />
+                <Progress percent={successRate} strokeColor="#16a34a" showInfo={false} />
               </div>
             </div>
 
-            <div style={{ marginTop: 18, background: '#fafafa', padding: '10px 12px', borderRadius: 8, border: '1px solid #f0f0f0' }}>
-              <div style={{ fontSize: 12, color: '#595959' }}>
-                💡 <b>Nhận xét:</b> Tỷ lệ chốt đơn thành công đạt <b>{successRate}%</b>, cao hơn mức trung bình 2.5% của thị trường nông sản tươi sống.
+            <div style={{ marginTop: 18, background: '#f8fafc', padding: '12px 14px', borderRadius: 10, border: '1px solid #e2e8f0' }}>
+              <div style={{ fontSize: 12.5, color: '#475569' }}>
+                💡 <b>Đánh giá:</b> Tỷ lệ hoàn tất đơn đạt <b>{successRate}%</b>, duy trì ở mức cao so với chuẩn ngành bán lẻ thực phẩm hữu cơ.
               </div>
             </div>
           </Card>
@@ -668,23 +795,23 @@ export const Dashboard: React.FC = () => {
           <Card 
             title={
               <Space>
-                <TrophyOutlined style={{ color: '#faad14' }} />
-                <span>Top Nông Sản Bán Chạy</span>
+                <TrophyOutlined style={{ color: '#f59e0b' }} />
+                <span style={{ fontSize: 15, fontWeight: 700 }}>Top Nông Sản Bán Chạy</span>
               </Space>
             }
             extra={
               <Input
                 size="small"
-                prefix={<SearchOutlined style={{ color: '#bbb' }} />}
+                prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
                 placeholder="Tìm nông sản..."
                 value={topProdSearch}
                 allowClear
                 onChange={(e) => setTopProdSearch(e.target.value)}
-                style={{ width: 140 }}
+                style={{ width: 140, borderRadius: 8 }}
               />
             }
             loading={loading}
-            style={{ borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
+            style={{ borderRadius: 14 }}
           >
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               {topProducts
@@ -695,27 +822,27 @@ export const Dashboard: React.FC = () => {
                 .map((p, idx) => {
                   const maxSales = topProducts[0]?.sales || 1;
                   const percent = Math.round((p.sales / maxSales) * 100);
-                  const colors = ['#f5222d', '#fa8c16', '#faad14', '#1890ff', '#52c41a'];
+                  const colors = ['#ef4444', '#f59e0b', '#10b981', '#0284c7', '#8b5cf6'];
                   return (
                     <div key={idx}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4, alignItems: 'center' }}>
                         <Space>
                           <Tag 
                             color={idx === 0 ? 'gold' : idx === 1 ? 'cyan' : idx === 2 ? 'volcano' : 'default'}
-                            style={{ borderRadius: 999, fontWeight: 700 }}
+                            style={{ borderRadius: 999, fontWeight: 700, padding: '1px 8px' }}
                           >
                             #{idx + 1}
                           </Tag>
                           <span style={{ fontWeight: 600 }}>{p.name}</span>
                         </Space>
-                        <b style={{ color: '#2e7d32' }}>{p.sales.toLocaleString('vi-VN')} kg</b>
+                        <b style={{ color: '#16a34a' }}>{p.sales.toLocaleString('vi-VN')} kg</b>
                       </div>
-                      <Progress percent={percent} strokeColor={colors[idx] || '#52c41a'} size="small" showInfo={false} />
+                      <Progress percent={percent} strokeColor={colors[idx] || '#16a34a'} size="small" showInfo={false} />
                     </div>
                   );
                 })}
               {topProducts.filter((p) => !topProdSearch.trim() || (p.name || '').toLowerCase().includes(topProdSearch.trim().toLowerCase())).length === 0 && (
-                <div style={{ textAlign: 'center', padding: '20px 0', color: '#888' }}>
+                <div style={{ textAlign: 'center', padding: '20px 0', color: '#94a3b8' }}>
                   Không tìm thấy nông sản phù hợp
                 </div>
               )}
@@ -728,20 +855,20 @@ export const Dashboard: React.FC = () => {
           <Card 
             title={
               <Space>
-                <WarningOutlined style={{ color: '#ff4d4f' }} />
-                <span>Lô Hàng Cần Xử Lý Gấp (FEFO)</span>
+                <WarningOutlined style={{ color: '#ef4444' }} />
+                <span style={{ fontSize: 15, fontWeight: 700 }}>Lô Hàng Cần Xử Lý Gấp (FEFO)</span>
               </Space>
             }
             extra={
               <Space wrap size={6}>
                 <Input
                   size="small"
-                  prefix={<SearchOutlined style={{ color: '#bbb' }} />}
-                  placeholder="Tìm mã lô, nông sản, hạn..."
+                  prefix={<SearchOutlined style={{ color: '#94a3b8' }} />}
+                  placeholder="Tìm mã lô, nông sản..."
                   value={fefoSearch}
                   allowClear
                   onChange={(e) => setFefoSearch(e.target.value)}
-                  style={{ width: 170 }}
+                  style={{ width: 170, borderRadius: 8 }}
                 />
                 <Select
                   size="small"
@@ -756,7 +883,7 @@ export const Dashboard: React.FC = () => {
               </Space>
             }
             loading={loading}
-            style={{ borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
+            style={{ borderRadius: 14 }}
           >
             <Table
               dataSource={nearExpiry.filter((item) => {

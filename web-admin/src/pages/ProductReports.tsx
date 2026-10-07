@@ -1248,15 +1248,28 @@ export const ProductReports: React.FC = () => {
   );
 
   return (
-    <div style={{ padding: 24 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       {/* ── HEADER & ACTIONS ── */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16, marginBottom: 20 }}>
+      <div 
+        style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center', 
+          flexWrap: 'wrap', 
+          gap: 16,
+          backgroundColor: '#ffffff',
+          padding: '18px 24px',
+          borderRadius: 14,
+          border: '1px solid #e2e8f0',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
+        }}
+      >
         <div>
-          <Title level={3} style={{ margin: 0, color: '#1B5E20' }}>
-            📊 Thống Kê Báo Cáo Sản Phẩm & Quản Lý Tồn Kho
+          <Title level={4} style={{ margin: 0, color: '#0f172a', fontWeight: 800 }}>
+            Thống Kê Báo Cáo Sản Phẩm & Quản Lý Tồn Kho
           </Title>
-          <Text type="secondary">
-            Kỳ báo cáo: <strong style={{ color: '#2E7D32' }}>{period?.label || 'Đang tải...'}</strong> · Tìm kiếm, lọc và phân tích chi tiết theo mọi tiêu chí
+          <Text type="secondary" style={{ fontSize: 13 }}>
+            Kỳ báo cáo: <strong style={{ color: '#16a34a' }}>{period?.label || 'Đang tải...'}</strong> · Phân tích dòng chảy nông sản, xuất kho và thất thoát FEFO
           </Text>
         </div>
         <Space wrap>

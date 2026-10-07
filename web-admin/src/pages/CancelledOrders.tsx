@@ -10,7 +10,6 @@ import {
   DatePicker, 
   Row, 
   Col, 
-  Statistic, 
   Tabs, 
   Badge, 
   Tooltip, 
@@ -573,64 +572,120 @@ export const CancelledOrders: React.FC = () => {
   ];
 
   return (
-    <div style={{ padding: '4px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       {/* 1. THỐNG KÊ KPI TOÀN BỘ ĐƠN HỦY & KHIẾU NẠI */}
-      <Row gutter={[16, 16]} style={{ marginBottom: 20 }}>
+      <Row gutter={[16, 16]}>
         <Col xs={24} sm={12} md={6}>
-          <Card bordered={false} style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 10 }}>
-            <Statistic
-              title={<span style={{ color: '#991B1B', fontWeight: 600 }}>🛑 Tổng Đơn Đã Hủy</span>}
-              value={totalCancelledCount}
-              suffix="đơn"
-              valueStyle={{ color: '#DC2626', fontWeight: 800 }}
-              prefix={<CloseCircleOutlined />}
-            />
-            <div style={{ fontSize: '11.5px', color: '#B91C1C', marginTop: 4 }}>
-              Giá trị: <strong>{totalCancelledMoney.toLocaleString('vi-VN')} đ</strong>
+          <Card 
+            className="kpi-card" 
+            style={{ borderRadius: 14, border: '1px solid #fecaca', height: '100%' }}
+            styles={{ body: { padding: '18px 20px' } }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#dc2626', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Tổng Đơn Đã Hủy
+                </div>
+                <div style={{ fontSize: 24, fontWeight: 800, color: '#dc2626', marginTop: 6, letterSpacing: '-0.5px' }}>
+                  {totalCancelledCount} <span style={{ fontSize: 14, fontWeight: 600 }}>đơn</span>
+                </div>
+              </div>
+              <div style={{ width: 42, height: 42, borderRadius: 12, background: '#fef2f2', color: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>
+                <CloseCircleOutlined />
+              </div>
+            </div>
+            <div style={{ fontSize: 12, color: '#b91c1c', marginTop: 10 }}>
+              Tổng tiền: <strong>{totalCancelledMoney.toLocaleString('vi-VN')} ₫</strong>
             </div>
           </Card>
         </Col>
 
         <Col xs={24} sm={12} md={6}>
-          <Card bordered={false} style={{ background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: 10 }}>
-            <Statistic
-              title={<span style={{ color: '#92400E', fontWeight: 600 }}>💸 Chờ Hoàn Tiền Online</span>}
-              value={pendingRefundOrders.length}
-              suffix="đơn"
-              valueStyle={{ color: '#D97706', fontWeight: 800 }}
-              prefix={<DollarOutlined />}
-            />
-            <div style={{ fontSize: '11.5px', color: '#B45309', marginTop: 4 }}>
-              Cần hoàn trả ví MoMo / VietQR
+          <Card 
+            className="kpi-card" 
+            style={{ borderRadius: 14, border: '1px solid #fde68a', height: '100%' }}
+            styles={{ body: { padding: '18px 20px' } }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#d97706', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Chờ Hoàn Tiền Online
+                </div>
+                <div style={{ fontSize: 24, fontWeight: 800, color: '#d97706', marginTop: 6, letterSpacing: '-0.5px' }}>
+                  {pendingRefundOrders.length} <span style={{ fontSize: 14, fontWeight: 600 }}>đơn</span>
+                </div>
+              </div>
+              <div style={{ width: 42, height: 42, borderRadius: 12, background: '#fffbeb', color: '#d97706', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>
+                <DollarOutlined />
+              </div>
+            </div>
+            <div style={{ fontSize: 12, color: '#b45309', marginTop: 10 }}>
+              Ưu tiên hoàn trả ví MoMo / VietQR
             </div>
           </Card>
         </Col>
 
         <Col xs={24} sm={12} md={6}>
-          <Card bordered={false} style={{ background: '#FFF7ED', border: '1px solid #FED7AA', borderRadius: 10 }}>
-            <Statistic
-              title={<span style={{ color: '#9A3412', fontWeight: 600 }}>⚡ Khiếu Nại Tươi Sống</span>}
-              value={tickets.length}
-              suffix={`(${pendingTicketsCount} chờ xử lý)`}
-              valueStyle={{ color: '#EA580C', fontWeight: 800 }}
-              prefix={<RollbackOutlined />}
-            />
-            <div style={{ fontSize: '11.5px', color: '#C2410C', marginTop: 4 }}>
+          <Card 
+            className="kpi-card" 
+            style={{ borderRadius: 14, border: '1px solid #fed7aa', height: '100%' }}
+            styles={{ body: { padding: '18px 20px' } }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#ea580c', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Khiếu Nại Tươi Sống
+                </div>
+                <div style={{ fontSize: 24, fontWeight: 800, color: '#ea580c', marginTop: 6, letterSpacing: '-0.5px' }}>
+                  {tickets.length} <span style={{ fontSize: 13, fontWeight: 600, color: '#c2410c' }}>({pendingTicketsCount} chờ duyệt)</span>
+                </div>
+              </div>
+              <div style={{ width: 42, height: 42, borderRadius: 12, background: '#fff7ed', color: '#ea580c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>
+                <RollbackOutlined />
+              </div>
+            </div>
+            <div style={{ fontSize: 12, color: '#c2410c', marginTop: 10 }}>
               Chính sách Zero-Waste (Không thu hồi)
             </div>
           </Card>
         </Col>
 
         <Col xs={24} sm={12} md={6}>
-          <Card bordered={false} style={{ background: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: 10 }}>
-            <Statistic
-              title={<span style={{ color: '#166534', fontWeight: 600 }}>🛡️ Cảnh Báo Gian Lận (Fraud)</span>}
-              value={flaggedTicketsCount}
-              suffix="ticket gắn cờ"
-              valueStyle={{ color: flaggedTicketsCount > 0 ? '#DC2626' : '#16A34A', fontWeight: 800 }}
-              prefix={<SafetyCertificateOutlined />}
-            />
-            <div style={{ fontSize: '11.5px', color: '#15803D', marginTop: 4 }}>
+          <Card 
+            className="kpi-card" 
+            style={{ 
+              borderRadius: 14, 
+              border: flaggedTicketsCount > 0 ? '1px solid #fecaca' : '1px solid #bbf7d0', 
+              height: '100%' 
+            }}
+            styles={{ body: { padding: '18px 20px' } }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: flaggedTicketsCount > 0 ? '#dc2626' : '#15803d', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Cảnh Báo Gian Lận
+                </div>
+                <div style={{ fontSize: 24, fontWeight: 800, color: flaggedTicketsCount > 0 ? '#dc2626' : '#16a34a', marginTop: 6, letterSpacing: '-0.5px' }}>
+                  {flaggedTicketsCount} <span style={{ fontSize: 14, fontWeight: 600 }}>gắn cờ</span>
+                </div>
+              </div>
+              <div 
+                style={{ 
+                  width: 42, 
+                  height: 42, 
+                  borderRadius: 12, 
+                  background: flaggedTicketsCount > 0 ? '#fef2f2' : '#f0fdf4', 
+                  color: flaggedTicketsCount > 0 ? '#dc2626' : '#16a34a', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  fontSize: 20 
+                }}
+              >
+                <SafetyCertificateOutlined />
+              </div>
+            </div>
+            <div style={{ fontSize: 12, color: flaggedTicketsCount > 0 ? '#b91c1c' : '#15803d', marginTop: 10 }}>
               Tỷ lệ trả &gt; 20% &gt; 5 đơn hàng
             </div>
           </Card>
@@ -638,7 +693,7 @@ export const CancelledOrders: React.FC = () => {
       </Row>
 
       {/* 2. TAB ĐIỀU HƯỚNG CHÍNH */}
-      <Card bordered={false} style={{ borderRadius: 12, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+      <Card style={{ borderRadius: 14 }}>
         <Tabs
           activeKey={activeTab}
           onChange={(key: any) => setActiveTab(key)}
