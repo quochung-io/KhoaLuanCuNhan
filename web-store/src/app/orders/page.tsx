@@ -885,9 +885,10 @@ export default function CustomerOrdersPage() {
       setCart(JSON.parse(storedCart));
     }
 
-    // Tự động đồng bộ trạng thái đơn hàng thời gian thực từ Admin (10s/lần)
+    // Tự động đồng bộ trạng thái đơn hàng & khiếu nại thời gian thực từ Admin (10s/lần)
     const syncInterval = setInterval(() => {
       if (parsedUser?.userId) {
+        // 1. Đồng bộ đơn hàng
         fetch(`http://localhost:5023/api/orders/customer/${parsedUser.userId}`)
           .then(res => res.ok ? res.json() : null)
           .then(data => {
@@ -898,6 +899,27 @@ export default function CustomerOrdersPage() {
                 const updated = data.find((o: Order) => o.orderId === prev.orderId);
                 return updated || prev;
               });
+            }
+          })
+          .catch(() => {});
+
+        // 2. Đồng bộ khiếu nại / thẩm định từ Admin
+        fetch(`http://localhost:5023/api/return-tickets/customer/${parsedUser.userId}`)
+          .then(res => res.ok ? res.json() : null)
+          .then(apiTickets => {
+            if (Array.isArray(apiTickets)) {
+              setUserClaims(apiTickets);
+              localStorage.setItem('user_fresh_claims', JSON.stringify(apiTickets));
+            }
+          })
+          .catch(() => {});
+
+        // 3. Đồng bộ ví điểm thưởng / bồi hoàn
+        fetch(`http://localhost:5023/api/loyalty/${parsedUser.userId}`)
+          .then(res => res.ok ? res.json() : null)
+          .then(data => {
+            if (data && data.currentPoints !== undefined) {
+              setUserPoints(data.currentPoints);
             }
           })
           .catch(() => {});

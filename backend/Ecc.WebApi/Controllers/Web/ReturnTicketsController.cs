@@ -373,25 +373,93 @@ public class ReturnTicketsController : ControllerBase
     /// PHẦN 3: Admin Phê duyệt khiếu nại - Tự động cộng tiền ví hoặc bù quà, KHÔNG thu hồi hàng
     /// </summary>
     [HttpPost("{id}/approve")]
-    public IActionResult ApproveTicket(string id, [FromQuery] string? adminNotes = null)
+    public async Task<IActionResult> ApproveTicket(string id, [FromQuery] string? adminNotes = null)
     {
+        ReturnTicketDto? ticket;
         lock (_lock)
         {
-            var ticket = _inMemoryTickets.FirstOrDefault(t => t.TicketId == id);
+            ticket = _inMemoryTickets.FirstOrDefault(t => t.TicketId == id);
             if (ticket == null) return NotFound(new { message = "Không tìm thấy phiếu khiếu nại." });
 
             ticket.Status = "APPROVED";
             ticket.ReviewedAt = DateTime.Now;
             ticket.AdminNotes = adminNotes ?? "Đã duyệt bồi hoàn theo chính sách Zero Reverse Logistics.";
-
-            return Ok(new
-            {
-                message = ticket.CompensationMethod == "WALLET_REFUND"
-                    ? $"Đã phê duyệt thành công! Tự động hoàn {ticket.RefundAmount:N0}₫ vào Ví tài khoản của khách."
-                    : "Đã phê duyệt thành công! Tự động tạo quà tặng đính kèm sản phẩm bù vào giỏ hàng đơn tiếp theo.",
-                ticket
-            });
         }
+
+        try
+        {
+            // 1. Nếu khách chọn Hoàn tiền vào ví (WALLET_REFUND): Cộng điểm/tiền ví vào UserLoyalty
+            if (ticket.CompensationMethod == "WALLET_REFUND")
+            {
+                var loyalty = await _context.UserLoyalties.FirstOrDefaultAsync(l => l.UserId == ticket.CustomerId);
+                int pointsDelta = (int)Math.Max(1, Math.Round(ticket.RefundAmount / 1000m));
+                if (loyalty != null)
+                {
+                    loyalty.CurrentPoints += pointsDelta;
+                    loyalty.UpdatedAt = DateTime.UtcNow;
+                }
+                else
+                {
+                    loyalty = new UserLoyalty
+                    {
+                        UserId = ticket.CustomerId,
+                        CurrentPoints = pointsDelta,
+                        TotalSpentYear = 0,
+                        TierId = 1,
+                        UpdatedAt = DateTime.UtcNow
+                    };
+                    _context.UserLoyalties.Add(loyalty);
+                }
+
+                _context.PointTransactions.Add(new PointTransaction
+                {
+                    UserId = ticket.CustomerId,
+                    OrderId = ticket.OrderId,
+                    PointsDelta = pointsDelta,
+                    TransactionType = "RefundClaim",
+                    Description = $"Hoàn tiền bồi thường nông sản đơn #{ticket.OrderCode} - Phiếu #{ticket.TicketId}",
+                    CreatedAt = DateTime.UtcNow
+                });
+            }
+            // 2. Nếu khách chọn Giao bù vào đơn hàng sau (REPLACEMENT_NEXT_ORDER): Tạo Voucher đền bù 100%
+            else
+            {
+                _context.UserVouchers.Add(new UserVoucher
+                {
+                    UserId = ticket.CustomerId,
+                    Code = $"BUHANG-{ticket.TicketId.Replace("-", "").ToUpper()[..8]}",
+                    Title = $"Quà tặng đền bù nông sản: {ticket.ProductName}",
+                    VoucherType = "free_item",
+                    DiscountValue = ticket.RefundAmount,
+                    MinOrderAmount = 0,
+                    ExpiryDate = DateTime.UtcNow.AddDays(30),
+                    IsUsed = false,
+                    CreatedAt = DateTime.UtcNow
+                });
+            }
+
+            // 3. Cập nhật trạng thái đơn hàng liên quan: PaymentStatus = Refunded
+            var order = await _context.Orders.FindAsync(ticket.OrderId);
+            if (order != null)
+            {
+                order.PaymentStatus = "Refunded";
+                order.UpdatedAt = DateTime.Now;
+            }
+
+            await _context.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Lỗi khi lưu bồi hoàn vào Database cho ticket {TicketId}", id);
+        }
+
+        return Ok(new
+        {
+            message = ticket.CompensationMethod == "WALLET_REFUND"
+                ? $"Đã phê duyệt thành công! Tự động hoàn {ticket.RefundAmount:N0}₫ vào Ví tài khoản của khách và cập nhật trạng thái đơn hàng."
+                : "Đã phê duyệt thành công! Tự động tạo quà tặng đính kèm sản phẩm bù vào giỏ hàng đơn tiếp theo.",
+            ticket
+        });
     }
 
     /// <summary>
