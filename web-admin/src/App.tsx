@@ -18,6 +18,7 @@ import {
   BellOutlined,
   ExportOutlined,
   SafetyCertificateOutlined,
+  ShopOutlined,
 } from '@ant-design/icons';
 
 // Import Pages
@@ -121,7 +122,7 @@ const AppContent: React.FC = () => {
         <Link to="/cancelled-orders">
           <span style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span>Đơn Hủy & Đổi Trả</span>
-            <span style={{ fontSize: 10, background: 'rgba(239,68,68,0.2)', color: '#fca5a5', padding: '1px 6px', borderRadius: 999 }}>
+            <span className="admin-menu-badge">
               Zero-Waste
             </span>
           </span>
@@ -197,7 +198,7 @@ const AppContent: React.FC = () => {
         collapsedWidth={80}
         className="admin-sider"
         style={{
-          background: '#0f172a',
+          background: '#101a29',
           boxShadow: '2px 0 8px 0 rgba(0, 0, 0, 0.05)',
           zIndex: 10,
           position: 'sticky',
@@ -207,67 +208,30 @@ const AppContent: React.FC = () => {
         }}
       >
         {/* LOGO & BRAND HEADER */}
-        <div
-          style={{
-            height: 64,
-            padding: collapsed ? '0 12px' : '0 20px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 12,
-            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-            background: 'linear-gradient(180deg, rgba(22,163,74,0.15) 0%, rgba(15,23,42,0) 100%)',
-            transition: 'all 0.2s',
-          }}
-        >
-          <div
-            style={{
-              width: 38,
-              height: 38,
-              borderRadius: 10,
-              background: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#ffffff',
-              fontSize: 20,
-              fontWeight: 800,
-              boxShadow: '0 4px 10px rgba(22, 163, 74, 0.35)',
-              flexShrink: 0,
-            }}
-          >
-            🌱
-          </div>
+        <div className={`admin-sider-brand${collapsed ? ' is-collapsed' : ''}`}>
+          <div className="admin-sider-mark"><ShopOutlined /></div>
           {!collapsed && (
-            <div style={{ overflow: 'hidden', whiteSpace: 'nowrap' }}>
-              <div
-                style={{
-                  color: '#ffffff',
-                  fontWeight: 800,
-                  fontSize: 16,
-                  letterSpacing: '0.5px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                }}
-              >
-                ECC AGRI-CHAIN
-              </div>
-              <div
-                style={{
-                  color: '#94a3b8',
-                  fontSize: 11,
-                  fontWeight: 500,
-                  letterSpacing: '0.2px',
-                }}
-              >
-                Quản Trị Chuỗi Nông Sản
-              </div>
+            <div className="admin-sider-brand-copy">
+              <div className="admin-sider-brand-name">ECC AGRI-CHAIN</div>
+              <div className="admin-sider-brand-caption">Quản trị nông sản</div>
             </div>
           )}
         </div>
 
         {/* MENU ĐIỀU HƯỚNG */}
-        <div style={{ padding: '12px 0' }}>
+        <div className={`admin-sider-navigation${collapsed ? ' is-collapsed' : ''}`}>
+          <div className={`admin-sider-nav-heading${collapsed ? ' is-collapsed' : ''}`}>
+            {!collapsed && <div className="admin-sider-section-label">Điều hướng</div>}
+            <Tooltip title={collapsed ? 'Mở rộng thanh điều hướng' : 'Thu gọn thanh điều hướng'} placement="right">
+              <Button
+                type="text"
+                className="admin-sider-toggle"
+                aria-label={collapsed ? 'Mở rộng thanh điều hướng' : 'Thu gọn thanh điều hướng'}
+                icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+                onClick={() => setCollapsed(!collapsed)}
+              />
+            </Tooltip>
+          </div>
           <Menu
             theme="dark"
             selectedKeys={[location.pathname]}
@@ -278,23 +242,12 @@ const AppContent: React.FC = () => {
 
         {/* FOOTER CỦA SIDER */}
         {!collapsed && (
-          <div
-            style={{
-              position: 'absolute',
-              bottom: 16,
-              left: 16,
-              right: 16,
-              padding: '12px 14px',
-              borderRadius: 10,
-              background: 'rgba(255, 255, 255, 0.05)',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-              <SafetyCertificateOutlined style={{ color: '#22c55e', fontSize: 14 }} />
-              <span style={{ color: '#e2e8f0', fontSize: 12, fontWeight: 600 }}>Tiêu chuẩn VietGAP</span>
+          <div className="admin-sider-footnote">
+            <div className="admin-sider-footnote-title">
+              <SafetyCertificateOutlined />
+              <span>Tiêu chuẩn VietGAP</span>
             </div>
-            <div style={{ color: '#94a3b8', fontSize: 11 }}>
+            <div className="admin-sider-footnote-copy">
               Bảo chứng chất lượng nông sản & vận hành minh bạch.
             </div>
           </div>
@@ -305,6 +258,7 @@ const AppContent: React.FC = () => {
       <Layout style={{ background: '#f8fafc' }}>
         {/* TOP HEADER */}
         <Header
+          className="admin-topbar"
           style={{
             height: 64,
             padding: '0 24px',
@@ -319,23 +273,9 @@ const AppContent: React.FC = () => {
             zIndex: 9,
           }}
         >
-          {/* TRÁI: Nút toggle sidebar & Tiêu đề trang động */}
+          <div className="admin-topbar-inner">
+          {/* Tiêu đề trang động */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            <Button
-              type="text"
-              icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-              onClick={() => setCollapsed(!collapsed)}
-              style={{
-                fontSize: 16,
-                width: 36,
-                height: 36,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderRadius: 8,
-                color: '#475569',
-              }}
-            />
             <div>
               <div style={{ fontSize: 16, fontWeight: 700, color: '#0f172a', lineHeight: 1.2 }}>
                 {currentMeta.title}
@@ -455,28 +395,32 @@ const AppContent: React.FC = () => {
               </Dropdown>
             )}
           </Space>
+          </div>
         </Header>
 
         {/* NỘI DUNG CHÍNH (CONTENT) */}
         <Content
+          className="admin-page-content"
           style={{
             padding: '24px',
             minHeight: 'calc(100vh - 64px - 60px)',
             background: '#f8fafc',
           }}
         >
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/users" element={<Users />} />
-            <Route path="/products" element={<Products />} />
-            <Route path="/batches" element={<Batches />} />
-            <Route path="/orders" element={<Orders />} />
-            <Route path="/cancelled-orders" element={<CancelledOrders />} />
-            <Route path="/product-reports" element={<ProductReports />} />
-            <Route path="/promotions" element={<PromotionsReviews />} />
-            <Route path="/recommendations" element={<RecommendationAnalytics />} />
-            <Route path="/notifications" element={<Notifications />} />
-          </Routes>
+          <div className="admin-content-inner">
+            <Routes>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/users" element={<Users />} />
+              <Route path="/products" element={<Products />} />
+              <Route path="/batches" element={<Batches />} />
+              <Route path="/orders" element={<Orders />} />
+              <Route path="/cancelled-orders" element={<CancelledOrders />} />
+              <Route path="/product-reports" element={<ProductReports />} />
+              <Route path="/promotions" element={<PromotionsReviews />} />
+              <Route path="/recommendations" element={<RecommendationAnalytics />} />
+              <Route path="/notifications" element={<Notifications />} />
+            </Routes>
+          </div>
         </Content>
 
         {/* FOOTER */}

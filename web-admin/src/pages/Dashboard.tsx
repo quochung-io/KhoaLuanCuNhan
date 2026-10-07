@@ -298,37 +298,24 @@ export const Dashboard: React.FC = () => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-      {/* ── HEADER ĐIỀU KHIỂN THỜI GIAN THẬT & BỘ LỌC CHU KỲ ── */}
+      {/* ── BỘ LỌC CHU KỲ ── */}
       <div 
         style={{ 
           display: 'flex', 
           justifyContent: 'space-between', 
           alignItems: 'center', 
           flexWrap: 'wrap', 
-          gap: 16,
+          gap: 12,
           backgroundColor: '#ffffff',
-          padding: '18px 24px',
-          borderRadius: 14,
+          padding: '12px 18px',
+          borderRadius: 10,
           border: '1px solid #e2e8f0',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
+          boxShadow: '0 1px 2px rgba(15, 23, 42, 0.03)'
         }}
       >
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: '#0f172a' }}>
-              Trung Tâm Giám Sát & Điều Hành Nông Sản ECC
-            </h2>
-            <Tag color="success" style={{ margin: 0, borderRadius: 999, padding: '2px 10px', fontSize: 11 }}>
-              <span style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: '#16a34a', marginRight: 6 }} />
-              Dữ liệu trực tiếp (Live)
-            </Tag>
-          </div>
-          <div style={{ color: '#64748b', fontSize: 13, marginTop: 4 }}>
-            Theo dõi dòng tiền GMV, tỷ lệ chuyển đổi, thuật toán FEFO và các điểm nghẽn chuỗi cung ứng
-          </div>
-        </div>
+        <Text strong style={{ color: '#334155', fontSize: 13 }}>Khoảng thời gian</Text>
 
-        <Space wrap size="middle">
+        <Space wrap size="small">
           {/* Bộ chọn chu kỳ nhanh */}
           <Segmented
             value={timeRange}
