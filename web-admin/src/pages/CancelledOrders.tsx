@@ -130,20 +130,26 @@ export const CancelledOrders: React.FC = () => {
   const [ticketToReject, setTicketToReject] = useState<ReturnTicket | null>(null);
   const [rejectReason, setRejectReason] = useState('');
 
-  // 1. Tải danh sách đơn hàng đã hủy
-  const fetchCancelledOrders = async () => {
+  // 1. Tải danh sách đơn hàng đã hủy hoặc có sản phẩm khiếu nại đổi trả
+  const fetchCancelledOrders = async (currentTickets?: ReturnTicket[]) => {
     setLoadingOrders(true);
     try {
       const res = await orderService.getAll();
       const all: Order[] = Array.isArray(res.data) ? res.data : [];
-      // Lọc các đơn có trạng thái Cancelled hoặc Returned
-      const filtered = all.filter(o => 
-        (o.orderStatus || '').toLowerCase() === 'cancelled' ||
-        (o.orderStatus || '').toLowerCase() === 'returned'
-      );
+      const activeTickets = currentTickets || tickets;
+      const ticketOrderIds = new Set(activeTickets.map(t => t.orderId));
+      const ticketOrderCodes = new Set(activeTickets.map(t => (t.orderCode || '').toLowerCase()));
+
+      // Lọc các đơn: Cancelled, Returned HOẶC có sản phẩm khiếu nại (Return Ticket)
+      const filtered = all.filter(o => {
+        const st = (o.orderStatus || '').toLowerCase();
+        const isTerm = st === 'cancelled' || st === 'returned';
+        const hasClaim = ticketOrderIds.has(o.orderId) || ticketOrderCodes.has((o.orderCode || '').toLowerCase());
+        return isTerm || hasClaim;
+      });
       setCancelledOrders(filtered);
     } catch {
-      message.error('Không thể tải danh sách đơn hàng đã hủy.');
+      message.error('Không thể tải danh sách đơn hàng đã hủy / đổi trả.');
     } finally {
       setLoadingOrders(false);
     }
@@ -154,7 +160,10 @@ export const CancelledOrders: React.FC = () => {
     setLoadingClaims(true);
     try {
       const res = await returnTicketService.getAll();
-      setTickets(Array.isArray(res.data) ? res.data : []);
+      const loadedTickets: ReturnTicket[] = Array.isArray(res.data) ? res.data : [];
+      setTickets(loadedTickets);
+      // Đồng bộ ngay danh sách đơn hàng
+      fetchCancelledOrders(loadedTickets);
     } catch {
       message.error('Không thể tải danh sách khiếu nại.');
     } finally {
@@ -163,7 +172,6 @@ export const CancelledOrders: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchCancelledOrders();
     fetchReturnTickets();
   }, []);
 
@@ -364,26 +372,56 @@ export const CancelledOrders: React.FC = () => {
     {
       title: 'Lý do / Phân loại',
       key: 'type',
-      width: 150,
+      width: 170,
       render: (_: any, r: Order) => {
         const isReturned = (r.orderStatus || '').toLowerCase() === 'returned';
+        const isCancelled = (r.orderStatus || '').toLowerCase() === 'cancelled';
+        const claimsForOrder = tickets.filter(t => t.orderId === r.orderId || (t.orderCode && t.orderCode.toLowerCase() === (r.orderCode || '').toLowerCase()));
+
+        if (claimsForOrder.length > 0) {
+          const first = claimsForOrder[0];
+          return (
+            <div>
+              <Tag color="orange" style={{ fontWeight: 700, padding: '2px 8px' }}>
+                ⚡ CÓ {claimsForOrder.length} SP KHIẾU NẠI
+              </Tag>
+              <div style={{ fontSize: '11px', color: '#EA580C', marginTop: 3 }}>
+                {first.reasonLabel} ({first.status === 'APPROVED' ? 'Đã duyệt' : first.status === 'REJECTED' ? 'Từ chối' : 'Chờ duyệt'})
+              </div>
+            </div>
+          );
+        }
         if (isReturned) {
           return <Tag color="volcano">Đổi trả sau nhận hàng</Tag>;
         }
-        return <Tag color="red">Khách hủy đơn hàng</Tag>;
+        if (isCancelled) {
+          return <Tag color="red">Khách hủy đơn hàng</Tag>;
+        }
+        return <Tag color="blue">{r.orderStatus || 'Đang xử lý'}</Tag>;
       }
     },
     {
       title: 'Tác vụ',
       key: 'actions',
-      width: 160,
+      width: 190,
       render: (_: any, r: Order) => {
         const needsRefund = r.paymentMethod !== 'COD' && (r.paymentStatus || '').toLowerCase() !== 'refunded';
+        const claimsForOrder = tickets.filter(t => t.orderId === r.orderId || (t.orderCode && t.orderCode.toLowerCase() === (r.orderCode || '').toLowerCase()));
+
         return (
-          <Space size="small">
+          <Space size="small" wrap>
             <Button size="small" icon={<EyeOutlined />} onClick={() => setViewOrderModal(r)}>
               Chi tiết
             </Button>
+            {claimsForOrder.length > 0 && (
+              <Button 
+                size="small" 
+                style={{ borderColor: '#EA580C', color: '#C2410C', fontWeight: 600, backgroundColor: '#FFF7ED' }}
+                onClick={() => setReviewTicketModal(claimsForOrder[0])}
+              >
+                Khiếu nại
+              </Button>
+            )}
             {needsRefund && (
               <Popconfirm
                 title="Xác nhận hoàn tiền cho khách"

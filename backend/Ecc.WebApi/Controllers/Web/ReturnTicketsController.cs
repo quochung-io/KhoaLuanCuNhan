@@ -49,6 +49,7 @@ public class RejectTicketRequest
 public class CreateReturnTicketRequest
 {
     public long OrderId { get; set; }
+    public string? OrderCode { get; set; }
     public long ProductId { get; set; }
     public long CustomerId { get; set; }
     public string Reason { get; set; } = null!;
@@ -224,7 +225,7 @@ public class ReturnTicketsController : ControllerBase
             .Include(o => o.OrderItems)
                 .ThenInclude(i => i.Product)
                     .ThenInclude(p => p.Category)
-            .FirstOrDefaultAsync(o => o.OrderId == req.OrderId);
+            .FirstOrDefaultAsync(o => o.OrderId == req.OrderId || (!string.IsNullOrEmpty(req.OrderCode) && o.OrderCode == req.OrderCode));
 
         if (order == null) return NotFound(new { message = "Không tìm thấy đơn hàng." });
 
@@ -238,14 +239,7 @@ public class ReturnTicketsController : ControllerBase
         var deliveredAt = order.UpdatedAt ?? order.CreatedAt ?? DateTime.Now.AddHours(-1);
         var (categoryType, allowedHours, categoryName) = ClassifyProduct(orderItem.Product);
         var deadline = deliveredAt.AddHours(allowedHours);
-
-        if (DateTime.Now > deadline)
-        {
-            return BadRequest(new
-            {
-                message = $"Đã quá thời gian khiếu nại quy định ({allowedHours} giờ kể từ lúc nhận hàng đối với nhóm {categoryName})."
-            });
-        }
+        bool isOverdue = DateTime.Now > deadline;
 
         // 4. PHẦN 4: HỆ THỐNG CẢNH BÁO GIAN LẬN (FRAUD DETECTION ENGINE)
         // Công thức: Tỷ lệ khiếu nại = (Số sản phẩm khiếu nại thành công / Tổng số sản phẩm đã mua) * 100%
@@ -590,6 +584,35 @@ public class ReturnTicketsController : ControllerBase
                 PackerName = "Nguyễn Văn Hùng (Mã NV: PK-01)",
                 PackstationCameraUrl = "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=800&auto=format&fit=crop&q=80",
                 PackTimestamp = DateTime.Now.AddHours(-10)
+            });
+
+            _inMemoryTickets.Add(new ReturnTicketDto
+            {
+                TicketId = "TCK-20261007-DH1044",
+                OrderId = 46,
+                OrderCode = "DH-20261007-1044",
+                ProductId = 33,
+                ProductName = "Sầu riêng Ri6 Bến Tre",
+                ProductImage = "https://images.unsplash.com/photo-1596707328646-b3e34b17a1cf?w=500&auto=format&fit=crop&q=60",
+                CustomerId = 20,
+                CustomerName = "NGUYEN PHAT HUY",
+                Reason = "DAMAGED_IN_TRANSIT",
+                ReasonLabel = "Hàng bị dập nát do vận chuyển",
+                EvidenceUrls = new List<string>
+                {
+                    "https://images.unsplash.com/photo-1596707328646-b3e34b17a1cf?w=800&auto=format&fit=crop&q=80",
+                    "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"
+                },
+                CompensationMethod = "WALLET_REFUND",
+                CompensationLabel = "Hoàn tiền vào Ví tài khoản (Store Credit)",
+                RefundAmount = 67500,
+                Status = "PENDING",
+                IsFraudFlagged = false,
+                CreatedAt = DateTime.Now.AddMinutes(-25),
+                PackWeightKg = 2.45,
+                PackerName = "Đặng Văn Lâm (Mã NV: PK-02)",
+                PackstationCameraUrl = "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=800&auto=format&fit=crop&q=80",
+                PackTimestamp = DateTime.Now.AddHours(-2)
             });
         }
     }
