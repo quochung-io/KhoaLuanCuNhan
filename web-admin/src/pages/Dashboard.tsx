@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   Card, 
   Col, 
@@ -31,7 +32,8 @@ import {
   RiseOutlined,
   TrophyOutlined,
   CheckCircleOutlined,
-  SearchOutlined
+  SearchOutlined,
+  CloseCircleOutlined
 } from '@ant-design/icons';
 import { 
   ResponsiveContainer, 
@@ -71,10 +73,12 @@ interface NearExpiryBatch {
 }
 
 export const Dashboard: React.FC = () => {
+  const navigate = useNavigate();
   // Khoảng thời gian phân tích: today | 7days | 30days | thismonth | thisyear
   const [timeRange, setTimeRange] = useState<string>('7days');
   const [chartMetric, setChartMetric] = useState<'both' | 'revenue' | 'orders'>('both');
   const [lastUpdated, setLastUpdated] = useState<string>(dayjs().format('HH:mm:ss'));
+  const [cancelledStats, setCancelledStats] = useState({ cancelledCount: 0, pendingRefundCount: 0 });
 
   // Bộ lọc tìm kiếm nhanh cho các bảng thống kê trong Dashboard
   const [fefoSearch, setFefoSearch] = useState<string>('');
@@ -132,6 +136,15 @@ export const Dashboard: React.FC = () => {
       // 4. Tải lô hàng sắp hết hạn (FEFO)
       const expiryRes = await orderService.getNearExpiry();
       setNearExpiry(expiryRes.data || []);
+
+      // 5. Thống kê đơn hủy & đổi trả
+      try {
+        const allOrdersRes = await orderService.getAll();
+        const all = Array.isArray(allOrdersRes.data) ? allOrdersRes.data : [];
+        const cCount = all.filter((o: any) => ['cancelled', 'returned'].includes(o.orderStatus?.toLowerCase())).length;
+        const pRefund = all.filter((o: any) => o.orderStatus?.toLowerCase() === 'cancelled' && o.paymentMethod !== 'COD' && o.paymentStatus?.toLowerCase() !== 'refunded').length;
+        setCancelledStats({ cancelledCount: cCount, pendingRefundCount: pRefund });
+      } catch {}
 
       setLastUpdated(dayjs().format('HH:mm:ss'));
     } catch {
@@ -407,6 +420,28 @@ export const Dashboard: React.FC = () => {
             />
             <div style={{ marginTop: 8, fontSize: 12, color: '#52c41a' }}>
               <CheckCircleOutlined /> Đang vận hành ổn định
+            </div>
+          </Card>
+        </Col>
+
+        {/* 6. Đơn Hủy & Đổi Trả */}
+        <Col xs={24} sm={12} lg={6} xl={4} style={{ flex: '1 1 200px' }}>
+          <Card 
+            loading={loading} 
+            hoverable
+            onClick={() => navigate('/cancelled-orders')}
+            style={{ borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.04)', cursor: 'pointer', border: '1px solid #ffccc7' }}
+          >
+            <Statistic
+              title={<span style={{ fontWeight: 600, color: '#cf1322' }}>ĐƠN HỦY &amp; ĐỔI TRẢ</span>}
+              value={cancelledStats.cancelledCount}
+              valueStyle={{ color: '#cf1322', fontWeight: 700 }}
+              prefix={<CloseCircleOutlined />}
+              suffix=" đơn"
+            />
+            <div style={{ marginTop: 8, fontSize: 11.5, color: '#d4380d', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span>{cancelledStats.pendingRefundCount > 0 ? `⚠️ ${cancelledStats.pendingRefundCount} chờ hoàn tiền` : 'Đã đối soát kho'}</span>
+              <span style={{ textDecoration: 'underline', color: '#1677ff' }}>Xem chi tiết &gt;</span>
             </div>
           </Card>
         </Col>

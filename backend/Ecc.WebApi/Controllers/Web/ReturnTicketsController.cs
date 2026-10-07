@@ -35,6 +35,15 @@ public class ReturnTicketDto
     public string? AdminNotes { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.Now;
     public DateTime? ReviewedAt { get; set; }
+    public double? PackWeightKg { get; set; }
+    public string? PackerName { get; set; }
+    public string? PackstationCameraUrl { get; set; }
+    public DateTime? PackTimestamp { get; set; }
+}
+
+public class RejectTicketRequest
+{
+    public string? Reason { get; set; }
 }
 
 public class CreateReturnTicketRequest
@@ -381,6 +390,138 @@ public class ReturnTicketsController : ControllerBase
                     ? $"Đã phê duyệt thành công! Tự động hoàn {ticket.RefundAmount:N0}₫ vào Ví tài khoản của khách."
                     : "Đã phê duyệt thành công! Tự động tạo quà tặng đính kèm sản phẩm bù vào giỏ hàng đơn tiếp theo.",
                 ticket
+            });
+        }
+    }
+
+    /// <summary>
+    /// PHẦN 3: Admin Từ chối khiếu nại kèm lý do thẩm định
+    /// </summary>
+    [HttpPost("{id}/reject")]
+    public IActionResult RejectTicket(string id, [FromBody] RejectTicketRequest? body)
+    {
+        lock (_lock)
+        {
+            var ticket = _inMemoryTickets.FirstOrDefault(t => t.TicketId == id);
+            if (ticket == null) return NotFound(new { message = "Không tìm thấy phiếu khiếu nại." });
+
+            ticket.Status = "REJECTED";
+            ticket.ReviewedAt = DateTime.Now;
+            ticket.AdminNotes = body?.Reason ?? "Từ chối bồi hoàn do đối chiếu dữ liệu trạm đóng gói không có dấu hiệu lỗi.";
+
+            return Ok(new
+            {
+                message = "Đã từ chối phiếu khiếu nại thành công.",
+                ticket
+            });
+        }
+    }
+
+    /// <summary>
+    /// Lấy toàn bộ danh sách khiếu nại cho Admin Dashboard (kèm seed mẫu nếu rỗng)
+    /// </summary>
+    [HttpGet]
+    public IActionResult GetAllTickets()
+    {
+        EnsureSampleTicketsSeeded();
+        lock (_lock)
+        {
+            return Ok(_inMemoryTickets.OrderByDescending(t => t.CreatedAt).ToList());
+        }
+    }
+
+    /// <summary>
+    /// Thống kê ticket khiếu nại cho Admin
+    /// </summary>
+    [HttpGet("stats")]
+    public IActionResult GetStats()
+    {
+        EnsureSampleTicketsSeeded();
+        lock (_lock)
+        {
+            var total = _inMemoryTickets.Count;
+            var pending = _inMemoryTickets.Count(t => t.Status == "PENDING" || t.Status == "FLAGGED_REVIEW");
+            var approved = _inMemoryTickets.Count(t => t.Status == "APPROVED");
+            var rejected = _inMemoryTickets.Count(t => t.Status == "REJECTED");
+            var flagged = _inMemoryTickets.Count(t => t.IsFraudFlagged);
+            var totalRefundAmount = _inMemoryTickets.Where(t => t.Status == "APPROVED").Sum(t => t.RefundAmount);
+
+            return Ok(new
+            {
+                total,
+                pending,
+                approved,
+                rejected,
+                flagged,
+                totalRefundAmount
+            });
+        }
+    }
+
+    private static void EnsureSampleTicketsSeeded()
+    {
+        lock (_lock)
+        {
+            if (_inMemoryTickets.Any()) return;
+
+            // Seed 2 ticket mẫu thực tế
+            _inMemoryTickets.Add(new ReturnTicketDto
+            {
+                TicketId = "TCK-20261007-F8A21B",
+                OrderId = 1,
+                OrderCode = "ORD-20260817-001",
+                ProductId = 1,
+                ProductName = "Khoai tây Đà Lạt tiêu chuẩn VietGAP (Túi 1kg)",
+                ProductImage = "https://images.unsplash.com/photo-1518977676601-b53f82aba655?w=500&auto=format&fit=crop&q=60",
+                CustomerId = 1,
+                CustomerName = "Nguyễn Văn An",
+                Reason = "DAMAGED_IN_TRANSIT",
+                ReasonLabel = "Hàng bị dập nát do vận chuyển",
+                EvidenceUrls = new List<string>
+                {
+                    "https://images.unsplash.com/photo-1518977676601-b53f82aba655?w=800&auto=format&fit=crop&q=80",
+                    "https://images.unsplash.com/photo-1589927986089-35812388d1f4?w=800&auto=format&fit=crop&q=80"
+                },
+                CompensationMethod = "WALLET_REFUND",
+                CompensationLabel = "Hoàn tiền vào Ví tài khoản (Store Credit)",
+                RefundAmount = 65000,
+                Status = "PENDING",
+                IsFraudFlagged = false,
+                CreatedAt = DateTime.Now.AddHours(-1.5),
+                PackWeightKg = 1.05,
+                PackerName = "Trần Thị Lan (Mã NV: PK-04)",
+                PackstationCameraUrl = "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=800&auto=format&fit=crop&q=80",
+                PackTimestamp = DateTime.Now.AddHours(-6)
+            });
+
+            _inMemoryTickets.Add(new ReturnTicketDto
+            {
+                TicketId = "TCK-20261007-9C44E2",
+                OrderId = 2,
+                OrderCode = "ORD-20260817-002",
+                ProductId = 2,
+                ProductName = "Sầu riêng Ri6 chín tự nhiên (Trái 2.5kg)",
+                ProductImage = "https://images.unsplash.com/photo-1596707328646-b3e34b17a1cf?w=500&auto=format&fit=crop&q=60",
+                CustomerId = 5,
+                CustomerName = "Lê Hoàng Phúc",
+                Reason = "ROTTEN_INTERNAL",
+                ReasonLabel = "Hàng bị thối hỏng/mốc bên trong",
+                EvidenceUrls = new List<string>
+                {
+                    "https://images.unsplash.com/photo-1596707328646-b3e34b17a1cf?w=800&auto=format&fit=crop&q=80",
+                    "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"
+                },
+                CompensationMethod = "REPLACEMENT_NEXT_ORDER",
+                CompensationLabel = "Giao bù sản phẩm đạt chất lượng vào đơn hàng tiếp theo",
+                RefundAmount = 350000,
+                Status = "FLAGGED_REVIEW",
+                IsFraudFlagged = true,
+                FraudNote = "⚠️ CẢNH BÁO GIAN LẬN: Khách hàng có 6 đơn hàng và tỷ lệ đổi trả đạt 33.3% (> 20%). Tắt phê duyệt nhanh, bắt buộc đối chiếu camera và cân nặng trạm đóng gói!",
+                CreatedAt = DateTime.Now.AddHours(-3),
+                PackWeightKg = 2.58,
+                PackerName = "Nguyễn Văn Hùng (Mã NV: PK-01)",
+                PackstationCameraUrl = "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=800&auto=format&fit=crop&q=80",
+                PackTimestamp = DateTime.Now.AddHours(-10)
             });
         }
     }

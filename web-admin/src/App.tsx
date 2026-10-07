@@ -12,6 +12,7 @@ import {
   DownOutlined,
   ThunderboltOutlined,
   BarChartOutlined,
+  CloseCircleOutlined,
 } from '@ant-design/icons';
 
 // Import Pages
@@ -19,6 +20,7 @@ import { Dashboard } from './pages/Dashboard';
 import { Users } from './pages/Users';
 import { Products } from './pages/Products';
 import { Orders } from './pages/Orders';
+import { CancelledOrders } from './pages/CancelledOrders';
 import { Batches } from './pages/Batches';
 import { PromotionsReviews } from './pages/PromotionsReviews';
 import { RecommendationAnalytics } from './pages/RecommendationAnalytics';
@@ -109,6 +111,11 @@ const AppContent: React.FC = () => {
       label: <Link to="/orders">Đơn Hàng & Vận Hành</Link>,
     },
     {
+      key: '/cancelled-orders',
+      icon: <CloseCircleOutlined style={{ color: '#ff4d4f' }} />,
+      label: <Link to="/cancelled-orders">Đơn Hủy & Đổi Trả</Link>,
+    },
+    {
       key: '/product-reports',
       icon: <BarChartOutlined style={{ color: '#1890ff' }} />,
       label: <Link to="/product-reports">Báo Cáo & Tồn Kho</Link>,
@@ -195,6 +202,7 @@ const AppContent: React.FC = () => {
               <Route path="/products" element={<Products />} />
               <Route path="/batches" element={<Batches />} />
               <Route path="/orders" element={<Orders />} />
+              <Route path="/cancelled-orders" element={<CancelledOrders />} />
               <Route path="/product-reports" element={<ProductReports />} />
               <Route path="/promotions" element={<PromotionsReviews />} />
               <Route path="/recommendations" element={<RecommendationAnalytics />} />
