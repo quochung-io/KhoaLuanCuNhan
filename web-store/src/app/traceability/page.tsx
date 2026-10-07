@@ -413,7 +413,7 @@ function generateBatchTimeline(batch: DbBatch) {
       location: 'Tổng kho phân phối trung tâm TP.HCM / Hà Nội',
       inspector: 'Bộ phận điều phối xuất kho LÀNH',
       recordNo: `MÃ QR TRÊN BAO BÌ: ${batch.batchCode}`,
-      desc: `Hàng về kho trung tâm được xuất kho theo nguyên tắc FEFO (First Expired First Out). Giao nhanh 2 giờ đến tận gian bếp người dùng, khuyên dùng trước ngày ${expStr} để đảm bảo vị ngon ngọt trọn vẹn nhất.`,
+      desc: `Hàng về kho trung tâm được điều phối xuất kho theo quy trình kiểm soát hạn dùng nghiêm ngặt. Giao nhanh 2 giờ đến tận gian bếp người dùng, khuyên dùng trước ngày ${expStr} để đảm bảo vị ngon ngọt trọn vẹn nhất.`,
       iotParams: [
         { label: 'Hạn dùng tốt nhất', val: expStr },
         { label: 'Thời gian giao', val: 'Hỏa tốc 2 giờ' },

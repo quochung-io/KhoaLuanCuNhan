@@ -1350,18 +1350,7 @@ export default function ProductDetailPage() {
                     alignItems: 'center',
                     gap: '4px'
                   }}>
-                    ⚡ XẢ HÀNG -{product.discountPercent}%
-                  </span>
-                  <span style={{
-                    background: 'rgba(254, 243, 199, 0.95)',
-                    color: '#92400E',
-                    fontSize: '11px',
-                    fontWeight: 700,
-                    padding: '3px 8px',
-                    borderRadius: '6px',
-                    border: '1px solid #FCD34D'
-                  }}>
-                    🔥 CẬN HẠN DÙNG NGAY
+                    ⚡ GIẢM {product.discountPercent}%
                   </span>
                 </div>
               )}
@@ -1549,10 +1538,10 @@ export default function ProductDetailPage() {
                 <span style={{ fontSize: '26px' }}>⚡</span>
                 <div>
                   <div style={{ fontWeight: 800, color: '#9F1239', fontSize: '13.5px' }}>
-                    ƯU ĐÃI XẢ HÀNG CẬN DATE - GIẢM {product.discountPercent}% THEO CHUẨN FEFO
+                    ƯU ĐÃI ĐẶC BIỆT - GIẢM {product.discountPercent}%
                   </div>
                   <div style={{ fontSize: '12px', color: '#BE123C', marginTop: '2px' }}>
-                    Sản phẩm nông sản vẫn giữ trọn độ tươi ngon tự nhiên, được khuyến khích sử dụng ngay trong 1-3 ngày tới!
+                    Nông sản tươi ngon tuyển chọn chuẩn VietGAP với mức giá ưu đãi đặc biệt trong ngày!
                   </div>
                 </div>
               </div>
@@ -1570,7 +1559,7 @@ export default function ProductDetailPage() {
                       {product.originalPrice?.toLocaleString('vi-VN')}₫
                     </span>
                     <span style={{ background: '#FEE2E2', color: '#DC2626', fontSize: '13px', fontWeight: 700, padding: '3px 10px', borderRadius: '8px', border: '1px solid #FCA5A5' }}>
-                      ⚡ Xả hàng cận hạn -{product.discountPercent}%
+                      ⚡ GIẢM {product.discountPercent}%
                     </span>
                     <div style={{ width: '100%', fontSize: '13px', color: '#DC2626', fontWeight: 700, marginTop: '2px' }}>
                       Tiết kiệm {((product.originalPrice || 0) - product.price).toLocaleString('vi-VN')}₫ / {product.unit}
@@ -1606,7 +1595,7 @@ export default function ProductDetailPage() {
                 <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--ink)', marginTop: '2px' }}>{harvestDate}</div>
               </div>
               <div style={{ background: 'var(--surface)', padding: '12px 16px', borderRadius: '14px', border: '1px solid var(--line)' }}>
-                <div style={{ fontSize: '11.5px', color: 'var(--ink-soft)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Hạn sử dụng (FEFO)</div>
+                <div style={{ fontSize: '11.5px', color: 'var(--ink-soft)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Hạn sử dụng tốt nhất</div>
                 <div style={{ fontSize: '14px', fontWeight: 700, color: '#C0392B', marginTop: '2px' }}>{expiryDate}</div>
               </div>
             </div>
@@ -2392,7 +2381,7 @@ export default function ProductDetailPage() {
                   <div style={{ background: 'var(--bg)', padding: '18px', borderRadius: '16px', border: '1px solid var(--line)' }}>
                     <div style={{ fontSize: '12px', color: 'var(--ink-soft)', fontWeight: 600 }}>HẠN SỬ DỤNG TỐT NHẤT (BEST BEFORE)</div>
                     <div style={{ fontSize: '18px', fontWeight: 800, color: '#C0392B', marginTop: '4px' }}>{expiryDate}</div>
-                    <div style={{ fontSize: '12px', color: 'var(--ink-soft)', marginTop: '4px' }}>Quy trình xuất kho FEFO nghiêm ngặt</div>
+                    <div style={{ fontSize: '12px', color: 'var(--ink-soft)', marginTop: '4px' }}>Kiểm định chất lượng nghiêm ngặt</div>
                   </div>
 
                   <div style={{ background: 'var(--bg)', padding: '18px', borderRadius: '16px', border: '1px solid var(--line)' }}>

@@ -1119,17 +1119,6 @@ function AllProductsInner() {
                         }}>
                           ⚡ GIẢM {p.discountPercent}%
                         </span>
-                        <span style={{
-                          backgroundColor: 'rgba(254, 243, 199, 0.95)',
-                          color: '#B45309',
-                          fontSize: '9.5px',
-                          fontWeight: 700,
-                          padding: '1px 5px',
-                          borderRadius: '4px',
-                          border: '1px solid #FCD34D'
-                        }}>
-                          XẢ CẬN DATE
-                        </span>
                       </div>
                     )}
                     <div style={{ display: 'block', width: '100%', height: '100%' }}>
@@ -1174,26 +1163,6 @@ function AllProductsInner() {
                     <span className="prod-name" style={{ cursor: 'pointer', transition: 'color 0.2s', opacity: p.isOutOfStock ? 0.7 : 1 }}>
                       {p.name}
                     </span>
-
-                    {/* THÔNG BÁO XẢ HÀNG TRÊN SẢN PHẨM */}
-                    {Boolean(p.discountPercent && p.discountPercent > 0) && (
-                      <div style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                        backgroundColor: '#FEF2F2',
-                        color: '#DC2626',
-                        padding: '2px 7px',
-                        borderRadius: '4px',
-                        fontSize: '11px',
-                        fontWeight: 700,
-                        marginTop: '3px',
-                        border: '1px solid #FECDD3'
-                      }}>
-                        <span>🔥</span>
-                        <span>Xả nông sản cận date (-{p.discountPercent}%)</span>
-                      </div>
-                    )}
 
                     <div className="stars">
                       {p.reviews > 0 ? (
@@ -1399,17 +1368,6 @@ function AllProductsInner() {
                       }}>
                         ⚡ GIẢM {quickViewProduct.discountPercent}%
                       </span>
-                      <span style={{
-                        backgroundColor: 'rgba(254, 243, 199, 0.95)',
-                        color: '#B45309',
-                        padding: '3px 8px',
-                        borderRadius: '6px',
-                        fontSize: '11px',
-                        fontWeight: 700,
-                        border: '1px solid #FCD34D'
-                      }}>
-                        XẢ CẬN DATE
-                      </span>
                     </div>
                   )}
                 </div>
@@ -1432,7 +1390,7 @@ function AllProductsInner() {
                     {quickViewProduct.name}
                   </h2>
 
-                  {/* THÔNG BÁO XẢ NÔNG SẢN CẬN DATE DƯỚI TÊN */}
+                  {/* THÔNG BÁO ƯU ĐÃI DƯỚI TÊN */}
                   {Boolean(quickViewProduct.discountPercent && quickViewProduct.discountPercent > 0) && (
                     <div style={{
                       display: 'inline-flex',
@@ -1447,10 +1405,10 @@ function AllProductsInner() {
                       <span style={{ fontSize: '16px' }}>⚡</span>
                       <div>
                         <div style={{ fontSize: '12.5px', fontWeight: 800, color: '#B91C1C' }}>
-                          KHUYẾN MÃI XẢ KHO CẬN DATE FEFO (-{quickViewProduct.discountPercent}%)
+                          ƯU ĐÃI ĐẶC BIỆT - GIẢM {quickViewProduct.discountPercent}%
                         </div>
                         <div style={{ fontSize: '11.5px', color: '#7F1D1D' }}>
-                          Lô hàng sắp hết hạn sử dụng. Cam kết chất lượng và an toàn vệ sinh thực phẩm!
+                          Nông sản tươi ngon tuyển chọn chuẩn VietGAP với giá ưu đãi trong ngày!
                         </div>
                       </div>
                     </div>

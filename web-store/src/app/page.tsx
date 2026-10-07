@@ -1513,15 +1513,15 @@ export default function LanhLandingPage() {
                 }}>
                   <div>
                     <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', backgroundColor: '#DC2626', color: '#FFFFFF', padding: '4px 12px', borderRadius: '999px', fontSize: '12px', fontWeight: 800, letterSpacing: '0.5px' }}>
-                      <span>⚡ FLASH SALE CẬN DATE</span>
+                      <span>⚡ FLASH SALE GIỜ VÀNG</span>
                       <span>•</span>
                       <span>GIẢM ĐẾN 50%</span>
                     </div>
                     <h2 style={{ fontSize: '26px', fontWeight: 900, color: '#991B1B', margin: '8px 0 4px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      🔥 Giờ Vàng Xả Kho Nông Sản Cận Date (FEFO)
+                      🔥 Giờ Vàng Nông Sản Tươi - Ưu Đãi Đến 50%
                     </h2>
                     <p style={{ margin: 0, fontSize: '13.5px', color: '#7F1D1D' }}>
-                      Thuật toán FEFO tự động giảm giá sâu các lô hàng sắp đến hạn dùng. Cam kết chuẩn VietGAP, tươi ngon và an toàn tuyệt đối!
+                      Nông sản tươi ngon kiểm định chuẩn VietGAP với mức giá ưu đãi đặc biệt trong ngày.
                     </p>
                   </div>
                   <div style={{
@@ -1597,17 +1597,6 @@ export default function LanhLandingPage() {
                           }}>
                             ⚡ GIẢM {p.discountPercent}%
                           </span>
-                          <span style={{
-                            backgroundColor: '#FEF3C7',
-                            color: '#92400E',
-                            fontSize: '10px',
-                            fontWeight: 800,
-                            padding: '2px 6px',
-                            borderRadius: '4px',
-                            border: '1px solid #FCD34D'
-                          }}>
-                            XẢ CẬN DATE
-                          </span>
                         </div>
                         {p.imageUrl ? (
                           <img
@@ -1644,7 +1633,7 @@ export default function LanhLandingPage() {
                             fontWeight: 600,
                             marginBottom: '10px'
                           }}>
-                            🔥 Xả kho FEFO: Tiết kiệm ngay {((p.originalPrice || 0) - (p.rawPrice || 0)).toLocaleString('vi-VN')}₫
+                            ✨ Tiết kiệm ngay {((p.originalPrice || 0) - (p.rawPrice || 0)).toLocaleString('vi-VN')}₫
                           </div>
                         </div>
 
@@ -1773,17 +1762,6 @@ export default function LanhLandingPage() {
                         }}>
                           ⚡ GIẢM {p.discountPercent}%
                         </span>
-                        <span style={{
-                          backgroundColor: 'rgba(254, 243, 199, 0.95)',
-                          color: '#B45309',
-                          fontSize: '9.5px',
-                          fontWeight: 700,
-                          padding: '1px 5px',
-                          borderRadius: '4px',
-                          border: '1px solid #FCD34D'
-                        }}>
-                          XẢ CẬN DATE
-                        </span>
                       </div>
                     )}
                     <div style={{ display: 'block', width: '100%', height: '100%' }}>
@@ -1838,26 +1816,6 @@ export default function LanhLandingPage() {
                     <span className="prod-name" style={{ cursor: 'pointer', transition: 'color 0.2s', opacity: p.isOutOfStock ? 0.7 : 1 }}>
                       {p.name}
                     </span>
-
-                    {/* THÔNG BÁO XẢ HÀNG TRÊN SẢN PHẨM */}
-                    {Boolean(p.discountPercent && p.discountPercent > 0) && (
-                      <div style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                        backgroundColor: '#FEF2F2',
-                        color: '#DC2626',
-                        padding: '2px 7px',
-                        borderRadius: '4px',
-                        fontSize: '11px',
-                        fontWeight: 700,
-                        marginTop: '3px',
-                        border: '1px solid #FECDD3'
-                      }}>
-                        <span>🔥</span>
-                        <span>Xả nông sản cận date (-{p.discountPercent}%)</span>
-                      </div>
-                    )}
 
                     <div 
                       className="stars" 
