@@ -21,9 +21,11 @@ public class RecommendationsController : ControllerBase
         public long? UserId { get; set; }
         public string? SessionId { get; set; }
         public long ProductId { get; set; }
-        public string ActionType { get; set; } = null!; // VIEW, QUICK_VIEW, SEARCH, CART, PURCHASE, RECOMMENDATION_CLICK
+        public string? ActionType { get; set; } // VIEW, QUICK_VIEW, SEARCH, CART, PURCHASE, RECOMMENDATION_CLICK
+        public string? EventType { get; set; } // Hỗ trợ tương thích Mobile App (view, click, cart, purchase)
         public string? SearchKeyword { get; set; }
         public string? RecommendationType { get; set; } // FOR_YOU, FREQUENTLY_BOUGHT_TOGETHER, SIMILAR, IN_SEASON, NEAR_DELIVERY
+        public string? ContextUsed { get; set; }
     }
 
     // POST: api/recommendations/track
@@ -32,16 +34,19 @@ public class RecommendationsController : ControllerBase
     {
         try
         {
-            if (dto.ProductId <= 0 || string.IsNullOrWhiteSpace(dto.ActionType))
+            var rawAction = !string.IsNullOrWhiteSpace(dto.ActionType) ? dto.ActionType : dto.EventType;
+            if (dto.ProductId <= 0 || string.IsNullOrWhiteSpace(rawAction))
             {
-                return BadRequest(new { message = "ProductId và ActionType là bắt buộc" });
+                return BadRequest(new { message = "ProductId và ActionType (hoặc EventType) là bắt buộc" });
             }
+
+            var action = rawAction.Trim().ToUpper();
 
             var behavior = new UserBehavior
             {
                 UserId = dto.UserId > 0 ? dto.UserId : null,
                 ProductId = dto.ProductId,
-                ActionType = dto.ActionType.Trim().ToUpper(),
+                ActionType = action,
                 SearchKeyword = dto.SearchKeyword,
                 SessionId = dto.SessionId ?? "SES-" + Guid.NewGuid().ToString("N")[..8],
                 CreatedAt = DateTime.UtcNow
@@ -50,13 +55,14 @@ public class RecommendationsController : ControllerBase
             _context.UserBehaviors.Add(behavior);
 
             // Cập nhật hoặc lưu vết RecommendationLogs
-            if (dto.ActionType.Equals("RECOMMENDATION_CLICK", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrEmpty(dto.RecommendationType))
+            var recType = dto.RecommendationType ?? dto.ContextUsed;
+            if ((action.Equals("RECOMMENDATION_CLICK", StringComparison.OrdinalIgnoreCase) || action.Equals("CLICK", StringComparison.OrdinalIgnoreCase)) && !string.IsNullOrEmpty(recType))
             {
                 var recLog = new RecommendationLog
                 {
                     UserId = dto.UserId > 0 ? dto.UserId : null,
                     ProductId = dto.ProductId,
-                    RecommendationType = dto.RecommendationType.Trim().ToUpper(),
+                    RecommendationType = recType.Trim().ToUpper(),
                     Score = 0.95,
                     Position = 1,
                     ShownAt = DateTime.UtcNow,
@@ -66,7 +72,7 @@ public class RecommendationsController : ControllerBase
                 };
                 _context.RecommendationLogs.Add(recLog);
             }
-            else if (dto.ActionType.Equals("CART", StringComparison.OrdinalIgnoreCase))
+            else if (action.Equals("CART", StringComparison.OrdinalIgnoreCase))
             {
                 var recentLog = await _context.RecommendationLogs
                     .Where(l => l.ProductId == dto.ProductId && (dto.UserId == null || l.UserId == dto.UserId))
@@ -78,7 +84,7 @@ public class RecommendationsController : ControllerBase
                     recentLog.AddedToCart = true;
                 }
             }
-            else if (dto.ActionType.Equals("PURCHASE", StringComparison.OrdinalIgnoreCase))
+            else if (action.Equals("PURCHASE", StringComparison.OrdinalIgnoreCase))
             {
                 var recentLog = await _context.RecommendationLogs
                     .Where(l => l.ProductId == dto.ProductId && (dto.UserId == null || l.UserId == dto.UserId))

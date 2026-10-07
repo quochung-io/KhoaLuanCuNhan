@@ -23,6 +23,7 @@ import { Batches } from './pages/Batches';
 import { PromotionsReviews } from './pages/PromotionsReviews';
 import { RecommendationAnalytics } from './pages/RecommendationAnalytics';
 import { ProductReports } from './pages/ProductReports';
+import { Notifications } from './pages/Notifications';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 
@@ -123,6 +124,11 @@ const AppContent: React.FC = () => {
       icon: <ThunderboltOutlined style={{ color: '#52c41a' }} />,
       label: <Link to="/recommendations">Gợi Ý AI & Hành Vi</Link>,
     },
+    {
+      key: '/notifications',
+      icon: <SolutionOutlined style={{ color: '#eb2f96' }} />,
+      label: <Link to="/notifications">Gửi Thông Báo</Link>,
+    },
   ];
 
   const userMenuItems = [
@@ -198,6 +204,7 @@ const AppContent: React.FC = () => {
               <Route path="/product-reports" element={<ProductReports />} />
               <Route path="/promotions" element={<PromotionsReviews />} />
               <Route path="/recommendations" element={<RecommendationAnalytics />} />
+              <Route path="/notifications" element={<Notifications />} />
             </Routes>
           </div>
         </Content>

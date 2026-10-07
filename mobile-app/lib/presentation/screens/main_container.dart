@@ -22,18 +22,18 @@ class MainContainerState extends State<MainContainer> {
 
   int get _cartCount => _cart.fold<int>(0, (sum, item) => sum + item.qty);
 
-  void _addToCart(Product product) {
+  void _addToCart(Product product, {int qty = 1}) {
     setState(() {
       final index = _cart.indexWhere((item) => item.product.id == product.id);
       if (index >= 0) {
-        _cart[index].qty++;
+        _cart[index].qty += qty;
       } else {
-        _cart.add(CartItem(product: product));
+        _cart.add(CartItem(product: product, qty: qty));
       }
     });
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Đã thêm ${product.name} vào giỏ hàng (+1)'),
+        content: Text('Đã thêm ${product.name} vào giỏ hàng (+$qty)'),
         duration: const Duration(seconds: 1),
         backgroundColor: const Color(0xFF2E7D32),
         behavior: SnackBarBehavior.floating,
@@ -90,18 +90,21 @@ class MainContainerState extends State<MainContainer> {
       ),
       CombosScreen(
         onAddToCart: _addToCart,
+        onOpenCart: _openCart,
+        cartCount: _cartCount,
       ),
       TraceScreen(
         initialLotCode: _scannedLotCode,
         onClearCode: () => _scannedLotCode = null,
       ),
-      const NotificationsScreen(),
+      NotificationsScreen(user: widget.user),
       ProfileScreen(
         user: widget.user,
         cartItems: _cart,
         onUpdateCartQty: _updateQty,
         onClearCart: _clearCart,
         onOpenCart: _openCart,
+        onAddToCart: _addToCart,
       ),
     ];
 

@@ -42,6 +42,38 @@ class Product {
       'Sẽ tiếp tục ủng hộ nông sản LÀNH!'
     ],
   });
+
+  factory Product.fromJson(Map<String, dynamic> json) {
+    IconData getIcon(String cat) {
+      if (cat.contains('Rau')) return Icons.eco_outlined;
+      if (cat.contains('Trái cây')) return Icons.spa_outlined;
+      return Icons.shopping_basket_outlined;
+    }
+    
+    Color getColor(String cat) {
+      if (cat.contains('Rau')) return const Color(0xFF2E7D32);
+      if (cat.contains('Trái cây')) return const Color(0xFFFF9800);
+      return const Color(0xFFC0392B);
+    }
+
+    return Product(
+      id: json['id'] ?? 0,
+      name: json['name'] ?? '',
+      price: (json['price'] as num?)?.toInt() ?? 0,
+      unit: json['unit'] ?? 'kg',
+      category: json['category'] ?? 'Khác',
+      cert: json['certification'] ?? 'VietGAP',
+      region: json['origin'] ?? 'Việt Nam',
+      rating: (json['rating'] as num?)?.toDouble() ?? 5.0,
+      reviews: (json['reviewsCount'] as num?)?.toInt() ?? 0,
+      icon: getIcon(json['category'] ?? ''),
+      color: getColor(json['category'] ?? ''),
+      lot: json['lotCode'] ?? 'LOT#UNKNOWN',
+      description: json['description'] ?? '',
+      imageUrl: json['imageUrl'],
+      stockQuantity: (json['stockQuantity'] as num?)?.toInt(),
+    );
+  }
 }
 
 final List<Product> productsData = [

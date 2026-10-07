@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../data/models/product_model.dart';
+import '../../../data/api_service.dart';
+import '../../../core/utils/traceability_utils.dart';
 import 'widgets/scanning_line_animation.dart';
 
 class TraceScreen extends StatefulWidget {
@@ -18,6 +20,8 @@ class _TraceScreenState extends State<TraceScreen> {
   bool _isScanning = false;
   String? _scannedCode;
   Product? _tracedProduct;
+
+  bool _isLoadingTrace = false;
 
   @override
   void initState() {
@@ -39,16 +43,50 @@ class _TraceScreenState extends State<TraceScreen> {
     }
   }
 
-  void _performTrace(String lotCode) {
+  Future<void> _performTrace(String lotCode) async {
     setState(() {
+      _isLoadingTrace = true;
       _hasSearched = true;
-      // Tìm sản phẩm có mã lô khớp
-      final found = productsData.firstWhere(
-        (p) => p.lot.toLowerCase() == lotCode.trim().toLowerCase(),
-        orElse: () => productsData[0], // fallback sang Cải bó xôi nếu gõ linh tinh
-      );
-      _tracedProduct = found;
+      _tracedProduct = null;
     });
+
+    try {
+      // 1. Lấy danh sách lô hàng từ API
+      final batches = await ApiService.getProductBatches();
+      
+      // 2. Tìm lô hàng khớp mã
+      final foundBatch = batches.firstWhere(
+        (b) => (b['batchCode'] ?? '').toString().toLowerCase() == lotCode.trim().toLowerCase(),
+        orElse: () => null,
+      );
+
+      if (foundBatch != null && mounted) {
+        final productData = foundBatch['product'];
+        Product? product;
+        if (productData != null) {
+          productData['lotCode'] = foundBatch['batchCode'];
+          product = Product.fromJson(productData);
+        }
+
+        setState(() {
+          _tracedProduct = product ?? productsData[0];
+          _isLoadingTrace = false;
+        });
+      } else if (mounted) {
+         setState(() {
+           // Fallback nếu gõ mã sai, hiển thị sản phẩm mẫu để test
+           _tracedProduct = productsData[0];
+           _isLoadingTrace = false;
+         });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _tracedProduct = productsData[0];
+          _isLoadingTrace = false;
+        });
+      }
+    }
   }
 
   // Giả lập quét mã QR với hiệu ứng động
@@ -167,7 +205,10 @@ class _TraceScreenState extends State<TraceScreen> {
                     const SizedBox(height: 24),
 
                     // Kết quả truy xuất
-                    if (_hasSearched && _tracedProduct != null) ...[
+                    if (_isLoadingTrace) ...[
+                      const SizedBox(height: 60),
+                      const Center(child: CircularProgressIndicator(color: Color(0xFF2E7D32))),
+                    ] else if (_hasSearched && _tracedProduct != null) ...[
                       _buildTracedProductHeader(_tracedProduct!),
                       const SizedBox(height: 24),
                       const Text(
@@ -322,14 +363,14 @@ class _TraceScreenState extends State<TraceScreen> {
 
   // Timeline hành trình Farm-to-Table
   Widget _buildTraceTimeline() {
-    final List<Map<String, String>> steps = [
-      {'icon': '🌱', 'title': 'Gieo trồng', 'date': '12/06/2026', 'code': 'SEED-0842', 'desc': 'Hạt giống hữu cơ đạt chuẩn được gieo trồng tại nông trại kiểm định Đà Lạt.'},
-      {'icon': '💧', 'title': 'Chăm sóc', 'date': '15/06–20/07', 'code': 'CARE-0842-A', 'desc': 'Tưới nước tự động, bón phân hữu cơ sinh học, không hóa chất.'},
-      {'icon': '🧺', 'title': 'Thu hoạch', 'date': '21/07/2026', 'code': 'HRV-0842-B', 'desc': 'Thu hoạch thủ công vào lúc sáng sớm để giữ độ tươi giòn.'},
-      {'icon': '🔬', 'title': 'Kiểm định', 'date': '21/07/2026', 'code': 'QC-0842-C', 'desc': 'Kiểm tra dư lượng nitrat và vi sinh vật gây hại, đạt chuẩn xuất vườn.'},
-      {'icon': '🚚', 'title': 'Vận chuyển', 'date': '22/07/2026', 'code': 'SHIP-0842-D', 'desc': 'Đóng gói trong thùng mát và vận chuyển bằng xe đông lạnh chuyên dụng.'},
-      {'icon': '🍽️', 'title': 'Bàn ăn', 'date': 'Hiện tại', 'code': 'DLV-0842-E', 'desc': 'Sản phẩm đến tay bạn tại cửa hàng hoặc giao hàng trong 2 giờ.'},
-    ];
+    if (_tracedProduct == null) return const SizedBox();
+    
+    // Sử dụng Utils để sinh timeline động khớp với Web
+    final List<Map<String, dynamic>> steps = TraceabilityUtils.generateTimeline(
+      _tracedProduct!.lot, 
+      _tracedProduct!.name, 
+      _tracedProduct!.originFarm ?? '',
+    );
 
     return ListView.builder(
       shrinkWrap: true,
@@ -338,6 +379,10 @@ class _TraceScreenState extends State<TraceScreen> {
       itemBuilder: (context, index) {
         final step = steps[index];
         final isLast = index == steps.length - 1;
+        
+        // Map IconData từ Utils sang text emoji tạm thời hoặc dùng trực tiếp IconData
+        final iconData = step['icon'] as IconData;
+
         return Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -352,12 +397,12 @@ class _TraceScreenState extends State<TraceScreen> {
                     color: Color(0xFFE3F1E3),
                     shape: BoxShape.circle,
                   ),
-                  child: Text(step['icon']!, style: const TextStyle(fontSize: 16)),
+                  child: Icon(iconData, size: 16, color: const Color(0xFF2E7D32)),
                 ),
                 if (!isLast)
                   Container(
                     width: 2,
-                    height: 60,
+                    height: 80, // Tăng chiều cao để đủ chỗ cho text
                     color: const Color(0xFFE1EAE0),
                   ),
               ],
@@ -371,24 +416,29 @@ class _TraceScreenState extends State<TraceScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        step['title']!,
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1B3A20)),
+                      Expanded(
+                        child: Text(
+                          (step['stage'] as String).split(': ')[1], // Lấy phần sau dấu ':' để làm title
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF1B3A20)),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
+                      const SizedBox(width: 8),
                       Text(
-                        step['date']!,
+                        (step['date'] as String).split(' ')[0], // Chỉ lấy phần ngày
                         style: const TextStyle(color: Color(0xFF8D9E90), fontSize: 11),
                       ),
                     ],
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    'Mã nhật ký: ${step['code']}',
+                    'Mã hồ sơ: ${(step['recordNo'] != null && step['recordNo'].toString().contains(': ')) ? step['recordNo'].toString().split(': ')[1] : step['recordNo'] ?? _tracedProduct!.lot}',
                     style: const TextStyle(fontSize: 10, color: Color(0xFF2E7D32), fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    step['desc']!,
+                    step['details'] as String,
                     style: const TextStyle(color: Color(0xFF4B5D50), fontSize: 12, height: 1.3),
                   ),
                   const SizedBox(height: 14),

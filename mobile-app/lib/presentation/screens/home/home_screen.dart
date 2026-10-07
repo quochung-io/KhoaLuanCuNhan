@@ -6,7 +6,7 @@ import '../product_detail/product_detail_screen.dart';
 import '../chat/chat_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  final Function(Product) onAddToCart;
+  final void Function(Product, {int qty}) onAddToCart;
   final VoidCallback? onOpenCart;
   final int cartCount;
 
@@ -145,21 +145,72 @@ class _HomeScreenState extends State<HomeScreen> {
         titleSpacing: 12,
         title: Row(
           children: [
-            // Thanh tìm kiếm ngắn lại
+            // Thanh tìm kiếm Autocomplete
             Expanded(
               child: SizedBox(
                 height: 40,
-                child: TextField(
-                  onChanged: (val) => setState(() => _searchQuery = val),
-                  decoration: InputDecoration(
-                    hintText: 'Tìm kiếm nông sản...',
-                    hintStyle: TextStyle(fontSize: 12.5, color: Colors.grey.shade400),
-                    prefixIcon: const Icon(Icons.search, color: Color(0xFF2E7D32), size: 18),
-                    filled: true,
-                    fillColor: const Color(0xFFF4F8F4),
-                    contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 12),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide.none),
-                  ),
+                child: Autocomplete<String>(
+                  optionsBuilder: (TextEditingValue textEditingValue) async {
+                    final prefix = textEditingValue.text;
+                    if (prefix.trim().isEmpty) {
+                      return const Iterable<String>.empty();
+                    }
+                    final suggestions = await ApiService.getAutocomplete(prefix);
+                    return suggestions;
+                  },
+                  onSelected: (String selection) {
+                    setState(() {
+                      _searchQuery = selection;
+                    });
+                  },
+                  fieldViewBuilder: (context, textEditingController, focusNode, onFieldSubmitted) {
+                    return TextField(
+                      controller: textEditingController,
+                      focusNode: focusNode,
+                      onChanged: (val) {
+                        setState(() => _searchQuery = val);
+                      },
+                      onSubmitted: (val) {
+                        onFieldSubmitted();
+                      },
+                      decoration: InputDecoration(
+                        hintText: 'Tìm kiếm nông sản...',
+                        hintStyle: TextStyle(fontSize: 12.5, color: Colors.grey.shade400),
+                        prefixIcon: const Icon(Icons.search, color: Color(0xFF2E7D32), size: 18),
+                        filled: true,
+                        fillColor: const Color(0xFFF4F8F4),
+                        contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 12),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide.none),
+                      ),
+                    );
+                  },
+                  optionsViewBuilder: (context, onSelected, options) {
+                    return Align(
+                      alignment: Alignment.topLeft,
+                      child: Material(
+                        elevation: 4,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxHeight: 200, maxWidth: 250),
+                          child: ListView.builder(
+                            padding: EdgeInsets.zero,
+                            shrinkWrap: true,
+                            itemCount: options.length,
+                            itemBuilder: (BuildContext context, int index) {
+                              final option = options.elementAt(index);
+                              return InkWell(
+                                onTap: () => onSelected(option),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                                  child: Text(option, style: const TextStyle(fontSize: 13)),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ),
             ),

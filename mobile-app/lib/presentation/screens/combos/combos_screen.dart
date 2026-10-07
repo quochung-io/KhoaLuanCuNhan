@@ -5,7 +5,7 @@ import 'combo_customize_screen.dart';
 import '../chat/chat_screen.dart';
 
 class CombosScreen extends StatefulWidget {
-  final Function(Product)? onAddToCart;
+  final void Function(Product, {int qty})? onAddToCart;
   final VoidCallback? onOpenCart;
   final int cartCount;
 

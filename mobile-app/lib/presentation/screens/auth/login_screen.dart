@@ -6,6 +6,8 @@ import '../admin/admin_dashboard_screen.dart';
 import '../supplier/supplier_dashboard_screen.dart';
 import '../../../core/theme.dart';
 import '../../../data/api_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 
 class LoginScreen extends StatefulWidget {
   final String? initialEmail;
@@ -50,6 +52,9 @@ class _LoginScreenState extends State<LoginScreen> {
       final result = await ApiService.login(email, password);
       final user = result['user'] as Map<String, dynamic>;
       final role = (user['role'] ?? 'CUSTOMER').toString().toUpperCase();
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('customer_user', jsonEncode(user));
 
       if (!mounted) return;
 

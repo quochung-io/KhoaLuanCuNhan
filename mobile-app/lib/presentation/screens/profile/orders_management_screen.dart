@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
 import '../../../data/api_service.dart';
+import '../../../data/models/product_model.dart';
 import 'order_detail_screen.dart';
 
 class OrdersManagementScreen extends StatefulWidget {
   final int initialTabIndex;
   final int userId;
+  final Function(Product, {int qty})? onAddToCart;
 
   const OrdersManagementScreen({
     super.key,
     this.initialTabIndex = 0,
     required this.userId,
+    this.onAddToCart,
   });
 
   @override
@@ -310,22 +313,75 @@ class _OrdersManagementScreenState extends State<OrdersManagementScreen> with Si
                     ),
                   ],
                 ),
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (ctx) => OrderDetailScreen(order: order),
+                Row(
+                  children: [
+                    OutlinedButton(
+                      onPressed: () {
+                        if (widget.onAddToCart != null) {
+                          final items = (order['orderItems'] as List<dynamic>?) ?? [];
+                          for (var item in items) {
+                            final p = item['product'];
+                            if (p != null) {
+                              // Build a partial Product model to add to cart
+                              final product = Product(
+                                id: p['productId'] ?? p['id'] ?? 0,
+                                name: p['productName'] ?? p['name'] ?? 'Sản phẩm',
+                                price: (p['price'] ?? 0).toDouble().toInt(),
+                                imageUrl: p['imageUrl'] ?? '',
+                                unit: p['unit'] ?? 'kg',
+                                category: p['type'] ?? 'product',
+                                stockQuantity: 999, // dummy
+                                description: '',
+                                lot: '',
+                                cert: 'VietGAP',
+                                region: 'Việt Nam',
+                                rating: 5.0,
+                                reviews: 0,
+                                icon: Icons.eco_outlined,
+                                color: const Color(0xFF2E7D32),
+                              );
+                              final qty = item['quantity'] ?? 1;
+                              widget.onAddToCart!(product, qty: qty);
+                            }
+                          }
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Đã thêm các sản phẩm vào giỏ hàng'),
+                              backgroundColor: Color(0xFF2E7D32),
+                              duration: Duration(seconds: 2),
+                            ),
+                          );
+                        }
+                      },
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Color(0xFF2E7D32)),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                       ),
-                    ).then((_) => _fetchOrders());
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2E7D32),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  ),
-                  child: const Text('Xem chi tiết', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                      child: const Text('Mua lại', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF2E7D32))),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (ctx) => OrderDetailScreen(
+                              order: order,
+                              onAddToCart: widget.onAddToCart,
+                            ),
+                          ),
+                        ).then((_) => _fetchOrders());
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF2E7D32),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                      child: const Text('Xem chi tiết', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                    ),
+                  ],
                 ),
               ],
             ),

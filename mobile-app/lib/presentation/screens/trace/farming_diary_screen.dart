@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/utils/traceability_utils.dart';
 
 class FarmingDiaryScreen extends StatelessWidget {
   final String lotCode;
@@ -14,62 +15,7 @@ class FarmingDiaryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final stages = [
-      {
-        'stage': 'Chặng 1: Xử lý đất & Thổ nhưỡng sinh học',
-        'date': '15/07/2026',
-        'icon': Icons.landscape_outlined,
-        'engineer': 'KS. Trần Văn Hùng (Viện Nông Nghiệp Tây Nguyên)',
-        'details': 'Đo độ pH đất đạt 6.5 lý tưởng. Bón lót phân trùn quế ủ hoai mục và chế phẩm vi sinh bản địa IMO để kích hoạt hệ vi sinh vật có lợi.',
-        'status': 'Đạt chuẩn hữu cơ',
-        'image': 'https://images.unsplash.com/photo-1592417817098-8f3d6910985c?w=500&auto=format&fit=crop&q=80',
-      },
-      {
-        'stage': 'Chặng 2: Gieo hạt & Ươm cây con',
-        'date': '22/07/2026',
-        'icon': Icons.grass_outlined,
-        'engineer': 'KS. Nguyễn Thị Lan (Trưởng bộ phận Vườn ươm)',
-        'details': 'Sử dụng hạt giống F1 thuần chủng đạt chuẩn Non-GMO (Không biến đổi gen). Ươm trên khay xơ dừa tiệt trùng hơi nước trong nhà màng.',
-        'status': 'Tỷ lệ nảy mầm 98%',
-        'image': 'https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?w=500&auto=format&fit=crop&q=80',
-      },
-      {
-        'stage': 'Chặng 3: Chăm sóc & Tưới tiêu tự động',
-        'date': '05/08/2026',
-        'icon': Icons.water_drop_outlined,
-        'engineer': 'KS. Trần Văn Hùng',
-        'details': 'Ứng dụng hệ thống tưới nhỏ giọt tự động công nghệ Israel. Bổ sung dinh dưỡng đạm cá thủy phân và dịch chuối ủ vi sinh định kỳ 5 ngày/lần.',
-        'status': 'Tươi xanh, phát triển tối ưu',
-        'image': 'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=500&auto=format&fit=crop&q=80',
-      },
-      {
-        'stage': 'Chặng 4: Kiểm soát sâu bệnh bằng thiên địch',
-        'date': '15/08/2026',
-        'icon': Icons.bug_report_outlined,
-        'engineer': 'Chuyên gia bảo vệ thực vật Lê Minh',
-        'details': 'Triển khai bẫy Pheromone sinh học và thả bọ rùa thiên địch để kiểm soát sâu tơ tự nhiên. Cam kết 100% không dùng thuốc trừ sâu hóa học.',
-        'status': 'Không hóa chất BVTV',
-        'image': 'https://images.unsplash.com/photo-1615811361523-6bd03d7748e7?w=500&auto=format&fit=crop&q=80',
-      },
-      {
-        'stage': 'Chặng 5: Kiểm nghiệm Lab QC ISO/IEC 17025',
-        'date': '22/08/2026',
-        'icon': Icons.science_outlined,
-        'engineer': 'Phòng Kiểm Nghiệm Độc Lập Quatest 3',
-        'details': 'Lấy ngẫu nhiên 5 mẫu nông sản kiểm tra 392 chỉ tiêu dư lượng hóa chất, kim loại nặng (Chì, Cadimi) và vi khuẩn đường ruột (E.coli, Salmonella).',
-        'status': 'Dư lượng = 0 ppm (Tuyệt đối an toàn)',
-        'image': 'https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?w=500&auto=format&fit=crop&q=80',
-      },
-      {
-        'stage': 'Chặng 6: Thu hoạch & Đóng gói xe lạnh',
-        'date': '24/08/2026',
-        'icon': Icons.inventory_2_outlined,
-        'engineer': 'Tổ Thu Hoạch HTX Nông Sản Đà Lạt',
-        'details': 'Thu hoạch sớm lúc 05:30 sáng khi nhiệt độ mát và sương còn đọng. Sơ chế, cắt tỉa lá già và đóng hộp sinh học dập mã QR truy xuất từng mẻ.',
-        'status': 'Đóng gói chuỗi lạnh 10°C',
-        'image': 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=500&auto=format&fit=crop&q=80',
-      },
-    ];
+    final stages = TraceabilityUtils.generateTimeline(lotCode, productName, farmName);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF7F9FA),
@@ -199,6 +145,23 @@ class FarmingDiaryScreen extends StatelessWidget {
                                 style: TextStyle(fontSize: 12.5, color: Colors.grey.shade700, height: 1.4),
                               ),
                               const SizedBox(height: 10),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                margin: const EdgeInsets.only(bottom: 8),
+                                decoration: BoxDecoration(color: const Color(0xFFFFF4E5), borderRadius: BorderRadius.circular(6)),
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.receipt_long_outlined, size: 14, color: Color(0xFFE65100)),
+                                    const SizedBox(width: 6),
+                                    Expanded(
+                                      child: Text(
+                                        st['recordNo'] as String,
+                                        style: const TextStyle(fontSize: 11, color: Color(0xFFE65100), fontWeight: FontWeight.bold),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                               Container(
                                 padding: const EdgeInsets.all(8),
                                 decoration: BoxDecoration(color: const Color(0xFFF7FBF7), borderRadius: BorderRadius.circular(8)),

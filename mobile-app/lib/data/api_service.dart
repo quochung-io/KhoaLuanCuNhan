@@ -201,6 +201,47 @@ class ApiService {
     }
   }
 
+  static Future<Map<String, dynamic>?> getProductById(int productId) async {
+    final url = Uri.parse('${AppConstants.baseUrl}/api/products/$productId');
+    try {
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static Future<List<String>> getAutocomplete(String prefix) async {
+    if (prefix.trim().isEmpty) return [];
+    final url = Uri.parse('${AppConstants.baseUrl}/api/products/autocomplete?prefix=${Uri.encodeComponent(prefix)}');
+    try {
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as List<dynamic>;
+        return data.map((e) => (e['productName'] ?? '').toString()).toList();
+      }
+      return [];
+    } catch (_) {
+      return [];
+    }
+  }
+
+  static Future<List<dynamic>> getFrequentlyBoughtTogether(int productId, {int limit = 6}) async {
+    final url = Uri.parse('${AppConstants.baseUrl}/api/recommendations/frequently-bought-together/$productId?limit=$limit');
+    try {
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as List<dynamic>;
+      }
+      return [];
+    } catch (_) {
+      return [];
+    }
+  }
+
   // ── THUẬT TOÁN GỢI Ý NGỮ CẢNH CARS ────────────────────────────
   static Future<Map<String, dynamic>> getContextAwareRecommendations({int? userId, int limit = 6}) async {
     // 1. Thử gọi gợi ý cá nhân hóa CARS đa nhân tố (For-You) nếu có user
@@ -319,6 +360,19 @@ class ApiService {
   }
 
   // ── HỒ SƠ & TÀI KHOẢN (USERS) ─────────────────────────────────
+  static Future<Map<String, dynamic>?> getUserLoyalty(int userId) async {
+    final url = Uri.parse('${AppConstants.baseUrl}/api/loyalty/$userId');
+    try {
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
   static Future<Map<String, dynamic>> updateProfile(
     int userId, {
     required String fullName,
@@ -464,4 +518,89 @@ class ApiService {
       return [];
     }
   }
+
+  // ── ĐỊA CHỈ & ĐẶT HÀNG (ADDRESS & ORDERS) ───────────────────────────
+  static Future<List<dynamic>> getAddresses(int userId) async {
+    final url = Uri.parse('${AppConstants.baseUrl}/api/addresses/user/$userId');
+    try {
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as List<dynamic>;
+      }
+      return [];
+    } catch (_) {
+      return [];
+    }
+  }
+
+  static Future<Map<String, dynamic>> createAddress(Map<String, dynamic> data) async {
+    final url = Uri.parse('${AppConstants.baseUrl}/api/addresses');
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(data),
+      );
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+      
+      try {
+        final errorBody = jsonDecode(response.body);
+        if (errorBody['message'] != null) {
+          throw Exception(errorBody['message']);
+        }
+      } catch (_) {}
+      
+      throw Exception('Lỗi thêm địa chỉ (${response.statusCode}): ${response.body}');
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  static Future<Map<String, dynamic>> createOrder(Map<String, dynamic> data) async {
+    final url = Uri.parse('${AppConstants.baseUrl}/api/orders');
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(data),
+      );
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+      throw Exception('Lỗi tạo đơn hàng (${response.statusCode}): ${response.body}');
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // ── THÔNG BÁO (NOTIFICATIONS) ─────────────────────────────────
+  static Future<List<dynamic>> getUserNotifications(int userId) async {
+    final url = Uri.parse('${AppConstants.baseUrl}/api/notifications/user/$userId');
+    try {
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as List<dynamic>;
+      }
+      return [];
+    } catch (_) {
+      return [];
+    }
+  }
+
+  static Future<void> markNotificationAsRead(int notificationId) async {
+    final url = Uri.parse('${AppConstants.baseUrl}/api/notifications/$notificationId/read');
+    try {
+      await http.put(url);
+    } catch (_) {}
+  }
+
+  static Future<void> markAllNotificationsAsRead(int userId) async {
+    final url = Uri.parse('${AppConstants.baseUrl}/api/notifications/user/$userId/read-all');
+    try {
+      await http.put(url);
+    } catch (_) {}
+  }
 }
+

@@ -54,7 +54,9 @@ export default function ProfilePage() {
   const [loyaltyPoints, setLoyaltyPoints] = useState(0);
   const [userTier, setUserTier] = useState<string>('Mới');
   const [totalSpentYear, setTotalSpentYear] = useState(0);
-  const nextTierSpend = 2000000;
+  const [pointRate, setPointRate] = useState(0.01);
+  const [nextTierSpend, setNextTierSpend] = useState(2000000);
+  const [nextTierName, setNextTierName] = useState('Bạc');
   const [loyaltySubTab, setLoyaltySubTab] = useState<'benefits' | 'rewards' | 'history'>('benefits');
   const [pointHistory, setPointHistory] = useState<any[]>([]);
   const [redeemSuccess, setRedeemSuccess] = useState('');
@@ -460,6 +462,20 @@ export default function ProfilePage() {
         setLoyaltyPoints(data.currentPoints ?? 0);
         setTotalSpentYear(data.totalSpentYear ?? 0);
         setUserTier(data.tier ?? 'Mới');
+        setPointRate(data.pointRate ?? 0.01);
+        
+        if (data.tiers && Array.isArray(data.tiers)) {
+          const currentTotal = data.totalSpentYear ?? 0;
+          const nextTier = data.tiers.find((t: any) => t.minSpend > currentTotal);
+          if (nextTier) {
+            setNextTierSpend(nextTier.minSpend);
+            setNextTierName(nextTier.tierName);
+          } else {
+            setNextTierSpend(currentTotal);
+            setNextTierName('Max');
+          }
+        }
+        
         if (data.history) setPointHistory(data.history);
         if (data.vouchers) setUserVouchers(data.vouchers);
       }
@@ -1603,24 +1619,32 @@ export default function ProfilePage() {
                         Hạng {userTier === 'Gold' ? 'Vàng' : userTier}
                       </div>
                       <div style={{ fontSize: '12px', color: 'var(--ink-soft)', marginTop: '6px' }}>
-                        Tích <strong>2%</strong> giá trị mỗi đơn hàng
+                        Tích <strong>{(pointRate * 100).toFixed(1)}%</strong> giá trị mỗi đơn hàng
                       </div>
                     </div>
                   </div>
 
                   {/* Thanh tiến trình đơn giản */}
-                  <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid var(--line)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12.5px', color: 'var(--ink-soft)', marginBottom: '6px' }}>
-                      <span>Chi tiêu tích lũy: <strong style={{ color: 'var(--ink)' }}>{totalSpentYear.toLocaleString('vi-VN')} đ</strong></span>
-                      <span>Mục tiêu Hạng Kim Cương: <strong style={{ color: 'var(--ink)' }}>{nextTierSpend.toLocaleString('vi-VN')} đ</strong></span>
+                  {nextTierName !== 'Max' ? (
+                    <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid var(--line)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12.5px', color: 'var(--ink-soft)', marginBottom: '6px' }}>
+                        <span>Chi tiêu tích lũy: <strong style={{ color: 'var(--ink)' }}>{totalSpentYear.toLocaleString('vi-VN')} đ</strong></span>
+                        <span>Mục tiêu Hạng {nextTierName}: <strong style={{ color: 'var(--ink)' }}>{nextTierSpend.toLocaleString('vi-VN')} đ</strong></span>
+                      </div>
+                      <div style={{ width: '100%', height: '8px', backgroundColor: 'var(--line)', borderRadius: '999px', overflow: 'hidden' }}>
+                        <div style={{ width: `${Math.min(100, (totalSpentYear / nextTierSpend) * 100)}%`, height: '100%', backgroundColor: 'var(--green-700)', borderRadius: '999px' }} />
+                      </div>
+                      <div style={{ fontSize: '12px', color: 'var(--ink-soft)', marginTop: '6px' }}>
+                        Chi tiêu thêm <strong>{(nextTierSpend - totalSpentYear).toLocaleString('vi-VN')} đ</strong> để nâng hạng {nextTierName}.
+                      </div>
                     </div>
-                    <div style={{ width: '100%', height: '8px', backgroundColor: 'var(--line)', borderRadius: '999px', overflow: 'hidden' }}>
-                      <div style={{ width: `${Math.min(100, (totalSpentYear / nextTierSpend) * 100)}%`, height: '100%', backgroundColor: 'var(--green-700)', borderRadius: '999px' }} />
+                  ) : (
+                    <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid var(--line)' }}>
+                      <div style={{ fontSize: '13px', color: 'var(--green-700)', fontWeight: 'bold' }}>
+                        🎉 Chúc mừng bạn đã đạt Hạng cao nhất!
+                      </div>
                     </div>
-                    <div style={{ fontSize: '12px', color: 'var(--ink-soft)', marginTop: '6px' }}>
-                      Chi tiêu thêm <strong>{(nextTierSpend - totalSpentYear).toLocaleString('vi-VN')} đ</strong> để nâng hạng Kim Cương (Tích 3% + Freeship không giới hạn).
-                    </div>
-                  </div>
+                  )}
                 </div>
 
                 {/* 2. Menu Chức Năng Đơn Giản */}
@@ -1690,29 +1714,29 @@ export default function ProfilePage() {
                           </tr>
                         </thead>
                         <tbody>
-                          <tr style={{ borderBottom: '1px solid var(--line)' }}>
-                            <td style={{ padding: '12px 14px', fontWeight: '600' }}>Thành viên Mới</td>
-                            <td style={{ padding: '12px 14px', color: 'var(--ink-soft)' }}>0 đ</td>
-                            <td style={{ padding: '12px 14px', color: 'var(--green-700)', fontWeight: '600' }}>1.0% (1.000đ = 1đ)</td>
-                            <td style={{ padding: '12px 14px', color: 'var(--ink-soft)' }}>Tặng 500 điểm khi tạo tài khoản</td>
+                          <tr style={{ borderBottom: '1px solid var(--line)', backgroundColor: userTier === 'Mới' ? 'var(--green-100)' : 'transparent' }}>
+                            <td style={{ padding: '12px 14px', fontWeight: userTier === 'Mới' ? '700' : '600', color: userTier === 'Mới' ? 'var(--green-900)' : 'inherit' }}>Thành viên Mới {userTier === 'Mới' ? '(Bạn)' : ''}</td>
+                            <td style={{ padding: '12px 14px', color: userTier === 'Mới' ? 'var(--green-900)' : 'var(--ink-soft)' }}>0 đ</td>
+                            <td style={{ padding: '12px 14px', color: userTier === 'Mới' ? 'var(--green-900)' : 'var(--green-700)', fontWeight: userTier === 'Mới' ? '700' : '600' }}>1.0% (1.000đ = 1đ)</td>
+                            <td style={{ padding: '12px 14px', color: userTier === 'Mới' ? 'var(--green-900)' : 'var(--ink-soft)' }}>Tặng 500 điểm khi tạo tài khoản</td>
                           </tr>
-                          <tr style={{ borderBottom: '1px solid var(--line)' }}>
-                            <td style={{ padding: '12px 14px', fontWeight: '600' }}>Hạng Bạc</td>
-                            <td style={{ padding: '12px 14px', color: 'var(--ink-soft)' }}>2.000.000 đ</td>
-                            <td style={{ padding: '12px 14px', color: 'var(--green-700)', fontWeight: '600' }}>1.5%</td>
-                            <td style={{ padding: '12px 14px', color: 'var(--ink-soft)' }}>1 mã Freeship / tháng, x2 điểm sinh nhật</td>
+                          <tr style={{ borderBottom: '1px solid var(--line)', backgroundColor: userTier === 'Bạc' ? 'var(--green-100)' : 'transparent' }}>
+                            <td style={{ padding: '12px 14px', fontWeight: userTier === 'Bạc' ? '700' : '600', color: userTier === 'Bạc' ? 'var(--green-900)' : 'inherit' }}>Hạng Bạc {userTier === 'Bạc' ? '(Bạn)' : ''}</td>
+                            <td style={{ padding: '12px 14px', color: userTier === 'Bạc' ? 'var(--green-900)' : 'var(--ink-soft)' }}>2.000.000 đ</td>
+                            <td style={{ padding: '12px 14px', color: userTier === 'Bạc' ? 'var(--green-900)' : 'var(--green-700)', fontWeight: userTier === 'Bạc' ? '700' : '600' }}>1.5%</td>
+                            <td style={{ padding: '12px 14px', color: userTier === 'Bạc' ? 'var(--green-900)' : 'var(--ink-soft)' }}>1 mã Freeship / tháng, x2 điểm sinh nhật</td>
                           </tr>
-                          <tr style={{ borderBottom: '1px solid var(--line)', backgroundColor: 'var(--green-100)' }}>
-                            <td style={{ padding: '12px 14px', fontWeight: '700', color: 'var(--green-900)' }}>Hạng Vàng (Bạn)</td>
-                            <td style={{ padding: '12px 14px', fontWeight: '600', color: 'var(--green-900)' }}>5.000.000 đ</td>
-                            <td style={{ padding: '12px 14px', color: 'var(--green-900)', fontWeight: '700' }}>2.0%</td>
-                            <td style={{ padding: '12px 14px', color: 'var(--green-900)' }}>3 mã Freeship / tháng, quà đặc sản sinh nhật</td>
+                          <tr style={{ borderBottom: '1px solid var(--line)', backgroundColor: userTier === 'Vàng' ? 'var(--green-100)' : 'transparent' }}>
+                            <td style={{ padding: '12px 14px', fontWeight: userTier === 'Vàng' ? '700' : '600', color: userTier === 'Vàng' ? 'var(--green-900)' : 'inherit' }}>Hạng Vàng {userTier === 'Vàng' ? '(Bạn)' : ''}</td>
+                            <td style={{ padding: '12px 14px', color: userTier === 'Vàng' ? 'var(--green-900)' : 'var(--ink-soft)' }}>5.000.000 đ</td>
+                            <td style={{ padding: '12px 14px', color: userTier === 'Vàng' ? 'var(--green-900)' : 'var(--green-700)', fontWeight: userTier === 'Vàng' ? '700' : '600' }}>2.0%</td>
+                            <td style={{ padding: '12px 14px', color: userTier === 'Vàng' ? 'var(--green-900)' : 'var(--ink-soft)' }}>3 mã Freeship / tháng, quà đặc sản sinh nhật</td>
                           </tr>
-                          <tr style={{ borderBottom: '1px solid var(--line)' }}>
-                            <td style={{ padding: '12px 14px', fontWeight: '600' }}>Kim Cương</td>
-                            <td style={{ padding: '12px 14px', color: 'var(--ink-soft)' }}>10.000.000 đ</td>
-                            <td style={{ padding: '12px 14px', color: 'var(--green-700)', fontWeight: '600' }}>3.0%</td>
-                            <td style={{ padding: '12px 14px', color: 'var(--ink-soft)' }}>Miễn phí ship toàn bộ, hỗ trợ riêng</td>
+                          <tr style={{ borderBottom: '1px solid var(--line)', backgroundColor: userTier === 'Kim Cương' ? 'var(--green-100)' : 'transparent' }}>
+                            <td style={{ padding: '12px 14px', fontWeight: userTier === 'Kim Cương' ? '700' : '600', color: userTier === 'Kim Cương' ? 'var(--green-900)' : 'inherit' }}>Kim Cương {userTier === 'Kim Cương' ? '(Bạn)' : ''}</td>
+                            <td style={{ padding: '12px 14px', color: userTier === 'Kim Cương' ? 'var(--green-900)' : 'var(--ink-soft)' }}>10.000.000 đ</td>
+                            <td style={{ padding: '12px 14px', color: userTier === 'Kim Cương' ? 'var(--green-900)' : 'var(--green-700)', fontWeight: userTier === 'Kim Cương' ? '700' : '600' }}>3.0%</td>
+                            <td style={{ padding: '12px 14px', color: userTier === 'Kim Cương' ? 'var(--green-900)' : 'var(--ink-soft)' }}>Miễn phí ship toàn bộ, hỗ trợ riêng</td>
                           </tr>
                         </tbody>
                       </table>

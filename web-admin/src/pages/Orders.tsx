@@ -17,6 +17,7 @@ interface OrderItem {
 
 interface Order {
   orderId: number;
+  orderCode?: string;
   customerId: number;
   customer?: {
     fullName: string;
@@ -281,10 +282,10 @@ export const Orders: React.FC = () => {
       title: 'Mã Đơn', 
       dataIndex: 'orderId', 
       key: 'orderId', 
-      width: 95,
+      width: 140,
       sorter: (a: Order, b: Order) => a.orderId - b.orderId,
       defaultSortOrder: 'descend' as const,
-      render: (id: number) => <Tag color="geekblue" style={{ fontWeight: 600 }}>#{id}</Tag>
+      render: (id: number, record: Order) => <Tag color="geekblue" style={{ fontWeight: 600 }}>{record.orderCode || `#${id}`}</Tag>
     },
     { 
       title: 'Khách hàng & Liên hệ', 

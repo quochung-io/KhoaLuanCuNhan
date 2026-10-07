@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../data/api_service.dart';
+
 class NotificationItem {
   final String id;
   final String title;
@@ -16,10 +18,36 @@ class NotificationItem {
     required this.type,
     this.isRead = false,
   });
+
+  factory NotificationItem.fromJson(Map<String, dynamic> json) {
+    return NotificationItem(
+      id: json['notificationId'].toString(),
+      title: json['title'] ?? '',
+      message: json['message'] ?? '',
+      time: _formatDate(json['createdAt']),
+      type: (json['type'] ?? 'system').toLowerCase(),
+      isRead: json['isRead'] ?? false,
+    );
+  }
+
+  static String _formatDate(String? isoDate) {
+    if (isoDate == null) return '';
+    try {
+      final date = DateTime.parse(isoDate);
+      final diff = DateTime.now().difference(date);
+      if (diff.inDays > 0) return '${diff.inDays} ngày trước';
+      if (diff.inHours > 0) return '${diff.inHours} giờ trước';
+      if (diff.inMinutes > 0) return '${diff.inMinutes} phút trước';
+      return 'Vừa xong';
+    } catch (_) {
+      return '';
+    }
+  }
 }
 
 class NotificationsScreen extends StatefulWidget {
-  const NotificationsScreen({super.key});
+  final Map<String, dynamic>? user;
+  const NotificationsScreen({super.key, this.user});
 
   @override
   State<NotificationsScreen> createState() => _NotificationsScreenState();
@@ -27,67 +55,61 @@ class NotificationsScreen extends StatefulWidget {
 
 class _NotificationsScreenState extends State<NotificationsScreen> {
   String _selectedCategory = 'all';
+  List<NotificationItem> _notifications = [];
+  bool _isLoading = true;
 
-  final List<NotificationItem> _notifications = [
-    NotificationItem(
-      id: '1',
-      title: 'Đơn hàng #ORD-8823 đang được giao!',
-      message: 'Shipper Nguyễn Văn B đang giao gói nông sản tươi đến địa chỉ của bạn. Dự kiến giao trong 30 phút.',
-      time: '10 phút trước',
-      type: 'order',
-      isRead: false,
-    ),
-    NotificationItem(
-      id: '2',
-      title: 'Xác nhận đơn hàng thành công #ORD-8823',
-      message: 'Hợp tác xã Nông Sản Đà Lạt đã tiếp nhận đơn và đang chuẩn bị những luống rau thu hoạch tươi nhất.',
-      time: '2 giờ trước',
-      type: 'order',
-      isRead: false,
-    ),
-    NotificationItem(
-      id: '3',
-      title: 'Ưu đãi Combo Gia Đình: Giảm 20%',
-      message: 'Combo rau củ quả tuần mới đã có mặt. Nhập mã TUOILANH20 để nhận ưu đãi ngay hôm nay!',
-      time: 'Hôm qua',
-      type: 'promo',
-      isRead: true,
-    ),
-    NotificationItem(
-      id: '4',
-      title: 'Tích luỹ +150 Lành Point thành công',
-      message: 'Bạn đã nhận 150 điểm thưởng từ đơn hàng hoàn thành #ORD-7612. Dùng điểm để đổi voucher giảm giá!',
-      time: '2 ngày trước',
-      type: 'system',
-      isRead: true,
-    ),
-    NotificationItem(
-      id: '5',
-      title: 'Lô Cải bó xôi mới đạt chuẩn VietGAP',
-      message: 'Hợp tác xã vừa cập nhật kết quả kiểm định Lab QC không dư lượng thuốc BVTV. Tra cứu ngay!',
-      time: '3 ngày trước',
-      type: 'system',
-      isRead: true,
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadNotifications();
+  }
+
+  Future<void> _loadNotifications() async {
+    if (widget.user == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
+    
+    try {
+      final userId = widget.user!['userId'];
+      final data = await ApiService.getUserNotifications(userId);
+      if (mounted) {
+        setState(() {
+          _notifications = data.map((json) => NotificationItem.fromJson(json)).toList();
+          _isLoading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
 
   List<NotificationItem> get _filteredNotifications {
     if (_selectedCategory == 'all') return _notifications;
-    return _notifications.where((n) => n.type == _selectedCategory).toList();
+    if (_selectedCategory == 'order') return _notifications.where((n) => n.type == 'order').toList();
+    if (_selectedCategory == 'promo') return _notifications.where((n) => n.type == 'promotion' || n.type == 'promo').toList();
+    return _notifications.where((n) => n.type == 'system' || n.type == 'supplier').toList();
   }
 
-  void _markAllAsRead() {
+  Future<void> _markAllAsRead() async {
+    if (widget.user != null) {
+      await ApiService.markAllNotificationsAsRead(widget.user!['userId']);
+    }
     setState(() {
       for (var n in _notifications) {
         n.isRead = true;
       }
     });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Đã đánh dấu tất cả là đã đọc'),
-        backgroundColor: Color(0xFF2E7D32),
-      ),
-    );
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Đã đánh dấu tất cả là đã đọc'),
+          backgroundColor: Color(0xFF2E7D32),
+        ),
+      );
+    }
   }
 
   @override
@@ -235,7 +257,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
     return GestureDetector(
       onTap: () {
-        setState(() => item.isRead = true);
+        if (!item.isRead) {
+          setState(() => item.isRead = true);
+          ApiService.markNotificationAsRead(int.parse(item.id));
+        }
       },
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),

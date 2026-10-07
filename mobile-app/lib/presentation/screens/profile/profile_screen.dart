@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 import '../../../data/api_service.dart';
 import '../../../data/models/cart_item_model.dart';
+import '../../../data/models/product_model.dart';
 import '../cart/cart_screen.dart';
 import '../chat/chat_screen.dart';
 import '../auth/login_screen.dart';
 import 'edit_profile_screen.dart';
 import 'orders_management_screen.dart';
+import 'address_management_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   final Map<String, dynamic>? user;
@@ -13,6 +17,7 @@ class ProfileScreen extends StatefulWidget {
   final Function(int, int)? onUpdateCartQty;
   final VoidCallback? onClearCart;
   final VoidCallback? onOpenCart;
+  final Function(Product, {int qty})? onAddToCart;
 
   const ProfileScreen({
     super.key,
@@ -21,6 +26,7 @@ class ProfileScreen extends StatefulWidget {
     this.onUpdateCartQty,
     this.onClearCart,
     this.onOpenCart,
+    this.onAddToCart,
   });
 
   @override
@@ -28,42 +34,82 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  late int _userId;
-  late String _fullName;
-  late String _email;
-  late String _phone;
-  late String _avatarUrl;
-  String _gender = 'Nam';
-  String _dob = '15/08/1995';
-  String _cccd = '079202001234';
-  String _membershipTier = 'Thành viên Vàng ⭐';
+  int _userId = 3;
+  String _fullName = 'Khách hàng';
+  String _email = '';
+  String _phone = '';
+  String _avatarUrl = '';
+  String _gender = 'Chưa cập nhật';
+  String _dob = 'Chưa cập nhật';
+  String _cccd = 'Chưa cập nhật';
+  String _membershipTier = 'Đang tải...';
+  int _loyaltyPoints = 0;
 
   List<dynamic> _orders = [];
 
   @override
   void initState() {
     super.initState();
-    _userId = widget.user?['userId'] ?? widget.user?['id'] ?? 3;
-    _fullName = widget.user?['fullName'] ?? 'Nguyễn Minh Anh';
-    _email = widget.user?['email'] ?? 'minhanh@gmail.com';
-    _phone = widget.user?['phone'] ?? '0912345678';
-    _avatarUrl = widget.user?['avatarUrl'] ?? '';
+    _initUserData();
+  }
 
-    // Căn cứ theo vai trò hoặc điểm số để xác định hạng thành viên
-    final role = widget.user?['role']?.toString().toLowerCase();
-    if (role == 'admin') {
-      _membershipTier = 'Quản trị viên 🛡️';
-    } else if (role == 'supplier') {
-      _membershipTier = 'Nhà vườn LÀNH 🏢';
-    } else {
-      _membershipTier = 'Thành viên Vàng ⭐';
+  Future<void> _initUserData() async {
+    Map<String, dynamic>? userData = widget.user;
+    
+    if (userData == null) {
+      final prefs = await SharedPreferences.getInstance();
+      final userStr = prefs.getString('customer_user');
+      if (userStr != null) {
+        userData = jsonDecode(userStr);
+      }
     }
 
-    _fetchOrders();
+    if (mounted) {
+      setState(() {
+        _userId = userData?['userId'] ?? userData?['id'] ?? 3;
+        _fullName = userData?['fullName'] ?? 'Khách hàng';
+        _email = userData?['email'] ?? '';
+        _phone = userData?['phone'] ?? '';
+        _avatarUrl = userData?['avatarUrl'] ?? '';
+
+        final role = userData?['role']?.toString().toLowerCase();
+        if (role == 'admin') {
+          _membershipTier = 'Quản trị viên 🛡️';
+        } else if (role == 'supplier') {
+          _membershipTier = 'Nhà vườn LÀNH 🏢';
+        } else {
+          _membershipTier = 'Đang tải...';
+          _fetchLoyalty();
+        }
+      });
+      _fetchOrders();
+    }
+  }
+
+  Future<void> _fetchLoyalty() async {
+    try {
+      final loyaltyData = await ApiService.getUserLoyalty(_userId);
+      if (mounted && loyaltyData != null) {
+        setState(() {
+          final tierStr = loyaltyData['tier']?.toString() ?? 'Mới';
+          if (tierStr == 'Mới') _membershipTier = 'Thành viên Mới 🌱';
+          else if (tierStr == 'Bạc') _membershipTier = 'Thành viên Bạc 🥈';
+          else if (tierStr == 'Vàng') _membershipTier = 'Thành viên Vàng 🥇';
+          else if (tierStr == 'Kim Cương') _membershipTier = 'Thành viên Kim Cương 💎';
+          else _membershipTier = 'Thành viên $tierStr';
+          
+          _loyaltyPoints = loyaltyData['currentPoints'] ?? 0;
+        });
+      }
+    } catch (_) {}
   }
 
   Future<void> _fetchOrders() async {
     try {
+      final role = widget.user?['role']?.toString().toLowerCase();
+      if (role != 'admin' && role != 'supplier') {
+        _fetchLoyalty();
+      }
       final orders = await ApiService.getCustomerOrders(_userId);
       if (mounted) {
         setState(() {
@@ -140,6 +186,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         builder: (ctx) => OrdersManagementScreen(
           initialTabIndex: tabIndex,
           userId: _userId,
+          onAddToCart: widget.onAddToCart,
         ),
       ),
     ).then((_) => _fetchOrders());
@@ -489,10 +536,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               icon: Icons.monetization_on_outlined,
                               color: const Color(0xFF2E7D32),
                               label: 'LÀNH Points',
-                              subLabel: '350 điểm',
+                              subLabel: '$_loyaltyPoints điểm',
                               onTap: () {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Số dư: 350 LÀNH Points (tương đương 35.000₫)')),
+                                  SnackBar(content: Text('Số dư: $_loyaltyPoints LÀNH Points')),
                                 );
                               },
                             ),
@@ -500,10 +547,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               icon: Icons.location_on_outlined,
                               color: Colors.blue,
                               label: 'Sổ địa chỉ',
-                              subLabel: '2 địa chỉ',
+                              subLabel: 'Quản lý',
                               onTap: () {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Địa chỉ chính: 123 Nguyễn Huệ, Quận 1, TP.HCM')),
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => AddressManagementScreen(
+                                      userId: _userId,
+                                    ),
+                                  ),
                                 );
                               },
                             ),
@@ -610,8 +662,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             actions: [
                               TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Hủy', style: TextStyle(color: Colors.grey))),
                               ElevatedButton(
-                                onPressed: () {
+                                onPressed: () async {
                                   Navigator.pop(ctx);
+                                  final prefs = await SharedPreferences.getInstance();
+                                  await prefs.remove('customer_user');
+                                  if (!mounted) return;
                                   Navigator.pushAndRemoveUntil(
                                     context,
                                     MaterialPageRoute(builder: (c) => const LoginScreen()),

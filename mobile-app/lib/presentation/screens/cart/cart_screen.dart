@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../data/models/cart_item_model.dart';
+import '../checkout/checkout_screen.dart';
 
-class CartScreen extends StatelessWidget {
+class CartScreen extends StatefulWidget {
   final List<CartItem> cartItems;
   final Function(int, int) onUpdateQty;
   final VoidCallback onCheckoutSuccess;
@@ -14,14 +15,19 @@ class CartScreen extends StatelessWidget {
   });
 
   @override
+  State<CartScreen> createState() => _CartScreenState();
+}
+
+class _CartScreenState extends State<CartScreen> {
+  @override
   Widget build(BuildContext context) {
-    final totalAmount = cartItems.fold<int>(0, (sum, item) => sum + item.product.price * item.qty);
+    final totalAmount = widget.cartItems.fold<int>(0, (sum, item) => sum + item.product.price * item.qty);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Giỏ hàng của bạn'),
       ),
-      body: cartItems.isEmpty
+      body: widget.cartItems.isEmpty
           ? Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -38,9 +44,9 @@ class CartScreen extends StatelessWidget {
               children: [
                 Expanded(
                   child: ListView.builder(
-                    itemCount: cartItems.length,
+                    itemCount: widget.cartItems.length,
                     itemBuilder: (context, index) {
-                      final item = cartItems[index];
+                      final item = widget.cartItems[index];
                       return _buildCartItemTile(context, item);
                     },
                   ),
@@ -92,7 +98,10 @@ class CartScreen extends StatelessWidget {
           Row(
             children: [
               IconButton(
-                onPressed: () => onUpdateQty(item.product.id, -1),
+                onPressed: () {
+                  widget.onUpdateQty(item.product.id, -1);
+                  setState(() {});
+                },
                 icon: const Icon(Icons.remove_circle_outline, color: Color(0xFF8D9E90), size: 20),
               ),
               Text(
@@ -100,7 +109,10 @@ class CartScreen extends StatelessWidget {
                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
               ),
               IconButton(
-                onPressed: () => onUpdateQty(item.product.id, 1),
+                onPressed: () {
+                  widget.onUpdateQty(item.product.id, 1);
+                  setState(() {});
+                },
                 icon: const Icon(Icons.add_circle_outline, color: Color(0xFF2E7D32), size: 20),
               ),
             ],
@@ -161,98 +173,35 @@ class CartScreen extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 18),
-            // Thanh toán giả lập (Mock Checkout Flow)
+            // Thanh toán thực tế
             SizedBox(
               width: double.infinity,
               height: 48,
               child: ElevatedButton(
                 onPressed: () {
-                  _showMockCheckoutDialog(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (ctx) => CheckoutScreen(
+                        cartItems: widget.cartItems,
+                        onCheckoutSuccess: widget.onCheckoutSuccess,
+                      ),
+                    ),
+                  ).then((_) {
+                    setState((){});
+                  });
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF2E7D32),
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
                 ),
-                child: const Text('Thanh toán giả lập', style: TextStyle(fontWeight: FontWeight.bold)),
+                child: const Text('Thanh toán', style: TextStyle(fontWeight: FontWeight.bold)),
               ),
             )
           ],
         ),
       ),
-    );
-  }
-
-  void _showMockCheckoutDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext ctx) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Row(
-            children: [
-              Icon(Icons.payment, color: Color(0xFFFF9800)),
-              SizedBox(width: 8),
-              Text('Giả lập thanh toán', style: TextStyle(fontWeight: FontWeight.bold)),
-            ],
-          ),
-          content: const Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Đây là tính năng thanh toán giả lập (Sandbox) phục vụ việc chạy demo khóa luận tốt nghiệp.',
-                style: TextStyle(fontSize: 13, color: Color(0xFF4B5D50), height: 1.4),
-              ),
-              SizedBox(height: 10),
-              Text(
-                'Hệ thống sẽ ghi nhận trạng thái đơn hàng là ĐÃ THANH TOÁN và trừ tồn kho các lô hàng tương ứng theo chuẩn FEFO.',
-                style: TextStyle(fontSize: 13, color: Color(0xFF4B5D50), height: 1.4),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Hủy', style: TextStyle(color: Color(0xFF8D9E90))),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(ctx);
-                onCheckoutSuccess();
-                showDialog(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                    content: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.check_circle, color: Color(0xFF2E7D32), size: 56),
-                        const SizedBox(height: 14),
-                        const Text('Đặt hàng thành công!', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                        const SizedBox(height: 6),
-                        const Text(
-                          'Đơn hàng của bạn đang được điều phối giao trong 2 giờ. Bạn có thể theo dõi hành trình ở mục Cá nhân.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 12, color: Color(0xFF4B5D50)),
-                        ),
-                        const SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: () => Navigator.pop(context),
-                          style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF2E7D32)),
-                          child: const Text('Đồng ý', style: TextStyle(color: Colors.white)),
-                        )
-                      ],
-                    ),
-                  ),
-                );
-              },
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF2E7D32)),
-              child: const Text('Xác nhận thanh toán', style: TextStyle(color: Colors.white)),
-            ),
-          ],
-        );
-      },
     );
   }
 }
