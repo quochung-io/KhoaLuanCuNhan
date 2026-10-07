@@ -799,8 +799,9 @@ export const ProductReports: React.FC = () => {
         {
           name: 'Tổn thất danh mục',
           type: 'pie',
-          radius: ['45%', '72%'],
-          center: ['50%', '48%'],
+          radius: ['40%', '62%'],
+          center: ['50%', '58%'],
+          avoidLabelOverlap: true,
           itemStyle: {
             borderRadius: 8,
             borderColor: '#fff',
@@ -808,10 +809,14 @@ export const ProductReports: React.FC = () => {
           },
           label: {
             show: true,
+            position: 'inside',
             formatter: '{b}\n{d}%',
+            color: '#fff',
             fontSize: 11,
             fontWeight: 600
           },
+          labelLine: { show: false },
+          labelLayout: { hideOverlap: true },
           data: data.length > 0 ? data : [{ name: 'Không có tổn thất', value: 0 }]
         }
       ]
@@ -845,13 +850,21 @@ export const ProductReports: React.FC = () => {
         top: 60,
         left: 20,
         right: 20,
-        bottom: 30,
+        bottom: 55,
         containLabel: true
       },
       xAxis: {
         type: 'category',
         data: names.length > 0 ? names : ['Chưa có dữ liệu'],
-        axisLabel: { interval: 0, rotate: 15, fontSize: 11 }
+        axisLabel: {
+          interval: 0,
+          rotate: 0,
+          align: 'center',
+          width: 170,
+          overflow: 'truncate',
+          ellipsis: '…',
+          fontSize: 11
+        }
       },
       yAxis: {
         type: 'value',
@@ -1574,15 +1587,28 @@ export const ProductReports: React.FC = () => {
       </Card>
 
       {/* ── KPI CARDS CÓ KHẢ NĂNG NHẤN VÀO ĐỂ DRILL DOWN RA DỮ LIỆU CỤ THỂ ── */}
-      <Row gutter={[16, 16]} style={{ marginBottom: 20 }}>
+      <Row
+        gutter={[16, 16]}
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 260px), 1fr))',
+          gridAutoRows: '1fr',
+          alignItems: 'stretch',
+          marginBottom: 20,
+        }}
+      >
         {/* 1. Doanh thu -> Drilldown danh sách đơn hàng đóng góp doanh thu */}
-        <Col xs={24} sm={12} lg={8} xl={4} style={{ flex: '1 1 200px' }}>
+          <Col style={{ minWidth: 0, display: 'flex' }}>
           <Tooltip title="👉 Nhấn để xem danh sách chi tiết các đơn hàng đóng góp doanh thu">
             <Card
               hoverable
               onClick={() => handleOpenDrilldown('revenue')}
               bordered={false}
               style={{
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
                 background: '#F6FFED',
                 borderLeft: '5px solid #52C41A',
                 borderRadius: 8,
@@ -1611,13 +1637,17 @@ export const ProductReports: React.FC = () => {
         </Col>
 
         {/* 2. Sản lượng bán -> Drilldown danh sách chi tiết sản phẩm đã bán */}
-        <Col xs={24} sm={12} lg={8} xl={4} style={{ flex: '1 1 200px' }}>
+          <Col style={{ minWidth: 0, display: 'flex' }}>
           <Tooltip title="👉 Nhấn để xem danh sách chi tiết các mặt hàng đã bán trong kỳ">
             <Card
               hoverable
               onClick={() => handleOpenDrilldown('sold')}
               bordered={false}
               style={{
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
                 background: '#E6F7FF',
                 borderLeft: '5px solid #1890FF',
                 borderRadius: 8,
@@ -1645,13 +1675,17 @@ export const ProductReports: React.FC = () => {
         </Col>
 
         {/* 3. Tồn kho toàn hệ thống -> Drilldown toàn bộ lô hàng FEFO & cảnh báo cận hạn */}
-        <Col xs={24} sm={12} lg={8} xl={4} style={{ flex: '1 1 200px' }}>
+          <Col style={{ minWidth: 0, display: 'flex' }}>
           <Tooltip title="👉 Nhấn để xem danh sách toàn bộ các lô hàng tồn kho (FEFO)">
             <Card
               hoverable
               onClick={() => handleOpenDrilldown('inventory')}
               bordered={false}
               style={{
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
                 background: '#FFF7E6',
                 borderLeft: '5px solid #FA8C16',
                 borderRadius: 8,
@@ -1678,13 +1712,17 @@ export const ProductReports: React.FC = () => {
         </Col>
 
         {/* 4. Quản lý Hoàn kho (Rollback & Returns) -> Drilldown chi tiết nhật ký đơn hủy / trả hàng */}
-        <Col xs={24} sm={12} lg={8} xl={4} style={{ flex: '1 1 200px' }}>
+          <Col style={{ minWidth: 0, display: 'flex' }}>
           <Tooltip title="👉 Nhấn để xem nhật ký các đơn hàng bị Hủy / Trả hàng và lịch sử hoàn kho ACID">
             <Card
               hoverable
               onClick={() => handleOpenDrilldown('returns')}
               bordered={false}
               style={{
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
                 background: '#FFF1F0',
                 borderLeft: '5px solid #FF4D4F',
                 borderRadius: 8,
@@ -1712,13 +1750,17 @@ export const ProductReports: React.FC = () => {
         </Col>
 
         {/* 5. Tổn thất Hàng hết hạn (Loss & Write-off) -> Drilldown chi tiết các lô hàng quá hạn */}
-        <Col xs={24} sm={12} lg={8} xl={4} style={{ flex: '1 1 200px' }}>
+          <Col style={{ minWidth: 0, display: 'flex' }}>
           <Tooltip title="👉 Nhấn để xem danh sách chi tiết các lô hàng hết hạn và tổn thất doanh thu">
             <Card
               hoverable
               onClick={() => handleOpenDrilldown('expired')}
               bordered={false}
               style={{
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
                 background: '#FFF1F0',
                 borderLeft: '5px solid #CF1322',
                 borderRadius: 8,
@@ -1766,7 +1808,7 @@ export const ProductReports: React.FC = () => {
                 color: '#fff',
                 width: 36,
                 height: 36,
-                borderRadius: 10,
+                borderRadius: 8,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -2209,15 +2251,28 @@ export const ProductReports: React.FC = () => {
     {activeMainTab === 'expired' && (
       <div>
         {/* 4 Thẻ KPI Phân Tích Thất Thoát */}
-        <Row gutter={[16, 16]} style={{ marginBottom: 20 }}>
+        <Row
+          gutter={[16, 16]}
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 260px), 1fr))',
+            gridAutoRows: '1fr',
+            alignItems: 'stretch',
+            marginBottom: 20,
+          }}
+        >
           {/* 1. Tổng Tổn Thất Do Hết Hạn */}
-          <Col xs={24} sm={12} lg={6}>
+          <Col style={{ minWidth: 0, display: 'flex' }}>
             <Card
               bordered={false}
               style={{
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
                 background: '#FFF1F0',
                 borderLeft: '5px solid #CF1322',
-                borderRadius: 10,
+                borderRadius: 8,
                 boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
               }}
             >
@@ -2242,13 +2297,17 @@ export const ProductReports: React.FC = () => {
           </Col>
 
           {/* 2. Tỷ Lệ Hao Hụt Nông Sản */}
-          <Col xs={24} sm={12} lg={6}>
+          <Col style={{ minWidth: 0, display: 'flex' }}>
             <Card
               bordered={false}
               style={{
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
                 background: '#FFF7E6',
                 borderLeft: '5px solid #FA8C16',
-                borderRadius: 10,
+                borderRadius: 8,
                 boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
               }}
             >
@@ -2273,13 +2332,17 @@ export const ProductReports: React.FC = () => {
           </Col>
 
           {/* 3. Nguy Cơ Tổn Thất Cận Hạn (30 ngày) */}
-          <Col xs={24} sm={12} lg={6}>
+          <Col style={{ minWidth: 0, display: 'flex' }}>
             <Card
               bordered={false}
               style={{
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
                 background: '#F0F5FF',
                 borderLeft: '5px solid #2F54EB',
-                borderRadius: 10,
+                borderRadius: 8,
                 boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
               }}
             >
@@ -2304,10 +2367,14 @@ export const ProductReports: React.FC = () => {
           </Col>
 
           {/* 4. Doanh Thu Xả Kho FEFO Thu Hồi */}
-          <Col xs={24} sm={12} lg={6}>
+          <Col style={{ minWidth: 0, display: 'flex' }}>
             <Card
               bordered={false}
               style={{
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
                 background: '#F6FFED',
                 borderLeft: '5px solid #52C41A',
                 borderRadius: 10,
@@ -2338,7 +2405,7 @@ export const ProductReports: React.FC = () => {
         {/* 2 Biểu đồ ECharts: Donut Phân bổ theo danh mục & Bar chart tổn thất theo nhà cung cấp */}
         <Row gutter={[16, 16]} style={{ marginBottom: 20 }}>
           <Col xs={24} lg={12}>
-            <Card style={{ borderRadius: 10, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+            <Card style={{ borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
               <ReactECharts
                 option={getExpiredCategoryChartOption()}
                 style={{ height: 320 }}
@@ -2348,7 +2415,7 @@ export const ProductReports: React.FC = () => {
             </Card>
           </Col>
           <Col xs={24} lg={12}>
-            <Card style={{ borderRadius: 10, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+            <Card style={{ borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
               <ReactECharts
                 option={getExpiredSupplierChartOption()}
                 style={{ height: 320 }}
@@ -2361,7 +2428,7 @@ export const ProductReports: React.FC = () => {
 
         {/* Bảng Chi Tiết Toàn Bộ Lô Hàng Hết Hạn & Cận Hạn */}
         <Card
-          style={{ borderRadius: 10, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
+          style={{ borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}
           title={
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
               <Space align="center" size={8}>

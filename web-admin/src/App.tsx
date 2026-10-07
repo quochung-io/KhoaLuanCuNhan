@@ -280,7 +280,7 @@ const AppContent: React.FC = () => {
               <div style={{ fontSize: 16, fontWeight: 700, color: '#0f172a', lineHeight: 1.2 }}>
                 {currentMeta.title}
               </div>
-              <div style={{ fontSize: 12, color: '#64748b' }}>
+              <div style={{ fontSize: 12, color: '#64748b', lineHeight: 1.2 }}>
                 {currentMeta.subtitle}
               </div>
             </div>

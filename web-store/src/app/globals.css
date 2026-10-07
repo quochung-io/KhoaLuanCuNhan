@@ -381,28 +381,28 @@ header{
 
 /* ================= FOOTER ================= */
 footer{background:var(--green-900); color:var(--bg); margin-top:40px; padding-top:64px;}
-[data-theme="dark"] footer{background:var(--surface); border-top:1px solid var(--line);}
+[data-theme="dark"] footer{background:var(--surface); border-top:1px solid var(--line); color:var(--ink);}
 .foot-grid{display:grid; grid-template-columns:1.4fr 1fr 1fr 1fr; gap:40px; padding-bottom:44px;}
 @media (max-width:800px){.foot-grid{grid-template-columns:1fr 1fr; row-gap:32px;}}
 .foot-grid h5{font-size:12.5px; text-transform:uppercase; letter-spacing:.08em; color:#8FAE93; margin-bottom:16px; font-family:var(--font-mono);}
-[data-theme="dark"] .foot-grid h5{color:var(--ink-soft);}
+[data-theme="dark"] .foot-grid h5{color:#C5D2C8;}
 .foot-grid li{margin-bottom:10px; font-size:13.5px; color:#D9E6D9;}
-[data-theme="dark"] .foot-grid li{color:var(--ink-soft);}
+[data-theme="dark"] .foot-grid li{color:#BFCDBF;}
 .foot-grid .logo{color:var(--bg); margin-bottom:14px;}
 [data-theme="dark"] .foot-grid .logo{color:var(--ink);}
 .foot-grid > div:first-child p{font-size:13.5px; color:#AEC4B1; max-width:280px; line-height:1.6;}
-[data-theme="dark"] .foot-grid > div:first-child p{color:var(--ink-soft);}
+[data-theme="dark"] .foot-grid > div:first-child p{color:#BFCDBF;}
 .cert-row{display:flex; gap:10px; margin-top:16px; flex-wrap:wrap;}
 .cert-pill{border:1px solid rgba(255,255,255,.2); border-radius:8px; padding:6px 10px; font-size:10.5px; font-family:var(--font-mono); color:#C9DACB;}
-[data-theme="dark"] .cert-pill{border-color:var(--line); color:var(--ink-soft);}
+[data-theme="dark"] .cert-pill{border-color:var(--line); color:#C5D2C8;}
 .foot-bottom{
   border-top:1px solid rgba(255,255,255,.12); padding:22px 0; display:flex; justify-content:space-between;
   align-items:center; flex-wrap:wrap; gap:14px; font-size:12px; color:#9FB7A1;
 }
-[data-theme="dark"] .foot-bottom{border-color:var(--line); color:var(--ink-soft);}
+[data-theme="dark"] .foot-bottom{border-color:var(--line); color:#AFC1B3;}
 .pay-icons{display:flex; gap:8px;}
 .pay-icons span{border:1px solid rgba(255,255,255,.2); border-radius:6px; padding:4px 8px; font-size:10px; font-family:var(--font-mono);}
-[data-theme="dark"] .pay-icons span{border-color:var(--line);}
+[data-theme="dark"] .pay-icons span{border-color:var(--line); color:#C5D2C8;}
 
 /* ================= CART DRAWER ================= */
 .overlay{position:fixed; inset:0; background:rgba(10,18,12,.4); opacity:0; pointer-events:none; transition:opacity .3s ease; z-index:90;}

@@ -76,3 +76,7 @@ Thumbs.db
 # Uploaded files
 backend/Ecc.WebApi/wwwroot/uploads/*
 !backend/Ecc.WebApi/wwwroot/uploads/.gitkeep
+
+# Playwright MCP & Test Artifacts
+.playwright-mcp/
+*screenshot*.png
