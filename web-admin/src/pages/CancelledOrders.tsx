@@ -178,7 +178,7 @@ export const CancelledOrders: React.FC = () => {
   const totalCancelledCount = cancelledOrders.length;
   const totalCancelledMoney = cancelledOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
   const pendingRefundOrders = cancelledOrders.filter(o => 
-    (o.paymentMethod !== 'COD' && (o.paymentStatus || '').toLowerCase() !== 'refunded')
+    (o.paymentMethod !== 'COD' && (o.paymentStatus || '').toLowerCase() === 'paid')
   );
   const flaggedTicketsCount = tickets.filter(t => t.isFraudFlagged && t.status === 'FLAGGED_REVIEW').length;
   const pendingTicketsCount = tickets.filter(t => t.status === 'PENDING' || t.status === 'FLAGGED_REVIEW').length;
@@ -198,9 +198,13 @@ export const CancelledOrders: React.FC = () => {
     }
     if (filterRefundStatus !== 'all') {
       const p = (o.paymentStatus || '').toLowerCase();
-      if (filterRefundStatus === 'refunded' && p !== 'refunded') return false;
-      if (filterRefundStatus === 'pending_refund' && (p === 'refunded' || o.paymentMethod === 'COD')) return false;
-      if (filterRefundStatus === 'cod_no_refund' && o.paymentMethod !== 'COD') return false;
+      const isPaid = p === 'paid';
+      const isRefunded = p === 'refunded';
+      const isNoRefund = !isPaid && !isRefunded; // Chưa thanh toán (Pending/Unpaid) hoặc COD
+
+      if (filterRefundStatus === 'refunded' && !isRefunded) return false;
+      if (filterRefundStatus === 'pending_refund' && (!isPaid || o.paymentMethod === 'COD')) return false;
+      if (filterRefundStatus === 'no_refund' && !isNoRefund) return false;
     }
     if (dateRange && dateRange[0] && dateRange[1]) {
       const orderDate = dayjs(o.createdAt);
@@ -346,23 +350,45 @@ export const CancelledOrders: React.FC = () => {
     {
       title: 'Thanh toán & Hoàn tiền',
       key: 'payment',
-      width: 170,
+      width: 180,
       render: (_: any, r: Order) => {
-        const isPaid = (r.paymentStatus || '').toLowerCase() === 'paid';
-        const isRefunded = (r.paymentStatus || '').toLowerCase() === 'refunded';
-        const isCod = r.paymentMethod === 'COD' || (!r.paymentMethod && !isPaid);
+        const pStatus = (r.paymentStatus || '').toLowerCase();
+        const isPaid = pStatus === 'paid';
+        const isRefunded = pStatus === 'refunded';
+        const isCod = r.paymentMethod === 'COD';
 
+        // 1. Đã hoàn tiền xong
         if (isRefunded) {
-          return <Tag color="green" style={{ fontWeight: 700 }}>✓ ĐÃ HOÀN TIỀN</Tag>;
+          return (
+            <div>
+              <Tag color="green" style={{ fontWeight: 700 }}>✓ ĐÃ HOÀN TIỀN</Tag>
+              <div style={{ fontSize: '11px', color: '#16A34A', marginTop: 2 }}>
+                Đã hoàn trả khách
+              </div>
+            </div>
+          );
         }
-        if (isCod) {
-          return <Tag color="default" style={{ color: '#64748B' }}>COD (Không cần hoàn)</Tag>;
+
+        // 2. Khách ĐÃ THANH TOÁN trước khi hủy -> CẦN HOÀN TIỀN
+        if (isPaid && !isCod) {
+          return (
+            <div>
+              <Tag color="orange" style={{ fontWeight: 700 }}>⏳ CHỜ HOÀN TIỀN</Tag>
+              <div style={{ fontSize: '11px', color: '#D97706', marginTop: 2 }}>
+                Khách đã trả qua {r.paymentMethod || 'Online'}
+              </div>
+            </div>
+          );
         }
+
+        // 3. Khách CHƯA THANH TOÁN (Pending/Unpaid) hoặc đơn COD -> KHÔNG CẦN HOÀN TIỀN
         return (
           <div>
-            <Tag color="orange" style={{ fontWeight: 700 }}>⏳ CHỜ HOÀN TIỀN</Tag>
-            <div style={{ fontSize: '11px', color: '#D97706', marginTop: 2 }}>
-              {r.paymentMethod || 'Chuyển khoản / MoMo'}
+            <Tag color="default" style={{ color: '#64748B', fontWeight: 600 }}>
+              Không cần hoàn tiền
+            </Tag>
+            <div style={{ fontSize: '11px', color: '#94A3B8', marginTop: 2 }}>
+              {isCod ? 'Đơn COD (Chưa thu tiền)' : 'Đơn chưa thanh toán'}
             </div>
           </div>
         );
@@ -404,7 +430,10 @@ export const CancelledOrders: React.FC = () => {
       key: 'actions',
       width: 190,
       render: (_: any, r: Order) => {
-        const needsRefund = r.paymentMethod !== 'COD' && (r.paymentStatus || '').toLowerCase() !== 'refunded';
+        const isPaid = (r.paymentStatus || '').toLowerCase() === 'paid';
+        const isCod = r.paymentMethod === 'COD';
+        // CHỈ hiển thị nút xác nhận hoàn tiền khi khách ĐÃ THANH TOÁN trước đó
+        const needsRefund = isPaid && !isCod;
         const claimsForOrder = tickets.filter(t => t.orderId === r.orderId || (t.orderCode && t.orderCode.toLowerCase() === (r.orderCode || '').toLowerCase()));
 
         return (
@@ -742,9 +771,9 @@ export const CancelledOrders: React.FC = () => {
                           onChange={v => setFilterRefundStatus(v)}
                         >
                           <Select.Option value="all">Tất cả trạng thái</Select.Option>
-                          <Select.Option value="pending_refund">Chờ hoàn tiền (Online)</Select.Option>
+                          <Select.Option value="no_refund">Không cần hoàn (Chưa thanh toán / COD)</Select.Option>
+                          <Select.Option value="pending_refund">Chờ hoàn tiền (Khách đã trả)</Select.Option>
                           <Select.Option value="refunded">Đã hoàn tiền</Select.Option>
-                          <Select.Option value="cod_no_refund">COD (Không hoàn)</Select.Option>
                         </Select>
                       </Col>
 
@@ -882,9 +911,16 @@ export const CancelledOrders: React.FC = () => {
               <Descriptions.Item label="Thời gian đặt">{dayjs(viewOrderModal.createdAt).format('DD/MM/YYYY HH:mm:ss')}</Descriptions.Item>
               <Descriptions.Item label="Phương thức">{viewOrderModal.paymentMethod || 'COD'}</Descriptions.Item>
               <Descriptions.Item label="Trạng thái hoàn tiền">
-                <Tag color={(viewOrderModal.paymentStatus || '').toLowerCase() === 'refunded' ? 'green' : 'orange'}>
-                  {(viewOrderModal.paymentStatus || 'Chưa hoàn').toUpperCase()}
-                </Tag>
+                {(() => {
+                  const pStatus = (viewOrderModal.paymentStatus || '').toLowerCase();
+                  if (pStatus === 'refunded') {
+                    return <Tag color="green" style={{ fontWeight: 700 }}>✓ ĐÃ HOÀN TIỀN</Tag>;
+                  }
+                  if (pStatus === 'paid' && viewOrderModal.paymentMethod !== 'COD') {
+                    return <Tag color="orange" style={{ fontWeight: 700 }}>⏳ CHỜ HOÀN TIỀN (Khách đã thanh toán)</Tag>;
+                  }
+                  return <Tag color="default">KHÔNG CẦN HOÀN TIỀN (Chưa thanh toán)</Tag>;
+                })()}
               </Descriptions.Item>
               <Descriptions.Item label="Địa chỉ giao" span={2}>
                 {viewOrderModal.address ? (
