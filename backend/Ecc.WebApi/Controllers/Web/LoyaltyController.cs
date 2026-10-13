@@ -168,6 +168,53 @@ END";
         {
             await EnsureSeededAsync(userId);
 
+            // Tự động kiểm tra và tích điểm cho các đơn hàng hoàn tất (10.000₫ = 1 điểm)
+            var completedOrders = await _context.Orders
+                .Where(o => o.CustomerId == userId && o.OrderStatus == "Completed")
+                .ToListAsync();
+
+            if (completedOrders.Any())
+            {
+                var existingEarnedOrderIds = await _context.PointTransactions
+                    .Where(t => t.UserId == userId && t.OrderId.HasValue && t.TransactionType == "Earn")
+                    .Select(t => t.OrderId!.Value)
+                    .ToListAsync();
+
+                bool updatedPoints = false;
+                var currentLoyalty = await _context.UserLoyalties.FirstOrDefaultAsync(l => l.UserId == userId);
+                if (currentLoyalty != null)
+                {
+                    foreach (var order in completedOrders)
+                    {
+                        if (!existingEarnedOrderIds.Contains(order.OrderId))
+                        {
+                            // 10 ngàn = 1 điểm
+                            int pts = (int)Math.Floor((order.Subtotal > 0 ? order.Subtotal : order.TotalAmount) / 10000m);
+                            if (pts > 0)
+                            {
+                                currentLoyalty.CurrentPoints += pts;
+                                currentLoyalty.TotalSpentYear += (order.Subtotal > 0 ? order.Subtotal : order.TotalAmount);
+                                _context.PointTransactions.Add(new PointTransaction
+                                {
+                                    UserId = userId,
+                                    OrderId = order.OrderId,
+                                    PointsDelta = pts,
+                                    TransactionType = "Earn",
+                                    Description = $"Tích điểm đơn hàng #{order.OrderCode ?? order.OrderId.ToString()} ({(order.Subtotal > 0 ? order.Subtotal : order.TotalAmount):N0}₫)",
+                                    CreatedAt = order.CreatedAt ?? DateTime.UtcNow
+                                });
+                                updatedPoints = true;
+                            }
+                        }
+                    }
+                    if (updatedPoints)
+                    {
+                        currentLoyalty.UpdatedAt = DateTime.UtcNow;
+                        await _context.SaveChangesAsync();
+                    }
+                }
+            }
+
             var loyalty = await _context.UserLoyalties
                 .Include(l => l.Tier)
                 .FirstOrDefaultAsync(l => l.UserId == userId);

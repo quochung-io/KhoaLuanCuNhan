@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../data/models/product_model.dart';
 import '../../../data/api_service.dart';
+import '../../../core/utils/favorites_service.dart';
 import '../product_detail/product_detail_screen.dart';
 
 import '../chat/chat_screen.dart';
@@ -26,17 +27,67 @@ class _HomeScreenState extends State<HomeScreen> {
   String _selectedSort = 'Mặc định';
   String _searchQuery = '';
 
-  List<Product> _allProducts = productsData;
+  List<String> _categories = ['Tất cả'];
+  Set<int> _favoriteProductIds = {};
+  List<Product> _allProducts = [];
   List<dynamic> _carsRecommendations = [];
   Map<String, dynamic> _carsContext = {};
-  bool _isLoadingProducts = false;
+  bool _isLoadingProducts = true;
   bool _isLoadingCars = false;
 
   @override
   void initState() {
     super.initState();
+    _fetchCategories();
+    _loadFavorites();
     _fetchRealProducts();
     _fetchCarsRecommendations();
+  }
+
+  Future<void> _loadFavorites() async {
+    final favs = await FavoritesService.getFavoriteProducts();
+    if (mounted) {
+      setState(() {
+        _favoriteProductIds = favs.map((p) => p.id).toSet();
+      });
+    }
+  }
+
+  Future<void> _toggleFavorite(Product p) async {
+    final nowFav = await FavoritesService.toggleFavoriteProduct(p);
+    if (mounted) {
+      setState(() {
+        if (nowFav) {
+          _favoriteProductIds.add(p.id);
+        } else {
+          _favoriteProductIds.remove(p.id);
+        }
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(nowFav ? 'Đã thêm "${p.name}" vào yêu thích' : 'Đã bỏ yêu thích "${p.name}"'),
+          duration: const Duration(seconds: 1),
+          backgroundColor: nowFav ? const Color(0xFF2E7D32) : Colors.grey.shade700,
+        ),
+      );
+    }
+  }
+
+  Future<void> _fetchCategories() async {
+    try {
+      final data = await ApiService.getCategories();
+      if (data.isNotEmpty && mounted) {
+        final cats = <String>['Tất cả'];
+        for (var item in data) {
+          final name = (item['categoryName'] ?? item['name'] ?? '').toString();
+          final id = item['categoryId'] ?? item['id'];
+          if (name.isNotEmpty && id != 5 && !name.toLowerCase().contains('combo') && !cats.contains(name)) {
+            cats.add(name);
+          }
+        }
+        setState(() => _categories = cats);
+      }
+    } catch (_) {}
   }
 
   Future<void> _fetchRealProducts() async {
@@ -46,40 +97,14 @@ class _HomeScreenState extends State<HomeScreen> {
       if (data.isNotEmpty && mounted) {
         final List<Product> loaded = [];
         for (var item in data) {
-          final pId = item['productId'] ?? item['id'] ?? 0;
-          final pName = item['productName'] ?? 'Nông sản';
-          final catName = item['category']?['categoryName'] ?? 'Rau củ';
-
+          final prod = Product.fromJson(item as Map<String, dynamic>);
           // LOẠI BỎ TRIỆT ĐỂ TẤT CẢ GÓI COMBO KHỎI TRANG CHỦ
-          if (pId >= 900 ||
-              pName.toString().toLowerCase().contains('combo') ||
-              catName.toString().toLowerCase().contains('combo')) {
+          if (prod.id >= 900 ||
+              prod.name.toLowerCase().contains('combo') ||
+              prod.category.toLowerCase().contains('combo')) {
             continue;
           }
-
-          final images = (item['productImages'] as List<dynamic>?) ?? [];
-          final imgUrl = images.isNotEmpty ? images[0]['imageUrl'] : null;
-
-          loaded.add(
-            Product(
-              id: pId,
-              name: pName,
-              price: (item['price'] is num) ? (item['price'] as num).toInt() : 30000,
-              unit: item['unit'] ?? 'kg',
-              category: catName,
-              cert: 'VietGAP',
-              region: 'Đà Lạt',
-              rating: (item['rating'] is num) ? (item['rating'] as num).toDouble() : 4.8,
-              reviews: item['reviewCount'] ?? 128,
-              icon: Icons.eco_outlined,
-              color: const Color(0xFF2E7D32),
-              lot: 'LOT-${pId.toString().padLeft(2, '0')}',
-              description: item['description'] ?? 'Nông sản hữu cơ tươi ngon chuẩn VietGAP.',
-              imageUrl: imgUrl,
-              originFarm: 'Hợp tác xã Nông Sản Đà Lạt',
-              stockQuantity: item['stockQuantity'] ?? 100,
-            ),
-          );
+          loaded.add(prod);
         }
         setState(() {
           _allProducts = loaded;
@@ -335,7 +360,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         const SizedBox(width: 8),
                         const Text(
-                          'Gợi Ý Ngữ Cảnh Hôm Nay (CARS)',
+                          'Gợi Ý Nông Sản Tươi Lành Hôm Nay',
                           style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.bold,
@@ -347,14 +372,14 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(height: 4),
                     Text(
                       _carsContext['timeOfDay'] != null
-                          ? 'Đề xuất phù hợp với ${_carsContext['timeOfDay']} · Nhiệt độ lý tưởng ${_carsContext['weather'] ?? 'Mát mẻ'}'
-                          : 'Thuật toán CARS phân tích theo thời gian & mùa vụ để đề xuất nông sản đạt đỉnh dưỡng chất.',
+                          ? 'Đề xuất phù hợp với ${_carsContext['timeOfDay']} · Tiết trời ${_carsContext['weather'] ?? 'Mát mẻ'}'
+                          : 'Được chọn lọc theo thời tiết & mùa vụ để mang đến cho bạn bữa ăn tươi ngon, trọn vị nhất.',
                       style: TextStyle(fontSize: 11.5, color: Colors.grey.shade600),
                     ),
                     const SizedBox(height: 12),
 
                     SizedBox(
-                      height: 165,
+                      height: 175,
                       child: _isLoadingCars
                           ? const Center(child: CircularProgressIndicator(color: Color(0xFF2E7D32)))
                           : ListView.builder(
@@ -368,92 +393,124 @@ class _HomeScreenState extends State<HomeScreen> {
                                 final pScore = rec['score'] != null ? (rec['score'] * 100).toInt() : 95;
                                 final imgUrl = rec['imageUrl'];
 
-                                return Container(
-                                  width: 140,
-                                  margin: const EdgeInsets.only(right: 12),
-                                  padding: const EdgeInsets.all(10),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(14),
-                                    border: Border.all(color: const Color(0xFFE5ECE5)),
-                                    boxShadow: [
-                                      BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 6),
-                                    ],
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Stack(
-                                        children: [
-                                          ClipRRect(
-                                            borderRadius: BorderRadius.circular(8),
-                                            child: imgUrl != null
-                                                ? Image.network(
-                                                    imgUrl,
-                                                    height: 70,
-                                                    width: double.infinity,
-                                                    fit: BoxFit.cover,
-                                                    errorBuilder: (context, error, stackTrace) => _buildFallbackImg(70),
-                                                  )
-                                                : _buildFallbackImg(70),
-                                          ),
-                                          Positioned(
-                                            top: 4,
-                                            right: 4,
-                                            child: Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                                              decoration: BoxDecoration(
-                                                color: const Color(0xFF2E7D32),
-                                                borderRadius: BorderRadius.circular(4),
+                                final num rawPrice = pPrice is num
+                                    ? pPrice
+                                    : (double.tryParse(pPrice.toString()) ?? 30000);
+                                final int intPrice = rawPrice.toInt();
+                                final String formattedPrice = _formatCurrency(intPrice);
+
+                                final prod = Product(
+                                  id: rec['productId'] ?? 99,
+                                  name: pName,
+                                  price: intPrice,
+                                  unit: pUnit,
+                                  cert: 'VietGAP',
+                                  region: 'Đà Lạt',
+                                  rating: 4.9,
+                                  reviews: 88,
+                                  icon: Icons.eco,
+                                  color: const Color(0xFF2E7D32),
+                                  lot: 'LOT-CARS',
+                                  description: 'Nông sản được gợi ý theo thời tiết & mùa vụ.',
+                                  imageUrl: imgUrl,
+                                );
+
+                                return GestureDetector(
+                                  onTap: () {
+                                    ApiService.trackRecommendation(productId: prod.id, eventType: 'click');
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => ProductDetailScreen(
+                                          product: prod,
+                                          onAddToCart: widget.onAddToCart,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  child: Container(
+                                    width: 145,
+                                    margin: const EdgeInsets.only(right: 12),
+                                    padding: const EdgeInsets.all(10),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(14),
+                                      border: Border.all(color: const Color(0xFFE5ECE5)),
+                                      boxShadow: [
+                                        BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 6),
+                                      ],
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Stack(
+                                          children: [
+                                            ClipRRect(
+                                              borderRadius: BorderRadius.circular(8),
+                                              child: imgUrl != null
+                                                  ? Image.network(
+                                                      ApiService.fixImageUrl(imgUrl),
+                                                      height: 70,
+                                                      width: double.infinity,
+                                                      fit: BoxFit.cover,
+                                                      errorBuilder: (context, error, stackTrace) => _buildFallbackImg(70),
+                                                    )
+                                                  : _buildFallbackImg(70),
+                                            ),
+                                            Positioned(
+                                              top: 4,
+                                              right: 4,
+                                              child: Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                                                decoration: BoxDecoration(
+                                                  color: const Color(0xFF2E7D32),
+                                                  borderRadius: BorderRadius.circular(4),
+                                                ),
+                                                child: Text('$pScore% match', style: const TextStyle(color: Colors.white, fontSize: 8.5, fontWeight: FontWeight.bold)),
                                               ),
-                                              child: Text('$pScore% match', style: const TextStyle(color: Colors.white, fontSize: 8.5, fontWeight: FontWeight.bold)),
                                             ),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 6),
-                                      Text(
-                                        pName,
-                                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                      const Spacer(),
-                                      Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Text(
-                                            '${pPrice.toString()}₫/$pUnit',
-                                            style: const TextStyle(color: Color(0xFF2E7D32), fontSize: 11, fontWeight: FontWeight.bold),
-                                          ),
-                                          GestureDetector(
-                                            onTap: () {
-                                              final prod = Product(
-                                                id: rec['productId'] ?? 99,
-                                                name: pName,
-                                                price: pPrice is num ? pPrice.toInt() : 30000,
-                                                unit: pUnit,
-                                                cert: 'VietGAP',
-                                                region: 'Đà Lạt',
-                                                rating: 4.9,
-                                                reviews: 88,
-                                                icon: Icons.eco,
-                                                color: const Color(0xFF2E7D32),
-                                                lot: 'LOT-CARS',
-                                                description: 'Nông sản theo ngữ cảnh.',
-                                                imageUrl: imgUrl,
-                                              );
-                                              widget.onAddToCart(prod);
-                                            },
-                                            child: Container(
-                                              padding: const EdgeInsets.all(4),
-                                              decoration: const BoxDecoration(color: Color(0xFFE8F5E9), shape: BoxShape.circle),
-                                              child: const Icon(Icons.add, size: 14, color: Color(0xFF2E7D32)),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 6),
+                                        Text(
+                                          pName,
+                                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        const Spacer(),
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                '$formattedPrice/$pUnit',
+                                                style: const TextStyle(color: Color(0xFF2E7D32), fontSize: 11, fontWeight: FontWeight.bold),
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
                                             ),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
+                                            GestureDetector(
+                                              onTap: () {
+                                                ApiService.trackRecommendation(productId: prod.id, eventType: 'cart');
+                                                widget.onAddToCart(prod);
+                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                  SnackBar(
+                                                    content: Text('Đã thêm "$pName" vào giỏ hàng!'),
+                                                    backgroundColor: const Color(0xFF2E7D32),
+                                                    duration: const Duration(seconds: 1),
+                                                  ),
+                                                );
+                                              },
+                                              child: Container(
+                                                padding: const EdgeInsets.all(4),
+                                                decoration: const BoxDecoration(color: Color(0xFFE8F5E9), shape: BoxShape.circle),
+                                                child: const Icon(Icons.add, size: 14, color: Color(0xFF2E7D32)),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 );
                               },
@@ -471,17 +528,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: Row(
-                      children: [
-                        _buildCategoryChip('Tất cả'),
-                        const SizedBox(width: 8),
-                        _buildCategoryChip('Rau ăn lá'),
-                        const SizedBox(width: 8),
-                        _buildCategoryChip('Củ & Quả'),
-                        const SizedBox(width: 8),
-                        _buildCategoryChip('Trái cây'),
-                        const SizedBox(width: 8),
-                        _buildCategoryChip('Nấm & Gia vị'),
-                      ],
+                      children: _categories.map((c) => Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: _buildCategoryChip(c),
+                      )).toList(),
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -601,17 +651,46 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
-              child: product.imageUrl != null
-                  ? Image.network(
-                      product.imageUrl!,
-                      height: 120,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => _buildFallbackImg(120),
-                    )
-                  : _buildFallbackImg(120),
+            Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
+                  child: (product.imageUrl != null && product.imageUrl!.isNotEmpty)
+                      ? Image.network(
+                          ApiService.fixImageUrl(product.imageUrl),
+                          height: 120,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => _buildFallbackImg(120),
+                        )
+                      : _buildFallbackImg(120),
+                ),
+                Positioned(
+                  top: 6,
+                  right: 6,
+                  child: GestureDetector(
+                    onTap: () => _toggleFavorite(product),
+                    child: Container(
+                      padding: const EdgeInsets.all(5),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.9),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.1),
+                            blurRadius: 4,
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        _favoriteProductIds.contains(product.id) ? Icons.favorite : Icons.favorite_border,
+                        size: 16,
+                        color: _favoriteProductIds.contains(product.id) ? Colors.red : Colors.grey.shade600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
             Padding(
               padding: const EdgeInsets.all(10),

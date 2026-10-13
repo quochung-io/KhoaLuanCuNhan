@@ -69,47 +69,55 @@ class _TraceScreenState extends State<TraceScreen> {
         }
 
         setState(() {
-          _tracedProduct = product ?? productsData[0];
+          _tracedProduct = product;
           _isLoadingTrace = false;
         });
       } else if (mounted) {
-         setState(() {
-           // Fallback nếu gõ mã sai, hiển thị sản phẩm mẫu để test
-           _tracedProduct = productsData[0];
-           _isLoadingTrace = false;
-         });
+        setState(() {
+          _tracedProduct = null;
+          _isLoadingTrace = false;
+        });
       }
     } catch (e) {
       if (mounted) {
         setState(() {
-          _tracedProduct = productsData[0];
+          _tracedProduct = null;
           _isLoadingTrace = false;
         });
       }
     }
   }
 
-  // Giả lập quét mã QR với hiệu ứng động
+  // Quét mã QR mẫu từ dữ liệu lô hàng thực tế
   void _startQrScan() {
     setState(() {
       _isScanning = true;
     });
-    // Giả lập quét thành công sau 2.5 giây
-    Future.delayed(const Duration(milliseconds: 2500), () {
+    Future.delayed(const Duration(milliseconds: 1500), () async {
       if (mounted && _isScanning) {
-        setState(() {
-          _isScanning = false;
-          _scannedCode = 'LOT#VN-DL-0842'; // Lô hàng Cải Bó Xôi
-          _controller.text = _scannedCode!;
-          _performTrace(_scannedCode!);
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Quét mã QR thành công!'),
-            backgroundColor: Color(0xFF2E7D32),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        String codeToUse = 'BATCH-001';
+        try {
+          final batches = await ApiService.getProductBatches();
+          if (batches.isNotEmpty) {
+            codeToUse = batches[0]['batchCode'] ?? 'BATCH-001';
+          }
+        } catch (_) {}
+
+        if (mounted) {
+          setState(() {
+            _isScanning = false;
+            _scannedCode = codeToUse;
+            _controller.text = _scannedCode!;
+            _performTrace(_scannedCode!);
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Quét mã QR thành công!'),
+              backgroundColor: Color(0xFF2E7D32),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
       }
     });
   }
@@ -222,6 +230,29 @@ class _TraceScreenState extends State<TraceScreen> {
                       ),
                       const SizedBox(height: 16),
                       _buildTraceTimeline(),
+                    ] else if (_hasSearched && _tracedProduct == null) ...[
+                      Center(
+                        child: Column(
+                          children: [
+                            const SizedBox(height: 40),
+                            Icon(Icons.search_off_rounded, size: 64, color: Colors.grey.shade400),
+                            const SizedBox(height: 12),
+                            const Text(
+                              'Không tìm thấy lô hàng',
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF1B3A20)),
+                            ),
+                            const SizedBox(height: 6),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                              child: Text(
+                                'Mã lô "${_controller.text}" không tồn tại trong hệ thống hoặc chưa được kích hoạt nhật ký canh tác.',
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(color: Color(0xFF8D9E90), fontSize: 12, height: 1.4),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
                     ] else if (!_hasSearched) ...[
                       // Giao diện chào khi chưa tìm kiếm
                       Center(

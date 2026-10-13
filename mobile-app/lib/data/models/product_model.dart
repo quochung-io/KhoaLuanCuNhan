@@ -17,7 +17,6 @@ class Product {
   final String? imageUrl;
   final String? originFarm;
   final int? stockQuantity;
-  final List<String> reviewList;
 
   Product({
     required this.id,
@@ -36,11 +35,6 @@ class Product {
     this.imageUrl,
     this.originFarm,
     this.stockQuantity,
-    this.reviewList = const [
-      'Sản phẩm rất tươi ngon, giao hàng đúng hẹn!',
-      'Chuẩn VietGAP, bao bì đóng gói sạch sẽ.',
-      'Sẽ tiếp tục ủng hộ nông sản LÀNH!'
-    ],
   });
 
   factory Product.fromJson(Map<String, dynamic> json) {
@@ -56,139 +50,75 @@ class Product {
       return const Color(0xFFC0392B);
     }
 
+    String categoryStr = 'Khác';
+    if (json['category'] is Map) {
+      categoryStr = json['category']['categoryName'] ?? 'Khác';
+    } else if (json['category'] is String) {
+      categoryStr = json['category'];
+    }
+
+    // Handle image URL from productImages list or direct imageUrl
+    String? imgUrl = json['imageUrl'] ?? json['ImageUrl'];
+    final pImages = json['productImages'] ?? json['ProductImages'];
+    if ((imgUrl == null || imgUrl.isEmpty) && pImages is List && pImages.isNotEmpty) {
+      final primaryImg = pImages.firstWhere(
+        (img) => img is Map && (img['isPrimary'] == true || img['IsPrimary'] == true),
+        orElse: () => pImages[0],
+      );
+      if (primaryImg is Map) {
+        imgUrl = (primaryImg['imageUrl'] ?? primaryImg['ImageUrl'])?.toString();
+      }
+    }
+
+    final pId = (json['productId'] ?? json['ProductId'] ?? json['id'] ?? json['Id'] ?? 0) as int;
+
+    // Handle Lot / Batch Code
+    String lotCode = '';
+    final batches = json['productBatches'] ?? json['ProductBatches'] ?? json['batches'] ?? json['Batches'];
+    if (batches is List && batches.isNotEmpty) {
+      final firstBatch = batches[0];
+      if (firstBatch is Map) {
+        final bCode = firstBatch['batchCode'] ?? firstBatch['BatchCode'];
+        if (bCode != null && bCode.toString().isNotEmpty) {
+          lotCode = bCode.toString();
+        }
+      }
+    }
+    if (lotCode.isEmpty) {
+      final directLot = json['lotCode'] ?? json['LotCode'] ?? json['lot'] ?? json['Lot'] ?? json['batchCode'] ?? json['BatchCode'];
+      if (directLot != null && directLot.toString().isNotEmpty && directLot.toString() != 'LOT#UNKNOWN') {
+        lotCode = directLot.toString();
+      }
+    }
+    if (lotCode.isEmpty || lotCode == 'LOT#UNKNOWN') {
+      lotCode = 'LOT-DL-${pId.toString().padLeft(3, '0')}';
+    }
+
+    String pName = (json['productName'] ?? json['ProductName'] ?? json['name'] ?? json['Name'] ?? json['title'] ?? '').toString();
+    if (pName.trim().isEmpty) {
+      pName = 'Nông sản VietGAP #$pId';
+    }
+
     return Product(
-      id: json['id'] ?? 0,
-      name: json['name'] ?? '',
+      id: pId,
+      name: pName,
       price: (json['price'] as num?)?.toInt() ?? 0,
-      unit: json['unit'] ?? 'kg',
-      category: json['category'] ?? 'Khác',
-      cert: json['certification'] ?? 'VietGAP',
-      region: json['origin'] ?? 'Việt Nam',
-      rating: (json['rating'] as num?)?.toDouble() ?? 5.0,
-      reviews: (json['reviewsCount'] as num?)?.toInt() ?? 0,
-      icon: getIcon(json['category'] ?? ''),
-      color: getColor(json['category'] ?? ''),
-      lot: json['lotCode'] ?? 'LOT#UNKNOWN',
-      description: json['description'] ?? '',
-      imageUrl: json['imageUrl'],
-      stockQuantity: (json['stockQuantity'] as num?)?.toInt(),
+      unit: (json['unit'] ?? 'kg').toString(),
+      category: categoryStr,
+      cert: (json['certification'] ?? 'VietGAP').toString(),
+      region: (json['originFarm'] ?? json['origin'] ?? 'Đà Lạt').toString(),
+      rating: ((json['averageRating'] ?? json['rating']) as num?)?.toDouble() ?? 5.0,
+      reviews: ((json['reviewsCount'] ?? json['reviews']) as num?)?.toInt() ?? 0,
+      icon: getIcon(categoryStr),
+      color: getColor(categoryStr),
+      lot: lotCode,
+      description: (json['description'] ?? '').toString(),
+      imageUrl: imgUrl,
+      originFarm: json['originFarm']?.toString(),
+      stockQuantity: ((json['availableStock'] ?? json['stockQuantity']) as num?)?.toInt(),
     );
   }
 }
 
-final List<Product> productsData = [
-  Product(
-    id: 1,
-    name: 'Cải bó xôi hữu cơ',
-    price: 28000,
-    unit: '300g',
-    category: 'Rau củ',
-    cert: 'VietGAP',
-    region: 'Đà Lạt',
-    rating: 4.8,
-    reviews: 212,
-    icon: Icons.eco_outlined,
-    color: const Color(0xFF2E7D32),
-    lot: 'LOT#VN-DL-0842',
-    description: 'Rau cải bó xôi được canh tác hữu cơ hoàn toàn tại nông trại Đà Lạt, giàu sắt và chất xơ, không sử dụng thuốc trừ sâu hóa học.',
-    reviewList: [
-      'Rau cải bó xôi rất non và ngọt, nấu canh ngon tuyệt!',
-      'Giao nhanh trong 2h, rau vẫn còn tươi nguyên sương.'
-    ],
-  ),
-  Product(
-    id: 2,
-    name: 'Cà rốt baby Đà Lạt',
-    price: 32000,
-    unit: '500g',
-    category: 'Rau củ',
-    cert: 'GlobalGAP',
-    region: 'Đà Lạt',
-    rating: 4.9,
-    reviews: 184,
-    icon: Icons.agriculture_outlined,
-    color: const Color(0xFFFF9800),
-    lot: 'LOT#VN-DL-0917',
-    description: 'Cà rốt baby giòn ngọt, thu hoạch non tại vườn hữu cơ, thích hợp ăn sống, làm nước ép hoặc chế biến thức ăn cho bé.',
-    reviewList: [
-      'Cà rốt giòn và ngọt đậm đà, ép nước uống rất thơm.',
-      'Bé nhà mình rất thích ăn sống loại này.'
-    ],
-  ),
-  Product(
-    id: 3,
-    name: 'Cam Cao Phong',
-    price: 45000,
-    unit: 'kg',
-    category: 'Trái cây',
-    cert: 'VietGAP',
-    region: 'Mộc Châu',
-    rating: 4.7,
-    reviews: 301,
-    icon: Icons.spa_outlined,
-    color: const Color(0xFFFF9800),
-    lot: 'LOT#VN-MC-1140',
-    description: 'Cam vỏ mỏng, mọng nước, vị ngọt thanh tự nhiên được trồng theo chuẩn VietGAP tại thung lũng Cao Phong.',
-    reviewList: [
-      'Cam mọng nước, vắt nước cho cả nhà uống giải nhiệt rất tốt.',
-      'Vỏ mỏng, tép cam vàng óng tự nhiên.'
-    ],
-  ),
-  Product(
-    id: 4,
-    name: 'Trứng gà ta thả vườn',
-    price: 52000,
-    unit: 'hộp 10 quả',
-    category: 'Thực phẩm',
-    cert: 'USDA Organic',
-    region: 'Đồng Tháp',
-    rating: 5.0,
-    reviews: 96,
-    icon: Icons.egg_outlined,
-    color: const Color(0xFFC0392B),
-    lot: 'LOT#VN-DT-0663',
-    description: 'Trứng từ giống gà ta thả vườn tự nhiên, ăn ngũ cốc hữu cơ, lòng đỏ sậm màu, béo thơm và giàu dinh dưỡng.',
-    reviewList: [
-      'Lòng đỏ rất to và thơm, trứng mới thu hoạch trong ngày!',
-      'Đóng khay chống sốc rất cẩn thận, không vỡ quả nào.'
-    ],
-  ),
-  Product(
-    id: 5,
-    name: 'Mật ong rừng nguyên chất',
-    price: 135000,
-    unit: '500ml',
-    category: 'Thực phẩm',
-    cert: 'USDA Organic',
-    region: 'Mộc Châu',
-    rating: 4.9,
-    reviews: 158,
-    icon: Icons.filter_vintage_outlined,
-    color: const Color(0xFFD4AC0D),
-    lot: 'LOT#VN-MC-0255',
-    description: 'Mật ong rừng khai thác tự nhiên tại các vùng hoa hoang dã Mộc Châu, không pha tạp, vị ngọt đậm đà tinh khiết.',
-    reviewList: [
-      'Mật ong đặc quánh, thơm mùi hoa rừng tự nhiên.',
-      'Dùng pha nước ấm uống mỗi sáng rất tốt cho tiêu hóa.'
-    ],
-  ),
-  Product(
-    id: 6,
-    name: 'Dâu tây Mộc Châu',
-    price: 68000,
-    unit: 'hộp 250g',
-    category: 'Trái cây',
-    cert: 'GlobalGAP',
-    region: 'Mộc Châu',
-    rating: 4.8,
-    reviews: 243,
-    icon: Icons.favorite_border_rounded,
-    color: const Color(0xFFC0392B),
-    lot: 'LOT#VN-MC-0389',
-    description: 'Dâu tây chín mọng đỏ, chua ngọt hài hòa, canh tác nhà màng ứng dụng công nghệ tưới tiêu nhỏ giọt đạt chuẩn GlobalGAP.',
-    reviewList: [
-      'Dâu tây ngọt thơm, không bị dập nát khi giao hàng.',
-      'Giá hợp lý cho chất lượng chuẩn GlobalGAP.'
-    ],
-  ),
-];
+final List<Product> productsData = [];
+

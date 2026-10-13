@@ -1,18 +1,23 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../../data/api_service.dart';
 import '../../../data/models/product_model.dart';
+import '../checkout/payment_qr_screen.dart';
+import '../main_container.dart';
 import 'order_detail_screen.dart';
 
 class OrdersManagementScreen extends StatefulWidget {
   final int initialTabIndex;
   final int userId;
   final Function(Product, {int qty})? onAddToCart;
+  final VoidCallback? onOpenCart;
 
   const OrdersManagementScreen({
     super.key,
     this.initialTabIndex = 0,
     required this.userId,
     this.onAddToCart,
+    this.onOpenCart,
   });
 
   @override
@@ -174,6 +179,10 @@ class _OrdersManagementScreenState extends State<OrdersManagementScreen> with Si
 
   Widget _buildOrderCard(dynamic order) {
     final status = (order['orderStatus'] ?? 'pending').toString();
+    final paymentStatus = (order['paymentStatus'] ?? '').toString().toLowerCase();
+    final paymentMethod = (order['paymentMethod'] ?? '').toString().toUpperCase();
+    final isUnpaidNonCOD = paymentMethod != 'COD' && paymentStatus != 'paid' && status.toLowerCase() == 'pending';
+
     final items = (order['orderItems'] as List<dynamic>?) ?? [];
     final code = (order['orderCode'] ?? '#${order['orderId']}').toString();
     final total = (order['totalAmount'] as num?)?.toInt() ?? 0;
@@ -200,32 +209,81 @@ class _OrdersManagementScreenState extends State<OrdersManagementScreen> with Si
           Padding(
             padding: const EdgeInsets.all(12),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
+                Expanded(
+                  child: Row(
+                    children: [
+                      const Icon(Icons.storefront, size: 16, color: Color(0xFF2E7D32)),
+                      const SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          'LÀNH Farm Official',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF1B3A20)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
                 Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.storefront, size: 16, color: Color(0xFF2E7D32)),
-                    const SizedBox(width: 6),
-                    Text(
-                      'LÀNH Farm Official',
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF1B3A20)),
+                    if (isUnpaidNonCOD) ...[
+                      () {
+                        final createdStr = order['createdAt']?.toString();
+                        int remMins = 15;
+                        if (createdStr != null && createdStr.isNotEmpty) {
+                          final c = DateTime.tryParse(createdStr) ?? DateTime.now();
+                          remMins = math.max(0, 15 - DateTime.now().difference(c).inMinutes);
+                        }
+                        return Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: remMins > 0 ? const Color(0xFFFFF3E0) : const Color(0xFFFFEBEE),
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(color: remMins > 0 ? const Color(0xFFFFB74D) : Colors.red.shade300),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                remMins > 0 ? Icons.timer_outlined : Icons.timer_off_outlined,
+                                size: 11,
+                                color: remMins > 0 ? const Color(0xFFE65100) : Colors.red,
+                              ),
+                              const SizedBox(width: 3),
+                              Text(
+                                remMins > 0 ? 'Còn ${remMins}p' : 'Hết hạn',
+                                style: TextStyle(
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.bold,
+                                  color: remMins > 0 ? const Color(0xFFE65100) : Colors.red,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }(),
+                      const SizedBox(width: 6),
+                    ],
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: _getStatusColor(status).withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        _getStatusText(status),
+                        style: TextStyle(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.bold,
+                          color: _getStatusColor(status),
+                        ),
+                      ),
                     ),
                   ],
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: _getStatusColor(status).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    _getStatusText(status),
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: _getStatusColor(status),
-                    ),
-                  ),
                 ),
               ],
             ),
@@ -295,38 +353,77 @@ class _OrdersManagementScreenState extends State<OrdersManagementScreen> with Si
           Padding(
             padding: const EdgeInsets.all(12),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Mã: $code', style: const TextStyle(fontSize: 11, color: Colors.grey)),
-                    const SizedBox(height: 2),
-                    Row(
-                      children: [
-                        const Text('Thành tiền: ', style: TextStyle(fontSize: 12, color: Colors.black87)),
-                        Text(
-                          '$totalFormatted₫',
-                          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF2E7D32)),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Mã: $code', style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                      const SizedBox(height: 2),
+                      FittedBox(
+                        alignment: Alignment.centerLeft,
+                        fit: BoxFit.scaleDown,
+                        child: Row(
+                          children: [
+                            const Text('Thành tiền: ', style: TextStyle(fontSize: 12, color: Colors.black87)),
+                            Text(
+                              '$totalFormatted₫',
+                              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF2E7D32)),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                  ],
+                      ),
+                    ],
+                  ),
                 ),
+                const SizedBox(width: 8),
                 Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    OutlinedButton(
-                      onPressed: () {
-                        if (widget.onAddToCart != null) {
+                    if (isUnpaidNonCOD) ...[
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          final rawId = order['orderId'] ?? order['id'];
+                          final int oId = rawId is num ? rawId.toInt() : int.tryParse(rawId.toString()) ?? 0;
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (ctx) => PaymentQRScreen(
+                                orderId: oId,
+                                orderCode: code,
+                                totalAmount: total.toInt(),
+                                paymentMethod: paymentMethod.contains('BANK') ? 'BankApp' : 'QRCode',
+                                userId: widget.userId,
+                                createdAt: DateTime.tryParse(order['createdAt']?.toString() ?? ''),
+                              ),
+                            ),
+                          ).then((_) => _fetchOrders());
+                        },
+                        icon: const Icon(Icons.qr_code, size: 14, color: Colors.white),
+                        label: const Text('Thanh toán', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Colors.white)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFE65100),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          elevation: 0,
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                    ] else ...[
+                      OutlinedButton(
+                        onPressed: () {
                           final items = (order['orderItems'] as List<dynamic>?) ?? [];
+                          bool hasItems = false;
                           for (var item in items) {
                             final p = item['product'];
                             if (p != null) {
-                              // Build a partial Product model to add to cart
                               final product = Product(
                                 id: p['productId'] ?? p['id'] ?? 0,
                                 name: p['productName'] ?? p['name'] ?? 'Sản phẩm',
-                                price: (p['price'] ?? 0).toDouble().toInt(),
+                                price: (p['price'] ?? 0).toInt(),
                                 imageUrl: p['imageUrl'] ?? '',
                                 unit: p['unit'] ?? 'kg',
                                 category: p['type'] ?? 'product',
@@ -340,27 +437,39 @@ class _OrdersManagementScreenState extends State<OrdersManagementScreen> with Si
                                 icon: Icons.eco_outlined,
                                 color: const Color(0xFF2E7D32),
                               );
-                              final qty = item['quantity'] ?? 1;
-                              widget.onAddToCart!(product, qty: qty);
+                              
+                              final qtyRaw = item['quantity'] ?? 1;
+                              final int qty = qtyRaw is num ? qtyRaw.toInt() : int.tryParse(qtyRaw.toString()) ?? 1;
+                              
+                              if (widget.onAddToCart != null) {
+                                widget.onAddToCart!(product, qty: qty);
+                                hasItems = true;
+                              }
                             }
                           }
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Đã thêm các sản phẩm vào giỏ hàng'),
-                              backgroundColor: Color(0xFF2E7D32),
-                              duration: Duration(seconds: 2),
-                            ),
-                          );
-                        }
-                      },
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Color(0xFF2E7D32)),
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          
+                          if (hasItems) {
+                            if (widget.onOpenCart != null) {
+                              widget.onOpenCart!();
+                            }
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Không có sản phẩm nào để mua lại'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        },
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Color(0xFF2E7D32)),
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                        child: const Text('Mua lại', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF2E7D32))),
                       ),
-                      child: const Text('Mua lại', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF2E7D32))),
-                    ),
-                    const SizedBox(width: 8),
+                      const SizedBox(width: 8),
+                    ],
                     ElevatedButton(
                       onPressed: () {
                         Navigator.push(
@@ -368,6 +477,7 @@ class _OrdersManagementScreenState extends State<OrdersManagementScreen> with Si
                           MaterialPageRoute(
                             builder: (ctx) => OrderDetailScreen(
                               order: order,
+                              userId: widget.userId,
                               onAddToCart: widget.onAddToCart,
                             ),
                           ),
@@ -376,10 +486,13 @@ class _OrdersManagementScreenState extends State<OrdersManagementScreen> with Si
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF2E7D32),
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        elevation: 0,
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
-                      child: const Text('Xem chi tiết', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                      child: const Text('Xem chi tiết', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold)),
                     ),
                   ],
                 ),
@@ -391,15 +504,39 @@ class _OrdersManagementScreenState extends State<OrdersManagementScreen> with Si
     );
   }
 
+  void _handleBack() {
+    if (Navigator.canPop(context)) {
+      Navigator.pop(context);
+    } else {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (c) => const MainContainer()),
+        (route) => false,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF7FAF7),
-      appBar: AppBar(
-        title: const Text('Đơn mua của tôi'),
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF1B3A20),
-        elevation: 0,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) {
+          _handleBack();
+        }
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF7FAF7),
+        appBar: AppBar(
+          title: const Text('Đơn mua của tôi'),
+          backgroundColor: Colors.white,
+          foregroundColor: const Color(0xFF1B3A20),
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: _handleBack,
+            tooltip: 'Quay lại',
+          ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(48),
           child: Container(
@@ -481,6 +618,7 @@ class _OrdersManagementScreenState extends State<OrdersManagementScreen> with Si
                 ),
               ],
             ),
+      ),
     );
   }
 }

@@ -22,6 +22,10 @@ builder.Services.AddSingleton<IOtpService, OtpService>();
 builder.Services.AddSingleton<FefoClearanceBackgroundService>();
 builder.Services.AddHostedService(sp => sp.GetRequiredService<FefoClearanceBackgroundService>());
 
+// ── Đăng ký Background Service tự động hủy đơn hàng chưa thanh toán quá 15 phút ──
+builder.Services.AddSingleton<OrderExpirationBackgroundService>();
+builder.Services.AddHostedService(sp => sp.GetRequiredService<OrderExpirationBackgroundService>());
+
 // ── Cấu hình CORS cho phép tất cả các nguồn (Web + Mobile App) ──
 builder.Services.AddCors(options =>
 {

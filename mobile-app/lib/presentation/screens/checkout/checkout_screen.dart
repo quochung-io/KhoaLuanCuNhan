@@ -5,6 +5,8 @@ import '../../../data/api_service.dart';
 import '../../../data/models/cart_item_model.dart';
 import '../profile/address_management_screen.dart';
 import '../main_container.dart';
+import 'payment_qr_screen.dart';
+import '../profile/orders_management_screen.dart';
 
 class CheckoutScreen extends StatefulWidget {
   final List<CartItem> cartItems;
@@ -123,44 +125,64 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         orderData['comment'] = _noteController.text;
       }
 
-      await ApiService.createOrder(orderData);
+      final res = await ApiService.createOrder(orderData);
 
       if (!mounted) return;
       widget.onCheckoutSuccess();
       
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.check_circle, color: Color(0xFF2E7D32), size: 56),
-              const SizedBox(height: 14),
-              const Text('Đặt hàng thành công!',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-              const SizedBox(height: 6),
-              const Text(
-                'Đơn hàng của bạn đang được điều phối. Bạn có thể theo dõi hành trình ở mục Cá nhân.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 12, color: Color(0xFF4B5D50)),
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (context) => const MainContainer()),
-                    (route) => false,
-                  );
-                },
-                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF2E7D32)),
-                child: const Text('Đồng ý', style: TextStyle(color: Colors.white)),
-              )
-            ],
+      if (_paymentMethod == 'QRCode' || _paymentMethod == 'BankApp') {
+        final rawId = res['orderId'] ?? res['id'];
+        final int orderId = rawId is num ? rawId.toInt() : int.tryParse(rawId.toString()) ?? 0;
+        final String orderCode = (res['orderCode'] ?? 'DH-${DateTime.now().millisecondsSinceEpoch}').toString();
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (ctx) => PaymentQRScreen(
+              orderId: orderId,
+              orderCode: orderCode,
+              totalAmount: _totalAmount,
+              paymentMethod: _paymentMethod,
+              userId: _userId,
+              createdAt: DateTime.now(),
+            ),
           ),
-        ),
-      );
+        );
+      } else {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.check_circle, color: Color(0xFF2E7D32), size: 56),
+                const SizedBox(height: 14),
+                const Text('Đặt hàng thành công!',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                const SizedBox(height: 6),
+                const Text(
+                  'Đơn hàng của bạn đang được điều phối. Bạn có thể theo dõi hành trình ở mục Cá nhân.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 12, color: Color(0xFF4B5D50)),
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(builder: (context) => const MainContainer()),
+                      (route) => false,
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF2E7D32)),
+                  child: const Text('Đồng ý', style: TextStyle(color: Colors.white)),
+                )
+              ],
+            ),
+          ),
+        );
+      }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(e.toString())),
@@ -244,14 +266,24 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     padding: const EdgeInsets.only(bottom: 12),
                     child: Row(
                       children: [
-                        Container(
-                          width: 50,
-                          height: 50,
-                          decoration: BoxDecoration(
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Container(
+                            width: 50,
+                            height: 50,
                             color: item.product.color.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(8),
+                            child: (item.product.imageUrl != null && item.product.imageUrl!.isNotEmpty)
+                                ? Image.network(
+                                    ApiService.fixImageUrl(item.product.imageUrl),
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) => Center(
+                                      child: Icon(item.product.icon, color: item.product.color),
+                                    ),
+                                  )
+                                : Center(
+                                    child: Icon(item.product.icon, color: item.product.color),
+                                  ),
                           ),
-                          child: Icon(item.product.icon, color: item.product.color),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
@@ -379,25 +411,65 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     onChanged: (val) => setState(() => _paymentMethod = val!),
                   ),
                   RadioListTile<String>(
-                    title: const Text('Thanh toán qua QR Code'),
+                    title: const Text('Thanh toán qua QR Code (VietQR 24/7)'),
                     value: 'QRCode',
                     groupValue: _paymentMethod,
                     activeColor: const Color(0xFF2E7D32),
                     contentPadding: EdgeInsets.zero,
                     onChanged: (val) => setState(() => _paymentMethod = val!),
                   ),
+                  if (_paymentMethod == 'QRCode')
+                    Container(
+                      margin: const EdgeInsets.only(top: 4, bottom: 8),
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF0FDF4),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: const Color(0xFFBBF7D0)),
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(Icons.qr_code_2, color: Color(0xFF166534), size: 20),
+                          SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Quét mã VietQR tự động điền số tiền & mã đơn bằng bất kỳ App Ngân Hàng nào. Thời gian giữ nông sản & thanh toán: 15 phút (tự động chạy ngầm từ lúc đặt hàng).',
+                              style: TextStyle(fontSize: 11.5, color: Color(0xFF166534), height: 1.3),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   RadioListTile<String>(
                     title: const Text('Thanh toán qua App Ngân hàng'),
                     value: 'BankApp',
                     groupValue: _paymentMethod,
                     activeColor: const Color(0xFF2E7D32),
                     contentPadding: EdgeInsets.zero,
-                    onChanged: (val) {
-                      setState(() => _paymentMethod = val!);
-                      // Mock dữ liệu tĩnh như yêu cầu
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Tính năng chuyển hướng App Ngân hàng đang giả lập')));
-                    },
+                    onChanged: (val) => setState(() => _paymentMethod = val!),
                   ),
+                  if (_paymentMethod == 'BankApp')
+                    Container(
+                      margin: const EdgeInsets.only(top: 4, bottom: 8),
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEFF6FF),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: const Color(0xFFBFDBFE)),
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(Icons.account_balance, color: Color(0xFF1D4ED8), size: 20),
+                          SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Sau khi đặt hàng, hệ thống hỗ trợ mở trực tiếp App Ngân Hàng (TPBank, MB, VCB...) và tự động xác nhận khi chuyển tiền. Hạn thanh toán: 15 phút.',
+                              style: TextStyle(fontSize: 11.5, color: Color(0xFF1E40AF), height: 1.3),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                 ],
               ),
             ),

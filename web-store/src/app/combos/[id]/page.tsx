@@ -310,11 +310,7 @@ const combosDatabase: Record<number, ComboDetail> = {
       { q: 'Rau củ bảo quản trong tủ lạnh được bao lâu?', a: 'Do rau được hái tươi và giao ngay trong ngày (không qua kho tồn), rau ăn lá giữ tươi ngon từ 5-7 ngày, củ quả và trái cây để được từ 10-15 ngày trong ngăn mát tủ lạnh.' },
       { q: 'Tôi có thể thanh toán từng tuần hay trả trước cả tháng?', a: 'Bạn có thể chọn thanh toán theo từng tuần khi nhận hàng (COD) hoặc đăng ký gói tháng qua chuyển khoản/MoMo để được giảm giá thêm 10% và miễn phí vận chuyển trọn vẹn.' }
     ],
-    customerReviews: [
-      { author: 'Chị Mai Lan', role: 'Nhân viên văn phòng - Q.7, TP.HCM', date: '08/09/2026', rating: 5, comment: 'Từ ngày đăng ký combo tuần của LÀNH mình không cần phải dậy sớm đi chợ nữa. Rau củ tươi rói, nấu canh ngọt lịm. Đặc biệt là cam Cao Phong mọng nước và ngọt thanh.' },
-      { author: 'Anh Quốc Bảo', role: 'Kỹ sư công nghệ - Cầu Giấy, Hà Nội', date: '04/09/2026', rating: 5, comment: 'Đóng gói rất sạch sẽ, túi giấy bảo vệ môi trường. Cải bó xôi và bơ 034 chất lượng vượt trội so với siêu thị gần nhà. Đáng tiền từng đồng.' },
-      { author: 'Cô Thanh Hằng', role: 'Nội trợ - Hải Châu, Đà Nẵng', date: '01/09/2026', rating: 5, comment: 'Nhà có 2 vợ chồng và bé 3 tuổi dùng gói này vừa vặn trong tuần, không bị thừa mứa vứt bỏ lãng phí. Tuần trước đổi bắp cải lấy súp lơ xanh được hỗ trợ rất nhiệt tình.' }
-    ]
+    customerReviews: []
   },
   902: {
     id: 902,
@@ -360,10 +356,7 @@ const combosDatabase: Record<number, ComboDetail> = {
       { q: 'Gói lớn có tặng thêm gì không?', a: 'Mỗi tuần bạn được tặng 1 vỉ 10 trứng gà ta thả vườn ăn thảo mộc tươi mới.' },
       { q: 'Có thể chia làm 2 lần giao trong 1 tuần được không?', a: 'Với gói lớn bạn có thể yêu cầu tách làm 2 lần giao (Thứ 3 và Thứ 6) với phụ phí ship ưu đãi chỉ 15.000₫/lượt phụ.' }
     ],
-    customerReviews: [
-      { author: 'Chị Bích Trâm', role: 'Gia đình 5 người - Cầu Giấy, Hà Nội', date: '06/09/2026', rating: 5, comment: 'Thùng nông sản rất to và chất lượng. Bắp cải ngọt lịm, dâu tây bé nhà mình mê tít. Cả nhà ăn cả tuần vẫn còn tươi ngon.' },
-      { author: 'Bác Minh Tâm', role: 'Cán bộ hưu trí - Q.Bình Thạnh, TP.HCM', date: '02/09/2026', rating: 5, comment: 'Rau ăn lá rất non và thơm mùi rau truyền thống, không bị nhớt như mua ngoài chợ. Rất an tâm cho sức khỏe người già.' }
-    ]
+    customerReviews: []
   },
   903: {
     id: 903,
@@ -404,9 +397,7 @@ const combosDatabase: Record<number, ComboDetail> = {
     faqs: [
       { q: 'Người ăn chay trường dùng gói này có bị thiếu chất không?', a: 'Không hề, thực đơn được đội ngũ chuyên gia dinh dưỡng cân đối tỷ lệ đạm thực vật từ nấm, hạt và vitamin từ rau củ để đảm bảo năng lượng tràn trề suốt tuần.' }
     ],
-    customerReviews: [
-      { author: 'Chị Diệu Tâm', role: 'Phật tử - Q.10, TP.HCM', date: '05/09/2026', rating: 5, comment: 'Đậu hũ non béo ngậy và thơm lừng mùi đậu nành quê. Nấm tươi sạch không hề có mùi thuốc khử. Rất biết ơn LÀNH đã có gói này.' }
-    ]
+    customerReviews: []
   },
   907: {
     id: 907,
@@ -439,9 +430,7 @@ const combosDatabase: Record<number, ComboDetail> = {
     faqs: [
       { q: 'Sản phẩm có an toàn tuyệt đối cho bé ăn dặm?', a: 'Toàn bộ nông sản được kiểm nghiệm định kỳ chỉ số nitrat và kim loại nặng đạt chuẩn an toàn cho trẻ sơ sinh và trẻ nhỏ.' }
     ],
-    customerReviews: [
-      { author: 'Mẹ Bắp', role: 'Mẹ bỉm sữa - Bình Thạnh, TP.HCM', date: '12/09/2026', rating: 5, comment: 'Bé nhà mình mới ăn dặm, trộm vía bí đỏ và cà rốt nghiền ngọt lịm bé ăn hết veo. Yên tâm hơn mua ngoài chợ nhiều.' }
-    ]
+    customerReviews: []
   },
   908: {
     id: 908,
@@ -473,9 +462,7 @@ const combosDatabase: Record<number, ComboDetail> = {
     faqs: [
       { q: 'Trái cây có bị xanh sượng không?', a: 'Nhà vườn cam kết trái cây chín già tự nhiên, ngọt đậm thơm nức mũi.' }
     ],
-    customerReviews: [
-      { author: 'Chị Ngọc Mai', role: 'Văn phòng - Q.1, TP.HCM', date: '10/09/2026', rating: 5, comment: 'Bưởi da xanh tép hồng giòn rụm, xoài cát thơm lừng cả phòng. Trái cây chuẩn miệt vườn ăn khác biệt hẳn.' }
-    ]
+    customerReviews: []
   },
   909: {
     id: 909,
@@ -506,9 +493,7 @@ const combosDatabase: Record<number, ComboDetail> = {
     faqs: [
       { q: 'Rau để được bao lâu trong tủ lạnh?', a: 'Rau tươi tự nhiên nên giữ được 5-7 ngày trong ngăn mát túi zip.' }
     ],
-    customerReviews: [
-      { author: 'Cô Ba Thu', role: 'Nội trợ - Q.5, TP.HCM', date: '07/09/2026', rating: 5, comment: 'Rau dền và mồng tơi nấu canh cua ngọt ngào hương vị quê nhà. Nhớ lại bữa cơm mẹ nấu ngày xưa.' }
-    ]
+    customerReviews: []
   },
   910: {
     id: 910,
@@ -538,9 +523,7 @@ const combosDatabase: Record<number, ComboDetail> = {
     faqs: [
       { q: 'Rau có rửa ăn liền được không?', a: 'Rau trồng thủy canh nhà kính rất sạch, bạn chỉ cần tráng qua nước lọc là dùng được ngay.' }
     ],
-    customerReviews: [
-      { author: 'Chị Hà My', role: 'HLV Yoga - Phú Nhuận, TP.HCM', date: '11/09/2026', rating: 5, comment: 'Xà lách giòn rụm và ngọt mát, cải Kale ép nước không hề bị đắng. Mình đã đăng ký gói tháng luôn rồi!' }
-    ]
+    customerReviews: []
   }
 };
 

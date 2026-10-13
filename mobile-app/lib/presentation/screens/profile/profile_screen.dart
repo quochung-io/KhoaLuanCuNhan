@@ -6,10 +6,18 @@ import '../../../data/models/cart_item_model.dart';
 import '../../../data/models/product_model.dart';
 import '../cart/cart_screen.dart';
 import '../chat/chat_screen.dart';
+import '../chat/admin_chat_screen.dart';
 import '../auth/login_screen.dart';
 import 'edit_profile_screen.dart';
 import 'orders_management_screen.dart';
 import 'address_management_screen.dart';
+import 'settings_screen.dart';
+import 'voucher_wallet_screen.dart';
+import 'points_screen.dart';
+import 'favorites_screen.dart';
+import 'help_center_screen.dart';
+import 'farming_standards_screen.dart';
+import 'privacy_policy_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   final Map<String, dynamic>? user;
@@ -44,6 +52,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String _cccd = 'Chưa cập nhật';
   String _membershipTier = 'Đang tải...';
   int _loyaltyPoints = 0;
+  int _voucherCount = 0;
 
   List<dynamic> _orders = [];
 
@@ -99,6 +108,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           else _membershipTier = 'Thành viên $tierStr';
           
           _loyaltyPoints = loyaltyData['currentPoints'] ?? 0;
+          final vouchers = (loyaltyData['vouchers'] as List<dynamic>?) ?? [];
+          _voucherCount = vouchers.where((v) => v['isUsed'] != true).length;
         });
       }
     } catch (_) {}
@@ -187,6 +198,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           initialTabIndex: tabIndex,
           userId: _userId,
           onAddToCart: widget.onAddToCart,
+          onOpenCart: _openCart,
         ),
       ),
     ).then((_) => _fetchOrders());
@@ -216,40 +228,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  void _showSettingsDialog() {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => Container(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Cài đặt hệ thống', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1B3A20))),
-            const SizedBox(height: 12),
-            ListTile(
-              leading: const Icon(Icons.notifications_active_outlined, color: Color(0xFF2E7D32)),
-              title: const Text('Thông báo ưu đãi & Lô hàng'),
-              trailing: Switch(value: true, activeThumbColor: const Color(0xFF2E7D32), onChanged: (v) {}),
-            ),
-            ListTile(
-              leading: const Icon(Icons.lock_outline, color: Color(0xFF2E7D32)),
-              title: const Text('Đổi mật khẩu'),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () {
-                Navigator.pop(ctx);
-                _navigateToEditProfile();
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.language, color: Color(0xFF2E7D32)),
-              title: const Text('Ngôn ngữ'),
-              trailing: const Text('Tiếng Việt (VN)', style: TextStyle(color: Colors.grey)),
-            ),
-          ],
+  void _navigateToSettings() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (ctx) => SettingsScreen(
+          onEditProfile: _navigateToEditProfile,
         ),
       ),
     );
@@ -372,7 +356,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               IconButton(
                                 icon: const Icon(Icons.settings_outlined, color: Color(0xFF4B5D50)),
                                 tooltip: 'Cài đặt',
-                                onPressed: _showSettingsDialog,
+                                onPressed: _navigateToSettings,
                               ),
 
                               // Nút Giỏ hàng với Badge số lượng (+1 khi thêm)
@@ -525,10 +509,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               icon: Icons.confirmation_number_outlined,
                               color: Colors.orange,
                               label: 'Kho Voucher',
-                              subLabel: '5 ưu đãi',
+                              subLabel: '$_voucherCount ưu đãi',
                               onTap: () {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Bạn đang có 5 voucher giảm giá nông sản sinh học!')),
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => VoucherWalletScreen(userId: _userId),
+                                  ),
                                 );
                               },
                             ),
@@ -538,8 +525,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               label: 'LÀNH Points',
                               subLabel: '$_loyaltyPoints điểm',
                               onTap: () {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text('Số dư: $_loyaltyPoints LÀNH Points')),
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => PointsScreen(userId: _userId),
+                                  ),
                                 );
                               },
                             ),
@@ -563,10 +553,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               icon: Icons.favorite_border,
                               color: Colors.red,
                               label: 'Đã thích',
-                              subLabel: '12 món',
+                              subLabel: 'Yêu thích',
                               onTap: () {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Danh sách 12 nông sản bạn đã lưu yêu thích')),
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => FavoritesScreen(
+                                      onAddToCart: widget.onAddToCart,
+                                    ),
+                                  ),
                                 );
                               },
                             ),
@@ -578,7 +573,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 const SizedBox(height: 14),
 
-                // 4. Khung Hỗ trợ (Trung tâm trợ giúp, Chăm sóc khách hàng, Điều khoản)
+                // 4. Khung Hỗ trợ & Chính sách
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Container(
@@ -602,14 +597,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           title: const Text('Trung tâm trợ giúp', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
                           trailing: const Icon(Icons.chevron_right, size: 18, color: Colors.grey),
                           onTap: () {
-                            showDialog(
-                              context: context,
-                              builder: (ctx) => AlertDialog(
-                                title: const Text('Trung tâm trợ giúp LÀNH'),
-                                content: const Text('LÀNH cam kết 100% nông sản sạch, đổi trả miễn phí trong 24h nếu rau củ bị dập úa hoặc không đúng chứng nhận sinh học.'),
-                                actions: [
-                                  TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Đã hiểu')),
-                                ],
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => const HelpCenterScreen()),
+                            );
+                          },
+                        ),
+                        const Divider(height: 1, indent: 56),
+                        ListTile(
+                          leading: const Icon(Icons.support_agent_outlined, color: Color(0xFF2E7D32)),
+                          title: const Text('Chat với Quản trị viên (Admin)', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                          subtitle: const Text('Giải quyết khiếu nại & kết nối nhà vườn', style: TextStyle(fontSize: 11, color: Colors.grey)),
+                          trailing: const Icon(Icons.chevron_right, size: 18, color: Colors.grey),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => AdminChatScreen(
+                                  currentUserId: _userId,
+                                  currentUserName: _fullName,
+                                ),
                               ),
                             );
                           },
@@ -617,7 +624,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         const Divider(height: 1, indent: 56),
                         ListTile(
                           leading: const Icon(Icons.headset_mic_outlined, color: Color(0xFF2E7D32)),
-                          title: const Text('Chăm sóc khách hàng', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                          title: const Text('Chăm sóc khách hàng (Chat bot)', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
                           subtitle: const Text('Hotline: 1900 8888 (7h30 - 21h00)', style: TextStyle(fontSize: 11, color: Colors.grey)),
                           trailing: const Icon(Icons.chevron_right, size: 18, color: Colors.grey),
                           onTap: _openChat,
@@ -625,18 +632,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         const Divider(height: 1, indent: 56),
                         ListTile(
                           leading: const Icon(Icons.verified_user_outlined, color: Color(0xFF2E7D32)),
-                          title: const Text('Tiêu chuẩn canh tác sinh học & Truy xuất nguồn gốc', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                          title: const Text('Tiêu chuẩn canh tác sinh học', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
                           trailing: const Icon(Icons.chevron_right, size: 18, color: Colors.grey),
                           onTap: () {
-                            showDialog(
-                              context: context,
-                              builder: (ctx) => AlertDialog(
-                                title: const Text('Cam kết minh bạch'),
-                                content: const Text('Toàn bộ quy trình 6 chặng canh tác được ghi nhận số hóa và xác thực qua mã lô QR trên bao bì từng gói nông sản.'),
-                                actions: [
-                                  TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Đóng')),
-                                ],
-                              ),
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => const FarmingStandardsScreen()),
+                            );
+                          },
+                        ),
+                        const Divider(height: 1, indent: 56),
+                        ListTile(
+                          leading: const Icon(Icons.privacy_tip_outlined, color: Color(0xFF2E7D32)),
+                          title: const Text('Chính sách bảo mật dữ liệu', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                          trailing: const Icon(Icons.chevron_right, size: 18, color: Colors.grey),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => const PrivacyPolicyScreen()),
                             );
                           },
                         ),
@@ -656,27 +669,91 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       onPressed: () {
                         showDialog(
                           context: context,
-                          builder: (ctx) => AlertDialog(
-                            title: const Text('Xác nhận đăng xuất'),
-                            content: const Text('Bạn có chắc chắn muốn đăng xuất khỏi ứng dụng LÀNH Farm?'),
-                            actions: [
-                              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Hủy', style: TextStyle(color: Colors.grey))),
-                              ElevatedButton(
-                                onPressed: () async {
-                                  Navigator.pop(ctx);
-                                  final prefs = await SharedPreferences.getInstance();
-                                  await prefs.remove('customer_user');
-                                  if (!mounted) return;
-                                  Navigator.pushAndRemoveUntil(
-                                    context,
-                                    MaterialPageRoute(builder: (c) => const LoginScreen()),
-                                    (route) => false,
-                                  );
-                                },
-                                style: ElevatedButton.styleFrom(backgroundColor: Colors.red.shade700),
-                                child: const Text('Đăng xuất', style: TextStyle(color: Colors.white)),
+                          builder: (ctx) => Dialog(
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                            elevation: 0,
+                            backgroundColor: Colors.transparent,
+                            child: Container(
+                              padding: const EdgeInsets.all(24),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(24),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.1),
+                                    blurRadius: 20,
+                                    offset: const Offset(0, 10),
+                                  ),
+                                ],
                               ),
-                            ],
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    width: 64,
+                                    height: 64,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFFEE2E2),
+                                      shape: BoxShape.circle,
+                                      border: Border.all(color: const Color(0xFFFECACA), width: 2),
+                                    ),
+                                    child: const Icon(Icons.logout_rounded, color: Color(0xFFDC2626), size: 30),
+                                  ),
+                                  const SizedBox(height: 18),
+                                  const Text(
+                                    'Xác nhận đăng xuất',
+                                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Color(0xFF1F2937)),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  const Text(
+                                    'Bạn có chắc chắn muốn đăng xuất khỏi ứng dụng LÀNH Farm? Giỏ hàng và ưu đãi của bạn vẫn được lưu trữ an toàn.',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(fontSize: 13.5, height: 1.45, color: Color(0xFF6B7280)),
+                                  ),
+                                  const SizedBox(height: 24),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: OutlinedButton(
+                                          onPressed: () => Navigator.pop(ctx),
+                                          style: OutlinedButton.styleFrom(
+                                            padding: const EdgeInsets.symmetric(vertical: 12),
+                                            side: const BorderSide(color: Color(0xFFE5E7EB)),
+                                            backgroundColor: const Color(0xFFF9FAFB),
+                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                          ),
+                                          child: const Text('Ở lại', style: TextStyle(color: Color(0xFF4B5563), fontWeight: FontWeight.w600, fontSize: 14)),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: ElevatedButton(
+                                          onPressed: () async {
+                                            Navigator.pop(ctx);
+                                            final prefs = await SharedPreferences.getInstance();
+                                            await prefs.remove('customer_user');
+                                            if (!mounted) return;
+                                            Navigator.pushAndRemoveUntil(
+                                              context,
+                                              MaterialPageRoute(builder: (c) => const LoginScreen()),
+                                              (route) => false,
+                                            );
+                                          },
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: const Color(0xFFDC2626),
+                                            foregroundColor: Colors.white,
+                                            padding: const EdgeInsets.symmetric(vertical: 12),
+                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                            elevation: 0,
+                                          ),
+                                          child: const Text('Đăng xuất', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
                         );
                       },

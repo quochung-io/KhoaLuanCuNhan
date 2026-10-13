@@ -1,8 +1,36 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../core/constants.dart';
 
 class ApiService {
+  static String fixImageUrl(String? url) {
+    if (url == null || url.trim().isEmpty) return '';
+    String trimmed = url.trim();
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+      if (trimmed.contains('localhost:5023')) {
+        return trimmed.replaceAll('localhost:5023', '10.0.2.2:5023');
+      }
+      if (trimmed.contains('127.0.0.1:5023')) {
+        return trimmed.replaceAll('127.0.0.1:5023', '10.0.2.2:5023');
+      }
+      if (trimmed.startsWith('/uploads/') || trimmed.startsWith('uploads/')) {
+        final path = trimmed.startsWith('/') ? trimmed : '/$trimmed';
+        return 'http://10.0.2.2:5023$path';
+      }
+      if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+        return 'http://10.0.2.2:5023/api/ProductImages/proxy?url=${Uri.encodeComponent(trimmed)}';
+      }
+      return 'http://10.0.2.2:5023/$trimmed';
+    } else {
+      if (trimmed.startsWith('/uploads/') || trimmed.startsWith('uploads/')) {
+        final path = trimmed.startsWith('/') ? trimmed : '/$trimmed';
+        return 'http://localhost:5023$path';
+      }
+    }
+    return trimmed;
+  }
+
   static Future<Map<String, dynamic>> login(String email, String password) async {
     final url = Uri.parse('${AppConstants.baseUrl}/api/auth/login');
     try {
@@ -180,7 +208,10 @@ class ApiService {
     try {
       final response = await http.get(url);
       if (response.statusCode == 200) {
-        return jsonDecode(response.body) as List<dynamic>;
+        final decoded = jsonDecode(response.body);
+        if (decoded is List) return decoded;
+        if (decoded is Map && decoded['value'] is List) return decoded['value'] as List<dynamic>;
+        if (decoded is Map && decoded['data'] is List) return decoded['data'] as List<dynamic>;
       }
       return [];
     } catch (_) {
@@ -193,7 +224,11 @@ class ApiService {
     try {
       final response = await http.get(url);
       if (response.statusCode == 200) {
-        return jsonDecode(response.body) as List<dynamic>;
+        final decoded = jsonDecode(response.body);
+        if (decoded is List) return decoded;
+        if (decoded is Map && decoded['value'] is List) return decoded['value'] as List<dynamic>;
+        if (decoded is Map && decoded['data'] is List) return decoded['data'] as List<dynamic>;
+        return [];
       }
       throw Exception('Lỗi tải sản phẩm');
     } catch (e) {
@@ -234,7 +269,10 @@ class ApiService {
     try {
       final response = await http.get(url);
       if (response.statusCode == 200) {
-        return jsonDecode(response.body) as List<dynamic>;
+        final decoded = jsonDecode(response.body);
+        if (decoded is List) return decoded;
+        if (decoded is Map && decoded['value'] is List) return decoded['value'] as List<dynamic>;
+        if (decoded is Map && decoded['data'] is List) return decoded['data'] as List<dynamic>;
       }
       return [];
     } catch (_) {
@@ -351,6 +389,24 @@ class ApiService {
         body: jsonEncode({
           'orderStatus': 'Cancelled',
           'note': reason ?? 'Khách hàng hủy đơn trên Mobile App',
+        }),
+      );
+      return response.statusCode == 200 || response.statusCode == 204;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  static Future<bool> confirmOrderPayment(int orderId) async {
+    final url = Uri.parse('${AppConstants.baseUrl}/api/orders/$orderId/status');
+    try {
+      final response = await http.put(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'orderStatus': 'Confirmed',
+          'paymentStatus': 'Paid',
+          'note': 'Khách hàng xác nhận đã chuyển khoản thành công',
         }),
       );
       return response.statusCode == 200 || response.statusCode == 204;
@@ -601,6 +657,42 @@ class ApiService {
     try {
       await http.put(url);
     } catch (_) {}
+  }
+
+  // ── THANH TOÁN & WEBHOOK REALTIME ─────────────────────────────
+  static Future<Map<String, dynamic>> getPaymentStatus(dynamic orderId) async {
+    final url = Uri.parse('${AppConstants.baseUrl}/api/PaymentWebhook/status/$orderId');
+    try {
+      final response = await http.get(url).timeout(const Duration(seconds: 4));
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      }
+      return {'isPaid': false, 'success': false};
+    } catch (_) {
+      return {'isPaid': false, 'success': false};
+    }
+  }
+
+  static Future<bool> simulatePaymentTransfer({
+    required dynamic orderId,
+    String? orderCode,
+    double? amount,
+  }) async {
+    final url = Uri.parse('${AppConstants.baseUrl}/api/PaymentWebhook/simulate');
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'orderId': orderId is int ? orderId : int.tryParse(orderId.toString()) ?? 0,
+          'orderCode': orderCode,
+          'amount': amount,
+        }),
+      );
+      return response.statusCode == 200;
+    } catch (_) {
+      return false;
+    }
   }
 }
 

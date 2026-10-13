@@ -99,6 +99,7 @@ public class ProductsController : ControllerBase
                 decimal availableStock = validBatches.Sum(b => b.InitialQuantity);
                 prod.AvailableStock = availableStock;
                 prod.IsOutOfStock = prod.ProductBatches.Any() && availableStock <= 0;
+                prod.LotCode = prod.ProductBatches.OrderByDescending(b => b.BatchId).FirstOrDefault()?.BatchCode ?? $"LOT-DL-{prod.ProductId:D3}";
             }
 
             return Ok(products);
@@ -179,6 +180,7 @@ public class ProductsController : ControllerBase
             decimal availableStock = validBatches.Sum(b => b.InitialQuantity);
             product.AvailableStock = availableStock;
             product.IsOutOfStock = product.ProductBatches.Any() && availableStock <= 0;
+            product.LotCode = product.ProductBatches.OrderByDescending(b => b.BatchId).FirstOrDefault()?.BatchCode ?? $"LOT-DL-{product.ProductId:D3}";
 
             return Ok(product);
         }

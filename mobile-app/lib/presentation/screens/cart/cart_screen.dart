@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../data/api_service.dart';
 import '../../../data/models/cart_item_model.dart';
 import '../checkout/checkout_screen.dart';
 
@@ -68,14 +69,24 @@ class _CartScreenState extends State<CartScreen> {
       ),
       child: Row(
         children: [
-          Container(
-            width: 50,
-            height: 50,
-            decoration: BoxDecoration(
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: Container(
+              width: 52,
+              height: 52,
               color: item.product.color.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(10),
+              child: (item.product.imageUrl != null && item.product.imageUrl!.isNotEmpty)
+                  ? Image.network(
+                      ApiService.fixImageUrl(item.product.imageUrl),
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Center(
+                        child: Icon(item.product.icon, color: item.product.color, size: 28),
+                      ),
+                    )
+                  : Center(
+                      child: Icon(item.product.icon, color: item.product.color, size: 28),
+                    ),
             ),
-            child: Icon(item.product.icon, color: item.product.color),
           ),
           const SizedBox(width: 12),
           Expanded(

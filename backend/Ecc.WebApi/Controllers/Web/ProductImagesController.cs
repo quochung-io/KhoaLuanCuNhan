@@ -84,6 +84,36 @@ public class ProductImagesController : ControllerBase
         await _context.SaveChangesAsync();
         return NoContent();
     }
+
+    private static readonly HttpClient _imageHttpClient = new HttpClient
+    {
+        Timeout = TimeSpan.FromSeconds(10)
+    };
+
+    [HttpGet("proxy")]
+    public async Task<IActionResult> ProxyImage([FromQuery] string url)
+    {
+        if (string.IsNullOrWhiteSpace(url)) return BadRequest("Url is required");
+        try
+        {
+            var request = new HttpRequestMessage(HttpMethod.Get, url);
+            request.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
+
+            var response = await _imageHttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+            if (!response.IsSuccessStatusCode)
+            {
+                return StatusCode((int)response.StatusCode);
+            }
+            var contentType = response.Content.Headers.ContentType?.MediaType ?? "image/jpeg";
+            var stream = await response.Content.ReadAsStreamAsync();
+            Response.Headers["Cache-Control"] = "public, max-age=604800";
+            return File(stream, contentType);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = $"Lỗi proxy ảnh: {ex.Message}" });
+        }
+    }
 }
 
 public class SyncProductImagesDto

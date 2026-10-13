@@ -38,17 +38,17 @@ public class OrdersController : ControllerBase
     [HttpGet("customer/{customerId}")]
     public async Task<ActionResult<IEnumerable<Order>>> GetOrdersByCustomer(long customerId)
     {
-        // Tự động kiểm tra và hủy các đơn hàng Online (BANK, MOMO) quá hạn thanh toán 30 phút
-        var thirtyMinsAgo = DateTime.Now.AddMinutes(-30);
-        var thirtyMinsAgoUtc = DateTime.UtcNow.AddMinutes(-30);
+        // Tự động kiểm tra và hủy các đơn hàng Online chưa thanh toán quá hạn 15 phút
+        var fifteenMinsAgo = DateTime.Now.AddMinutes(-15);
+        var fifteenMinsAgoUtc = DateTime.UtcNow.AddMinutes(-15);
 
         var expiredOrders = await _context.Orders
             .Where(o => o.CustomerId == customerId 
                      && o.OrderStatus == "Pending" 
                      && o.PaymentStatus != "Paid" 
-                     && (o.PaymentMethod == "BANK" || o.PaymentMethod == "MOMO")
+                     && o.PaymentMethod != "COD"
                      && o.CreatedAt.HasValue
-                     && (o.CreatedAt.Value < thirtyMinsAgo || o.CreatedAt.Value < thirtyMinsAgoUtc))
+                     && (o.CreatedAt.Value < fifteenMinsAgo || o.CreatedAt.Value < fifteenMinsAgoUtc))
             .ToListAsync();
 
         if (expiredOrders.Any())
@@ -409,6 +409,19 @@ public class OrdersController : ControllerBase
             .FirstOrDefaultAsync(o => o.OrderId == id);
 
         if (order == null) return NotFound();
+
+        // Tự động hủy nếu quá 15 phút chưa thanh toán
+        if (order.OrderStatus == "Pending" 
+            && order.PaymentStatus != "Paid" 
+            && order.PaymentMethod != "COD"
+            && order.CreatedAt.HasValue
+            && (DateTime.Now - order.CreatedAt.Value).TotalMinutes >= 15)
+        {
+            order.OrderStatus = "Cancelled";
+            order.UpdatedAt = DateTime.Now;
+            await _context.SaveChangesAsync();
+        }
+
         return order;
     }
 
@@ -886,6 +899,50 @@ public class OrdersController : ControllerBase
 
             order.OrderStatus = normalizedStatus;
             order.UpdatedAt = DateTime.Now;
+
+            // Tự động tích điểm khi đơn hàng hoàn thành (10.000₫ = 1 điểm)
+            if (normalizedStatus == "Completed" && order.CustomerId > 0)
+            {
+                var custId = order.CustomerId;
+                var alreadyAwarded = await _context.PointTransactions
+                    .AnyAsync(t => t.UserId == custId && t.OrderId == order.OrderId && t.TransactionType == "Earn");
+                if (!alreadyAwarded)
+                {
+                    var loyalty = await _context.UserLoyalties.FirstOrDefaultAsync(l => l.UserId == custId);
+                    if (loyalty == null)
+                    {
+                        var newTier = await _context.MembershipTiers.FirstOrDefaultAsync(t => t.TierName == "Mới")
+                                      ?? await _context.MembershipTiers.FirstAsync();
+                        loyalty = new UserLoyalty
+                        {
+                            UserId = custId,
+                            CurrentPoints = 0,
+                            TotalSpentYear = 0,
+                            TierId = newTier.TierId,
+                            UpdatedAt = DateTime.UtcNow
+                        };
+                        _context.UserLoyalties.Add(loyalty);
+                        await _context.SaveChangesAsync();
+                    }
+
+                    int pts = (int)Math.Floor((order.Subtotal > 0 ? order.Subtotal : order.TotalAmount) / 10000m);
+                    if (pts > 0)
+                    {
+                        loyalty.CurrentPoints += pts;
+                        loyalty.TotalSpentYear += (order.Subtotal > 0 ? order.Subtotal : order.TotalAmount);
+                        loyalty.UpdatedAt = DateTime.UtcNow;
+                        _context.PointTransactions.Add(new PointTransaction
+                        {
+                            UserId = custId,
+                            OrderId = order.OrderId,
+                            PointsDelta = pts,
+                            TransactionType = "Earn",
+                            Description = $"Tích điểm đơn hàng #{order.OrderCode ?? order.OrderId.ToString()} ({(order.Subtotal > 0 ? order.Subtotal : order.TotalAmount):N0}₫)",
+                            CreatedAt = DateTime.UtcNow
+                        });
+                    }
+                }
+            }
 
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();

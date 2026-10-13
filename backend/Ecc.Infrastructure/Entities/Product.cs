@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 
 namespace Ecc.Infrastructure.Entities;
@@ -32,7 +33,6 @@ public class Product
     
     public ICollection<ProductImage> ProductImages { get; set; } = new List<ProductImage>();
     
-    [JsonIgnore]
     public ICollection<ProductBatch> ProductBatches { get; set; } = new List<ProductBatch>();
     
     [JsonIgnore]
@@ -41,8 +41,14 @@ public class Product
     [JsonIgnore]
     public ICollection<Review> Reviews { get; set; } = new List<Review>();
 
+    [NotMapped]
+    public string? LotCode { get; set; }
+    [NotMapped]
     public double? AverageRating { get; set; }
+    [NotMapped]
     public int? ReviewsCount { get; set; }
+    [NotMapped]
     public bool? IsOutOfStock { get; set; }
+    [NotMapped]
     public decimal? AvailableStock { get; set; }
 }
