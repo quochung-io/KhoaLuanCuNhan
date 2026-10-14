@@ -28,6 +28,7 @@ public class AppDbContext : DbContext
     public DbSet<ProductSeason> ProductSeasons => Set<ProductSeason>();
     public DbSet<Farm> Farms => Set<Farm>();
     public DbSet<Supplier> Suppliers => Set<Supplier>();
+    public DbSet<Promotion> Promotions => Set<Promotion>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -485,6 +486,24 @@ public class AppDbContext : DbContext
              .WithMany()
              .HasForeignKey(s => s.UserId)
              .OnDelete(DeleteBehavior.NoAction);
+        });
+
+        // ── Promotion ─────────────────────────────────
+        modelBuilder.Entity<Promotion>(e =>
+        {
+            e.ToTable("Promotions");
+            e.HasKey(p => p.PromotionId);
+            e.Property(p => p.PromotionId).HasColumnName("PromotionId");
+            e.Property(p => p.PromotionCode).HasColumnName("PromotionCode").HasMaxLength(50).IsRequired();
+            e.Property(p => p.PromotionName).HasColumnName("PromotionName").HasMaxLength(150).IsRequired();
+            e.Property(p => p.DiscountType).HasColumnName("DiscountType").HasMaxLength(50);
+            e.Property(p => p.DiscountValue).HasColumnName("DiscountValue").HasColumnType("decimal(18,2)").IsRequired();
+            e.Property(p => p.StartDate).HasColumnName("StartDate");
+            e.Property(p => p.EndDate).HasColumnName("EndDate");
+            e.Property(p => p.MinOrderValue).HasColumnName("MinOrderValue").HasColumnType("decimal(18,2)");
+            e.Property(p => p.MaxDiscount).HasColumnName("MaxDiscount").HasColumnType("decimal(18,2)");
+            e.Property(p => p.UsageLimit).HasColumnName("UsageLimit");
+            e.Property(p => p.Status).HasColumnName("Status").HasMaxLength(50);
         });
     }
 }

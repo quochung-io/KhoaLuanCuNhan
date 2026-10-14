@@ -681,5 +681,187 @@ public class ReviewsController : ControllerBase
             return StatusCode(500, new { message = $"Lỗi: {ex.Message}" });
         }
     }
+
+    // ───────────────────────────────────────────────────────────
+    // CÁC ENDPOINT QUẢN TRỊ VIÊN (ADMIN REVIEW MANAGEMENT)
+    // ───────────────────────────────────────────────────────────
+
+    // GET: api/reviews/admin
+    [HttpGet("admin")]
+    public async Task<IActionResult> GetAllReviewsAdmin(
+        [FromQuery] string? status,
+        [FromQuery] string? search,
+        [FromQuery] int? star,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 50)
+    {
+        try
+        {
+            var baseQuery = _context.Reviews
+                .Include(r => r.Customer)
+                .Include(r => r.Product)
+                .Include(r => r.ReviewImages)
+                .Where(r => r.ParentReviewId == null);
+
+            // Thống kê nhanh theo trạng thái
+            var allReviews = await baseQuery.Select(r => new { r.ReviewId, r.Status }).ToListAsync();
+            int total = allReviews.Count;
+            int pendingCount = allReviews.Count(r => (r.Status ?? "Approved").Equals("Pending", StringComparison.OrdinalIgnoreCase));
+            int approvedCount = allReviews.Count(r => string.IsNullOrEmpty(r.Status) || r.Status.Equals("Approved", StringComparison.OrdinalIgnoreCase));
+            int rejectedCount = allReviews.Count(r => (r.Status ?? "").Equals("Rejected", StringComparison.OrdinalIgnoreCase));
+
+            var filtered = baseQuery.AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(status) && status.ToLower() != "all")
+            {
+                if (status.ToLower() == "approved")
+                {
+                    filtered = filtered.Where(r => string.IsNullOrEmpty(r.Status) || r.Status.ToLower() == "approved");
+                }
+                else
+                {
+                    filtered = filtered.Where(r => r.Status != null && r.Status.ToLower() == status.ToLower());
+                }
+            }
+
+            if (star.HasValue && star.Value >= 1 && star.Value <= 5)
+            {
+                filtered = filtered.Where(r => r.Rating == star.Value);
+            }
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var s = search.Trim().ToLower();
+                filtered = filtered.Where(r => 
+                    (r.Comment != null && r.Comment.ToLower().Contains(s)) ||
+                    (r.Customer != null && r.Customer.FullName.ToLower().Contains(s)) ||
+                    (r.Product != null && r.Product.ProductName.ToLower().Contains(s))
+                );
+            }
+
+            int filteredCount = await filtered.CountAsync();
+            int validPage = Math.Max(1, page);
+            int validPageSize = Math.Max(1, Math.Min(100, pageSize));
+
+            var items = await filtered
+                .OrderByDescending(r => r.CreatedAt)
+                .Skip((validPage - 1) * validPageSize)
+                .Take(validPageSize)
+                .Select(r => new
+                {
+                    id = r.ReviewId,
+                    customerId = r.CustomerId,
+                    customerName = r.Customer != null ? r.Customer.FullName : "Khách hàng",
+                    customerEmail = r.Customer != null ? r.Customer.Email : "",
+                    productId = r.ProductId,
+                    productName = r.Product != null ? r.Product.ProductName : "Sản phẩm",
+                    rating = r.Rating,
+                    comment = r.Comment ?? "",
+                    isPurchased = r.IsPurchased,
+                    helpfulCount = r.HelpfulCount,
+                    reportCount = r.ReportCount,
+                    status = string.IsNullOrEmpty(r.Status) ? "Approved" : r.Status,
+                    createdAt = r.CreatedAt.HasValue ? r.CreatedAt.Value.ToString("dd/MM/yyyy HH:mm") : "",
+                    images = r.ReviewImages.Select(img => img.ImageUrl).ToList()
+                })
+                .ToListAsync();
+
+            return Ok(new
+            {
+                total,
+                pendingCount,
+                approvedCount,
+                rejectedCount,
+                filteredCount,
+                page = validPage,
+                pageSize = validPageSize,
+                reviews = items
+            });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "Lỗi khi lấy danh sách đánh giá admin: " + ex.Message });
+        }
+    }
+
+    public class UpdateReviewStatusRequest
+    {
+        public string Status { get; set; } = "Approved"; // "Approved", "Rejected", "Pending"
+    }
+
+    // PUT: api/reviews/admin/{id}/status
+    [HttpPut("admin/{id}/status")]
+    public async Task<IActionResult> UpdateReviewStatus(long id, [FromBody] UpdateReviewStatusRequest req)
+    {
+        try
+        {
+            var review = await _context.Reviews.FindAsync(id);
+            if (review == null)
+            {
+                return NotFound(new { message = $"Không tìm thấy đánh giá #{id}" });
+            }
+
+            var newStatus = req.Status?.Trim();
+            if (string.IsNullOrWhiteSpace(newStatus))
+            {
+                newStatus = "Approved";
+            }
+
+            // Chuẩn hóa chữ hoa chữ thường
+            if (newStatus.Equals("approved", StringComparison.OrdinalIgnoreCase)) newStatus = "Approved";
+            else if (newStatus.Equals("rejected", StringComparison.OrdinalIgnoreCase)) newStatus = "Rejected";
+            else if (newStatus.Equals("pending", StringComparison.OrdinalIgnoreCase)) newStatus = "Pending";
+
+            review.Status = newStatus;
+            review.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = $"Đã cập nhật trạng thái đánh giá #{id} thành: {newStatus}", status = newStatus });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "Lỗi: " + ex.Message });
+        }
+    }
+
+    // DELETE: api/reviews/admin/{id}
+    [HttpDelete("admin/{id}")]
+    public async Task<IActionResult> DeleteReviewAdmin(long id)
+    {
+        try
+        {
+            var review = await _context.Reviews
+                .Include(r => r.ReviewImages)
+                .Include(r => r.Replies)
+                .FirstOrDefaultAsync(r => r.ReviewId == id);
+
+            if (review == null)
+            {
+                return NotFound(new { message = $"Không tìm thấy đánh giá #{id}" });
+            }
+
+            // Xóa ảnh liên quan
+            if (review.ReviewImages.Any())
+            {
+                _context.ReviewImages.RemoveRange(review.ReviewImages);
+            }
+
+            // Xóa replies nếu có
+            if (review.Replies.Any())
+            {
+                _context.Reviews.RemoveRange(review.Replies);
+            }
+
+            _context.Reviews.Remove(review);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = $"Đã xóa đánh giá #{id} thành công!" });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "Lỗi: " + ex.Message });
+        }
+    }
 }
 

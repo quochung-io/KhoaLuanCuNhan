@@ -141,3 +141,20 @@ export const returnTicketService = {
   reject: (id: string, reason?: string) => 
     api.post(`/return-tickets/${id}/reject`, { reason }),
 };
+
+export const promotionService = {
+  getAll: (params?: { search?: string; status?: string }) => api.get('/promotions', { params }),
+  getById: (id: number) => api.get(`/promotions/${id}`),
+  create: (data: any) => api.post('/promotions', data),
+  update: (id: number, data: any) => api.put(`/promotions/${id}`, data),
+  toggleStatus: (id: number) => api.put(`/promotions/${id}/toggle-status`),
+  delete: (id: number) => api.delete(`/promotions/${id}`),
+};
+
+export const reviewAdminService = {
+  getAll: (params?: { status?: string; search?: string; star?: number; page?: number; pageSize?: number }) => 
+    api.get('/reviews/admin', { params }),
+  updateStatus: (id: number, status: string) => api.put(`/reviews/admin/${id}/status`, { status }),
+  delete: (id: number) => api.delete(`/reviews/admin/${id}`),
+};
+
