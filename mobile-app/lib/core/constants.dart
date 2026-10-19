@@ -1,4 +1,4 @@
-﻿import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart';
 
 class AppConstants {
   static String get baseUrl {
@@ -10,4 +10,6 @@ class AppConstants {
       return 'http://localhost:5023';
     }
   }
+
+  static const int orderExpirationMinutes = 15;
 }

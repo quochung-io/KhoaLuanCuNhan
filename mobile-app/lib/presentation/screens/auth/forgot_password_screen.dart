@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../../core/theme.dart';
 import '../../../data/api_service.dart';
 
@@ -44,7 +44,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       });
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Đã gửi mã xác minh OTP qua Email của bạn! (Mã demo: 123456)'),
+          content: Text(
+            'Đã gửi mã xác minh OTP qua Email của bạn! (Mã demo: 123456)',
+          ),
           backgroundColor: LanhTheme.primaryColor,
         ),
       );
@@ -68,13 +70,19 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   Future<void> _handleResetPassword() async {
     if (_otpController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vui lòng nhập mã OTP!'), backgroundColor: Colors.red),
+        const SnackBar(
+          content: Text('Vui lòng nhập mã OTP!'),
+          backgroundColor: Colors.red,
+        ),
       );
       return;
     }
     if (_newPasswordController.text.length < 6) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Mật khẩu mới phải từ 6 ký tự!'), backgroundColor: Colors.red),
+        const SnackBar(
+          content: Text('Mật khẩu mới phải từ 6 ký tự!'),
+          backgroundColor: Colors.red,
+        ),
       );
       return;
     }
@@ -124,7 +132,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.black),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: Colors.black,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
@@ -157,7 +168,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     children: [
                       const Text(
                         'Email đăng ký',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
                       ),
                       const SizedBox(height: 8),
                       TextFormField(
@@ -165,14 +179,21 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         keyboardType: TextInputType.emailAddress,
                         decoration: InputDecoration(
                           hintText: 'Nhập email đã đăng ký tài khoản',
-                          prefixIcon: const Icon(Icons.email_outlined, color: LanhTheme.primaryColor),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                          prefixIcon: const Icon(
+                            Icons.email_outlined,
+                            color: LanhTheme.primaryColor,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
                             return 'Vui lòng nhập email!';
                           }
-                          if (!RegExp(r'^[\w-\.]+@([\w-]+\.)*[\w-]{2,}$').hasMatch(value.trim())) {
+                          if (!RegExp(
+                            r'^[\w-\.]+@([\w-]+\.)*[\w-]{2,}$',
+                          ).hasMatch(value.trim())) {
                             return 'Email không hợp lệ!';
                           }
                           return null;
@@ -185,17 +206,25 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           backgroundColor: LanhTheme.primaryColor,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
                         child: _isLoading
                             ? const SizedBox(
                                 height: 20,
                                 width: 20,
-                                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
                               )
                             : const Text(
                                 'Gửi mã xác minh OTP',
-                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                       ),
                     ],
@@ -208,7 +237,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   children: [
                     const Text(
                       'Mã xác minh OTP (6 chữ số)',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     TextField(
@@ -217,8 +249,13 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       maxLength: 6,
                       decoration: InputDecoration(
                         hintText: 'Nhập mã OTP (VD: 123456)',
-                        prefixIcon: const Icon(Icons.sms_outlined, color: LanhTheme.primaryColor),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        prefixIcon: const Icon(
+                          Icons.sms_outlined,
+                          color: LanhTheme.primaryColor,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                         counterText: '',
                       ),
                     ),
@@ -226,7 +263,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
                     const Text(
                       'Mật khẩu mới',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     TextField(
@@ -234,10 +274,15 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       obscureText: _obscureNewPassword,
                       decoration: InputDecoration(
                         hintText: 'Nhập mật khẩu mới',
-                        prefixIcon: const Icon(Icons.lock_outline, color: LanhTheme.primaryColor),
+                        prefixIcon: const Icon(
+                          Icons.lock_outline,
+                          color: LanhTheme.primaryColor,
+                        ),
                         suffixIcon: IconButton(
                           icon: Icon(
-                            _obscureNewPassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                            _obscureNewPassword
+                                ? Icons.visibility_off_outlined
+                                : Icons.visibility_outlined,
                             color: Colors.grey,
                           ),
                           onPressed: () {
@@ -246,7 +291,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                             });
                           },
                         ),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 32),
@@ -256,17 +303,25 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         backgroundColor: LanhTheme.primaryColor,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                       child: _isLoading
                           ? const SizedBox(
                               height: 20,
                               width: 20,
-                              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
                             )
                           : const Text(
                               'Đặt lại mật khẩu',
-                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                     ),
                   ],

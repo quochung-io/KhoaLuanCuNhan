@@ -23,6 +23,21 @@ class MainContainerState extends State<MainContainer> {
   int get _cartCount => _cart.fold<int>(0, (sum, item) => sum + item.qty);
 
   void _addToCart(Product product, {int qty = 1}) {
+    if (product.isOutOfStock ||
+        (product.stockQuantity != null && product.stockQuantity! <= 0)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Sản phẩm "${product.name}" hiện đã hết hàng, không thể thêm vào giỏ!',
+          ),
+          duration: const Duration(seconds: 2),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
     setState(() {
       final index = _cart.indexWhere((item) => item.product.id == product.id);
       if (index >= 0) {
@@ -109,10 +124,7 @@ class MainContainerState extends State<MainContainer> {
     ];
 
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: screens,
-      ),
+      body: IndexedStack(index: _currentIndex, children: screens),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           boxShadow: [
@@ -134,8 +146,14 @@ class MainContainerState extends State<MainContainer> {
           backgroundColor: Colors.white,
           selectedItemColor: const Color(0xFF2E7D32),
           unselectedItemColor: const Color(0xFF8D9E90),
-          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
-          unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 11),
+          selectedLabelStyle: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 11,
+          ),
+          unselectedLabelStyle: const TextStyle(
+            fontWeight: FontWeight.w500,
+            fontSize: 11,
+          ),
           items: [
             const BottomNavigationBarItem(
               icon: Icon(Icons.home_outlined),
@@ -172,7 +190,10 @@ class MainContainerState extends State<MainContainer> {
                           color: Color(0xFFE53935),
                           shape: BoxShape.circle,
                         ),
-                        constraints: const BoxConstraints(minWidth: 8, minHeight: 8),
+                        constraints: const BoxConstraints(
+                          minWidth: 8,
+                          minHeight: 8,
+                        ),
                       ),
                     ),
                 ],

@@ -41,6 +41,7 @@ public class ReviewsController : ControllerBase
     // DTO cho yêu cầu chỉnh sửa đánh giá
     public class UpdateReviewRequest
     {
+        public long? UserId { get; set; }
         public int Rating { get; set; } = 5;
         public string? Comment { get; set; }
         public List<string>? ImageUrls { get; set; }
@@ -519,7 +520,18 @@ public class ReviewsController : ControllerBase
                 return NotFound(new { message = $"Không tìm thấy đánh giá có ID = {id}" });
             }
 
-            if (req.Rating < 1 || req.Rating > 5)
+            // Kiểm tra quyền: tài khoản phải là chủ đánh giá hoặc Admin
+            if (req.UserId.HasValue && req.UserId.Value > 0)
+            {
+                var user = await _context.Users.FindAsync(req.UserId.Value);
+                bool isAdmin = user != null && user.RoleId == 1;
+                if (!isAdmin && review.CustomerId != req.UserId.Value)
+                {
+                    return StatusCode(403, new { message = "Bạn không có quyền chỉnh sửa đánh giá này!" });
+                }
+            }
+
+            if (review.ParentReviewId == null && (req.Rating < 1 || req.Rating > 5))
             {
                 return BadRequest(new { message = "Số sao phải từ 1 đến 5!" });
             }
@@ -529,11 +541,14 @@ public class ReviewsController : ControllerBase
                 return BadRequest(new { message = "Nội dung nhận xét không được để trống!" });
             }
 
-            review.Rating = req.Rating;
+            if (req.Rating >= 1 && req.Rating <= 5)
+            {
+                review.Rating = req.Rating;
+            }
             review.Comment = req.Comment.Trim();
             review.UpdatedAt = DateTime.UtcNow;
 
-            // Cập nhật lại ảnh
+            // Cập nhật lại ảnh nếu có
             if (req.ImageUrls != null)
             {
                 _context.ReviewImages.RemoveRange(review.ReviewImages);
@@ -569,12 +584,13 @@ public class ReviewsController : ControllerBase
 
     // DELETE: api/reviews/{id} (Xóa đánh giá của chính mình)
     [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteReview(long id)
+    public async Task<IActionResult> DeleteReview(long id, [FromQuery] long? userId = null)
     {
         try
         {
             var review = await _context.Reviews
                 .Include(r => r.ReviewImages)
+                .Include(r => r.Replies)
                 .FirstOrDefaultAsync(r => r.ReviewId == id);
 
             if (review == null)
@@ -582,7 +598,43 @@ public class ReviewsController : ControllerBase
                 return NotFound(new { message = $"Không tìm thấy đánh giá có ID = {id}" });
             }
 
-            _context.ReviewImages.RemoveRange(review.ReviewImages);
+            // Kiểm tra quyền: tài khoản phải là chủ đánh giá hoặc Admin
+            if (userId.HasValue && userId.Value > 0)
+            {
+                var user = await _context.Users.FindAsync(userId.Value);
+                bool isAdmin = user != null && user.RoleId == 1;
+                if (!isAdmin && review.CustomerId != userId.Value)
+                {
+                    return StatusCode(403, new { message = "Bạn không có quyền xóa đánh giá này!" });
+                }
+            }
+
+            // Xóa phiếu bầu hữu ích liên quan
+            var relatedReviewIds = new List<long> { review.ReviewId };
+            if (review.Replies != null && review.Replies.Any())
+            {
+                relatedReviewIds.AddRange(review.Replies.Select(rep => rep.ReviewId));
+            }
+            var votes = await _context.ReviewHelpfulVotes
+                .Where(v => relatedReviewIds.Contains(v.ReviewId))
+                .ToListAsync();
+            if (votes.Any())
+            {
+                _context.ReviewHelpfulVotes.RemoveRange(votes);
+            }
+
+            // Xóa ảnh liên quan
+            if (review.ReviewImages != null && review.ReviewImages.Any())
+            {
+                _context.ReviewImages.RemoveRange(review.ReviewImages);
+            }
+
+            // Xóa các câu trả lời trực thuộc nếu có
+            if (review.Replies != null && review.Replies.Any())
+            {
+                _context.Reviews.RemoveRange(review.Replies);
+            }
+
             _context.Reviews.Remove(review);
             await _context.SaveChangesAsync();
 

@@ -150,13 +150,35 @@ END";
                 };
                 _context.UserLoyalties.Add(userLoyalty);
                 await _context.SaveChangesAsync();
-
-                // Tặng 1 voucher chào mừng thành viên mới
-                _context.UserVouchers.Add(
-                    new UserVoucher { UserId = userId, Code = "WELCOME50", Title = "Voucher Chào Mừng Thành Viên Mới", VoucherType = "cash", DiscountValue = 50000, MinOrderAmount = 200000, ExpiryDate = DateTime.UtcNow.AddMonths(1), IsUsed = false }
-                );
-                await _context.SaveChangesAsync();
             }
+        }
+
+        // Đảm bảo tất cả người dùng (kể cả tài khoản cũ và mới) đều có trọn bộ voucher ưu đãi chào mừng
+        var existingCodes = await _context.UserVouchers
+            .Where(v => v.UserId == userId)
+            .Select(v => v.Code.ToUpper())
+            .ToListAsync();
+
+        var welcomeVouchers = new List<UserVoucher>
+        {
+            new UserVoucher { UserId = userId, Code = "WELCOME50", Title = "Voucher Chào Mừng Thành Viên Mới", VoucherType = "cash", DiscountValue = 50000, MinOrderAmount = 200000, ExpiryDate = DateTime.UtcNow.AddMonths(3), IsUsed = false },
+            new UserVoucher { UserId = userId, Code = "LANHFRESH20", Title = "Giảm 20.000đ Đơn Nông Sản", VoucherType = "cash", DiscountValue = 20000, MinOrderAmount = 150000, ExpiryDate = DateTime.UtcNow.AddMonths(3), IsUsed = false },
+            new UserVoucher { UserId = userId, Code = "FREESHIP50", Title = "Miễn Phí Vận Chuyển Toàn Sàn", VoucherType = "ship", DiscountValue = 30000, MinOrderAmount = 150000, ExpiryDate = DateTime.UtcNow.AddMonths(2), IsUsed = false },
+            new UserVoucher { UserId = userId, Code = "VIETGAP10", Title = "Giảm 10% Rau Hữu Cơ VietGAP", VoucherType = "discount", DiscountValue = 15000, MinOrderAmount = 100000, ExpiryDate = DateTime.UtcNow.AddMonths(2), IsUsed = false }
+        };
+
+        bool hasNewVouchers = false;
+        foreach (var wv in welcomeVouchers)
+        {
+            if (!existingCodes.Contains(wv.Code.ToUpper()))
+            {
+                _context.UserVouchers.Add(wv);
+                hasNewVouchers = true;
+            }
+        }
+        if (hasNewVouchers)
+        {
+            await _context.SaveChangesAsync();
         }
     }
 
@@ -235,6 +257,52 @@ END";
                 .ThenByDescending(v => v.CreatedAt)
                 .ToListAsync();
 
+            // Gộp thêm các voucher khuyến mãi toàn sàn đang Active từ Web Admin
+            var userVoucherCodes = new HashSet<string>(vouchers.Select(v => v.Code.ToUpper()));
+            var activePromos = await _context.Promotions
+                .Where(p => (p.Status == "Active" || p.Status == null) &&
+                            (!p.EndDate.HasValue || p.EndDate.Value >= DateTime.UtcNow))
+                .OrderByDescending(p => p.PromotionId)
+                .ToListAsync();
+
+            var allVouchers = vouchers.Select(v => new
+            {
+                voucherId = (long)v.VoucherId,
+                code = v.Code,
+                title = v.Title,
+                voucherType = v.VoucherType,
+                discountValue = v.DiscountValue,
+                minOrderAmount = v.MinOrderAmount,
+                expiryDate = v.ExpiryDate,
+                isUsed = v.IsUsed,
+                description = v.Title
+            }).ToList();
+
+            foreach (var p in activePromos)
+            {
+                if (!userVoucherCodes.Contains(p.PromotionCode.ToUpper()))
+                {
+                    var isShip = (p.DiscountType ?? "").ToLower() == "ship";
+                    var isPercent = (p.DiscountType ?? "").ToLower() == "percent";
+                    allVouchers.Add(new
+                    {
+                        voucherId = 100000 + p.PromotionId,
+                        code = p.PromotionCode,
+                        title = p.PromotionName,
+                        voucherType = isShip ? "ship" : (isPercent ? "discount" : "cash"),
+                        discountValue = p.DiscountValue,
+                        minOrderAmount = p.MinOrderValue ?? 0,
+                        expiryDate = p.EndDate ?? DateTime.UtcNow.AddMonths(3),
+                        isUsed = false,
+                        description = isShip 
+                            ? $"Miễn phí vận chuyển tối đa {p.DiscountValue:N0}₫ cho đơn từ {(p.MinOrderValue ?? 0):N0}₫"
+                            : (isPercent 
+                                ? $"Giảm {p.DiscountValue:0.#}% cho đơn từ {(p.MinOrderValue ?? 0):N0}₫"
+                                : $"Giảm {p.DiscountValue:N0}₫ cho đơn từ {(p.MinOrderValue ?? 0):N0}₫")
+                    });
+                }
+            }
+
             return Ok(new
             {
                 currentPoints = loyalty?.CurrentPoints ?? 0,
@@ -243,12 +311,188 @@ END";
                 pointRate = loyalty?.Tier?.PointRate ?? 0.01m,
                 tiers,
                 history,
-                vouchers
+                vouchers = allVouchers
             });
         }
         catch (Exception ex)
         {
             return StatusCode(500, new { message = "Lỗi khi lấy thông tin loyalty", error = ex.Message });
+        }
+    }
+
+    // GET /api/loyalty/checkout-vouchers?userId=...&subtotal=...&shippingFee=...
+    [HttpGet("checkout-vouchers")]
+    public async Task<IActionResult> GetCheckoutVouchers(
+        [FromQuery] long userId,
+        [FromQuery] decimal subtotal = 0,
+        [FromQuery] decimal shippingFee = 0)
+    {
+        try
+        {
+            await EnsureSeededAsync(userId);
+
+            var now = DateTime.UtcNow;
+            var userVouchers = await _context.UserVouchers
+                .Where(v => v.UserId == userId && !v.IsUsed)
+                .OrderByDescending(v => v.CreatedAt)
+                .ToListAsync();
+
+            var shopVouchers = new List<object>();
+            var platformVouchers = new List<object>();
+
+            var userVoucherCodes = new HashSet<string>(userVouchers.Select(v => v.Code.ToUpper()));
+
+            foreach (var v in userVouchers)
+            {
+                var isExpired = v.ExpiryDate < now;
+                var isMinOrderReached = subtotal >= v.MinOrderAmount;
+                var isValid = !isExpired && isMinOrderReached;
+
+                string? invalidReason = null;
+                if (isExpired)
+                {
+                    invalidReason = "Voucher đã hết hạn sử dụng";
+                }
+                else if (!isMinOrderReached)
+                {
+                    var missing = v.MinOrderAmount - subtotal;
+                    invalidReason = $"Đơn tối thiểu {v.MinOrderAmount:N0}₫ (còn thiếu {missing:N0}₫)";
+                }
+
+                decimal discountAmount = 0;
+                var type = (v.VoucherType ?? "cash").ToLower();
+                if (isValid)
+                {
+                    if (type == "ship")
+                    {
+                        discountAmount = Math.Min(shippingFee, v.DiscountValue);
+                    }
+                    else if ((type == "percent" || type == "discount") && v.DiscountValue <= 100)
+                    {
+                        discountAmount = Math.Round((subtotal * v.DiscountValue) / 100);
+                    }
+                    else // cash / fixed hoặc số tiền cố định
+                    {
+                        discountAmount = Math.Min(subtotal, v.DiscountValue);
+                    }
+                }
+
+                var item = new
+                {
+                    voucherId = v.VoucherId,
+                    code = v.Code,
+                    title = v.Title,
+                    voucherType = v.VoucherType,
+                    discountValue = v.DiscountValue,
+                    minOrderAmount = v.MinOrderAmount,
+                    expiryDate = v.ExpiryDate.ToString("dd/MM/yyyy"),
+                    isValid,
+                    invalidReason,
+                    discountAmount
+                };
+
+                if (type == "ship")
+                {
+                    platformVouchers.Add(item);
+                }
+                else
+                {
+                    shopVouchers.Add(item);
+                }
+            }
+
+            // 2. Lấy thêm tất cả các chương trình khuyến mãi toàn sàn đang Active từ Web Admin (Promotions)
+            var activePromotions = await _context.Promotions
+                .Where(p => (p.Status == "Active" || p.Status == null) &&
+                            (!p.StartDate.HasValue || p.StartDate.Value <= now) &&
+                            (!p.EndDate.HasValue || p.EndDate.Value >= now))
+                .OrderByDescending(p => p.PromotionId)
+                .ToListAsync();
+
+            foreach (var p in activePromotions)
+            {
+                // Tránh hiển thị trùng mã nếu user đã có trong ví cá nhân
+                if (userVoucherCodes.Contains(p.PromotionCode.ToUpper()))
+                {
+                    continue;
+                }
+
+                var isExpired = p.EndDate.HasValue && p.EndDate.Value < now;
+                var minOrder = p.MinOrderValue ?? 0;
+                var isMinOrderReached = subtotal >= minOrder;
+                var isValid = !isExpired && isMinOrderReached;
+
+                string? invalidReason = null;
+                if (isExpired)
+                {
+                    invalidReason = "Voucher đã hết hạn sử dụng";
+                }
+                else if (!isMinOrderReached)
+                {
+                    var missing = minOrder - subtotal;
+                    invalidReason = $"Đơn tối thiểu {minOrder:N0}₫ (còn thiếu {missing:N0}₫)";
+                }
+
+                decimal discountAmount = 0;
+                var rawType = (p.DiscountType ?? "percent").ToLower();
+                var isShip = rawType == "ship";
+
+                if (isValid)
+                {
+                    if (isShip)
+                    {
+                        discountAmount = Math.Min(shippingFee, p.DiscountValue);
+                    }
+                    else if (rawType == "percent")
+                    {
+                        var disc = Math.Round((subtotal * p.DiscountValue) / 100);
+                        if (p.MaxDiscount.HasValue && p.MaxDiscount.Value > 0)
+                        {
+                            disc = Math.Min(disc, p.MaxDiscount.Value);
+                        }
+                        discountAmount = disc;
+                    }
+                    else // Fixed / Cash
+                    {
+                        discountAmount = Math.Min(subtotal, p.DiscountValue);
+                    }
+                }
+
+                var item = new
+                {
+                    voucherId = 100000 + p.PromotionId,
+                    code = p.PromotionCode,
+                    title = p.PromotionName,
+                    voucherType = isShip ? "ship" : (rawType == "percent" ? "discount" : "cash"),
+                    discountValue = p.DiscountValue,
+                    minOrderAmount = minOrder,
+                    expiryDate = p.EndDate.HasValue ? p.EndDate.Value.ToString("dd/MM/yyyy") : "31/12/2026",
+                    isValid,
+                    invalidReason,
+                    discountAmount
+                };
+
+                if (isShip)
+                {
+                    platformVouchers.Add(item);
+                }
+                else
+                {
+                    shopVouchers.Add(item);
+                }
+            }
+
+            return Ok(new
+            {
+                subtotal,
+                shippingFee,
+                shopVouchers,
+                platformVouchers
+            });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "Lỗi khi lấy danh sách voucher thanh toán", error = ex.Message });
         }
     }
 

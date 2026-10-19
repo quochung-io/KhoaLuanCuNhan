@@ -31,7 +31,10 @@ class ApiService {
     return trimmed;
   }
 
-  static Future<Map<String, dynamic>> login(String email, String password) async {
+  static Future<Map<String, dynamic>> login(
+    String email,
+    String password,
+  ) async {
     final url = Uri.parse('${AppConstants.baseUrl}/api/auth/login');
     try {
       final response = await http.post(
@@ -44,10 +47,13 @@ class ApiService {
         return jsonDecode(response.body) as Map<String, dynamic>;
       } else {
         final error = jsonDecode(response.body);
-        throw Exception(error['message'] ?? 'Đăng nhập thất bại (${response.statusCode})');
+        throw Exception(
+          error['message'] ?? 'Đăng nhập thất bại (${response.statusCode})',
+        );
       }
     } catch (e) {
-      if (e.toString().contains('Failed host lookup') || e.toString().contains('Connection refused')) {
+      if (e.toString().contains('Failed host lookup') ||
+          e.toString().contains('Connection refused')) {
         throw Exception('Không thể kết nối đến máy chủ Backend.');
       }
       rethrow;
@@ -77,10 +83,14 @@ class ApiService {
       if (response.statusCode == 200) {
         return result as Map<String, dynamic>;
       } else {
-        throw Exception(result['message'] ?? 'Thông tin đã tồn tại trên hệ thống (${response.statusCode})');
+        throw Exception(
+          result['message'] ??
+              'Thông tin đã tồn tại trên hệ thống (${response.statusCode})',
+        );
       }
     } catch (e) {
-      if (e.toString().contains('Failed host lookup') || e.toString().contains('Connection refused')) {
+      if (e.toString().contains('Failed host lookup') ||
+          e.toString().contains('Connection refused')) {
         throw Exception('Không thể kết nối đến máy chủ Backend.');
       }
       rethrow;
@@ -104,10 +114,13 @@ class ApiService {
       if (response.statusCode == 200) {
         return result as Map<String, dynamic>;
       } else {
-        throw Exception(result['message'] ?? 'Không thể gửi mã OTP (${response.statusCode})');
+        throw Exception(
+          result['message'] ?? 'Không thể gửi mã OTP (${response.statusCode})',
+        );
       }
     } catch (e) {
-      if (e.toString().contains('Failed host lookup') || e.toString().contains('Connection refused')) {
+      if (e.toString().contains('Failed host lookup') ||
+          e.toString().contains('Connection refused')) {
         throw Exception('Không thể kết nối đến máy chủ Backend.');
       }
       rethrow;
@@ -140,10 +153,13 @@ class ApiService {
 
       if (response.statusCode != 200) {
         final error = jsonDecode(response.body);
-        throw Exception(error['message'] ?? 'Đăng ký thất bại (${response.statusCode})');
+        throw Exception(
+          error['message'] ?? 'Đăng ký thất bại (${response.statusCode})',
+        );
       }
     } catch (e) {
-      if (e.toString().contains('Failed host lookup') || e.toString().contains('Connection refused')) {
+      if (e.toString().contains('Failed host lookup') ||
+          e.toString().contains('Connection refused')) {
         throw Exception('Không thể kết nối đến máy chủ Backend.');
       }
       rethrow;
@@ -163,10 +179,13 @@ class ApiService {
       if (response.statusCode == 200) {
         return result as Map<String, dynamic>;
       } else {
-        throw Exception(result['message'] ?? 'Yêu cầu OTP thất bại (${response.statusCode})');
+        throw Exception(
+          result['message'] ?? 'Yêu cầu OTP thất bại (${response.statusCode})',
+        );
       }
     } catch (e) {
-      if (e.toString().contains('Failed host lookup') || e.toString().contains('Connection refused')) {
+      if (e.toString().contains('Failed host lookup') ||
+          e.toString().contains('Connection refused')) {
         throw Exception('Không thể kết nối đến máy chủ Backend.');
       }
       rethrow;
@@ -192,10 +211,14 @@ class ApiService {
 
       if (response.statusCode != 200) {
         final error = jsonDecode(response.body);
-        throw Exception(error['message'] ?? 'Đặt lại mật khẩu thất bại (${response.statusCode})');
+        throw Exception(
+          error['message'] ??
+              'Đặt lại mật khẩu thất bại (${response.statusCode})',
+        );
       }
     } catch (e) {
-      if (e.toString().contains('Failed host lookup') || e.toString().contains('Connection refused')) {
+      if (e.toString().contains('Failed host lookup') ||
+          e.toString().contains('Connection refused')) {
         throw Exception('Không thể kết nối đến máy chủ Backend.');
       }
       rethrow;
@@ -210,8 +233,10 @@ class ApiService {
       if (response.statusCode == 200) {
         final decoded = jsonDecode(response.body);
         if (decoded is List) return decoded;
-        if (decoded is Map && decoded['value'] is List) return decoded['value'] as List<dynamic>;
-        if (decoded is Map && decoded['data'] is List) return decoded['data'] as List<dynamic>;
+        if (decoded is Map && decoded['value'] is List)
+          return decoded['value'] as List<dynamic>;
+        if (decoded is Map && decoded['data'] is List)
+          return decoded['data'] as List<dynamic>;
       }
       return [];
     } catch (_) {
@@ -226,8 +251,10 @@ class ApiService {
       if (response.statusCode == 200) {
         final decoded = jsonDecode(response.body);
         if (decoded is List) return decoded;
-        if (decoded is Map && decoded['value'] is List) return decoded['value'] as List<dynamic>;
-        if (decoded is Map && decoded['data'] is List) return decoded['data'] as List<dynamic>;
+        if (decoded is Map && decoded['value'] is List)
+          return decoded['value'] as List<dynamic>;
+        if (decoded is Map && decoded['data'] is List)
+          return decoded['data'] as List<dynamic>;
         return [];
       }
       throw Exception('Lỗi tải sản phẩm');
@@ -251,7 +278,9 @@ class ApiService {
 
   static Future<List<String>> getAutocomplete(String prefix) async {
     if (prefix.trim().isEmpty) return [];
-    final url = Uri.parse('${AppConstants.baseUrl}/api/products/autocomplete?prefix=${Uri.encodeComponent(prefix)}');
+    final url = Uri.parse(
+      '${AppConstants.baseUrl}/api/products/autocomplete?prefix=${Uri.encodeComponent(prefix)}',
+    );
     try {
       final response = await http.get(url);
       if (response.statusCode == 200) {
@@ -264,15 +293,22 @@ class ApiService {
     }
   }
 
-  static Future<List<dynamic>> getFrequentlyBoughtTogether(int productId, {int limit = 6}) async {
-    final url = Uri.parse('${AppConstants.baseUrl}/api/recommendations/frequently-bought-together/$productId?limit=$limit');
+  static Future<List<dynamic>> getFrequentlyBoughtTogether(
+    int productId, {
+    int limit = 6,
+  }) async {
+    final url = Uri.parse(
+      '${AppConstants.baseUrl}/api/recommendations/frequently-bought-together/$productId?limit=$limit',
+    );
     try {
       final response = await http.get(url);
       if (response.statusCode == 200) {
         final decoded = jsonDecode(response.body);
         if (decoded is List) return decoded;
-        if (decoded is Map && decoded['value'] is List) return decoded['value'] as List<dynamic>;
-        if (decoded is Map && decoded['data'] is List) return decoded['data'] as List<dynamic>;
+        if (decoded is Map && decoded['value'] is List)
+          return decoded['value'] as List<dynamic>;
+        if (decoded is Map && decoded['data'] is List)
+          return decoded['data'] as List<dynamic>;
       }
       return [];
     } catch (_) {
@@ -281,13 +317,22 @@ class ApiService {
   }
 
   // ── THUẬT TOÁN GỢI Ý NGỮ CẢNH CARS ────────────────────────────
-  static Future<Map<String, dynamic>> getContextAwareRecommendations({int? userId, int limit = 6}) async {
+  static Future<Map<String, dynamic>> getContextAwareRecommendations({
+    int? userId,
+    int limit = 6,
+  }) async {
     // 1. Thử gọi gợi ý cá nhân hóa CARS đa nhân tố (For-You) nếu có user
     if (userId != null && userId > 0) {
       try {
-        final uriForYou = Uri.parse('${AppConstants.baseUrl}/api/recommendations/for-you').replace(
-          queryParameters: {'userId': userId.toString(), 'limit': limit.toString()},
-        );
+        final uriForYou =
+            Uri.parse(
+              '${AppConstants.baseUrl}/api/recommendations/for-you',
+            ).replace(
+              queryParameters: {
+                'userId': userId.toString(),
+                'limit': limit.toString(),
+              },
+            );
         final res = await http.get(uriForYou);
         if (res.statusCode == 200) {
           final data = jsonDecode(res.body);
@@ -307,9 +352,9 @@ class ApiService {
 
     // 2. Gợi ý nông sản chính vụ theo mùa (In-Season CARS)
     try {
-      final uriInSeason = Uri.parse('${AppConstants.baseUrl}/api/recommendations/in-season').replace(
-        queryParameters: {'limit': limit.toString()},
-      );
+      final uriInSeason = Uri.parse(
+        '${AppConstants.baseUrl}/api/recommendations/in-season',
+      ).replace(queryParameters: {'limit': limit.toString()});
       final response = await http.get(uriInSeason);
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -355,7 +400,9 @@ class ApiService {
 
   // ── ĐƠN HÀNG (ORDERS) ─────────────────────────────────────────
   static Future<List<dynamic>> getCustomerOrders(int customerId) async {
-    final url = Uri.parse('${AppConstants.baseUrl}/api/orders/customer/$customerId');
+    final url = Uri.parse(
+      '${AppConstants.baseUrl}/api/orders/customer/$customerId',
+    );
     try {
       final response = await http.get(url);
       if (response.statusCode == 200) {
@@ -380,7 +427,7 @@ class ApiService {
     }
   }
 
-  static Future<bool> cancelOrder(int orderId, {String? reason}) async {
+  static Future<bool> cancelOrder(dynamic orderId, {String? reason}) async {
     final url = Uri.parse('${AppConstants.baseUrl}/api/orders/$orderId/status');
     try {
       final response = await http.put(
@@ -465,12 +512,19 @@ class ApiService {
   }
 
   // ── ĐÁNH GIÁ (REVIEWS) ────────────────────────────────────────
-  static Future<Map<String, dynamic>> getProductReviews(int productId, {int? currentUserId}) async {
-    final uri = Uri.parse('${AppConstants.baseUrl}/api/reviews/product/$productId').replace(
-      queryParameters: {
-        if (currentUserId != null && currentUserId > 0) 'currentUserId': currentUserId.toString(),
-      },
-    );
+  static Future<Map<String, dynamic>> getProductReviews(
+    int productId, {
+    int? currentUserId,
+  }) async {
+    final uri =
+        Uri.parse(
+          '${AppConstants.baseUrl}/api/reviews/product/$productId',
+        ).replace(
+          queryParameters: {
+            if (currentUserId != null && currentUserId > 0)
+              'currentUserId': currentUserId.toString(),
+          },
+        );
     try {
       final response = await http.get(uri);
       if (response.statusCode == 200) {
@@ -478,7 +532,11 @@ class ApiService {
         if (data is Map<String, dynamic>) {
           return data;
         } else if (data is List) {
-          return {'reviews': data, 'totalReviews': data.length, 'averageRating': 5.0};
+          return {
+            'reviews': data,
+            'totalReviews': data.length,
+            'averageRating': 5.0,
+          };
         }
       }
       return {'reviews': [], 'totalReviews': 0, 'averageRating': 5.0};
@@ -519,7 +577,9 @@ class ApiService {
     required int reviewId,
     required int userId,
   }) async {
-    final url = Uri.parse('${AppConstants.baseUrl}/api/reviews/$reviewId/helpful?userId=$userId');
+    final url = Uri.parse(
+      '${AppConstants.baseUrl}/api/reviews/$reviewId/helpful?userId=$userId',
+    );
     try {
       final response = await http.post(
         url,
@@ -541,7 +601,9 @@ class ApiService {
     required String customerName,
     required String comment,
   }) async {
-    final url = Uri.parse('${AppConstants.baseUrl}/api/reviews/$reviewId/reply');
+    final url = Uri.parse(
+      '${AppConstants.baseUrl}/api/reviews/$reviewId/reply',
+    );
     try {
       final response = await http.post(
         url,
@@ -558,6 +620,46 @@ class ApiService {
       return null;
     } catch (_) {
       return null;
+    }
+  }
+
+  static Future<bool> updateReview({
+    required int reviewId,
+    required int userId,
+    required String comment,
+    int? rating,
+    List<String>? imageUrls,
+  }) async {
+    final url = Uri.parse('${AppConstants.baseUrl}/api/reviews/$reviewId');
+    try {
+      final response = await http.put(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'userId': userId,
+          if (rating != null) 'rating': rating,
+          'comment': comment,
+          if (imageUrls != null) 'imageUrls': imageUrls,
+        }),
+      );
+      return response.statusCode == 200;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  static Future<bool> deleteReview({
+    required int reviewId,
+    required int userId,
+  }) async {
+    final url = Uri.parse(
+      '${AppConstants.baseUrl}/api/reviews/$reviewId?userId=$userId',
+    );
+    try {
+      final response = await http.delete(url);
+      return response.statusCode == 200;
+    } catch (_) {
+      return false;
     }
   }
 
@@ -589,7 +691,9 @@ class ApiService {
     }
   }
 
-  static Future<Map<String, dynamic>> createAddress(Map<String, dynamic> data) async {
+  static Future<Map<String, dynamic>> createAddress(
+    Map<String, dynamic> data,
+  ) async {
     final url = Uri.parse('${AppConstants.baseUrl}/api/addresses');
     try {
       final response = await http.post(
@@ -600,21 +704,25 @@ class ApiService {
       if (response.statusCode == 201 || response.statusCode == 200) {
         return jsonDecode(response.body);
       }
-      
+
       try {
         final errorBody = jsonDecode(response.body);
         if (errorBody['message'] != null) {
           throw Exception(errorBody['message']);
         }
       } catch (_) {}
-      
-      throw Exception('Lỗi thêm địa chỉ (${response.statusCode}): ${response.body}');
+
+      throw Exception(
+        'Lỗi thêm địa chỉ (${response.statusCode}): ${response.body}',
+      );
     } catch (e) {
       rethrow;
     }
   }
 
-  static Future<Map<String, dynamic>> createOrder(Map<String, dynamic> data) async {
+  static Future<Map<String, dynamic>> createOrder(
+    Map<String, dynamic> data,
+  ) async {
     final url = Uri.parse('${AppConstants.baseUrl}/api/orders');
     try {
       final response = await http.post(
@@ -625,7 +733,28 @@ class ApiService {
       if (response.statusCode == 201 || response.statusCode == 200) {
         return jsonDecode(response.body);
       }
-      throw Exception('Lỗi tạo đơn hàng (${response.statusCode}): ${response.body}');
+      throw Exception(
+        'Lỗi tạo đơn hàng (${response.statusCode}): ${response.body}',
+      );
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  static Future<Map<String, dynamic>> createMomoPayment(dynamic orderId) async {
+    final url = Uri.parse('${AppConstants.baseUrl}/api/Payment/momo/create');
+    final id = orderId is int ? orderId : int.tryParse(orderId.toString()) ?? 0;
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'orderId': id}),
+      );
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      }
+      final err = jsonDecode(response.body);
+      throw Exception(err['message'] ?? 'Không thể khởi tạo giao dịch MoMo');
     } catch (e) {
       rethrow;
     }
@@ -633,7 +762,9 @@ class ApiService {
 
   // ── THÔNG BÁO (NOTIFICATIONS) ─────────────────────────────────
   static Future<List<dynamic>> getUserNotifications(int userId) async {
-    final url = Uri.parse('${AppConstants.baseUrl}/api/notifications/user/$userId');
+    final url = Uri.parse(
+      '${AppConstants.baseUrl}/api/notifications/user/$userId',
+    );
     try {
       final response = await http.get(url);
       if (response.statusCode == 200) {
@@ -646,14 +777,18 @@ class ApiService {
   }
 
   static Future<void> markNotificationAsRead(int notificationId) async {
-    final url = Uri.parse('${AppConstants.baseUrl}/api/notifications/$notificationId/read');
+    final url = Uri.parse(
+      '${AppConstants.baseUrl}/api/notifications/$notificationId/read',
+    );
     try {
       await http.put(url);
     } catch (_) {}
   }
 
   static Future<void> markAllNotificationsAsRead(int userId) async {
-    final url = Uri.parse('${AppConstants.baseUrl}/api/notifications/user/$userId/read-all');
+    final url = Uri.parse(
+      '${AppConstants.baseUrl}/api/notifications/user/$userId/read-all',
+    );
     try {
       await http.put(url);
     } catch (_) {}
@@ -661,7 +796,9 @@ class ApiService {
 
   // ── THANH TOÁN & WEBHOOK REALTIME ─────────────────────────────
   static Future<Map<String, dynamic>> getPaymentStatus(dynamic orderId) async {
-    final url = Uri.parse('${AppConstants.baseUrl}/api/PaymentWebhook/status/$orderId');
+    final url = Uri.parse(
+      '${AppConstants.baseUrl}/api/PaymentWebhook/status/$orderId',
+    );
     try {
       final response = await http.get(url).timeout(const Duration(seconds: 4));
       if (response.statusCode == 200) {
@@ -678,13 +815,17 @@ class ApiService {
     String? orderCode,
     double? amount,
   }) async {
-    final url = Uri.parse('${AppConstants.baseUrl}/api/PaymentWebhook/simulate');
+    final url = Uri.parse(
+      '${AppConstants.baseUrl}/api/PaymentWebhook/simulate',
+    );
     try {
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
-          'orderId': orderId is int ? orderId : int.tryParse(orderId.toString()) ?? 0,
+          'orderId': orderId is int
+              ? orderId
+              : int.tryParse(orderId.toString()) ?? 0,
           'orderCode': orderCode,
           'amount': amount,
         }),
@@ -694,5 +835,24 @@ class ApiService {
       return false;
     }
   }
-}
 
+  // ── VOUCHERS CHO THANH TOÁN (CHECKOUT VOUCHERS) ───────────────
+  static Future<Map<String, dynamic>> getCheckoutVouchers({
+    required int userId,
+    required int subtotal,
+    required int shippingFee,
+  }) async {
+    final url = Uri.parse(
+      '${AppConstants.baseUrl}/api/loyalty/checkout-vouchers?userId=$userId&subtotal=$subtotal&shippingFee=$shippingFee',
+    );
+    try {
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      }
+      return {'shopVouchers': [], 'platformVouchers': []};
+    } catch (_) {
+      return {'shopVouchers': [], 'platformVouchers': []};
+    }
+  }
+}

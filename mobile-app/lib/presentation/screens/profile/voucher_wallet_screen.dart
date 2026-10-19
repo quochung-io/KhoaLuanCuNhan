@@ -11,7 +11,8 @@ class VoucherWalletScreen extends StatefulWidget {
   State<VoucherWalletScreen> createState() => _VoucherWalletScreenState();
 }
 
-class _VoucherWalletScreenState extends State<VoucherWalletScreen> with SingleTickerProviderStateMixin {
+class _VoucherWalletScreenState extends State<VoucherWalletScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   List<dynamic> _vouchers = [];
   bool _isLoading = true;
@@ -43,8 +44,10 @@ class _VoucherWalletScreenState extends State<VoucherWalletScreen> with SingleTi
     }
   }
 
-  List<dynamic> get _activeVouchers => _vouchers.where((v) => v['isUsed'] != true).toList();
-  List<dynamic> get _usedVouchers => _vouchers.where((v) => v['isUsed'] == true).toList();
+  List<dynamic> get _activeVouchers =>
+      _vouchers.where((v) => v['isUsed'] != true).toList();
+  List<dynamic> get _usedVouchers =>
+      _vouchers.where((v) => v['isUsed'] == true).toList();
 
   void _copyVoucherCode(String code) {
     Clipboard.setData(ClipboardData(text: code));
@@ -64,7 +67,10 @@ class _VoucherWalletScreenState extends State<VoucherWalletScreen> with SingleTi
     return Scaffold(
       backgroundColor: const Color(0xFFF7FAF7),
       appBar: AppBar(
-        title: Text(isEn ? 'Voucher Wallet' : 'Kho Voucher Của Bạn', style: const TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(
+          isEn ? 'Voucher Wallet' : 'Kho Voucher Của Bạn',
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
         backgroundColor: Colors.white,
         foregroundColor: const Color(0xFF1B3A20),
         elevation: 0,
@@ -74,15 +80,26 @@ class _VoucherWalletScreenState extends State<VoucherWalletScreen> with SingleTi
           unselectedLabelColor: Colors.grey,
           indicatorColor: const Color(0xFF2E7D32),
           indicatorWeight: 3,
-          labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+          labelStyle: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+          ),
           tabs: [
-            Tab(text: '${isEn ? "Available" : "Khả dụng"} (${_activeVouchers.length})'),
-            Tab(text: '${isEn ? "Used / Expired" : "Đã dùng / Hết hạn"} (${_usedVouchers.length})'),
+            Tab(
+              text:
+                  '${isEn ? "Available" : "Khả dụng"} (${_activeVouchers.length})',
+            ),
+            Tab(
+              text:
+                  '${isEn ? "Used / Expired" : "Đã dùng / Hết hạn"} (${_usedVouchers.length})',
+            ),
           ],
         ),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFF2E7D32)))
+          ? const Center(
+              child: CircularProgressIndicator(color: Color(0xFF2E7D32)),
+            )
           : TabBarView(
               controller: _tabController,
               children: [
@@ -99,10 +116,16 @@ class _VoucherWalletScreenState extends State<VoucherWalletScreen> with SingleTi
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.confirmation_number_outlined, size: 72, color: Colors.grey.shade400),
+            Icon(
+              Icons.confirmation_number_outlined,
+              size: 72,
+              color: Colors.grey.shade400,
+            ),
             const SizedBox(height: 12),
             Text(
-              isActive ? 'Chưa có voucher khả dụng' : 'Không có voucher đã dùng',
+              isActive
+                  ? 'Chưa có voucher khả dụng'
+                  : 'Không có voucher đã dùng',
               style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
             ),
           ],
@@ -126,9 +149,15 @@ class _VoucherWalletScreenState extends State<VoucherWalletScreen> with SingleTi
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: isActive ? const Color(0xFFE1EAE0) : Colors.grey.shade300),
+            border: Border.all(
+              color: isActive ? const Color(0xFFE1EAE0) : Colors.grey.shade300,
+            ),
             boxShadow: [
-              BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 6, offset: const Offset(0, 2)),
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.03),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              ),
             ],
           ),
           child: Row(
@@ -136,16 +165,25 @@ class _VoucherWalletScreenState extends State<VoucherWalletScreen> with SingleTi
               // Cột bên trái: Icon và Giá trị
               Container(
                 width: 100,
-                padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 8),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 20,
+                  horizontal: 8,
+                ),
                 decoration: BoxDecoration(
-                  color: isActive ? const Color(0xFFE8F5E9) : Colors.grey.shade200,
-                  borderRadius: const BorderRadius.horizontal(left: Radius.circular(13)),
+                  color: isActive
+                      ? const Color(0xFFE8F5E9)
+                      : Colors.grey.shade200,
+                  borderRadius: const BorderRadius.horizontal(
+                    left: Radius.circular(13),
+                  ),
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
-                      v['voucherType'] == 'ship' ? Icons.local_shipping_outlined : Icons.card_giftcard,
+                      v['voucherType'] == 'ship'
+                          ? Icons.local_shipping_outlined
+                          : Icons.card_giftcard,
                       color: isActive ? const Color(0xFF2E7D32) : Colors.grey,
                       size: 28,
                     ),
@@ -173,28 +211,53 @@ class _VoucherWalletScreenState extends State<VoucherWalletScreen> with SingleTi
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
-                              color: isActive ? const Color(0xFFF1F8E9) : Colors.grey.shade100,
+                              color: isActive
+                                  ? const Color(0xFFF1F8E9)
+                                  : Colors.grey.shade100,
                               borderRadius: BorderRadius.circular(4),
-                              border: Border.all(color: isActive ? const Color(0xFFAED581) : Colors.grey.shade400),
+                              border: Border.all(
+                                color: isActive
+                                    ? const Color(0xFFAED581)
+                                    : Colors.grey.shade400,
+                              ),
                             ),
                             child: Text(
                               code,
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,
-                                color: isActive ? const Color(0xFF33691E) : Colors.grey,
+                                color: isActive
+                                    ? const Color(0xFF33691E)
+                                    : Colors.grey,
                               ),
                             ),
                           ),
                           if (isActive)
                             InkWell(
                               onTap: () => _copyVoucherCode(code),
-                              child: const Text('Sao chép', style: TextStyle(fontSize: 12, color: Colors.blue, fontWeight: FontWeight.bold)),
+                              child: const Text(
+                                'Sao chép',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.blue,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             )
                           else
-                            const Text('Đã hết hạn', style: TextStyle(fontSize: 11, color: Colors.grey, fontStyle: FontStyle.italic)),
+                            const Text(
+                              'Đã hết hạn',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.grey,
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
                         ],
                       ),
                       const SizedBox(height: 6),
@@ -203,18 +266,26 @@ class _VoucherWalletScreenState extends State<VoucherWalletScreen> with SingleTi
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
-                          color: isActive ? const Color(0xFF1B3A20) : Colors.grey,
+                          color: isActive
+                              ? const Color(0xFF1B3A20)
+                              : Colors.grey,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         'Đơn tối thiểu: ${minOrder.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}đ',
-                        style: TextStyle(fontSize: 11.5, color: Colors.grey.shade600),
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          color: Colors.grey.shade600,
+                        ),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         'Hạn dùng: $expiry',
-                        style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.grey.shade500,
+                        ),
                       ),
                     ],
                   ),

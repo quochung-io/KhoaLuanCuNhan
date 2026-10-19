@@ -52,7 +52,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(val ? 'Đã bật nhận thông báo khuyến mãi & đơn hàng' : 'Đã tắt nhận thông báo'),
+          content: Text(
+            val
+                ? 'Đã bật nhận thông báo khuyến mãi & đơn hàng'
+                : 'Đã tắt nhận thông báo',
+          ),
           duration: const Duration(seconds: 1),
           backgroundColor: const Color(0xFF2E7D32),
         ),
@@ -91,18 +95,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   shape: BoxShape.circle,
                   border: Border.all(color: const Color(0xFFFECACA), width: 2),
                 ),
-                child: const Icon(Icons.logout_rounded, color: Color(0xFFDC2626), size: 30),
+                child: const Icon(
+                  Icons.logout_rounded,
+                  color: Color(0xFFDC2626),
+                  size: 30,
+                ),
               ),
               const SizedBox(height: 18),
               const Text(
                 'Xác nhận đăng xuất',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Color(0xFF1F2937)),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                  color: Color(0xFF1F2937),
+                ),
               ),
               const SizedBox(height: 10),
               const Text(
                 'Bạn có chắc chắn muốn đăng xuất khỏi ứng dụng LÀNH Farm? Giỏ hàng và ưu đãi của bạn vẫn được lưu trữ an toàn.',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 13.5, height: 1.45, color: Color(0xFF6B7280)),
+                style: TextStyle(
+                  fontSize: 13.5,
+                  height: 1.45,
+                  color: Color(0xFF6B7280),
+                ),
               ),
               const SizedBox(height: 24),
               Row(
@@ -114,9 +130,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         side: const BorderSide(color: Color(0xFFE5E7EB)),
                         backgroundColor: const Color(0xFFF9FAFB),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
-                      child: const Text('Ở lại', style: TextStyle(color: Color(0xFF4B5563), fontWeight: FontWeight.w600, fontSize: 14)),
+                      child: const Text(
+                        'Ở lại',
+                        style: TextStyle(
+                          color: Color(0xFF4B5563),
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -129,7 +154,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         if (!mounted) return;
                         Navigator.pushAndRemoveUntil(
                           context,
-                          MaterialPageRoute(builder: (c) => const LoginScreen()),
+                          MaterialPageRoute(
+                            builder: (c) => const LoginScreen(),
+                          ),
                           (route) => false,
                         );
                       },
@@ -137,10 +164,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         backgroundColor: const Color(0xFFDC2626),
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                         elevation: 0,
                       ),
-                      child: const Text('Đăng xuất', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                      child: const Text(
+                        'Đăng xuất',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -159,7 +194,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF7FAF7),
       appBar: AppBar(
-        title: Text(loc.tr('settings'), style: const TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(
+          loc.tr('settings'),
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
         backgroundColor: Colors.white,
         foregroundColor: const Color(0xFF1B3A20),
         elevation: 0,
@@ -179,11 +217,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (ctx) => ChangePasswordScreen(userEmail: _userEmail)),
+                MaterialPageRoute(
+                  builder: (ctx) => ChangePasswordScreen(userEmail: _userEmail),
+                ),
               );
             },
           ),
-          
+
           const SizedBox(height: 24),
           _buildSectionHeader(loc.tr('system_preferences')),
           SwitchListTile(
@@ -193,16 +233,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 color: const Color(0xFFE8F5E9),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(Icons.notifications_active_outlined, color: Color(0xFF2E7D32), size: 22),
+              child: const Icon(
+                Icons.notifications_active_outlined,
+                color: Color(0xFF2E7D32),
+                size: 22,
+              ),
             ),
-            title: const Text('Thông báo ưu đãi & đơn hàng', style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w600, color: Color(0xFF1B3A20))),
-            subtitle: const Text('Nhận tin cập nhật trạng thái đơn hàng và khuyến mãi mới nhất', style: TextStyle(fontSize: 12, color: Color(0xFF6B7280))),
+            title: const Text(
+              'Thông báo ưu đãi & đơn hàng',
+              style: TextStyle(
+                fontSize: 14.5,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF1B3A20),
+              ),
+            ),
+            subtitle: const Text(
+              'Nhận tin cập nhật trạng thái đơn hàng và khuyến mãi mới nhất',
+              style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+            ),
             value: _notificationsEnabled,
             activeThumbColor: const Color(0xFF2E7D32),
             activeTrackColor: const Color(0xFFA5D6A7),
             onChanged: _toggleNotification,
           ),
-          
+
           const SizedBox(height: 24),
           _buildSectionHeader(loc.tr('information')),
           _buildListTile(
@@ -211,7 +265,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (ctx) => const PrivacyPolicyScreen()),
+                MaterialPageRoute(
+                  builder: (ctx) => const PrivacyPolicyScreen(),
+                ),
               );
             },
           ),
@@ -228,7 +284,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _buildListTile(
             icon: Icons.info_outline,
             title: 'Về ứng dụng LÀNH Farm',
-            trailing: const Text('Phiên bản 2.1.0', style: TextStyle(color: Colors.grey, fontSize: 12)),
+            trailing: const Text(
+              'Phiên bản 2.1.0',
+              style: TextStyle(color: Colors.grey, fontSize: 12),
+            ),
             onTap: () {},
           ),
 
@@ -241,11 +300,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: ElevatedButton.icon(
                 onPressed: _showLogoutDialog,
                 icon: const Icon(Icons.logout, size: 18, color: Colors.white),
-                label: const Text('Đăng xuất tài khoản', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white)),
+                label: const Text(
+                  'Đăng xuất tài khoản',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: Colors.white,
+                  ),
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFD32F2F),
                   elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
               ),
             ),

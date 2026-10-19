@@ -53,10 +53,12 @@ class _TraceScreenState extends State<TraceScreen> {
     try {
       // 1. Lấy danh sách lô hàng từ API
       final batches = await ApiService.getProductBatches();
-      
+
       // 2. Tìm lô hàng khớp mã
       final foundBatch = batches.firstWhere(
-        (b) => (b['batchCode'] ?? '').toString().toLowerCase() == lotCode.trim().toLowerCase(),
+        (b) =>
+            (b['batchCode'] ?? '').toString().toLowerCase() ==
+            lotCode.trim().toLowerCase(),
         orElse: () => null,
       );
 
@@ -125,9 +127,7 @@ class _TraceScreenState extends State<TraceScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Truy xuất nguồn gốc'),
-      ),
+      appBar: AppBar(title: const Text('Truy xuất nguồn gốc')),
       body: _isScanning
           ? _buildQrScannerOverlay()
           : SingleChildScrollView(
@@ -164,18 +164,31 @@ class _TraceScreenState extends State<TraceScreen> {
                             controller: _controller,
                             decoration: InputDecoration(
                               hintText: 'Nhập mã ví dụ: LOT#VN-DL-0842',
-                              hintStyle: const TextStyle(color: Color(0xFF8D9E90), fontSize: 13),
+                              hintStyle: const TextStyle(
+                                color: Color(0xFF8D9E90),
+                                fontSize: 13,
+                              ),
                               fillColor: Colors.white,
                               filled: true,
-                              prefixIcon: const Icon(Icons.search, color: Color(0xFF2E7D32)),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              prefixIcon: const Icon(
+                                Icons.search,
+                                color: Color(0xFF2E7D32),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(color: Color(0xFFE1EAE0)),
+                                borderSide: const BorderSide(
+                                  color: Color(0xFFE1EAE0),
+                                ),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(color: Color(0xFF2E7D32)),
+                                borderSide: const BorderSide(
+                                  color: Color(0xFF2E7D32),
+                                ),
                               ),
                             ),
                           ),
@@ -189,11 +202,18 @@ class _TraceScreenState extends State<TraceScreen> {
                             decoration: BoxDecoration(
                               color: const Color(0xFFE3F1E3),
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: const Color(0xFF2E7D32).withValues(alpha: 0.2)),
+                              border: Border.all(
+                                color: const Color(
+                                  0xFF2E7D32,
+                                ).withValues(alpha: 0.2),
+                              ),
                             ),
-                            child: const Icon(Icons.qr_code_scanner, color: Color(0xFF2E7D32)),
+                            child: const Icon(
+                              Icons.qr_code_scanner,
+                              color: Color(0xFF2E7D32),
+                            ),
                           ),
-                        )
+                        ),
                       ],
                     ),
                     const SizedBox(height: 12),
@@ -205,9 +225,14 @@ class _TraceScreenState extends State<TraceScreen> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF2E7D32),
                           foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
-                        child: const Text('Truy xuất', style: TextStyle(fontWeight: FontWeight.bold)),
+                        child: const Text(
+                          'Truy xuất',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 24),
@@ -215,7 +240,11 @@ class _TraceScreenState extends State<TraceScreen> {
                     // Kết quả truy xuất
                     if (_isLoadingTrace) ...[
                       const SizedBox(height: 60),
-                      const Center(child: CircularProgressIndicator(color: Color(0xFF2E7D32))),
+                      const Center(
+                        child: CircularProgressIndicator(
+                          color: Color(0xFF2E7D32),
+                        ),
+                      ),
                     ] else if (_hasSearched && _tracedProduct != null) ...[
                       _buildTracedProductHeader(_tracedProduct!),
                       const SizedBox(height: 24),
@@ -235,35 +264,58 @@ class _TraceScreenState extends State<TraceScreen> {
                         child: Column(
                           children: [
                             const SizedBox(height: 40),
-                            Icon(Icons.search_off_rounded, size: 64, color: Colors.grey.shade400),
+                            Icon(
+                              Icons.search_off_rounded,
+                              size: 64,
+                              color: Colors.grey.shade400,
+                            ),
                             const SizedBox(height: 12),
                             const Text(
                               'Không tìm thấy lô hàng',
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF1B3A20)),
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                color: Color(0xFF1B3A20),
+                              ),
                             ),
                             const SizedBox(height: 6),
                             Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24.0,
+                              ),
                               child: Text(
                                 'Mã lô "${_controller.text}" không tồn tại trong hệ thống hoặc chưa được kích hoạt nhật ký canh tác.',
                                 textAlign: TextAlign.center,
-                                style: const TextStyle(color: Color(0xFF8D9E90), fontSize: 12, height: 1.4),
+                                style: const TextStyle(
+                                  color: Color(0xFF8D9E90),
+                                  fontSize: 12,
+                                  height: 1.4,
+                                ),
                               ),
                             ),
                           ],
                         ),
-                      )
+                      ),
                     ] else if (!_hasSearched) ...[
                       // Giao diện chào khi chưa tìm kiếm
                       Center(
                         child: Column(
                           children: [
                             const SizedBox(height: 40),
-                            Icon(Icons.history_edu_outlined, size: 72, color: const Color(0xFF2E7D32).withValues(alpha: 0.15)),
+                            Icon(
+                              Icons.history_edu_outlined,
+                              size: 72,
+                              color: const Color(
+                                0xFF2E7D32,
+                              ).withValues(alpha: 0.15),
+                            ),
                             const SizedBox(height: 12),
                             const Text(
                               'Nhật ký Farm-to-Table',
-                              style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1B3A20)),
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF1B3A20),
+                              ),
                             ),
                             const SizedBox(height: 6),
                             const Padding(
@@ -271,13 +323,17 @@ class _TraceScreenState extends State<TraceScreen> {
                               child: Text(
                                 'Quét mã QR trên tem nhãn nông sản LÀNH để kiểm tra nguồn gốc, hạt giống, quá trình thu hoạch và chứng nhận kiểm định.',
                                 textAlign: TextAlign.center,
-                                style: TextStyle(color: Color(0xFF8D9E90), fontSize: 12, height: 1.4),
+                                style: TextStyle(
+                                  color: Color(0xFF8D9E90),
+                                  fontSize: 12,
+                                  height: 1.4,
+                                ),
                               ),
                             ),
                           ],
                         ),
-                      )
-                    ]
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -300,7 +356,12 @@ class _TraceScreenState extends State<TraceScreen> {
             children: [
               const Text(
                 'QUÉT MÃ QR NÔNG SẢN LÀNH',
-                style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold, letterSpacing: 1.2),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.2,
+                ),
               ),
               const SizedBox(height: 8),
               const Text(
@@ -334,12 +395,14 @@ class _TraceScreenState extends State<TraceScreen> {
                 style: OutlinedButton.styleFrom(
                   side: const BorderSide(color: Colors.white54),
                   foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
                 ),
                 child: const Text('Hủy bỏ'),
-              )
+              ),
             ],
-          )
+          ),
         ],
       ),
     );
@@ -372,21 +435,32 @@ class _TraceScreenState extends State<TraceScreen> {
               children: [
                 Text(
                   product.name,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF1B3A20)),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: Color(0xFF1B3A20),
+                  ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   'Lô sản xuất: ${product.lot}',
-                  style: const TextStyle(color: Color(0xFF2E7D32), fontWeight: FontWeight.bold, fontSize: 12),
+                  style: const TextStyle(
+                    color: Color(0xFF2E7D32),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   'Chuẩn: ${product.cert} · Nguồn gốc: ${product.region}',
-                  style: const TextStyle(color: Color(0xFF8D9E90), fontSize: 11),
+                  style: const TextStyle(
+                    color: Color(0xFF8D9E90),
+                    fontSize: 11,
+                  ),
                 ),
               ],
             ),
-          )
+          ),
         ],
       ),
     );
@@ -395,11 +469,11 @@ class _TraceScreenState extends State<TraceScreen> {
   // Timeline hành trình Farm-to-Table
   Widget _buildTraceTimeline() {
     if (_tracedProduct == null) return const SizedBox();
-    
+
     // Sử dụng Utils để sinh timeline động khớp với Web
     final List<Map<String, dynamic>> steps = TraceabilityUtils.generateTimeline(
-      _tracedProduct!.lot, 
-      _tracedProduct!.name, 
+      _tracedProduct!.lot,
+      _tracedProduct!.name,
       _tracedProduct!.originFarm ?? '',
     );
 
@@ -410,7 +484,7 @@ class _TraceScreenState extends State<TraceScreen> {
       itemBuilder: (context, index) {
         final step = steps[index];
         final isLast = index == steps.length - 1;
-        
+
         // Map IconData từ Utils sang text emoji tạm thời hoặc dùng trực tiếp IconData
         final iconData = step['icon'] as IconData;
 
@@ -428,7 +502,11 @@ class _TraceScreenState extends State<TraceScreen> {
                     color: Color(0xFFE3F1E3),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(iconData, size: 16, color: const Color(0xFF2E7D32)),
+                  child: Icon(
+                    iconData,
+                    size: 16,
+                    color: const Color(0xFF2E7D32),
+                  ),
                 ),
                 if (!isLast)
                   Container(
@@ -449,33 +527,52 @@ class _TraceScreenState extends State<TraceScreen> {
                     children: [
                       Expanded(
                         child: Text(
-                          (step['stage'] as String).split(': ')[1], // Lấy phần sau dấu ':' để làm title
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF1B3A20)),
+                          (step['stage'] as String).split(
+                            ': ',
+                          )[1], // Lấy phần sau dấu ':' để làm title
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                            color: Color(0xFF1B3A20),
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        (step['date'] as String).split(' ')[0], // Chỉ lấy phần ngày
-                        style: const TextStyle(color: Color(0xFF8D9E90), fontSize: 11),
+                        (step['date'] as String).split(
+                          ' ',
+                        )[0], // Chỉ lấy phần ngày
+                        style: const TextStyle(
+                          color: Color(0xFF8D9E90),
+                          fontSize: 11,
+                        ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 2),
                   Text(
                     'Mã hồ sơ: ${(step['recordNo'] != null && step['recordNo'].toString().contains(': ')) ? step['recordNo'].toString().split(': ')[1] : step['recordNo'] ?? _tracedProduct!.lot}',
-                    style: const TextStyle(fontSize: 10, color: Color(0xFF2E7D32), fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      fontSize: 10,
+                      color: Color(0xFF2E7D32),
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     step['details'] as String,
-                    style: const TextStyle(color: Color(0xFF4B5D50), fontSize: 12, height: 1.3),
+                    style: const TextStyle(
+                      color: Color(0xFF4B5D50),
+                      fontSize: 12,
+                      height: 1.3,
+                    ),
                   ),
                   const SizedBox(height: 14),
                 ],
               ),
-            )
+            ),
           ],
         );
       },

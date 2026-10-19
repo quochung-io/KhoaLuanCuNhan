@@ -22,7 +22,8 @@ class PaymentSuccessScreen extends StatefulWidget {
   State<PaymentSuccessScreen> createState() => _PaymentSuccessScreenState();
 }
 
-class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> with SingleTickerProviderStateMixin {
+class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
+    with SingleTickerProviderStateMixin {
   late AnimationController _animController;
   late Animation<double> _scaleAnimation;
 
@@ -69,7 +70,8 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> with Single
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
-    final timeStr = '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')} - ${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}';
+    final timeStr =
+        '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')} - ${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}';
 
     return PopScope(
       canPop: false,
@@ -89,7 +91,10 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> with Single
             children: [
               Expanded(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 32,
+                  ),
                   child: Column(
                     children: [
                       const SizedBox(height: 20),
@@ -105,7 +110,9 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> with Single
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFF2E7D32).withValues(alpha: 0.2),
+                                color: const Color(
+                                  0xFF2E7D32,
+                                ).withValues(alpha: 0.2),
                                 blurRadius: 24,
                                 spreadRadius: 4,
                               ),
@@ -165,7 +172,10 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> with Single
                               children: [
                                 const Text(
                                   'Số tiền thanh toán',
-                                  style: TextStyle(fontSize: 13.5, color: Color(0xFF556958)),
+                                  style: TextStyle(
+                                    fontSize: 13.5,
+                                    color: Color(0xFF556958),
+                                  ),
                                 ),
                                 Text(
                                   '${_formatCurrency(widget.totalAmount)} đ',
@@ -178,7 +188,11 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> with Single
                               ],
                             ),
                             const Divider(height: 24, color: Color(0xFFE1EAE0)),
-                            _buildInfoRow('Mã đơn hàng', widget.orderCode, isBold: true),
+                            _buildInfoRow(
+                              'Mã đơn hàng',
+                              widget.orderCode,
+                              isBold: true,
+                            ),
                             const SizedBox(height: 12),
                             _buildInfoRow('Phương thức', _getMethodTitle()),
                             const SizedBox(height: 12),
@@ -189,10 +203,16 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> with Single
                               children: [
                                 const Text(
                                   'Trạng thái',
-                                  style: TextStyle(fontSize: 13, color: Color(0xFF556958)),
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: Color(0xFF556958),
+                                  ),
                                 ),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 4,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: const Color(0xFFE8F5E9),
                                     borderRadius: BorderRadius.circular(12),
@@ -200,7 +220,11 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> with Single
                                   child: const Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      Icon(Icons.verified, size: 14, color: Color(0xFF2E7D32)),
+                                      Icon(
+                                        Icons.verified,
+                                        size: 14,
+                                        color: Color(0xFF2E7D32),
+                                      ),
                                       SizedBox(width: 4),
                                       Text(
                                         'Đã thanh toán (Paid)',
@@ -231,12 +255,20 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> with Single
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Icon(Icons.local_shipping_outlined, color: Color(0xFFF57F17), size: 22),
+                            const Icon(
+                              Icons.local_shipping_outlined,
+                              color: Color(0xFFF57F17),
+                              size: 22,
+                            ),
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(
                                 'Nông sản của bạn đang được người bán chuẩn bị và đóng gói tươi mới để chuyển giao cho đơn vị vận chuyển sớm nhất.',
-                                style: TextStyle(fontSize: 12.5, color: Colors.brown.shade800, height: 1.35),
+                                style: TextStyle(
+                                  fontSize: 12.5,
+                                  color: Colors.brown.shade800,
+                                  height: 1.35,
+                                ),
                               ),
                             ),
                           ],
@@ -259,19 +291,27 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> with Single
                         onPressed: () {
                           Navigator.pushAndRemoveUntil(
                             context,
-                            MaterialPageRoute(builder: (_) => OrdersManagementScreen(userId: widget.userId)),
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  OrdersManagementScreen(userId: widget.userId),
+                            ),
                             (route) => route.isFirst,
                           );
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF2E7D32),
                           foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
                           elevation: 0,
                         ),
                         child: const Text(
                           'Xem Đơn Hàng Của Tôi',
-                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ),
@@ -283,13 +323,20 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen> with Single
                         onPressed: () {
                           Navigator.pushAndRemoveUntil(
                             context,
-                            MaterialPageRoute(builder: (_) => const MainContainer()),
+                            MaterialPageRoute(
+                              builder: (_) => const MainContainer(),
+                            ),
                             (route) => false,
                           );
                         },
                         style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: Color(0xFF2E7D32), width: 1.2),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          side: const BorderSide(
+                            color: Color(0xFF2E7D32),
+                            width: 1.2,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
                         ),
                         child: const Text(
                           'Tiếp Tục Mua Sắm',

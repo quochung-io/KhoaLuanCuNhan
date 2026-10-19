@@ -69,12 +69,16 @@ class _LoginScreenState extends State<LoginScreen> {
       if (role == 'ADMIN') {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => AdminDashboardScreen(user: user)),
+          MaterialPageRoute(
+            builder: (context) => AdminDashboardScreen(user: user),
+          ),
         );
       } else if (role == 'SUPPLIER') {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => SupplierDashboardScreen(user: user)),
+          MaterialPageRoute(
+            builder: (context) => SupplierDashboardScreen(user: user),
+          ),
         );
       } else {
         // CUSTOMER -> Màn hình Mua hàng Storefront
@@ -144,10 +148,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 const Center(
                   child: Text(
                     'Nông sản hữu cơ · Truy xuất minh bạch',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey,
-                    ),
+                    style: TextStyle(fontSize: 13, color: Colors.grey),
                   ),
                 ),
                 const SizedBox(height: 28),
@@ -155,10 +156,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 // Email Input
                 const Text(
                   'Email',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                 ),
                 const SizedBox(height: 8),
                 TextFormField(
@@ -166,20 +164,28 @@ class _LoginScreenState extends State<LoginScreen> {
                   keyboardType: TextInputType.emailAddress,
                   decoration: InputDecoration(
                     hintText: 'Nhập email của bạn',
-                    prefixIcon: const Icon(Icons.email_outlined, color: LanhTheme.primaryColor),
+                    prefixIcon: const Icon(
+                      Icons.email_outlined,
+                      color: LanhTheme.primaryColor,
+                    ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: LanhTheme.primaryColor, width: 2),
+                      borderSide: const BorderSide(
+                        color: LanhTheme.primaryColor,
+                        width: 2,
+                      ),
                     ),
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
                       return 'Vui lòng nhập email!';
                     }
-                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)*[\w-]{2,}$').hasMatch(value.trim())) {
+                    if (!RegExp(
+                      r'^[\w-\.]+@([\w-]+\.)*[\w-]{2,}$',
+                    ).hasMatch(value.trim())) {
                       return 'Email không đúng định dạng!';
                     }
                     return null;
@@ -224,10 +230,15 @@ class _LoginScreenState extends State<LoginScreen> {
                   obscureText: _obscurePassword,
                   decoration: InputDecoration(
                     hintText: 'Nhập mật khẩu',
-                    prefixIcon: const Icon(Icons.lock_outline, color: LanhTheme.primaryColor),
+                    prefixIcon: const Icon(
+                      Icons.lock_outline,
+                      color: LanhTheme.primaryColor,
+                    ),
                     suffixIcon: IconButton(
                       icon: Icon(
-                        _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                        _obscurePassword
+                            ? Icons.visibility_off
+                            : Icons.visibility,
                         color: Colors.grey,
                       ),
                       onPressed: () {
@@ -241,7 +252,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: LanhTheme.primaryColor, width: 2),
+                      borderSide: const BorderSide(
+                        color: LanhTheme.primaryColor,
+                        width: 2,
+                      ),
                     ),
                   ),
                   validator: (value) {
@@ -272,11 +286,17 @@ class _LoginScreenState extends State<LoginScreen> {
                       ? const SizedBox(
                           height: 20,
                           width: 20,
-                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
                         )
                       : const Text(
                           'Đăng Nhập',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                 ),
                 const SizedBox(height: 24),
@@ -290,7 +310,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       onTap: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => const RegisterScreen()),
+                          MaterialPageRoute(
+                            builder: (context) => const RegisterScreen(),
+                          ),
                         );
                       },
                       child: const Text(

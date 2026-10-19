@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Ecc.Infrastructure.Data;
 using Ecc.Infrastructure.Entities;
+using Ecc.WebApi.Services;
 using System.Text.RegularExpressions;
 
 namespace Ecc.WebApi.Controllers;
@@ -11,11 +12,16 @@ namespace Ecc.WebApi.Controllers;
 public class PaymentWebhookController : ControllerBase
 {
     private readonly AppDbContext _context;
+    private readonly IMoMoPaymentService _momoService;
     private readonly ILogger<PaymentWebhookController> _logger;
 
-    public PaymentWebhookController(AppDbContext context, ILogger<PaymentWebhookController> logger)
+    public PaymentWebhookController(
+        AppDbContext context,
+        IMoMoPaymentService momoService,
+        ILogger<PaymentWebhookController> logger)
     {
         _context = context;
+        _momoService = momoService;
         _logger = logger;
     }
 
@@ -125,6 +131,105 @@ public class PaymentWebhookController : ControllerBase
             orderCode = order.OrderCode,
             amount = order.TotalAmount
         });
+    }
+
+    /// <summary>
+    /// Tiếp nhận IPN Webhook từ MoMo khi khách hoàn tất giao dịch
+    /// Endpoint: POST api/PaymentWebhook/momo
+    /// </summary>
+    [HttpPost("momo")]
+    public async Task<IActionResult> ReceiveMomoIpn([FromBody] MoMoIpnRequest ipn)
+    {
+        _logger.LogInformation("Nhận MoMo IPN: OrderId={OrderId}, TransId={TransId}, Amount={Amount}, ResultCode={Code}",
+            ipn.OrderId, ipn.TransId, ipn.Amount, ipn.ResultCode);
+
+        // 1. Kiểm tra chữ ký HMAC SHA256
+        if (!_momoService.VerifySignature(ipn))
+        {
+            _logger.LogWarning("Chữ ký MoMo IPN không hợp lệ: {OrderId}", ipn.OrderId);
+            return BadRequest(new { message = "Chữ ký không hợp lệ (Invalid signature)" });
+        }
+
+        // 2. Tìm đơn hàng tương ứng theo MomoOrderId hoặc OrderCode
+        var order = await _context.Orders
+            .Include(o => o.Customer)
+            .FirstOrDefaultAsync(o => o.MomoOrderId == ipn.OrderId || o.OrderCode == ipn.OrderId || ipn.OrderId.StartsWith(o.OrderCode));
+
+        if (order == null)
+        {
+            // Thử trích xuất OrderCode từ chuỗi dạng DH-xxxx_timestamp
+            var codeMatch = Regex.Match(ipn.OrderId ?? "", @"DH[_-]?(\d+)", RegexOptions.IgnoreCase);
+            if (codeMatch.Success)
+            {
+                var cleanCode = codeMatch.Value.ToUpper();
+                order = await _context.Orders
+                    .Include(o => o.Customer)
+                    .FirstOrDefaultAsync(o => o.OrderCode == cleanCode);
+            }
+        }
+
+        if (order == null)
+        {
+            _logger.LogWarning("Không tìm thấy đơn hàng cho MoMo IPN: {OrderId}", ipn.OrderId);
+            return NotFound(new { message = "Không tìm thấy đơn hàng tương ứng." });
+        }
+
+        // 3. Xử lý Idempotent: Nếu đơn đã được xác nhận thanh toán trước đó
+        if (order.PaymentStatus == "Paid")
+        {
+            return NoContent();
+        }
+
+        // 4. Kiểm tra số tiền thanh toán có khớp với tổng đơn hàng
+        long expectedAmount = (long)Math.Round(order.TotalAmount);
+        if (ipn.Amount != expectedAmount)
+        {
+            _logger.LogWarning("Số tiền MoMo ({Actual}) không khớp với đơn hàng #{OrderCode} ({Expected})",
+                ipn.Amount, order.OrderCode, expectedAmount);
+            return BadRequest(new { message = "Số tiền thanh toán không khớp giá trị đơn hàng." });
+        }
+
+        // 5. Cập nhật trạng thái đơn hàng khi giao dịch MoMo thành công (ResultCode = 0)
+        if (ipn.ResultCode == 0)
+        {
+            order.PaymentStatus = "Paid";
+            order.MomoTransId = ipn.TransId.ToString();
+            if (order.OrderStatus == "Pending" || string.IsNullOrEmpty(order.OrderStatus))
+            {
+                order.OrderStatus = "Confirmed";
+            }
+            order.UpdatedAt = DateTime.Now;
+
+            try
+            {
+                _context.Notifications.Add(new Notification
+                {
+                    UserId = order.CustomerId,
+                    Type = "ORDER",
+                    Title = "Thanh toán MoMo thành công!",
+                    Message = $"Đơn hàng #{order.OrderCode} đã thanh toán thành công qua MoMo ({order.TotalAmount:N0}đ). Người bán đang chuẩn bị giao hàng.",
+                    ReferenceId = order.OrderId.ToString(),
+                    IsRead = false,
+                    CreatedAt = DateTime.Now
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning("Lỗi khi thêm thông báo đơn hàng MoMo: {Message}", ex.Message);
+            }
+
+            await _context.SaveChangesAsync();
+            _logger.LogInformation("Đã cập nhật đơn hàng #{OrderCode} thành Paid qua MoMo (TransId: {TransId})",
+                order.OrderCode, ipn.TransId);
+        }
+        else
+        {
+            _logger.LogWarning("Giao dịch MoMo đơn hàng #{OrderCode} không thành công: ResultCode={Code}, Message={Msg}",
+                order.OrderCode, ipn.ResultCode, ipn.Message);
+        }
+
+        // Chuẩn phản hồi IPN của MoMo: HTTP 204 No Content
+        return NoContent();
     }
 
     /// <summary>

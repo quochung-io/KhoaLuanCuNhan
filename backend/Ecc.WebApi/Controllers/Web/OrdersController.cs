@@ -551,74 +551,293 @@ public class OrdersController : ControllerBase
         }
 
         // 2. Xác thực và tính toán Mã giảm giá (Voucher) trên Server
-        decimal discountAmount = 0;
+        decimal shopDiscount = 0;
+        decimal platformDiscount = 0;
         decimal shippingFee = Math.Max(0, dto.ShippingFee ?? 30000);
 
-        if (!string.IsNullOrWhiteSpace(dto.VoucherCode))
+        // A. Xử lý Voucher của Shop (Giảm tiền hàng: cash, percent, discount)
+        UserVoucher? selectedShopVoucher = null;
+        Promotion? selectedShopPromo = null;
+
+        if (dto.ShopVoucherId.HasValue && dto.ShopVoucherId.Value > 0)
+        {
+            if (dto.ShopVoucherId.Value >= 100000)
+            {
+                var pId = dto.ShopVoucherId.Value - 100000;
+                selectedShopPromo = await _context.Promotions.FirstOrDefaultAsync(p => p.PromotionId == pId);
+            }
+            else
+            {
+                selectedShopVoucher = await _context.UserVouchers
+                    .FirstOrDefaultAsync(v => v.VoucherId == dto.ShopVoucherId.Value && v.UserId == dto.CustomerId && !v.IsUsed);
+            }
+        }
+
+        if (selectedShopVoucher == null && selectedShopPromo == null && !string.IsNullOrWhiteSpace(dto.ShopVoucherCode))
+        {
+            var code = dto.ShopVoucherCode.Trim().ToUpper();
+            selectedShopVoucher = await _context.UserVouchers
+                .FirstOrDefaultAsync(v => v.Code.ToUpper() == code && v.UserId == dto.CustomerId && !v.IsUsed);
+
+            if (selectedShopVoucher == null)
+            {
+                selectedShopPromo = await _context.Promotions
+                    .FirstOrDefaultAsync(p => p.PromotionCode.ToUpper() == code && (p.Status == "Active" || p.Status == null));
+            }
+        }
+
+        if (selectedShopVoucher != null)
+        {
+            if (calculatedSubtotal < selectedShopVoucher.MinOrderAmount)
+            {
+                return BadRequest($"Voucher shop '{selectedShopVoucher.Code}' yêu cầu đơn hàng đạt tối thiểu {selectedShopVoucher.MinOrderAmount:N0}₫.");
+            }
+            if (selectedShopVoucher.ExpiryDate < DateTime.UtcNow)
+            {
+                return BadRequest($"Voucher shop '{selectedShopVoucher.Code}' đã hết hạn sử dụng.");
+            }
+
+            var type = (selectedShopVoucher.VoucherType ?? "cash").ToLower();
+            if ((type == "percent" || type == "discount") && selectedShopVoucher.DiscountValue <= 100)
+            {
+                shopDiscount = Math.Round((calculatedSubtotal * selectedShopVoucher.DiscountValue) / 100);
+            }
+            else
+            {
+                shopDiscount = Math.Min(calculatedSubtotal, selectedShopVoucher.DiscountValue);
+            }
+
+            selectedShopVoucher.IsUsed = true;
+            selectedShopVoucher.UsedAt = DateTime.UtcNow;
+        }
+        else if (selectedShopPromo != null)
+        {
+            if (selectedShopPromo.EndDate.HasValue && selectedShopPromo.EndDate.Value < DateTime.UtcNow)
+            {
+                return BadRequest($"Voucher shop '{selectedShopPromo.PromotionCode}' đã hết hạn sử dụng.");
+            }
+            if (calculatedSubtotal < (selectedShopPromo.MinOrderValue ?? 0))
+            {
+                return BadRequest($"Voucher shop '{selectedShopPromo.PromotionCode}' yêu cầu đơn hàng đạt tối thiểu {(selectedShopPromo.MinOrderValue ?? 0):N0}₫.");
+            }
+
+            var type = (selectedShopPromo.DiscountType ?? "percent").ToLower();
+            if (type == "percent")
+            {
+                var disc = Math.Round((calculatedSubtotal * selectedShopPromo.DiscountValue) / 100);
+                if (selectedShopPromo.MaxDiscount.HasValue && selectedShopPromo.MaxDiscount.Value > 0)
+                {
+                    disc = Math.Min(disc, selectedShopPromo.MaxDiscount.Value);
+                }
+                shopDiscount = disc;
+            }
+            else if (type == "ship")
+            {
+                shopDiscount = Math.Min(shippingFee, selectedShopPromo.DiscountValue);
+            }
+            else
+            {
+                shopDiscount = Math.Min(calculatedSubtotal, selectedShopPromo.DiscountValue);
+            }
+
+            if (selectedShopPromo.UsageLimit.HasValue && selectedShopPromo.UsageLimit.Value > 0)
+            {
+                selectedShopPromo.UsageLimit -= 1;
+            }
+        }
+
+        // B. Xử lý LÀNH Voucher / Voucher App (Freeship / Ưu đãi toàn sàn)
+        UserVoucher? selectedPlatformVoucher = null;
+        Promotion? selectedPlatformPromo = null;
+
+        if (dto.PlatformVoucherId.HasValue && dto.PlatformVoucherId.Value > 0)
+        {
+            if (dto.PlatformVoucherId.Value >= 100000)
+            {
+                var pId = dto.PlatformVoucherId.Value - 100000;
+                selectedPlatformPromo = await _context.Promotions.FirstOrDefaultAsync(p => p.PromotionId == pId);
+            }
+            else
+            {
+                selectedPlatformVoucher = await _context.UserVouchers
+                    .FirstOrDefaultAsync(v => v.VoucherId == dto.PlatformVoucherId.Value && v.UserId == dto.CustomerId && !v.IsUsed);
+            }
+        }
+
+        if (selectedPlatformVoucher == null && selectedPlatformPromo == null && !string.IsNullOrWhiteSpace(dto.PlatformVoucherCode))
+        {
+            var code = dto.PlatformVoucherCode.Trim().ToUpper();
+            selectedPlatformVoucher = await _context.UserVouchers
+                .FirstOrDefaultAsync(v => v.Code.ToUpper() == code && v.UserId == dto.CustomerId && !v.IsUsed);
+
+            if (selectedPlatformVoucher == null)
+            {
+                selectedPlatformPromo = await _context.Promotions
+                    .FirstOrDefaultAsync(p => p.PromotionCode.ToUpper() == code && (p.Status == "Active" || p.Status == null));
+            }
+        }
+
+        if (selectedPlatformVoucher != null)
+        {
+            if (calculatedSubtotal < selectedPlatformVoucher.MinOrderAmount)
+            {
+                return BadRequest($"Voucher sàn '{selectedPlatformVoucher.Code}' yêu cầu đơn hàng đạt tối thiểu {selectedPlatformVoucher.MinOrderAmount:N0}₫.");
+            }
+            if (selectedPlatformVoucher.ExpiryDate < DateTime.UtcNow)
+            {
+                return BadRequest($"Voucher sàn '{selectedPlatformVoucher.Code}' đã hết hạn sử dụng.");
+            }
+
+            var type = (selectedPlatformVoucher.VoucherType ?? "ship").ToLower();
+            if (type == "ship")
+            {
+                platformDiscount = Math.Min(shippingFee, selectedPlatformVoucher.DiscountValue);
+            }
+            else if ((type == "percent" || type == "discount") && selectedPlatformVoucher.DiscountValue <= 100)
+            {
+                platformDiscount = Math.Round((calculatedSubtotal * selectedPlatformVoucher.DiscountValue) / 100);
+            }
+            else
+            {
+                platformDiscount = Math.Min(calculatedSubtotal - shopDiscount, selectedPlatformVoucher.DiscountValue);
+            }
+
+            selectedPlatformVoucher.IsUsed = true;
+            selectedPlatformVoucher.UsedAt = DateTime.UtcNow;
+        }
+        else if (selectedPlatformPromo != null)
+        {
+            if (selectedPlatformPromo.EndDate.HasValue && selectedPlatformPromo.EndDate.Value < DateTime.UtcNow)
+            {
+                return BadRequest($"Voucher sàn '{selectedPlatformPromo.PromotionCode}' đã hết hạn sử dụng.");
+            }
+            if (calculatedSubtotal < (selectedPlatformPromo.MinOrderValue ?? 0))
+            {
+                return BadRequest($"Voucher sàn '{selectedPlatformPromo.PromotionCode}' yêu cầu đơn hàng đạt tối thiểu {(selectedPlatformPromo.MinOrderValue ?? 0):N0}₫.");
+            }
+
+            var type = (selectedPlatformPromo.DiscountType ?? "ship").ToLower();
+            if (type == "ship")
+            {
+                platformDiscount = Math.Min(shippingFee, selectedPlatformPromo.DiscountValue);
+            }
+            else if (type == "percent")
+            {
+                var disc = Math.Round((calculatedSubtotal * selectedPlatformPromo.DiscountValue) / 100);
+                if (selectedPlatformPromo.MaxDiscount.HasValue && selectedPlatformPromo.MaxDiscount.Value > 0)
+                {
+                    disc = Math.Min(disc, selectedPlatformPromo.MaxDiscount.Value);
+                }
+                platformDiscount = disc;
+            }
+            else
+            {
+                platformDiscount = Math.Min(calculatedSubtotal - shopDiscount, selectedPlatformPromo.DiscountValue);
+            }
+
+            if (selectedPlatformPromo.UsageLimit.HasValue && selectedPlatformPromo.UsageLimit.Value > 0)
+            {
+                selectedPlatformPromo.UsageLimit -= 1;
+            }
+        }
+
+        // C. Tương thích ngược nếu chỉ truyền VoucherCode đơn lẻ
+        if (selectedShopVoucher == null && selectedShopPromo == null && selectedPlatformVoucher == null && selectedPlatformPromo == null && !string.IsNullOrWhiteSpace(dto.VoucherCode))
         {
             var vCode = dto.VoucherCode.Trim().ToUpper();
-            var userVoucher = await _context.UserVouchers
+            var legacyVoucher = await _context.UserVouchers
                 .FirstOrDefaultAsync(v => (v.UserId == dto.CustomerId || v.UserId == 1) 
                                        && v.Code.ToUpper() == vCode 
                                        && !v.IsUsed);
 
-            if (userVoucher != null)
+            if (legacyVoucher != null)
             {
-                if (calculatedSubtotal < userVoucher.MinOrderAmount)
+                if (calculatedSubtotal < legacyVoucher.MinOrderAmount)
                 {
-                    return BadRequest($"Mã giảm giá '{vCode}' yêu cầu đơn hàng đạt tối thiểu {userVoucher.MinOrderAmount:N0}₫.");
+                    return BadRequest($"Mã giảm giá '{vCode}' yêu cầu đơn hàng đạt tối thiểu {legacyVoucher.MinOrderAmount:N0}₫.");
                 }
 
-                if (userVoucher.VoucherType.ToLower() == "ship")
+                if (legacyVoucher.VoucherType.ToLower() == "ship")
                 {
-                    discountAmount = Math.Min(shippingFee, userVoucher.DiscountValue);
+                    platformDiscount = Math.Min(shippingFee, legacyVoucher.DiscountValue);
                 }
-                else if (userVoucher.VoucherType.ToLower() == "percent" || userVoucher.VoucherType.ToLower() == "discount")
+                else if (legacyVoucher.VoucherType.ToLower() == "percent" || legacyVoucher.VoucherType.ToLower() == "discount")
                 {
-                    discountAmount = Math.Round((calculatedSubtotal * userVoucher.DiscountValue) / 100);
+                    shopDiscount = Math.Round((calculatedSubtotal * legacyVoucher.DiscountValue) / 100);
                 }
-                else // cash / fixed
+                else
                 {
-                    discountAmount = Math.Min(calculatedSubtotal, userVoucher.DiscountValue);
+                    shopDiscount = Math.Min(calculatedSubtotal, legacyVoucher.DiscountValue);
                 }
 
-                userVoucher.IsUsed = true;
-                userVoucher.UsedAt = DateTime.UtcNow;
+                legacyVoucher.IsUsed = true;
+                legacyVoucher.UsedAt = DateTime.UtcNow;
             }
             else
             {
-                // Hỗ trợ các mã voucher tiêu chuẩn của hệ thống LÀNH Farm
-                switch (vCode)
+                var promoFallback = await _context.Promotions
+                    .FirstOrDefaultAsync(p => p.PromotionCode.ToUpper() == vCode && (p.Status == "Active" || p.Status == null));
+
+                if (promoFallback != null)
                 {
-                    case "LANHNEW":
-                        if (calculatedSubtotal >= 100000)
-                            discountAmount = Math.Min(40000, (calculatedSubtotal * 15) / 100);
-                        break;
-                    case "FREESHIP30K":
-                    case "FREESHIP50":
-                        if (calculatedSubtotal >= 150000)
-                            discountAmount = Math.Min(shippingFee, 30000);
-                        break;
-                    case "ORGANIC50K":
-                    case "WELCOME50":
-                        if (calculatedSubtotal >= 250000)
-                            discountAmount = 50000;
-                        break;
-                    case "DALATFARM":
-                    case "LANHFRESH20":
-                        if (calculatedSubtotal >= 120000)
-                            discountAmount = 20000;
-                        break;
-                    default:
-                        return BadRequest($"Mã giảm giá '{dto.VoucherCode}' không hợp lệ hoặc đã hết lượt sử dụng.");
+                    if (calculatedSubtotal < (promoFallback.MinOrderValue ?? 0))
+                    {
+                        return BadRequest($"Mã giảm giá '{vCode}' yêu cầu đơn hàng đạt tối thiểu {(promoFallback.MinOrderValue ?? 0):N0}₫.");
+                    }
+                    var pType = (promoFallback.DiscountType ?? "percent").ToLower();
+                    if (pType == "ship")
+                    {
+                        platformDiscount = Math.Min(shippingFee, promoFallback.DiscountValue);
+                    }
+                    else if (pType == "percent")
+                    {
+                        var disc = Math.Round((calculatedSubtotal * promoFallback.DiscountValue) / 100);
+                        if (promoFallback.MaxDiscount.HasValue && promoFallback.MaxDiscount.Value > 0)
+                        {
+                            disc = Math.Min(disc, promoFallback.MaxDiscount.Value);
+                        }
+                        shopDiscount = disc;
+                    }
+                    else
+                    {
+                        shopDiscount = Math.Min(calculatedSubtotal, promoFallback.DiscountValue);
+                    }
+                }
+                else
+                {
+                    switch (vCode)
+                    {
+                        case "LANHNEW":
+                            if (calculatedSubtotal >= 100000)
+                                shopDiscount = Math.Min(40000, (calculatedSubtotal * 15) / 100);
+                            break;
+                        case "FREESHIP30K":
+                        case "FREESHIP50":
+                            if (calculatedSubtotal >= 150000)
+                                platformDiscount = Math.Min(shippingFee, 30000);
+                            break;
+                        case "ORGANIC50K":
+                        case "WELCOME50":
+                            if (calculatedSubtotal >= 250000)
+                                shopDiscount = 50000;
+                            break;
+                        case "DALATFARM":
+                        case "LANHFRESH20":
+                            if (calculatedSubtotal >= 120000)
+                                shopDiscount = 20000;
+                            break;
+                        default:
+                            return BadRequest($"Mã giảm giá '{dto.VoucherCode}' không hợp lệ hoặc đã hết lượt sử dụng.");
+                    }
                 }
             }
         }
-        else if (dto.DiscountAmount.HasValue && dto.DiscountAmount.Value > 0)
+        else if (selectedShopVoucher == null && selectedPlatformVoucher == null && dto.DiscountAmount.HasValue && dto.DiscountAmount.Value > 0)
         {
-            discountAmount = Math.Min(dto.DiscountAmount.Value, calculatedSubtotal);
+            shopDiscount = Math.Min(dto.DiscountAmount.Value, calculatedSubtotal);
         }
 
+        decimal discountAmount = shopDiscount + platformDiscount;
         decimal totalAmount = Math.Max(0, calculatedSubtotal + shippingFee - discountAmount);
 
         // 3. Chuẩn bị đối tượng Order để lưu vào DB
@@ -1149,6 +1368,10 @@ public class OrderCreateDto
     public decimal Subtotal { get; set; }
     public decimal? DiscountAmount { get; set; }
     public string? VoucherCode { get; set; }
+    public int? ShopVoucherId { get; set; }
+    public string? ShopVoucherCode { get; set; }
+    public int? PlatformVoucherId { get; set; }
+    public string? PlatformVoucherCode { get; set; }
     public decimal? ShippingFee { get; set; }
     public string PaymentMethod { get; set; } = null!;
     public List<OrderItemDto> OrderItems { get; set; } = new();

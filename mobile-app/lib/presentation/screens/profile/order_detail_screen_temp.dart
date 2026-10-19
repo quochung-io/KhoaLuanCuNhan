@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../../data/api_service.dart';
 import '../../../data/models/product_model.dart';
 import '../product_detail/product_detail_screen.dart'; // import product detail
@@ -51,39 +51,52 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (ctx) {
         return StatefulBuilder(
           builder: (context, setModalState) {
             return Padding(
               padding: EdgeInsets.only(
                 bottom: MediaQuery.of(context).viewInsets.bottom,
-                left: 16, right: 16, top: 20,
+                left: 16,
+                right: 16,
+                top: 20,
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text('ÄÃ¡nh giÃ¡ Ä‘Æ¡n hÃ ng', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const Text(
+                    'ÄÃ¡nh giÃ¡ Ä‘Æ¡n hÃ ng',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
                   const SizedBox(height: 16),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(5, (index) => IconButton(
-                      icon: Icon(
-                        index < selectedRating ? Icons.star : Icons.star_border,
-                        color: Colors.orange,
-                        size: 40,
+                    children: List.generate(
+                      5,
+                      (index) => IconButton(
+                        icon: Icon(
+                          index < selectedRating
+                              ? Icons.star
+                              : Icons.star_border,
+                          color: Colors.orange,
+                          size: 40,
+                        ),
+                        onPressed: () {
+                          setModalState(() => selectedRating = index + 1);
+                        },
                       ),
-                      onPressed: () {
-                        setModalState(() => selectedRating = index + 1);
-                      },
-                    )),
+                    ),
                   ),
                   const SizedBox(height: 16),
                   TextField(
                     controller: commentCtrl,
                     maxLines: 3,
                     decoration: const InputDecoration(
-                      hintText: 'Chia sáº» tráº£i nghiá»‡m cá»§a báº¡n vá» nÃ´ng sáº£n...',
+                      hintText:
+                          'Chia sáº» tráº£i nghiá»‡m cá»§a báº¡n vá» nÃ´ng sáº£n...',
                       border: OutlineInputBorder(),
                     ),
                   ),
@@ -100,7 +113,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                         backgroundColor: const Color(0xFF2E7D32),
                         foregroundColor: Colors.white,
                       ),
-                      child: const Text('Gá»­i Ä‘Ã¡nh giÃ¡', style: TextStyle(fontWeight: FontWeight.bold)),
+                      child: const Text(
+                        'Gá»­i Ä‘Ã¡nh giÃ¡',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -117,8 +133,13 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     setState(() => _isLoading = true);
     final items = (_currentOrder['orderItems'] as List<dynamic>?) ?? [];
     final customer = _currentOrder['customer'] as Map<String, dynamic>?;
-    final customerId = customer?['id'] ?? customer?['customerId'] ?? _currentOrder['customerId'] ?? 3;
-    final customerName = customer?['fullName'] ?? customer?['name'] ?? 'KhÃ¡ch hÃ ng';
+    final customerId =
+        customer?['id'] ??
+        customer?['customerId'] ??
+        _currentOrder['customerId'] ??
+        3;
+    final customerName =
+        customer?['fullName'] ?? customer?['name'] ?? 'KhÃ¡ch hÃ ng';
 
     bool allSuccess = true;
     for (var item in items) {
@@ -132,7 +153,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
               customerId: customerId,
               customerName: customerName,
               rating: rating,
-              comment: comment.isEmpty ? 'Cháº¥t lÆ°á»£ng nÃ´ng sáº£n ráº¥t tá»‘t!' : comment,
+              comment: comment.isEmpty
+                  ? 'Cháº¥t lÆ°á»£ng nÃ´ng sáº£n ráº¥t tá»‘t!'
+                  : comment,
             );
             if (!success) allSuccess = false;
           } catch (e) {
@@ -147,7 +170,11 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(allSuccess ? 'ÄÃ£ gá»­i Ä‘Ã¡nh giÃ¡ thÃ nh cÃ´ng!' : 'CÃ³ lá»—i khi gá»­i má»™t sá»‘ Ä‘Ã¡nh giÃ¡.'),
+          content: Text(
+            allSuccess
+                ? 'ÄÃ£ gá»­i Ä‘Ã¡nh giÃ¡ thÃ nh cÃ´ng!'
+                : 'CÃ³ lá»—i khi gá»­i má»™t sá»‘ Ä‘Ã¡nh giÃ¡.',
+          ),
           backgroundColor: allSuccess ? const Color(0xFF2E7D32) : Colors.red,
         ),
       );
@@ -155,16 +182,24 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   }
 
   void _showCancelDialog() {
-    final reasonCtrl = TextEditingController(text: 'TÃ´i muá»‘n Ä‘á»•i Ä‘á»‹a chá»‰ giao hÃ ng hoáº·c thÃªm mÃ³n');
+    final reasonCtrl = TextEditingController(
+      text: 'TÃ´i muá»‘n Ä‘á»•i Ä‘á»‹a chá»‰ giao hÃ ng hoáº·c thÃªm mÃ³n',
+    );
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('XÃ¡c nháº­n há»§y Ä‘Æ¡n hÃ ng', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        title: const Text(
+          'XÃ¡c nháº­n há»§y Ä‘Æ¡n hÃ ng',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Báº¡n cÃ³ cháº¯c cháº¯n muá»‘n há»§y Ä‘Æ¡n hÃ ng nÃ y khÃ´ng? NÃ´ng sáº£n sáº½ Ä‘Æ°á»£c hoÃ n láº¡i kho.', style: TextStyle(fontSize: 13)),
+            const Text(
+              'Báº¡n cÃ³ cháº¯c cháº¯n muá»‘n há»§y Ä‘Æ¡n hÃ ng nÃ y khÃ´ng? NÃ´ng sáº£n sáº½ Ä‘Æ°á»£c hoÃ n láº¡i kho.',
+              style: TextStyle(fontSize: 13),
+            ),
             const SizedBox(height: 12),
             TextField(
               controller: reasonCtrl,
@@ -180,14 +215,20 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Giá»¯ Ä‘Æ¡n hÃ ng', style: TextStyle(color: Colors.grey)),
+            child: const Text(
+              'Giá»¯ Ä‘Æ¡n hÃ ng',
+              style: TextStyle(color: Colors.grey),
+            ),
           ),
           ElevatedButton(
             onPressed: () async {
               Navigator.pop(ctx);
               setState(() => _isLoading = true);
               final orderId = _currentOrder['orderId'] ?? _currentOrder['id'];
-              final success = await ApiService.cancelOrder(orderId, reason: reasonCtrl.text.trim());
+              final success = await ApiService.cancelOrder(
+                orderId,
+                reason: reasonCtrl.text.trim(),
+              );
               setState(() => _isLoading = false);
 
               if (mounted) {
@@ -197,17 +238,28 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                   });
                   widget.onOrderUpdated?.call();
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('ÄÃ£ há»§y Ä‘Æ¡n hÃ ng thÃ nh cÃ´ng'), backgroundColor: Colors.red),
+                    const SnackBar(
+                      content: Text('ÄÃ£ há»§y Ä‘Æ¡n hÃ ng thÃ nh cÃ´ng'),
+                      backgroundColor: Colors.red,
+                    ),
                   );
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('KhÃ´ng thá»ƒ há»§y Ä‘Æ¡n lÃºc nÃ y. Vui lÃ²ng thá»­ láº¡i.'), backgroundColor: Colors.red),
+                    const SnackBar(
+                      content: Text(
+                        'KhÃ´ng thá»ƒ há»§y Ä‘Æ¡n lÃºc nÃ y. Vui lÃ²ng thá»­ láº¡i.',
+                      ),
+                      backgroundColor: Colors.red,
+                    ),
                   );
                 }
               }
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Há»§y Ä‘Æ¡n ngay', style: TextStyle(color: Colors.white)),
+            child: const Text(
+              'Há»§y Ä‘Æ¡n ngay',
+              style: TextStyle(color: Colors.white),
+            ),
           ),
         ],
       ),
@@ -216,7 +268,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final oStatus = (_currentOrder['orderStatus'] ?? 'pending').toString().toLowerCase();
+    final oStatus = (_currentOrder['orderStatus'] ?? 'pending')
+        .toString()
+        .toLowerCase();
     final isCancelled = oStatus == 'cancelled';
     final currentStep = _getStatusStep(oStatus);
     final items = (_currentOrder['orderItems'] as List<dynamic>?) ?? [];
@@ -233,7 +287,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         backgroundColor: Colors.white,
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFF2E7D32)))
+          ? const Center(
+              child: CircularProgressIndicator(color: Color(0xFF2E7D32)),
+            )
           : SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -275,12 +331,19 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                             ),
                             child: const Row(
                               children: [
-                                Icon(Icons.cancel_outlined, color: Colors.red, size: 20),
+                                Icon(
+                                  Icons.cancel_outlined,
+                                  color: Colors.red,
+                                  size: 20,
+                                ),
                                 SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
                                     'ÄÆ¡n hÃ ng Ä‘Ã£ Ä‘Æ°á»£c há»§y. NÃ´ng sáº£n vÃ  chi phÃ­ Ä‘Ã£ Ä‘Æ°á»£c xá»­ lÃ½ hoÃ n tráº£.',
-                                    style: TextStyle(color: Colors.red, fontSize: 12.5),
+                                    style: TextStyle(
+                                      color: Colors.red,
+                                      fontSize: 12.5,
+                                    ),
                                   ),
                                 ),
                               ],
@@ -306,7 +369,11 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                       children: [
                         const Row(
                           children: [
-                            Icon(Icons.location_on_outlined, color: Color(0xFF2E7D32), size: 18),
+                            Icon(
+                              Icons.location_on_outlined,
+                              color: Color(0xFF2E7D32),
+                              size: 18,
+                            ),
                             SizedBox(width: 8),
                             Text(
                               'Äá»ŠA CHá»ˆ NHáº¬N HÃ€NG',
@@ -321,18 +388,32 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                         ),
                         const Divider(height: 20),
                         Text(
-                          address?['receiverName'] ?? _currentOrder['customer']?['fullName'] ?? 'KhÃ¡ch hÃ ng',
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                          address?['receiverName'] ??
+                              _currentOrder['customer']?['fullName'] ??
+                              'KhÃ¡ch hÃ ng',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          address?['phone'] ?? _currentOrder['customer']?['phone'] ?? '0911000001',
-                          style: TextStyle(color: Colors.grey.shade700, fontSize: 13),
+                          address?['phone'] ??
+                              _currentOrder['customer']?['phone'] ??
+                              '0911000001',
+                          style: TextStyle(
+                            color: Colors.grey.shade700,
+                            fontSize: 13,
+                          ),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           _formatAddress(address),
-                          style: TextStyle(color: Colors.grey.shade700, fontSize: 13, height: 1.3),
+                          style: TextStyle(
+                            color: Colors.grey.shade700,
+                            fontSize: 13,
+                            height: 1.3,
+                          ),
                         ),
                       ],
                     ),
@@ -362,18 +443,31 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                                 color: Color(0xFF2E7D32),
                               ),
                             ),
-                            Text('${items.length} mÃ³n', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                            Text(
+                              '${items.length} mÃ³n',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey,
+                              ),
+                            ),
                           ],
                         ),
                         const Divider(height: 20),
                         ...items.map((item) {
                           final prod = item['product'] as Map<String, dynamic>?;
-                          final prodName = prod?['productName'] ?? item['productName'] ?? 'NÃ´ng sáº£n LÃ€NH';
+                          final prodName =
+                              prod?['productName'] ??
+                              item['productName'] ??
+                              'NÃ´ng sáº£n LÃ€NH';
                           final unit = prod?['unit'] ?? item['unit'] ?? 'kg';
                           final qty = item['quantity'] ?? 1;
-                          final price = item['unitPrice'] ?? prod?['price'] ?? 0;
-                          final images = prod?['productImages'] as List<dynamic>?;
-                          final imgUrl = (images != null && images.isNotEmpty) ? images[0]['imageUrl'] : null;
+                          final price =
+                              item['unitPrice'] ?? prod?['price'] ?? 0;
+                          final images =
+                              prod?['productImages'] as List<dynamic>?;
+                          final imgUrl = (images != null && images.isNotEmpty)
+                              ? images[0]['imageUrl']
+                              : null;
 
                           return InkWell(
                             onTap: () {
@@ -381,7 +475,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                                 final product = Product(
                                   id: prod['productId'] ?? prod['id'] ?? 0,
                                   name: prodName,
-                                  price: (prod['price'] ?? 0).toDouble().toInt(),
+                                  price: (prod['price'] ?? 0)
+                                      .toDouble()
+                                      .toInt(),
                                   imageUrl: imgUrl ?? '',
                                   unit: unit,
                                   category: prod['type'] ?? 'product',
@@ -400,7 +496,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                                   MaterialPageRoute(
                                     builder: (context) => ProductDetailScreen(
                                       product: product,
-                                      onAddToCart: widget.onAddToCart ?? (p, {qty=1}) {},
+                                      onAddToCart:
+                                          widget.onAddToCart ??
+                                          (p, {qty = 1}) {},
                                     ),
                                   ),
                                 );
@@ -418,32 +516,45 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                                             width: 50,
                                             height: 50,
                                             fit: BoxFit.cover,
-                                            errorBuilder: (context, error, stackTrace) => _buildFallbackImg(),
+                                            errorBuilder:
+                                                (context, error, stackTrace) =>
+                                                    _buildFallbackImg(),
                                           )
                                         : _buildFallbackImg(),
                                   ),
                                   const SizedBox(width: 12),
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           prodName,
-                                          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5),
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 13.5,
+                                          ),
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
                                         ),
                                         const SizedBox(height: 4),
                                         Text(
                                           'Sá»‘ lÆ°á»£ng: $qty $unit',
-                                          style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.grey.shade600,
+                                          ),
                                         ),
                                       ],
                                     ),
                                   ),
                                   Text(
                                     _formatCurrency(price * qty),
-                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5, color: Color(0xFF2E7D32)),
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13.5,
+                                      color: Color(0xFF2E7D32),
+                                    ),
                                   ),
                                 ],
                               ),
@@ -476,18 +587,40 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                           ),
                         ),
                         const Divider(height: 20),
-                        _buildPaymentRow('Tiá»n hÃ ng nÃ´ng sáº£n', _formatCurrency(_currentOrder['totalAmount'])),
+                        _buildPaymentRow(
+                          'Tiá»n hÃ ng nÃ´ng sáº£n',
+                          _formatCurrency(_currentOrder['totalAmount']),
+                        ),
                         _buildPaymentRow('PhÃ­ váº­n chuyá»ƒn', 'Miá»…n phÃ­'),
-                        _buildPaymentRow('PhÆ°Æ¡ng thá»©c', _currentOrder['paymentMethod'] ?? 'COD (Tiá»n máº·t)'),
-                        _buildPaymentRow('Tráº¡ng thÃ¡i thanh toÃ¡n', _currentOrder['paymentStatus'] == 'Paid' ? 'ÄÃ£ thanh toÃ¡n' : 'ChÆ°a thanh toÃ¡n'),
+                        _buildPaymentRow(
+                          'PhÆ°Æ¡ng thá»©c',
+                          _currentOrder['paymentMethod'] ??
+                              'COD (Tiá»n máº·t)',
+                        ),
+                        _buildPaymentRow(
+                          'Tráº¡ng thÃ¡i thanh toÃ¡n',
+                          _currentOrder['paymentStatus'] == 'Paid'
+                              ? 'ÄÃ£ thanh toÃ¡n'
+                              : 'ChÆ°a thanh toÃ¡n',
+                        ),
                         const Divider(height: 20),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text('Tá»•ng thanh toÃ¡n:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                            const Text(
+                              'Tá»•ng thanh toÃ¡n:',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15,
+                              ),
+                            ),
                             Text(
                               _formatCurrency(_currentOrder['totalAmount']),
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Color(0xFF2E7D32)),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 18,
+                                color: Color(0xFF2E7D32),
+                              ),
                             ),
                           ],
                         ),
@@ -503,11 +636,22 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                       height: 46,
                       child: OutlinedButton.icon(
                         onPressed: _showCancelDialog,
-                        icon: const Icon(Icons.cancel_outlined, color: Colors.red),
-                        label: const Text('Há»¦Y ÄÆ N HÃ€NG NÃ€Y', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+                        icon: const Icon(
+                          Icons.cancel_outlined,
+                          color: Colors.red,
+                        ),
+                        label: const Text(
+                          'Há»¦Y ÄÆ N HÃ€NG NÃ€Y',
+                          style: TextStyle(
+                            color: Colors.red,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                         style: OutlinedButton.styleFrom(
                           side: const BorderSide(color: Colors.red),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
                         ),
                       ),
                     ),
@@ -535,10 +679,17 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                           const SizedBox(height: 12),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
-                            children: List.generate(5, (index) => IconButton(
-                              icon: const Icon(Icons.star_border, color: Colors.orange, size: 32),
-                              onPressed: _showReviewModal,
-                            )),
+                            children: List.generate(
+                              5,
+                              (index) => IconButton(
+                                icon: const Icon(
+                                  Icons.star_border,
+                                  color: Colors.orange,
+                                  size: 32,
+                                ),
+                                onPressed: _showReviewModal,
+                              ),
+                            ),
                           ),
                         ],
                       ),
@@ -556,7 +707,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                             if (prod != null) {
                               final product = Product(
                                 id: prod['productId'] ?? prod['id'] ?? 0,
-                                name: prod['productName'] ?? prod['name'] ?? 'Sáº£n pháº©m',
+                                name:
+                                    prod['productName'] ??
+                                    prod['name'] ??
+                                    'Sáº£n pháº©m',
                                 price: (prod['price'] ?? 0).toDouble().toInt(),
                                 imageUrl: prod['imageUrl'] ?? '',
                                 unit: prod['unit'] ?? 'kg',
@@ -577,18 +731,31 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                           }
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text('ÄÃ£ thÃªm cÃ¡c sáº£n pháº©m vÃ o giá» hÃ ng'),
+                              content: Text(
+                                'ÄÃ£ thÃªm cÃ¡c sáº£n pháº©m vÃ o giá» hÃ ng',
+                              ),
                               backgroundColor: Color(0xFF2E7D32),
                               duration: Duration(seconds: 2),
                             ),
                           );
                         }
                       },
-                      icon: const Icon(Icons.shopping_cart_checkout, color: Colors.white),
-                      label: const Text('MUA Láº I ÄÆ N HÃ€NG NÃ€Y', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      icon: const Icon(
+                        Icons.shopping_cart_checkout,
+                        color: Colors.white,
+                      ),
+                      label: const Text(
+                        'MUA Láº I ÄÆ N HÃ€NG NÃ€Y',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF2E7D32),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                       ),
                     ),
                   ),
@@ -603,7 +770,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     return Container(
       width: 50,
       height: 50,
-      decoration: BoxDecoration(color: const Color(0xFFE8F5E9), borderRadius: BorderRadius.circular(8)),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE8F5E9),
+        borderRadius: BorderRadius.circular(8),
+      ),
       child: const Icon(Icons.eco, color: Color(0xFF2E7D32), size: 24),
     );
   }
@@ -625,8 +795,14 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: TextStyle(fontSize: 13, color: Colors.grey.shade700)),
-          Text(value, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+          Text(
+            label,
+            style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
+          ),
+          Text(
+            value,
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+          ),
         ],
       ),
     );
@@ -667,8 +843,18 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(6)),
-      child: Text(label, style: TextStyle(color: text, fontSize: 11.5, fontWeight: FontWeight.bold)),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: text,
+          fontSize: 11.5,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
     );
   }
 
@@ -695,7 +881,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                   width: 22,
                   height: 22,
                   decoration: BoxDecoration(
-                    color: isDone ? const Color(0xFF2E7D32) : Colors.grey.shade300,
+                    color: isDone
+                        ? const Color(0xFF2E7D32)
+                        : Colors.grey.shade300,
                     shape: BoxShape.circle,
                   ),
                   child: isDone
@@ -706,7 +894,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                   Container(
                     width: 2,
                     height: 28,
-                    color: isDone && index < currentStep ? const Color(0xFF2E7D32) : Colors.grey.shade300,
+                    color: isDone && index < currentStep
+                        ? const Color(0xFF2E7D32)
+                        : Colors.grey.shade300,
                   ),
               ],
             ),
@@ -718,8 +908,12 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                   steps[index],
                   style: TextStyle(
                     fontSize: 13,
-                    fontWeight: isCurrent ? FontWeight.bold : (isDone ? FontWeight.w600 : FontWeight.normal),
-                    color: isDone ? const Color(0xFF1B3A20) : Colors.grey.shade500,
+                    fontWeight: isCurrent
+                        ? FontWeight.bold
+                        : (isDone ? FontWeight.w600 : FontWeight.normal),
+                    color: isDone
+                        ? const Color(0xFF1B3A20)
+                        : Colors.grey.shade500,
                   ),
                 ),
               ),
@@ -730,4 +924,3 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     );
   }
 }
-

@@ -30,7 +30,8 @@ class BankInfo {
 
   factory BankInfo.fromJson(Map<String, dynamic> json) => BankInfo(
     code: json['code']?.toString() ?? '',
-    shortName: json['shortName']?.toString() ?? json['short_name']?.toString() ?? '',
+    shortName:
+        json['shortName']?.toString() ?? json['short_name']?.toString() ?? '',
     fullName: json['fullName']?.toString() ?? json['name']?.toString() ?? '',
     bin: json['bin']?.toString() ?? '',
     appScheme: json['appScheme']?.toString() ?? '',
@@ -70,16 +71,19 @@ class LinkedBankAccount {
     'logoUrl': logoUrl,
   };
 
-  factory LinkedBankAccount.fromJson(Map<String, dynamic> json) => LinkedBankAccount(
-    id: json['id']?.toString() ?? DateTime.now().millisecondsSinceEpoch.toString(),
-    bankCode: json['bankCode']?.toString() ?? 'MB',
-    bankName: json['bankName']?.toString() ?? 'MB Bank',
-    accountNumber: json['accountNumber']?.toString() ?? '',
-    accountHolder: json['accountHolder']?.toString() ?? '',
-    isDefault: json['isDefault'] == true,
-    appScheme: json['appScheme']?.toString() ?? '',
-    logoUrl: json['logoUrl']?.toString() ?? '',
-  );
+  factory LinkedBankAccount.fromJson(Map<String, dynamic> json) =>
+      LinkedBankAccount(
+        id:
+            json['id']?.toString() ??
+            DateTime.now().millisecondsSinceEpoch.toString(),
+        bankCode: json['bankCode']?.toString() ?? 'MB',
+        bankName: json['bankName']?.toString() ?? 'MB Bank',
+        accountNumber: json['accountNumber']?.toString() ?? '',
+        accountHolder: json['accountHolder']?.toString() ?? '',
+        isDefault: json['isDefault'] == true,
+        appScheme: json['appScheme']?.toString() ?? '',
+        logoUrl: json['logoUrl']?.toString() ?? '',
+      );
 }
 
 class BankService {
@@ -88,15 +92,78 @@ class BankService {
 
   // Danh sách 9 ngân hàng phổ biến offline mặc định (dùng khi mất mạng và chưa có cache)
   static const List<BankInfo> defaultBanks = [
-    BankInfo(code: 'MB', shortName: 'MB Bank', fullName: 'Ngân hàng Quân Đội', bin: '970422', appScheme: 'mbmobile://', logoUrl: 'https://cdn.vietqr.io/img/MB.png'),
-    BankInfo(code: 'VCB', shortName: 'Vietcombank', fullName: 'Ngân hàng Ngoại Thương VN', bin: '970436', appScheme: 'vietcombank://', logoUrl: 'https://cdn.vietqr.io/img/VCB.png'),
-    BankInfo(code: 'TCB', shortName: 'Techcombank', fullName: 'Ngân hàng Kỹ Thương VN', bin: '970407', appScheme: 'tcb://', logoUrl: 'https://cdn.vietqr.io/img/TCB.png'),
-    BankInfo(code: 'TPB', shortName: 'TPBank', fullName: 'Ngân hàng Tiên Phong', bin: '970423', appScheme: 'tpbank://', logoUrl: 'https://cdn.vietqr.io/img/TPB.png'),
-    BankInfo(code: 'BIDV', shortName: 'BIDV', fullName: 'Ngân hàng Đầu Tư & Phát Triển VN', bin: '970418', appScheme: 'bidvsmartbanking://', logoUrl: 'https://cdn.vietqr.io/img/BIDV.png'),
-    BankInfo(code: 'ACB', shortName: 'ACB', fullName: 'Ngân hàng Á Châu', bin: '970416', appScheme: 'acb://', logoUrl: 'https://cdn.vietqr.io/img/ACB.png'),
-    BankInfo(code: 'VPB', shortName: 'VPBank', fullName: 'Ngân hàng Việt Nam Thịnh Vượng', bin: '970432', appScheme: 'vpbankneo://', logoUrl: 'https://cdn.vietqr.io/img/VPB.png'),
-    BankInfo(code: 'CTG', shortName: 'VietinBank', fullName: 'Ngân hàng Công Thương VN', bin: '970415', appScheme: 'vietinbankipay://', logoUrl: 'https://cdn.vietqr.io/img/ICB.png'),
-    BankInfo(code: 'VBA', shortName: 'Agribank', fullName: 'Ngân hàng Nông Nghiệp & PTNT', bin: '970405', appScheme: 'agribank://', logoUrl: 'https://cdn.vietqr.io/img/VBA.png'),
+    BankInfo(
+      code: 'MB',
+      shortName: 'MB Bank',
+      fullName: 'Ngân hàng Quân Đội',
+      bin: '970422',
+      appScheme: 'mbmobile://',
+      logoUrl: 'https://cdn.vietqr.io/img/MB.png',
+    ),
+    BankInfo(
+      code: 'VCB',
+      shortName: 'Vietcombank',
+      fullName: 'Ngân hàng Ngoại Thương VN',
+      bin: '970436',
+      appScheme: 'vietcombank://',
+      logoUrl: 'https://cdn.vietqr.io/img/VCB.png',
+    ),
+    BankInfo(
+      code: 'TCB',
+      shortName: 'Techcombank',
+      fullName: 'Ngân hàng Kỹ Thương VN',
+      bin: '970407',
+      appScheme: 'tcb://',
+      logoUrl: 'https://cdn.vietqr.io/img/TCB.png',
+    ),
+    BankInfo(
+      code: 'TPB',
+      shortName: 'TPBank',
+      fullName: 'Ngân hàng Tiên Phong',
+      bin: '970423',
+      appScheme: 'tpbank://',
+      logoUrl: 'https://cdn.vietqr.io/img/TPB.png',
+    ),
+    BankInfo(
+      code: 'BIDV',
+      shortName: 'BIDV',
+      fullName: 'Ngân hàng Đầu Tư & Phát Triển VN',
+      bin: '970418',
+      appScheme: 'bidvsmartbanking://',
+      logoUrl: 'https://cdn.vietqr.io/img/BIDV.png',
+    ),
+    BankInfo(
+      code: 'ACB',
+      shortName: 'ACB',
+      fullName: 'Ngân hàng Á Châu',
+      bin: '970416',
+      appScheme: 'acb://',
+      logoUrl: 'https://cdn.vietqr.io/img/ACB.png',
+    ),
+    BankInfo(
+      code: 'VPB',
+      shortName: 'VPBank',
+      fullName: 'Ngân hàng Việt Nam Thịnh Vượng',
+      bin: '970432',
+      appScheme: 'vpbankneo://',
+      logoUrl: 'https://cdn.vietqr.io/img/VPB.png',
+    ),
+    BankInfo(
+      code: 'CTG',
+      shortName: 'VietinBank',
+      fullName: 'Ngân hàng Công Thương VN',
+      bin: '970415',
+      appScheme: 'vietinbankipay://',
+      logoUrl: 'https://cdn.vietqr.io/img/ICB.png',
+    ),
+    BankInfo(
+      code: 'VBA',
+      shortName: 'Agribank',
+      fullName: 'Ngân hàng Nông Nghiệp & PTNT',
+      bin: '970405',
+      appScheme: 'agribank://',
+      logoUrl: 'https://cdn.vietqr.io/img/VBA.png',
+    ),
   ];
 
   // Gọi API VietQR lấy trọn bộ 65+ ngân hàng tại Việt Nam (có cơ chế Cache và Offline Fallback)
@@ -104,7 +171,9 @@ class BankService {
     final prefs = await SharedPreferences.getInstance();
 
     try {
-      final response = await http.get(Uri.parse('https://api.vietqr.io/v2/banks')).timeout(const Duration(seconds: 4));
+      final response = await http
+          .get(Uri.parse('https://api.vietqr.io/v2/banks'))
+          .timeout(const Duration(seconds: 4));
 
       if (response.statusCode == 200) {
         final decoded = jsonDecode(response.body);
@@ -114,7 +183,8 @@ class BankService {
           final banks = data.map((item) {
             final m = item as Map<String, dynamic>;
             final code = (m['code'] ?? '').toString();
-            final shortName = (m['shortName'] ?? m['short_name'] ?? code).toString();
+            final shortName = (m['shortName'] ?? m['short_name'] ?? code)
+                .toString();
             final name = (m['name'] ?? shortName).toString();
             final bin = (m['bin'] ?? '').toString();
             final logo = (m['logo'] ?? '').toString();
@@ -177,7 +247,9 @@ class BankService {
     if (cachedStr != null && cachedStr.isNotEmpty) {
       try {
         final list = jsonDecode(cachedStr) as List<dynamic>;
-        return list.map((m) => BankInfo.fromJson(m as Map<String, dynamic>)).toList();
+        return list
+            .map((m) => BankInfo.fromJson(m as Map<String, dynamic>))
+            .toList();
       } catch (_) {}
     }
 
@@ -213,7 +285,13 @@ class BankService {
     try {
       final prefs = await SharedPreferences.getInstance();
       final listStr = prefs.getStringList(_storageKey) ?? [];
-      return listStr.map((s) => LinkedBankAccount.fromJson(jsonDecode(s) as Map<String, dynamic>)).toList();
+      return listStr
+          .map(
+            (s) => LinkedBankAccount.fromJson(
+              jsonDecode(s) as Map<String, dynamic>,
+            ),
+          )
+          .toList();
     } catch (_) {
       return [];
     }

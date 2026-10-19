@@ -64,7 +64,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _initUserData() async {
     Map<String, dynamic>? userData = widget.user;
-    
+
     if (userData == null) {
       final prefs = await SharedPreferences.getInstance();
       final userStr = prefs.getString('customer_user');
@@ -101,12 +101,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (mounted && loyaltyData != null) {
         setState(() {
           final tierStr = loyaltyData['tier']?.toString() ?? 'Mới';
-          if (tierStr == 'Mới') _membershipTier = 'Thành viên Mới 🌱';
-          else if (tierStr == 'Bạc') _membershipTier = 'Thành viên Bạc 🥈';
-          else if (tierStr == 'Vàng') _membershipTier = 'Thành viên Vàng 🥇';
-          else if (tierStr == 'Kim Cương') _membershipTier = 'Thành viên Kim Cương 💎';
-          else _membershipTier = 'Thành viên $tierStr';
-          
+          if (tierStr == 'Mới')
+            _membershipTier = 'Thành viên Mới 🌱';
+          else if (tierStr == 'Bạc')
+            _membershipTier = 'Thành viên Bạc 🥈';
+          else if (tierStr == 'Vàng')
+            _membershipTier = 'Thành viên Vàng 🥇';
+          else if (tierStr == 'Kim Cương')
+            _membershipTier = 'Thành viên Kim Cương 💎';
+          else
+            _membershipTier = 'Thành viên $tierStr';
+
           _loyaltyPoints = loyaltyData['currentPoints'] ?? 0;
           final vouchers = (loyaltyData['vouchers'] as List<dynamic>?) ?? [];
           _voucherCount = vouchers.where((v) => v['isUsed'] != true).length;
@@ -138,6 +143,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (status == 'processing') return s == 'processing' || s == 'confirmed';
       if (status == 'shipping') return s == 'shipping';
       if (status == 'delivered') return s == 'delivered' || s == 'completed';
+      if (status == 'cancelled') return s == 'cancelled' || s == 'canceled';
       return false;
     }).length;
   }
@@ -232,9 +238,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (ctx) => SettingsScreen(
-          onEditProfile: _navigateToEditProfile,
-        ),
+        builder: (ctx) => SettingsScreen(onEditProfile: _navigateToEditProfile),
       ),
     );
   }
@@ -253,7 +257,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               children: [
                 // 1. Phía trên cùng: Header Avatar + Tên + Hạng thành viên & Cụm nút Setting, Cart, Chat
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 16,
+                  ),
                   color: Colors.white,
                   child: Column(
                     children: [
@@ -266,7 +273,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               onTap: _navigateToEditProfile,
                               borderRadius: BorderRadius.circular(12),
                               child: Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 4),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 4,
+                                ),
                                 child: Row(
                                   children: [
                                     // Avatar
@@ -274,12 +283,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       children: [
                                         CircleAvatar(
                                           radius: 28,
-                                          backgroundColor: const Color(0xFFE8F5E9),
-                                          backgroundImage: _avatarUrl.isNotEmpty ? NetworkImage(_avatarUrl) : null,
+                                          backgroundColor: const Color(
+                                            0xFFE8F5E9,
+                                          ),
+                                          backgroundImage: _avatarUrl.isNotEmpty
+                                              ? NetworkImage(_avatarUrl)
+                                              : null,
                                           child: _avatarUrl.isEmpty
                                               ? Text(
-                                                  _fullName.isNotEmpty ? _fullName.trim()[0].toUpperCase() : 'L',
-                                                  style: const TextStyle(color: Color(0xFF2E7D32), fontWeight: FontWeight.bold, fontSize: 20),
+                                                  _fullName.isNotEmpty
+                                                      ? _fullName
+                                                            .trim()[0]
+                                                            .toUpperCase()
+                                                      : 'L',
+                                                  style: const TextStyle(
+                                                    color: Color(0xFF2E7D32),
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 20,
+                                                  ),
                                                 )
                                               : null,
                                         ),
@@ -292,7 +313,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                               color: Color(0xFF2E7D32),
                                               shape: BoxShape.circle,
                                             ),
-                                            child: const Icon(Icons.edit, size: 10, color: Colors.white),
+                                            child: const Icon(
+                                              Icons.edit,
+                                              size: 10,
+                                              color: Colors.white,
+                                            ),
                                           ),
                                         ),
                                       ],
@@ -302,7 +327,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     // Tên & Hạng thành viên
                                     Expanded(
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           Row(
                                             children: [
@@ -315,21 +341,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                                     color: Color(0xFF1B3A20),
                                                   ),
                                                   maxLines: 1,
-                                                  overflow: TextOverflow.ellipsis,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
                                                 ),
                                               ),
                                               const SizedBox(width: 4),
-                                              const Icon(Icons.chevron_right, size: 18, color: Colors.grey),
+                                              const Icon(
+                                                Icons.chevron_right,
+                                                size: 18,
+                                                color: Colors.grey,
+                                              ),
                                             ],
                                           ),
                                           const SizedBox(height: 4),
                                           // Tên hạng thành viên kế bên
                                           Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 8,
+                                              vertical: 2,
+                                            ),
                                             decoration: BoxDecoration(
                                               color: const Color(0xFFFFF8E1),
-                                              borderRadius: BorderRadius.circular(6),
-                                              border: Border.all(color: const Color(0xFFFFD54F)),
+                                              borderRadius:
+                                                  BorderRadius.circular(6),
+                                              border: Border.all(
+                                                color: const Color(0xFFFFD54F),
+                                              ),
                                             ),
                                             child: Text(
                                               _membershipTier,
@@ -354,7 +391,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             children: [
                               // Nút Setting
                               IconButton(
-                                icon: const Icon(Icons.settings_outlined, color: Color(0xFF4B5D50)),
+                                icon: const Icon(
+                                  Icons.settings_outlined,
+                                  color: Color(0xFF4B5D50),
+                                ),
                                 tooltip: 'Cài đặt',
                                 onPressed: _navigateToSettings,
                               ),
@@ -364,7 +404,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 clipBehavior: Clip.none,
                                 children: [
                                   IconButton(
-                                    icon: const Icon(Icons.shopping_cart_outlined, color: Color(0xFF2E7D32)),
+                                    icon: const Icon(
+                                      Icons.shopping_cart_outlined,
+                                      color: Color(0xFF2E7D32),
+                                    ),
                                     tooltip: 'Giỏ hàng',
                                     onPressed: _openCart,
                                   ),
@@ -378,10 +421,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                           color: Color(0xFFE53935),
                                           shape: BoxShape.circle,
                                         ),
-                                        constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                                        constraints: const BoxConstraints(
+                                          minWidth: 16,
+                                          minHeight: 16,
+                                        ),
                                         child: Text(
-                                          _cartCount > 99 ? '99+' : '$_cartCount',
-                                          style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
+                                          _cartCount > 99
+                                              ? '99+'
+                                              : '$_cartCount',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 9,
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                           textAlign: TextAlign.center,
                                         ),
                                       ),
@@ -391,7 +443,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                               // Nút Chat
                               IconButton(
-                                icon: const Icon(Icons.chat_outlined, color: Color(0xFF2E7D32)),
+                                icon: const Icon(
+                                  Icons.chat_outlined,
+                                  color: Color(0xFF2E7D32),
+                                ),
                                 tooltip: 'Trò chuyện hỗ trợ',
                                 onPressed: _openChat,
                               ),
@@ -423,20 +478,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     child: Column(
                       children: [
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               const Text(
                                 'Đơn mua của tôi',
-                                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF1B3A20)),
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF1B3A20),
+                                ),
                               ),
                               GestureDetector(
                                 onTap: () => _navigateToOrders(0),
                                 child: const Row(
                                   children: [
-                                    Text('Xem lịch sử đơn', style: TextStyle(fontSize: 12, color: Color(0xFF8D9E90))),
-                                    Icon(Icons.chevron_right, size: 16, color: Color(0xFF8D9E90)),
+                                    Text(
+                                      'Xem lịch sử đơn',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Color(0xFF8D9E90),
+                                      ),
+                                    ),
+                                    Icon(
+                                      Icons.chevron_right,
+                                      size: 16,
+                                      color: Color(0xFF8D9E90),
+                                    ),
                                   ],
                                 ),
                               ),
@@ -445,9 +517,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                         const Divider(height: 1, color: Color(0xFFF0F0F0)),
 
-                        // 4 ô trạng thái đơn mua
+                        // 5 ô trạng thái đơn mua
                         Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 14,
+                            horizontal: 4,
+                          ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceAround,
                             children: [
@@ -465,7 +540,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               ),
                               _buildOrderStatusItem(
                                 icon: Icons.local_shipping_outlined,
-                                label: 'Chờ giao hàng',
+                                label: 'Chờ giao',
                                 count: _countOrders('shipping'),
                                 onTap: () => _navigateToOrders(2),
                               ),
@@ -474,6 +549,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 label: 'Đánh giá',
                                 count: _countOrders('delivered'),
                                 onTap: () => _navigateToOrders(3),
+                              ),
+                              _buildOrderStatusItem(
+                                icon: Icons.cancel_outlined,
+                                label: 'Đã hủy',
+                                count: _countOrders('cancelled'),
+                                onTap: () => _navigateToOrders(4),
                               ),
                             ],
                           ),
@@ -499,7 +580,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       children: [
                         const Text(
                           'TIỆN ÍCH CỦA TÔI',
-                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF8D9E90), letterSpacing: 0.8),
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF8D9E90),
+                            letterSpacing: 0.8,
+                          ),
                         ),
                         const SizedBox(height: 12),
                         Row(
@@ -514,7 +600,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => VoucherWalletScreen(userId: _userId),
+                                    builder: (context) =>
+                                        VoucherWalletScreen(userId: _userId),
                                   ),
                                 );
                               },
@@ -528,7 +615,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => PointsScreen(userId: _userId),
+                                    builder: (context) =>
+                                        PointsScreen(userId: _userId),
                                   ),
                                 );
                               },
@@ -542,9 +630,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => AddressManagementScreen(
-                                      userId: _userId,
-                                    ),
+                                    builder: (context) =>
+                                        AddressManagementScreen(
+                                          userId: _userId,
+                                        ),
                                   ),
                                 );
                               },
@@ -589,26 +678,62 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
                           child: Text(
                             'HỖ TRỢ & CHÍNH SÁCH',
-                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF8D9E90), letterSpacing: 0.8),
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF8D9E90),
+                              letterSpacing: 0.8,
+                            ),
                           ),
                         ),
                         ListTile(
-                          leading: const Icon(Icons.help_outline, color: Color(0xFF2E7D32)),
-                          title: const Text('Trung tâm trợ giúp', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-                          trailing: const Icon(Icons.chevron_right, size: 18, color: Colors.grey),
+                          leading: const Icon(
+                            Icons.help_outline,
+                            color: Color(0xFF2E7D32),
+                          ),
+                          title: const Text(
+                            'Trung tâm trợ giúp',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          trailing: const Icon(
+                            Icons.chevron_right,
+                            size: 18,
+                            color: Colors.grey,
+                          ),
                           onTap: () {
                             Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (context) => const HelpCenterScreen()),
+                              MaterialPageRoute(
+                                builder: (context) => const HelpCenterScreen(),
+                              ),
                             );
                           },
                         ),
                         const Divider(height: 1, indent: 56),
                         ListTile(
-                          leading: const Icon(Icons.support_agent_outlined, color: Color(0xFF2E7D32)),
-                          title: const Text('Chat với Quản trị viên (Admin)', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-                          subtitle: const Text('Giải quyết khiếu nại & kết nối nhà vườn', style: TextStyle(fontSize: 11, color: Colors.grey)),
-                          trailing: const Icon(Icons.chevron_right, size: 18, color: Colors.grey),
+                          leading: const Icon(
+                            Icons.support_agent_outlined,
+                            color: Color(0xFF2E7D32),
+                          ),
+                          title: const Text(
+                            'Chat với Quản trị viên (Admin)',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          subtitle: const Text(
+                            'Giải quyết khiếu nại & kết nối nhà vườn',
+                            style: TextStyle(fontSize: 11, color: Colors.grey),
+                          ),
+                          trailing: const Icon(
+                            Icons.chevron_right,
+                            size: 18,
+                            color: Colors.grey,
+                          ),
                           onTap: () {
                             Navigator.push(
                               context,
@@ -623,33 +748,81 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                         const Divider(height: 1, indent: 56),
                         ListTile(
-                          leading: const Icon(Icons.headset_mic_outlined, color: Color(0xFF2E7D32)),
-                          title: const Text('Chăm sóc khách hàng (Chat bot)', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-                          subtitle: const Text('Hotline: 1900 8888 (7h30 - 21h00)', style: TextStyle(fontSize: 11, color: Colors.grey)),
-                          trailing: const Icon(Icons.chevron_right, size: 18, color: Colors.grey),
+                          leading: const Icon(
+                            Icons.headset_mic_outlined,
+                            color: Color(0xFF2E7D32),
+                          ),
+                          title: const Text(
+                            'Chăm sóc khách hàng (Chat bot)',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          subtitle: const Text(
+                            'Hotline: 1900 8888 (7h30 - 21h00)',
+                            style: TextStyle(fontSize: 11, color: Colors.grey),
+                          ),
+                          trailing: const Icon(
+                            Icons.chevron_right,
+                            size: 18,
+                            color: Colors.grey,
+                          ),
                           onTap: _openChat,
                         ),
                         const Divider(height: 1, indent: 56),
                         ListTile(
-                          leading: const Icon(Icons.verified_user_outlined, color: Color(0xFF2E7D32)),
-                          title: const Text('Tiêu chuẩn canh tác sinh học', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-                          trailing: const Icon(Icons.chevron_right, size: 18, color: Colors.grey),
+                          leading: const Icon(
+                            Icons.verified_user_outlined,
+                            color: Color(0xFF2E7D32),
+                          ),
+                          title: const Text(
+                            'Tiêu chuẩn canh tác sinh học',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          trailing: const Icon(
+                            Icons.chevron_right,
+                            size: 18,
+                            color: Colors.grey,
+                          ),
                           onTap: () {
                             Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (context) => const FarmingStandardsScreen()),
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const FarmingStandardsScreen(),
+                              ),
                             );
                           },
                         ),
                         const Divider(height: 1, indent: 56),
                         ListTile(
-                          leading: const Icon(Icons.privacy_tip_outlined, color: Color(0xFF2E7D32)),
-                          title: const Text('Chính sách bảo mật dữ liệu', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-                          trailing: const Icon(Icons.chevron_right, size: 18, color: Colors.grey),
+                          leading: const Icon(
+                            Icons.privacy_tip_outlined,
+                            color: Color(0xFF2E7D32),
+                          ),
+                          title: const Text(
+                            'Chính sách bảo mật dữ liệu',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          trailing: const Icon(
+                            Icons.chevron_right,
+                            size: 18,
+                            color: Colors.grey,
+                          ),
                           onTap: () {
                             Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (context) => const PrivacyPolicyScreen()),
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const PrivacyPolicyScreen(),
+                              ),
                             );
                           },
                         ),
@@ -670,7 +843,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         showDialog(
                           context: context,
                           builder: (ctx) => Dialog(
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(24),
+                            ),
                             elevation: 0,
                             backgroundColor: Colors.transparent,
                             child: Container(
@@ -695,20 +870,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     decoration: BoxDecoration(
                                       color: const Color(0xFFFEE2E2),
                                       shape: BoxShape.circle,
-                                      border: Border.all(color: const Color(0xFFFECACA), width: 2),
+                                      border: Border.all(
+                                        color: const Color(0xFFFECACA),
+                                        width: 2,
+                                      ),
                                     ),
-                                    child: const Icon(Icons.logout_rounded, color: Color(0xFFDC2626), size: 30),
+                                    child: const Icon(
+                                      Icons.logout_rounded,
+                                      color: Color(0xFFDC2626),
+                                      size: 30,
+                                    ),
                                   ),
                                   const SizedBox(height: 18),
                                   const Text(
                                     'Xác nhận đăng xuất',
-                                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Color(0xFF1F2937)),
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 18,
+                                      color: Color(0xFF1F2937),
+                                    ),
                                   ),
                                   const SizedBox(height: 10),
                                   const Text(
                                     'Bạn có chắc chắn muốn đăng xuất khỏi ứng dụng LÀNH Farm? Giỏ hàng và ưu đãi của bạn vẫn được lưu trữ an toàn.',
                                     textAlign: TextAlign.center,
-                                    style: TextStyle(fontSize: 13.5, height: 1.45, color: Color(0xFF6B7280)),
+                                    style: TextStyle(
+                                      fontSize: 13.5,
+                                      height: 1.45,
+                                      color: Color(0xFF6B7280),
+                                    ),
                                   ),
                                   const SizedBox(height: 24),
                                   Row(
@@ -717,12 +907,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         child: OutlinedButton(
                                           onPressed: () => Navigator.pop(ctx),
                                           style: OutlinedButton.styleFrom(
-                                            padding: const EdgeInsets.symmetric(vertical: 12),
-                                            side: const BorderSide(color: Color(0xFFE5E7EB)),
-                                            backgroundColor: const Color(0xFFF9FAFB),
-                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                            padding: const EdgeInsets.symmetric(
+                                              vertical: 12,
+                                            ),
+                                            side: const BorderSide(
+                                              color: Color(0xFFE5E7EB),
+                                            ),
+                                            backgroundColor: const Color(
+                                              0xFFF9FAFB,
+                                            ),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
+                                            ),
                                           ),
-                                          child: const Text('Ở lại', style: TextStyle(color: Color(0xFF4B5563), fontWeight: FontWeight.w600, fontSize: 14)),
+                                          child: const Text(
+                                            'Ở lại',
+                                            style: TextStyle(
+                                              color: Color(0xFF4B5563),
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 14,
+                                            ),
+                                          ),
                                         ),
                                       ),
                                       const SizedBox(width: 12),
@@ -730,23 +936,40 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         child: ElevatedButton(
                                           onPressed: () async {
                                             Navigator.pop(ctx);
-                                            final prefs = await SharedPreferences.getInstance();
+                                            final prefs =
+                                                await SharedPreferences.getInstance();
                                             await prefs.remove('customer_user');
                                             if (!mounted) return;
                                             Navigator.pushAndRemoveUntil(
                                               context,
-                                              MaterialPageRoute(builder: (c) => const LoginScreen()),
+                                              MaterialPageRoute(
+                                                builder: (c) =>
+                                                    const LoginScreen(),
+                                              ),
                                               (route) => false,
                                             );
                                           },
                                           style: ElevatedButton.styleFrom(
-                                            backgroundColor: const Color(0xFFDC2626),
+                                            backgroundColor: const Color(
+                                              0xFFDC2626,
+                                            ),
                                             foregroundColor: Colors.white,
-                                            padding: const EdgeInsets.symmetric(vertical: 12),
-                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                            padding: const EdgeInsets.symmetric(
+                                              vertical: 12,
+                                            ),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
+                                            ),
                                             elevation: 0,
                                           ),
-                                          child: const Text('Đăng xuất', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                                          child: const Text(
+                                            'Đăng xuất',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 14,
+                                            ),
+                                          ),
                                         ),
                                       ),
                                     ],
@@ -757,11 +980,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                         );
                       },
-                      icon: const Icon(Icons.logout, size: 18, color: Colors.red),
-                      label: const Text('Đăng xuất tài khoản', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 13)),
+                      icon: const Icon(
+                        Icons.logout,
+                        size: 18,
+                        color: Colors.red,
+                      ),
+                      label: const Text(
+                        'Đăng xuất tài khoản',
+                        style: TextStyle(
+                          color: Colors.red,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
                       style: OutlinedButton.styleFrom(
                         side: BorderSide(color: Colors.red.shade200),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                         backgroundColor: Colors.white,
                       ),
                     ),
@@ -799,15 +1035,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     top: -4,
                     right: -8,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 5,
+                        vertical: 1,
+                      ),
                       decoration: const BoxDecoration(
                         color: Color(0xFFE53935),
                         borderRadius: BorderRadius.all(Radius.circular(10)),
                       ),
-                      constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                      constraints: const BoxConstraints(
+                        minWidth: 16,
+                        minHeight: 16,
+                      ),
                       child: Text(
                         '$count',
-                        style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
                         textAlign: TextAlign.center,
                       ),
                     ),
@@ -817,7 +1063,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const SizedBox(height: 6),
             Text(
               label,
-              style: const TextStyle(fontSize: 11, color: Color(0xFF4B5D50), fontWeight: FontWeight.w500),
+              style: const TextStyle(
+                fontSize: 11,
+                color: Color(0xFF4B5D50),
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ],
         ),
@@ -849,8 +1099,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: Icon(icon, color: color, size: 22),
             ),
             const SizedBox(height: 6),
-            Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF1B3A20))),
-            Text(subLabel, style: const TextStyle(fontSize: 10, color: Color(0xFF8D9E90))),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF1B3A20),
+              ),
+            ),
+            Text(
+              subLabel,
+              style: const TextStyle(fontSize: 10, color: Color(0xFF8D9E90)),
+            ),
           ],
         ),
       ),

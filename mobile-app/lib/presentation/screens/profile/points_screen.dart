@@ -87,13 +87,18 @@ class _PointsScreenState extends State<PointsScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF7FAF7),
       appBar: AppBar(
-        title: Text(isEn ? 'Points & Membership' : 'Điểm Thưởng & Hạng Thành Viên', style: const TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(
+          isEn ? 'Points & Membership' : 'Điểm Thưởng & Hạng Thành Viên',
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
         backgroundColor: Colors.white,
         foregroundColor: const Color(0xFF1B3A20),
         elevation: 0,
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFF2E7D32)))
+          ? const Center(
+              child: CircularProgressIndicator(color: Color(0xFF2E7D32)),
+            )
           : SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -107,7 +112,11 @@ class _PointsScreenState extends State<PointsScreen> {
                       gradient: _getTierGradient(_tierName),
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
-                        BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 10, offset: const Offset(0, 4)),
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.15),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
                       ],
                     ),
                     child: Column(
@@ -118,21 +127,36 @@ class _PointsScreenState extends State<PointsScreen> {
                           children: [
                             Text(
                               'THẺ THÀNH VIÊN LÀNH',
-                              style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 11, letterSpacing: 1.5, fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.8),
+                                fontSize: 11,
+                                letterSpacing: 1.5,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
                               decoration: BoxDecoration(
                                 color: Colors.white.withValues(alpha: 0.25),
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: Row(
                                 children: [
-                                  Text(_getTierIcon(_tierName), style: const TextStyle(fontSize: 14)),
+                                  Text(
+                                    _getTierIcon(_tierName),
+                                    style: const TextStyle(fontSize: 14),
+                                  ),
                                   const SizedBox(width: 4),
                                   Text(
                                     _tierName,
-                                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -150,13 +174,24 @@ class _PointsScreenState extends State<PointsScreen> {
                           textBaseline: TextBaseline.alphabetic,
                           children: [
                             Text(
-                              _currentPoints.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.'),
-                              style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold),
+                              _currentPoints.toString().replaceAllMapped(
+                                RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+                                (Match m) => '${m[1]}.',
+                              ),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 32,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                             const SizedBox(width: 6),
                             const Text(
                               'L-Points',
-                              style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ],
                         ),
@@ -172,11 +207,18 @@ class _PointsScreenState extends State<PointsScreen> {
                             children: [
                               Text(
                                 'Chi tiêu năm: ${_totalSpentYear.toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}đ',
-                                style: const TextStyle(color: Colors.white, fontSize: 11.5, fontWeight: FontWeight.w500),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
                               const Text(
                                 'Tích lũy tự động khi nhận hàng',
-                                style: TextStyle(color: Colors.white70, fontSize: 11),
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 11,
+                                ),
                               ),
                             ],
                           ),
@@ -190,7 +232,12 @@ class _PointsScreenState extends State<PointsScreen> {
                   // 2. Đặc quyền các hạng thành viên
                   const Text(
                     'ĐẶC QUYỀN HẠNG THÀNH VIÊN',
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF8D9E90), letterSpacing: 1.0),
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF8D9E90),
+                      letterSpacing: 1.0,
+                    ),
                   ),
                   const SizedBox(height: 12),
 
@@ -198,10 +245,26 @@ class _PointsScreenState extends State<PointsScreen> {
                     scrollDirection: Axis.horizontal,
                     child: Row(
                       children: [
-                        _buildTierBenefitCard('🌱 Hạng Mới', 'Chi tiêu: 0đ', 'Tích 1% điểm cho mọi đơn hàng nông sản VietGAP.'),
-                        _buildTierBenefitCard('🥈 Hạng Bạc', 'Chi tiêu: 2.000.000đ', 'Tích 1.5% điểm, tặng 1 mã Freeship mỗi tháng.'),
-                        _buildTierBenefitCard('🥇 Hạng Vàng', 'Chi tiêu: 5.000.000đ', 'Tích 2% điểm, 3 mã Freeship/tháng & quà sinh nhật.'),
-                        _buildTierBenefitCard('💎 Kim Cương', 'Chi tiêu: 10.000.000đ', 'Tích 3% điểm, miễn phí giao trọn đời, tài trợ cây giống.'),
+                        _buildTierBenefitCard(
+                          '🌱 Hạng Mới',
+                          'Chi tiêu: 0đ',
+                          'Tích 1% điểm cho mọi đơn hàng nông sản VietGAP.',
+                        ),
+                        _buildTierBenefitCard(
+                          '🥈 Hạng Bạc',
+                          'Chi tiêu: 2.000.000đ',
+                          'Tích 1.5% điểm, tặng 1 mã Freeship mỗi tháng.',
+                        ),
+                        _buildTierBenefitCard(
+                          '🥇 Hạng Vàng',
+                          'Chi tiêu: 5.000.000đ',
+                          'Tích 2% điểm, 3 mã Freeship/tháng & quà sinh nhật.',
+                        ),
+                        _buildTierBenefitCard(
+                          '💎 Kim Cương',
+                          'Chi tiêu: 10.000.000đ',
+                          'Tích 3% điểm, miễn phí giao trọn đời, tài trợ cây giống.',
+                        ),
                       ],
                     ),
                   ),
@@ -211,7 +274,12 @@ class _PointsScreenState extends State<PointsScreen> {
                   // 3. Lịch sử điểm thưởng
                   const Text(
                     'LỊCH SỬ BIẾN ĐỘNG ĐIỂM',
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF8D9E90), letterSpacing: 1.0),
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF8D9E90),
+                      letterSpacing: 1.0,
+                    ),
                   ),
                   const SizedBox(height: 12),
 
@@ -225,7 +293,10 @@ class _PointsScreenState extends State<PointsScreen> {
                       ),
                       child: Text(
                         'Chưa có lịch sử giao dịch điểm',
-                        style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                        style: TextStyle(
+                          color: Colors.grey.shade600,
+                          fontSize: 13,
+                        ),
                       ),
                     )
                   else
@@ -239,32 +310,55 @@ class _PointsScreenState extends State<PointsScreen> {
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         itemCount: _history.length,
-                        separatorBuilder: (ctx, i) => const Divider(height: 1, color: Color(0xFFF0F4F0)),
+                        separatorBuilder: (ctx, i) =>
+                            const Divider(height: 1, color: Color(0xFFF0F4F0)),
                         itemBuilder: (context, index) {
                           final item = _history[index];
-                          final points = (item['pointsDelta'] as num?)?.toInt() ?? 0;
+                          final points =
+                              (item['pointsDelta'] as num?)?.toInt() ?? 0;
                           final desc = item['description'] ?? 'Biến động điểm';
-                          final date = (item['createdAt'] ?? '').toString().split('T').first;
+                          final date = (item['createdAt'] ?? '')
+                              .toString()
+                              .split('T')
+                              .first;
                           final isPlus = points >= 0;
 
                           return ListTile(
                             leading: CircleAvatar(
                               radius: 18,
-                              backgroundColor: isPlus ? const Color(0xFFE8F5E9) : const Color(0xFFFFEBEE),
+                              backgroundColor: isPlus
+                                  ? const Color(0xFFE8F5E9)
+                                  : const Color(0xFFFFEBEE),
                               child: Icon(
                                 isPlus ? Icons.add : Icons.remove,
-                                color: isPlus ? const Color(0xFF2E7D32) : Colors.red,
+                                color: isPlus
+                                    ? const Color(0xFF2E7D32)
+                                    : Colors.red,
                                 size: 18,
                               ),
                             ),
-                            title: Text(desc, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-                            subtitle: Text(date, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                            title: Text(
+                              desc,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            subtitle: Text(
+                              date,
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: Colors.grey,
+                              ),
+                            ),
                             trailing: Text(
                               '${isPlus ? "+" : ""}$points L',
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
-                                color: isPlus ? const Color(0xFF2E7D32) : Colors.red,
+                                color: isPlus
+                                    ? const Color(0xFF2E7D32)
+                                    : Colors.red,
                               ),
                             ),
                           );
@@ -290,11 +384,32 @@ class _PointsScreenState extends State<PointsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF1B3A20))),
+          Text(
+            title,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+              color: Color(0xFF1B3A20),
+            ),
+          ),
           const SizedBox(height: 2),
-          Text(condition, style: const TextStyle(fontSize: 10.5, color: Color(0xFF2E7D32), fontWeight: FontWeight.bold)),
+          Text(
+            condition,
+            style: const TextStyle(
+              fontSize: 10.5,
+              color: Color(0xFF2E7D32),
+              fontWeight: FontWeight.bold,
+            ),
+          ),
           const SizedBox(height: 8),
-          Text(desc, style: TextStyle(fontSize: 11, color: Colors.grey.shade700, height: 1.3)),
+          Text(
+            desc,
+            style: TextStyle(
+              fontSize: 11,
+              color: Colors.grey.shade700,
+              height: 1.3,
+            ),
+          ),
         ],
       ),
     );

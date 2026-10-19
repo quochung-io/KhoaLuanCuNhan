@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import '../../../core/utils/bank_service.dart';
 
 class LinkedBankAccountsScreen extends StatefulWidget {
-  final bool selectMode; // Nếu true, bấm vào thẻ sẽ pop về và trả về thẻ được chọn
+  final bool
+  selectMode; // Nếu true, bấm vào thẻ sẽ pop về và trả về thẻ được chọn
   const LinkedBankAccountsScreen({super.key, this.selectMode = false});
 
   @override
-  State<LinkedBankAccountsScreen> createState() => _LinkedBankAccountsScreenState();
+  State<LinkedBankAccountsScreen> createState() =>
+      _LinkedBankAccountsScreenState();
 }
 
 class _LinkedBankAccountsScreenState extends State<LinkedBankAccountsScreen> {
@@ -67,7 +69,9 @@ class _LinkedBankAccountsScreenState extends State<LinkedBankAccountsScreen> {
   }
 
   void _openBankSelector(BuildContext context, Function(BankInfo) onSelect) {
-    final bankList = _allBanks.isNotEmpty ? _allBanks : BankService.defaultBanks;
+    final bankList = _allBanks.isNotEmpty
+        ? _allBanks
+        : BankService.defaultBanks;
 
     showModalBottomSheet(
       context: context,
@@ -112,16 +116,28 @@ class _LinkedBankAccountsScreenState extends State<LinkedBankAccountsScreen> {
                       children: [
                         Row(
                           children: [
-                            const Icon(Icons.account_balance, color: Color(0xFF2E7D32), size: 22),
+                            const Icon(
+                              Icons.account_balance,
+                              color: Color(0xFF2E7D32),
+                              size: 22,
+                            ),
                             const SizedBox(width: 8),
                             Text(
                               'Chọn ngân hàng (${bankList.length})',
-                              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Color(0xFF1B3A20)),
+                              style: const TextStyle(
+                                fontSize: 17,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF1B3A20),
+                              ),
                             ),
                           ],
                         ),
                         IconButton(
-                          icon: const Icon(Icons.close, size: 20, color: Colors.grey),
+                          icon: const Icon(
+                            Icons.close,
+                            size: 20,
+                            color: Colors.grey,
+                          ),
                           onPressed: () => Navigator.pop(ctx),
                         ),
                       ],
@@ -133,18 +149,30 @@ class _LinkedBankAccountsScreenState extends State<LinkedBankAccountsScreen> {
                     child: TextField(
                       decoration: InputDecoration(
                         hintText: 'Tìm theo tên, mã (VCB, MB, Techcombank...)',
-                        hintStyle: TextStyle(fontSize: 13, color: Colors.grey.shade400),
-                        prefixIcon: const Icon(Icons.search, color: Color(0xFF2E7D32)),
+                        hintStyle: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey.shade400,
+                        ),
+                        prefixIcon: const Icon(
+                          Icons.search,
+                          color: Color(0xFF2E7D32),
+                        ),
                         filled: true,
                         fillColor: const Color(0xFFF7FAF7),
-                        contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                        contentPadding: const EdgeInsets.symmetric(
+                          vertical: 10,
+                        ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFFE1EAE0)),
+                          borderSide: const BorderSide(
+                            color: Color(0xFFE1EAE0),
+                          ),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFFE1EAE0)),
+                          borderSide: const BorderSide(
+                            color: Color(0xFFE1EAE0),
+                          ),
                         ),
                       ),
                       onChanged: (val) {
@@ -161,15 +189,23 @@ class _LinkedBankAccountsScreenState extends State<LinkedBankAccountsScreen> {
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.search_off, size: 48, color: Colors.grey.shade300),
+                                Icon(
+                                  Icons.search_off,
+                                  size: 48,
+                                  color: Colors.grey.shade300,
+                                ),
                                 const SizedBox(height: 8),
-                                Text('Không tìm thấy ngân hàng phù hợp', style: TextStyle(color: Colors.grey.shade500)),
+                                Text(
+                                  'Không tìm thấy ngân hàng phù hợp',
+                                  style: TextStyle(color: Colors.grey.shade500),
+                                ),
                               ],
                             ),
                           )
                         : ListView.separated(
                             itemCount: filtered.length,
-                            separatorBuilder: (_, __) => Divider(height: 1, color: Colors.grey.shade100),
+                            separatorBuilder: (_, __) =>
+                                Divider(height: 1, color: Colors.grey.shade100),
                             itemBuilder: (c, i) {
                               final bank = filtered[i];
                               return ListTile(
@@ -180,7 +216,9 @@ class _LinkedBankAccountsScreenState extends State<LinkedBankAccountsScreen> {
                                   decoration: BoxDecoration(
                                     color: Colors.white,
                                     borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(color: Colors.grey.shade200),
+                                    border: Border.all(
+                                      color: Colors.grey.shade200,
+                                    ),
                                   ),
                                   child: bank.logoUrl.isNotEmpty
                                       ? Image.network(
@@ -188,22 +226,43 @@ class _LinkedBankAccountsScreenState extends State<LinkedBankAccountsScreen> {
                                           fit: BoxFit.contain,
                                           errorBuilder: (_, __, ___) => Center(
                                             child: Text(
-                                              bank.code.length > 4 ? bank.code.substring(0, 4) : bank.code,
-                                              style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: _getBankColor(bank.code)),
+                                              bank.code.length > 4
+                                                  ? bank.code.substring(0, 4)
+                                                  : bank.code,
+                                              style: TextStyle(
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.bold,
+                                                color: _getBankColor(bank.code),
+                                              ),
                                             ),
                                           ),
                                         )
                                       : Center(
                                           child: Text(
-                                            bank.code.length > 4 ? bank.code.substring(0, 4) : bank.code,
-                                            style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: _getBankColor(bank.code)),
+                                            bank.code.length > 4
+                                                ? bank.code.substring(0, 4)
+                                                : bank.code,
+                                            style: TextStyle(
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.bold,
+                                              color: _getBankColor(bank.code),
+                                            ),
                                           ),
                                         ),
                                 ),
-                                title: Text(bank.shortName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                                title: Text(
+                                  bank.shortName,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                  ),
+                                ),
                                 subtitle: Text(
                                   bank.fullName,
-                                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey.shade600,
+                                  ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
@@ -225,7 +284,9 @@ class _LinkedBankAccountsScreenState extends State<LinkedBankAccountsScreen> {
   }
 
   void _showAddAccountSheet() {
-    BankInfo selectedBank = _allBanks.isNotEmpty ? _allBanks.first : BankService.defaultBanks.first;
+    BankInfo selectedBank = _allBanks.isNotEmpty
+        ? _allBanks.first
+        : BankService.defaultBanks.first;
     final accountNumCtrl = TextEditingController();
     final accountHolderCtrl = TextEditingController();
     bool setAsDefault = _accounts.isEmpty;
@@ -265,23 +326,41 @@ class _LinkedBankAccountsScreenState extends State<LinkedBankAccountsScreen> {
                   const SizedBox(height: 16),
                   const Row(
                     children: [
-                      Icon(Icons.account_balance, color: Color(0xFF2E7D32), size: 24),
+                      Icon(
+                        Icons.account_balance,
+                        color: Color(0xFF2E7D32),
+                        size: 24,
+                      ),
                       SizedBox(width: 8),
                       Text(
                         'Liên kết tài khoản ngân hàng',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1B3A20)),
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1B3A20),
+                        ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 6),
                   Text(
                     'Dùng để thanh toán 1 chạm qua ứng dụng ngân hàng khi mua sắm nông sản.',
-                    style: TextStyle(fontSize: 12.5, color: Colors.grey.shade600),
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      color: Colors.grey.shade600,
+                    ),
                   ),
                   const SizedBox(height: 20),
 
                   // Chọn Ngân hàng
-                  const Text('NGÂN HÀNG', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF8D9E90))),
+                  const Text(
+                    'NGÂN HÀNG',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF8D9E90),
+                    ),
+                  ),
                   const SizedBox(height: 8),
                   InkWell(
                     onTap: () {
@@ -291,7 +370,10 @@ class _LinkedBankAccountsScreenState extends State<LinkedBankAccountsScreen> {
                     },
                     borderRadius: BorderRadius.circular(12),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 10,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFFF7FAF7),
                         borderRadius: BorderRadius.circular(12),
@@ -314,15 +396,29 @@ class _LinkedBankAccountsScreenState extends State<LinkedBankAccountsScreen> {
                                     fit: BoxFit.contain,
                                     errorBuilder: (_, __, ___) => Center(
                                       child: Text(
-                                        selectedBank.code.length > 4 ? selectedBank.code.substring(0, 4) : selectedBank.code,
-                                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: _getBankColor(selectedBank.code)),
+                                        selectedBank.code.length > 4
+                                            ? selectedBank.code.substring(0, 4)
+                                            : selectedBank.code,
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                          color: _getBankColor(
+                                            selectedBank.code,
+                                          ),
+                                        ),
                                       ),
                                     ),
                                   )
                                 : Center(
                                     child: Text(
-                                      selectedBank.code.length > 4 ? selectedBank.code.substring(0, 4) : selectedBank.code,
-                                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: _getBankColor(selectedBank.code)),
+                                      selectedBank.code.length > 4
+                                          ? selectedBank.code.substring(0, 4)
+                                          : selectedBank.code,
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                        color: _getBankColor(selectedBank.code),
+                                      ),
                                     ),
                                   ),
                           ),
@@ -333,18 +429,28 @@ class _LinkedBankAccountsScreenState extends State<LinkedBankAccountsScreen> {
                               children: [
                                 Text(
                                   selectedBank.shortName,
-                                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF1B3A20)),
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF1B3A20),
+                                  ),
                                 ),
                                 Text(
                                   selectedBank.fullName,
-                                  style: TextStyle(fontSize: 11.5, color: Colors.grey.shade600),
+                                  style: TextStyle(
+                                    fontSize: 11.5,
+                                    color: Colors.grey.shade600,
+                                  ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ],
                             ),
                           ),
-                          const Icon(Icons.keyboard_arrow_down, color: Color(0xFF2E7D32)),
+                          const Icon(
+                            Icons.keyboard_arrow_down,
+                            color: Color(0xFF2E7D32),
+                          ),
                         ],
                       ),
                     ),
@@ -352,37 +458,75 @@ class _LinkedBankAccountsScreenState extends State<LinkedBankAccountsScreen> {
                   const SizedBox(height: 16),
 
                   // Số tài khoản
-                  const Text('SỐ TÀI KHOẢN NGÂN HÀNG', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF8D9E90))),
+                  const Text(
+                    'SỐ TÀI KHOẢN NGÂN HÀNG',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF8D9E90),
+                    ),
+                  ),
                   const SizedBox(height: 8),
                   TextField(
                     controller: accountNumCtrl,
                     keyboardType: TextInputType.number,
                     decoration: InputDecoration(
                       hintText: 'Nhập số tài khoản (ví dụ: 0359781682)',
-                      prefixIcon: const Icon(Icons.credit_card_outlined, color: Color(0xFF2E7D32)),
+                      prefixIcon: const Icon(
+                        Icons.credit_card_outlined,
+                        color: Color(0xFF2E7D32),
+                      ),
                       filled: true,
                       fillColor: const Color(0xFFF7FAF7),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE1EAE0))),
-                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE1EAE0))),
-                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF2E7D32))),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Color(0xFFE1EAE0)),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Color(0xFFE1EAE0)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Color(0xFF2E7D32)),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 16),
 
                   // Tên chủ tài khoản
-                  const Text('TÊN CHỦ TÀI KHOẢN (IN HOA)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF8D9E90))),
+                  const Text(
+                    'TÊN CHỦ TÀI KHOẢN (IN HOA)',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF8D9E90),
+                    ),
+                  ),
                   const SizedBox(height: 8),
                   TextField(
                     controller: accountHolderCtrl,
                     textCapitalization: TextCapitalization.characters,
                     decoration: InputDecoration(
                       hintText: 'Nhập họ tên (ví dụ: BUI QUOC HUNG)',
-                      prefixIcon: const Icon(Icons.person_outline, color: Color(0xFF2E7D32)),
+                      prefixIcon: const Icon(
+                        Icons.person_outline,
+                        color: Color(0xFF2E7D32),
+                      ),
                       filled: true,
                       fillColor: const Color(0xFFF7FAF7),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE1EAE0))),
-                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE1EAE0))),
-                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF2E7D32))),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Color(0xFFE1EAE0)),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Color(0xFFE1EAE0)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Color(0xFF2E7D32)),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -393,9 +537,13 @@ class _LinkedBankAccountsScreenState extends State<LinkedBankAccountsScreen> {
                       Checkbox(
                         value: setAsDefault,
                         activeColor: const Color(0xFF2E7D32),
-                        onChanged: (val) => setSheetState(() => setAsDefault = val ?? false),
+                        onChanged: (val) =>
+                            setSheetState(() => setAsDefault = val ?? false),
                       ),
-                      const Text('Đặt làm tài khoản thanh toán mặc định', style: TextStyle(fontSize: 13)),
+                      const Text(
+                        'Đặt làm tài khoản thanh toán mặc định',
+                        style: TextStyle(fontSize: 13),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 20),
@@ -411,7 +559,12 @@ class _LinkedBankAccountsScreenState extends State<LinkedBankAccountsScreen> {
 
                         if (accNum.isEmpty || accHolder.isEmpty) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Vui lòng nhập đầy đủ Số tài khoản và Tên chủ thẻ!'), backgroundColor: Colors.red),
+                            const SnackBar(
+                              content: Text(
+                                'Vui lòng nhập đầy đủ Số tài khoản và Tên chủ thẻ!',
+                              ),
+                              backgroundColor: Colors.red,
+                            ),
                           );
                           return;
                         }
@@ -434,7 +587,9 @@ class _LinkedBankAccountsScreenState extends State<LinkedBankAccountsScreen> {
                         if (!mounted) return;
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text('Đã liên kết thành công tài khoản ${selectedBank.shortName}!'),
+                            content: Text(
+                              'Đã liên kết thành công tài khoản ${selectedBank.shortName}!',
+                            ),
                             backgroundColor: const Color(0xFF2E7D32),
                           ),
                         );
@@ -442,10 +597,18 @@ class _LinkedBankAccountsScreenState extends State<LinkedBankAccountsScreen> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF2E7D32),
                         foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                         elevation: 0,
                       ),
-                      child: const Text('Xác nhận liên kết', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                      child: const Text(
+                        'Xác nhận liên kết',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -462,8 +625,13 @@ class _LinkedBankAccountsScreenState extends State<LinkedBankAccountsScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Xác nhận xóa tài khoản', style: TextStyle(fontWeight: FontWeight.bold)),
-        content: Text('Bạn có chắc muốn hủy liên kết tài khoản ${acc.bankName} (${acc.accountNumber})?'),
+        title: const Text(
+          'Xác nhận xóa tài khoản',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        content: Text(
+          'Bạn có chắc muốn hủy liên kết tài khoản ${acc.bankName} (${acc.accountNumber})?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
@@ -480,7 +648,10 @@ class _LinkedBankAccountsScreenState extends State<LinkedBankAccountsScreen> {
                 );
               }
             },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
             child: const Text('Xóa liên kết'),
           ),
         ],
@@ -493,74 +664,116 @@ class _LinkedBankAccountsScreenState extends State<LinkedBankAccountsScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF7FAF7),
       appBar: AppBar(
-        title: const Text('Tài Khoản Ngân Hàng', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Tài Khoản Ngân Hàng',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         backgroundColor: Colors.white,
         foregroundColor: const Color(0xFF1B3A20),
         elevation: 0,
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFF2E7D32)))
+          ? const Center(
+              child: CircularProgressIndicator(color: Color(0xFF2E7D32)),
+            )
           : _accounts.isEmpty
-              ? Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(32),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          width: 80,
-                          height: 80,
-                          decoration: const BoxDecoration(
-                            color: Color(0xFFE8F5E9),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.account_balance_wallet_outlined, size: 40, color: Color(0xFF2E7D32)),
-                        ),
-                        const SizedBox(height: 16),
-                        const Text(
-                          'Chưa liên kết tài khoản nào',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF1B3A20)),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Liên kết tài khoản ngân hàng của bạn để thanh toán đơn hàng nông sản 1 chạm nhanh chóng.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 13, color: Colors.grey.shade600, height: 1.4),
-                        ),
-                        const SizedBox(height: 24),
-                        ElevatedButton.icon(
-                          onPressed: _showAddAccountSheet,
-                          icon: const Icon(Icons.add, color: Colors.white),
-                          label: const Text('Liên kết ngân hàng ngay', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF2E7D32),
-                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            elevation: 0,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                )
-              : ListView(
-                  padding: const EdgeInsets.all(16),
+          ? Center(
+              child: Padding(
+                padding: const EdgeInsets.all(32),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    ..._accounts.map((acc) => _buildCardTile(acc)),
+                    Container(
+                      width: 80,
+                      height: 80,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFE8F5E9),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.account_balance_wallet_outlined,
+                        size: 40,
+                        color: Color(0xFF2E7D32),
+                      ),
+                    ),
                     const SizedBox(height: 16),
-                    OutlinedButton.icon(
+                    const Text(
+                      'Chưa liên kết tài khoản nào',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: Color(0xFF1B3A20),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Liên kết tài khoản ngân hàng của bạn để thanh toán đơn hàng nông sản 1 chạm nhanh chóng.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey.shade600,
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton.icon(
                       onPressed: _showAddAccountSheet,
-                      icon: const Icon(Icons.add_circle_outline, color: Color(0xFF2E7D32)),
-                      label: const Text('Thêm tài khoản ngân hàng khác', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2E7D32))),
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Color(0xFF2E7D32), width: 1.2),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                        backgroundColor: Colors.white,
+                      icon: const Icon(Icons.add, color: Colors.white),
+                      label: const Text(
+                        'Liên kết ngân hàng ngay',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF2E7D32),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 12,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 0,
                       ),
                     ),
                   ],
                 ),
+              ),
+            )
+          : ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                ..._accounts.map((acc) => _buildCardTile(acc)),
+                const SizedBox(height: 16),
+                OutlinedButton.icon(
+                  onPressed: _showAddAccountSheet,
+                  icon: const Icon(
+                    Icons.add_circle_outline,
+                    color: Color(0xFF2E7D32),
+                  ),
+                  label: const Text(
+                    'Thêm tài khoản ngân hàng khác',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF2E7D32),
+                    ),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(
+                      color: Color(0xFF2E7D32),
+                      width: 1.2,
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    backgroundColor: Colors.white,
+                  ),
+                ),
+              ],
+            ),
     );
   }
 
@@ -579,10 +792,7 @@ class _LinkedBankAccountsScreenState extends State<LinkedBankAccountsScreen> {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
           gradient: LinearGradient(
-            colors: [
-              cardColor,
-              cardColor.withValues(alpha: 0.8),
-            ],
+            colors: [cardColor, cardColor.withValues(alpha: 0.8)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -637,7 +847,10 @@ class _LinkedBankAccountsScreenState extends State<LinkedBankAccountsScreen> {
                           if (acc.logoUrl.isNotEmpty)
                             Container(
                               height: 28,
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
                               margin: const EdgeInsets.only(right: 8),
                               decoration: BoxDecoration(
                                 color: Colors.white,
@@ -647,40 +860,67 @@ class _LinkedBankAccountsScreenState extends State<LinkedBankAccountsScreen> {
                                 acc.logoUrl,
                                 height: 22,
                                 fit: BoxFit.contain,
-                                errorBuilder: (_, __, ___) => const Icon(Icons.credit_card, color: Colors.grey, size: 18),
+                                errorBuilder: (_, __, ___) => const Icon(
+                                  Icons.credit_card,
+                                  color: Colors.grey,
+                                  size: 18,
+                                ),
                               ),
                             )
                           else
                             const Padding(
                               padding: EdgeInsets.only(right: 8),
-                              child: Icon(Icons.credit_card, color: Colors.white, size: 24),
+                              child: Icon(
+                                Icons.credit_card,
+                                color: Colors.white,
+                                size: 24,
+                              ),
                             ),
                           Text(
                             acc.bankName,
-                            style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ],
                       ),
                       if (acc.isDefault)
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.white.withValues(alpha: 0.25),
                             borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: Colors.white.withValues(alpha: 0.5)),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.5),
+                            ),
                           ),
                           child: const Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(Icons.check, size: 12, color: Colors.white),
                               SizedBox(width: 4),
-                              Text('Mặc định', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
+                              Text(
+                                'Mặc định',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             ],
                           ),
                         )
                       else if (!widget.selectMode)
                         PopupMenuButton<String>(
-                          icon: const Icon(Icons.more_vert, color: Colors.white),
+                          icon: const Icon(
+                            Icons.more_vert,
+                            color: Colors.white,
+                          ),
                           onSelected: (val) async {
                             if (val == 'default') {
                               await BankService.setDefaultAccount(acc.id);
@@ -694,7 +934,11 @@ class _LinkedBankAccountsScreenState extends State<LinkedBankAccountsScreen> {
                               value: 'default',
                               child: Row(
                                 children: [
-                                  Icon(Icons.check_circle_outline, color: Color(0xFF2E7D32), size: 18),
+                                  Icon(
+                                    Icons.check_circle_outline,
+                                    color: Color(0xFF2E7D32),
+                                    size: 18,
+                                  ),
                                   SizedBox(width: 8),
                                   Text('Đặt làm mặc định'),
                                 ],
@@ -704,9 +948,16 @@ class _LinkedBankAccountsScreenState extends State<LinkedBankAccountsScreen> {
                               value: 'delete',
                               child: Row(
                                 children: [
-                                  Icon(Icons.delete_outline, color: Colors.red, size: 18),
+                                  Icon(
+                                    Icons.delete_outline,
+                                    color: Colors.red,
+                                    size: 18,
+                                  ),
                                   SizedBox(width: 8),
-                                  Text('Xóa liên kết', style: TextStyle(color: Colors.red)),
+                                  Text(
+                                    'Xóa liên kết',
+                                    style: TextStyle(color: Colors.red),
+                                  ),
                                 ],
                               ),
                             ),
@@ -717,7 +968,10 @@ class _LinkedBankAccountsScreenState extends State<LinkedBankAccountsScreen> {
 
                   // Số tài khoản
                   Text(
-                    acc.accountNumber.replaceAllMapped(RegExp(r".{4}"), (match) => "${match.group(0)} "),
+                    acc.accountNumber.replaceAllMapped(
+                      RegExp(r".{4}"),
+                      (match) => "${match.group(0)} ",
+                    ),
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 18,
@@ -734,11 +988,21 @@ class _LinkedBankAccountsScreenState extends State<LinkedBankAccountsScreen> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('CHỦ TÀI KHOẢN', style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 9.5)),
+                          Text(
+                            'CHỦ TÀI KHOẢN',
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.7),
+                              fontSize: 9.5,
+                            ),
+                          ),
                           const SizedBox(height: 2),
                           Text(
                             acc.accountHolder,
-                            style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ],
                       ),

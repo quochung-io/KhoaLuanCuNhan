@@ -29,7 +29,8 @@ class _ReviewScreenState extends State<ReviewScreen> {
   final List<Map<String, String>> _mediaList = [
     {
       'type': 'image',
-      'url': 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=500',
+      'url':
+          'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=500',
     },
   ];
 
@@ -53,21 +54,29 @@ class _ReviewScreenState extends State<ReviewScreen> {
       setState(() {
         _mediaList.add({
           'type': 'image',
-          'url': 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=500',
+          'url':
+              'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=500',
         });
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Đã thêm 1 ảnh chụp nông sản thực tế!'), duration: Duration(seconds: 1)),
+        const SnackBar(
+          content: Text('Đã thêm 1 ảnh chụp nông sản thực tế!'),
+          duration: Duration(seconds: 1),
+        ),
       );
     } else {
       setState(() {
         _mediaList.add({
           'type': 'video',
-          'url': 'https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?w=500',
+          'url':
+              'https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?w=500',
         });
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Đã đính kèm 1 clip video mở hộp nông sản!'), duration: Duration(seconds: 1)),
+        const SnackBar(
+          content: Text('Đã đính kèm 1 clip video mở hộp nông sản!'),
+          duration: Duration(seconds: 1),
+        ),
       );
     }
   }
@@ -83,7 +92,9 @@ class _ReviewScreenState extends State<ReviewScreen> {
     if (commentText.isEmpty && _selectedTags.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Vui lòng nhập nội dung đánh giá hoặc chọn nhận xét nhanh'),
+          content: Text(
+            'Vui lòng nhập nội dung đánh giá hoặc chọn nhận xét nhanh',
+          ),
           backgroundColor: Colors.red,
         ),
       );
@@ -96,7 +107,10 @@ class _ReviewScreenState extends State<ReviewScreen> {
         ? '${_selectedTags.join(' · ')}\n$commentText'.trim()
         : commentText;
 
-    final imageUrls = _mediaList.where((m) => m['type'] == 'image').map((m) => m['url']!).toList();
+    final imageUrls = _mediaList
+        .where((m) => m['type'] == 'image')
+        .map((m) => m['url']!)
+        .toList();
 
     try {
       final newRev = {
@@ -128,7 +142,10 @@ class _ReviewScreenState extends State<ReviewScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi khi gửi đánh giá: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('Lỗi khi gửi đánh giá: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
         setState(() => _isSubmitting = false);
       }
@@ -150,7 +167,10 @@ class _ReviewScreenState extends State<ReviewScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF7FAF7),
       appBar: AppBar(
-        title: Text(isEn ? 'Review Produce' : 'Đánh Giá Nông Sản', style: const TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(
+          isEn ? 'Review Produce' : 'Đánh Giá Nông Sản',
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
         backgroundColor: Colors.white,
         foregroundColor: const Color(0xFF1B3A20),
         elevation: 0,
@@ -171,7 +191,9 @@ class _ReviewScreenState extends State<ReviewScreen> {
                 children: [
                   ClipRRect(
                     borderRadius: BorderRadius.circular(10),
-                    child: widget.product.imageUrl != null && widget.product.imageUrl!.isNotEmpty
+                    child:
+                        widget.product.imageUrl != null &&
+                            widget.product.imageUrl!.isNotEmpty
                         ? Image.network(
                             widget.product.imageUrl!,
                             width: 60,
@@ -181,14 +203,22 @@ class _ReviewScreenState extends State<ReviewScreen> {
                               width: 60,
                               height: 60,
                               color: const Color(0xFFE8F5E9),
-                              child: Icon(widget.product.icon, color: widget.product.color, size: 30),
+                              child: Icon(
+                                widget.product.icon,
+                                color: widget.product.color,
+                                size: 30,
+                              ),
                             ),
                           )
                         : Container(
                             width: 60,
                             height: 60,
                             color: const Color(0xFFE8F5E9),
-                            child: Icon(widget.product.icon, color: widget.product.color, size: 30),
+                            child: Icon(
+                              widget.product.icon,
+                              color: widget.product.color,
+                              size: 30,
+                            ),
                           ),
                   ),
                   const SizedBox(width: 12),
@@ -198,14 +228,22 @@ class _ReviewScreenState extends State<ReviewScreen> {
                       children: [
                         Text(
                           widget.product.name,
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1B3A20)),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                            color: Color(0xFF1B3A20),
+                          ),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 4),
                         Text(
                           '${widget.product.cert} · ${widget.product.region}',
-                          style: const TextStyle(fontSize: 11.5, color: Color(0xFF2E7D32), fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                            fontSize: 11.5,
+                            color: Color(0xFF2E7D32),
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ],
                     ),
@@ -226,7 +264,14 @@ class _ReviewScreenState extends State<ReviewScreen> {
               ),
               child: Column(
                 children: [
-                  const Text('Chất lượng nông sản', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1B3A20))),
+                  const Text(
+                    'Chất lượng nông sản',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                      color: Color(0xFF1B3A20),
+                    ),
+                  ),
                   const SizedBox(height: 8),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -234,7 +279,9 @@ class _ReviewScreenState extends State<ReviewScreen> {
                       final star = index + 1.0;
                       return IconButton(
                         icon: Icon(
-                          star <= _productRating ? Icons.star : Icons.star_border,
+                          star <= _productRating
+                              ? Icons.star
+                              : Icons.star_border,
                           color: const Color(0xFFFFB300),
                           size: 36,
                         ),
@@ -244,7 +291,11 @@ class _ReviewScreenState extends State<ReviewScreen> {
                   ),
                   Text(
                     _getRatingLabel(_productRating),
-                    style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: Color(0xFF2E7D32)),
+                    style: const TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF2E7D32),
+                    ),
                   ),
                   const SizedBox(height: 16),
                   const Divider(),
@@ -254,16 +305,27 @@ class _ReviewScreenState extends State<ReviewScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('Dịch vụ nhà cung cấp & HTX:', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: Color(0xFF1B3A20))),
+                      const Text(
+                        'Dịch vụ nhà cung cấp & HTX:',
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1B3A20),
+                        ),
+                      ),
                       Row(
                         children: List.generate(5, (index) {
                           final star = index + 1.0;
                           return GestureDetector(
                             onTap: () => setState(() => _sellerRating = star),
                             child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 2),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 2,
+                              ),
                               child: Icon(
-                                star <= _sellerRating ? Icons.star : Icons.star_border,
+                                star <= _sellerRating
+                                    ? Icons.star
+                                    : Icons.star_border,
                                 color: Colors.orange,
                                 size: 20,
                               ),
@@ -290,7 +352,14 @@ class _ReviewScreenState extends State<ReviewScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Nhận xét nhanh:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF1B3A20))),
+                  const Text(
+                    'Nhận xét nhanh:',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                      color: Color(0xFF1B3A20),
+                    ),
+                  ),
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 8,
@@ -304,8 +373,12 @@ class _ReviewScreenState extends State<ReviewScreen> {
                         backgroundColor: const Color(0xFFF7FAF7),
                         labelStyle: TextStyle(
                           fontSize: 11.5,
-                          color: isSelected ? const Color(0xFF2E7D32) : Colors.black87,
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                          color: isSelected
+                              ? const Color(0xFF2E7D32)
+                              : Colors.black87,
+                          fontWeight: isSelected
+                              ? FontWeight.bold
+                              : FontWeight.normal,
                         ),
                         onSelected: (val) {
                           setState(() {
@@ -326,12 +399,22 @@ class _ReviewScreenState extends State<ReviewScreen> {
                     controller: _commentController,
                     maxLines: 4,
                     decoration: InputDecoration(
-                      hintText: 'Hãy chia sẻ cảm nhận chân thực về độ tươi, mùi vị, cách đóng gói bảo quản...',
-                      hintStyle: const TextStyle(fontSize: 12.5, color: Colors.grey),
+                      hintText:
+                          'Hãy chia sẻ cảm nhận chân thực về độ tươi, mùi vị, cách đóng gói bảo quản...',
+                      hintStyle: const TextStyle(
+                        fontSize: 12.5,
+                        color: Colors.grey,
+                      ),
                       filled: true,
                       fillColor: const Color(0xFFF9FAF9),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE1EAE0))),
-                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE1EAE0))),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Color(0xFFE1EAE0)),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Color(0xFFE1EAE0)),
+                      ),
                     ),
                   ),
 
@@ -343,11 +426,18 @@ class _ReviewScreenState extends State<ReviewScreen> {
                     children: [
                       const Text(
                         'Hình ảnh & Clip thực tế (Tối đa 5)',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5, color: Color(0xFF1B3A20)),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12.5,
+                          color: Color(0xFF1B3A20),
+                        ),
                       ),
                       Text(
                         '${_mediaList.length}/5',
-                        style: const TextStyle(fontSize: 12, color: Colors.grey),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey,
+                        ),
                       ),
                     ],
                   ),
@@ -367,14 +457,28 @@ class _ReviewScreenState extends State<ReviewScreen> {
                             decoration: BoxDecoration(
                               color: const Color(0xFFF7FAF7),
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: const Color(0xFF2E7D32), style: BorderStyle.solid),
+                              border: Border.all(
+                                color: const Color(0xFF2E7D32),
+                                style: BorderStyle.solid,
+                              ),
                             ),
                             child: const Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.add_a_photo_outlined, color: Color(0xFF2E7D32), size: 24),
+                                Icon(
+                                  Icons.add_a_photo_outlined,
+                                  color: Color(0xFF2E7D32),
+                                  size: 24,
+                                ),
                                 SizedBox(height: 4),
-                                Text('Thêm ảnh', style: TextStyle(fontSize: 10, color: Color(0xFF2E7D32), fontWeight: FontWeight.bold)),
+                                Text(
+                                  'Thêm ảnh',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: Color(0xFF2E7D32),
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                               ],
                             ),
                           ),
@@ -395,9 +499,20 @@ class _ReviewScreenState extends State<ReviewScreen> {
                             child: const Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.videocam_outlined, color: Colors.orange, size: 24),
+                                Icon(
+                                  Icons.videocam_outlined,
+                                  color: Colors.orange,
+                                  size: 24,
+                                ),
                                 SizedBox(height: 4),
-                                Text('Thêm clip', style: TextStyle(fontSize: 10, color: Colors.orange, fontWeight: FontWeight.bold)),
+                                Text(
+                                  'Thêm clip',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: Colors.orange,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                               ],
                             ),
                           ),
@@ -424,11 +539,19 @@ class _ReviewScreenState extends State<ReviewScreen> {
                                 child: isVideo
                                     ? Container(
                                         decoration: BoxDecoration(
-                                          color: Colors.black.withValues(alpha: 0.35),
-                                          borderRadius: BorderRadius.circular(12),
+                                          color: Colors.black.withValues(
+                                            alpha: 0.35,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
                                         ),
                                         child: const Center(
-                                          child: Icon(Icons.play_circle_fill, color: Colors.white, size: 28),
+                                          child: Icon(
+                                            Icons.play_circle_fill,
+                                            color: Colors.white,
+                                            size: 28,
+                                          ),
                                         ),
                                       )
                                     : null,
@@ -440,8 +563,15 @@ class _ReviewScreenState extends State<ReviewScreen> {
                                   onTap: () => _removeMedia(index),
                                   child: Container(
                                     padding: const EdgeInsets.all(2),
-                                    decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
-                                    child: const Icon(Icons.close, color: Colors.white, size: 14),
+                                    decoration: const BoxDecoration(
+                                      color: Colors.black54,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(
+                                      Icons.close,
+                                      color: Colors.white,
+                                      size: 14,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -466,13 +596,18 @@ class _ReviewScreenState extends State<ReviewScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF2E7D32),
                   foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
                 child: _isSubmitting
                     ? const CircularProgressIndicator(color: Colors.white)
                     : Text(
                         isEn ? 'Submit Review' : 'Gửi Đánh Giá Ngay',
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
                       ),
               ),
             ),

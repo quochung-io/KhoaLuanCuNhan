@@ -12,7 +12,9 @@ class FavoritesService {
     try {
       final prefs = await SharedPreferences.getInstance();
       final list = prefs.getStringList(_productKey) ?? [];
-      return list.map((s) => Product.fromJson(jsonDecode(s) as Map<String, dynamic>)).toList();
+      return list
+          .map((s) => Product.fromJson(jsonDecode(s) as Map<String, dynamic>))
+          .toList();
     } catch (_) {
       return [];
     }
@@ -46,22 +48,24 @@ class FavoritesService {
       list.removeAt(idx);
       isNowFav = false;
     } else {
-      list.add(jsonEncode({
-        'id': p.id,
-        'productId': p.id,
-        'name': p.name,
-        'productName': p.name,
-        'price': p.price,
-        'unit': p.unit,
-        'category': p.category,
-        'certification': p.cert,
-        'origin': p.region,
-        'rating': p.rating,
-        'reviewsCount': p.reviews,
-        'lotCode': p.lot,
-        'description': p.description,
-        'imageUrl': p.imageUrl,
-      }));
+      list.add(
+        jsonEncode({
+          'id': p.id,
+          'productId': p.id,
+          'name': p.name,
+          'productName': p.name,
+          'price': p.price,
+          'unit': p.unit,
+          'category': p.category,
+          'certification': p.cert,
+          'origin': p.region,
+          'rating': p.rating,
+          'reviewsCount': p.reviews,
+          'lotCode': p.lot,
+          'description': p.description,
+          'imageUrl': p.imageUrl,
+        }),
+      );
       isNowFav = true;
     }
 
@@ -119,18 +123,20 @@ class FavoritesService {
       list.removeAt(idx);
       isNowFav = false;
     } else {
-      list.add(jsonEncode({
-        'id': c.id,
-        'name': c.name,
-        'desc': c.desc,
-        'price': c.price,
-        'rawPrice': c.rawPrice,
-        'badge': c.badge,
-        'supplierId': c.supplierId,
-        'supplierName': c.supplierName,
-        'imageUrl': c.imageUrl,
-        'type': c.type,
-      }));
+      list.add(
+        jsonEncode({
+          'id': c.id,
+          'name': c.name,
+          'desc': c.desc,
+          'price': c.price,
+          'rawPrice': c.rawPrice,
+          'badge': c.badge,
+          'supplierId': c.supplierId,
+          'supplierName': c.supplierName,
+          'imageUrl': c.imageUrl,
+          'type': c.type,
+        }),
+      );
       isNowFav = true;
     }
 

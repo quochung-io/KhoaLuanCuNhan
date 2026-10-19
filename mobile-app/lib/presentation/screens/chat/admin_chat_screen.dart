@@ -5,11 +5,7 @@ class AdminChatScreen extends StatefulWidget {
   final int? currentUserId;
   final String? currentUserName;
 
-  const AdminChatScreen({
-    super.key,
-    this.currentUserId,
-    this.currentUserName,
-  });
+  const AdminChatScreen({super.key, this.currentUserId, this.currentUserName});
 
   @override
   State<AdminChatScreen> createState() => _AdminChatScreenState();
@@ -31,12 +27,14 @@ class _AdminChatScreenState extends State<AdminChatScreen> {
   final List<Map<String, dynamic>> _messages = [
     {
       'sender': 'admin',
-      'text': 'Chào bạn! Đây là kênh tiếp nhận và giải quyết trực tiếp của Ban Quản Trị Hệ Thống LÀNH.',
+      'text':
+          'Chào bạn! Đây là kênh tiếp nhận và giải quyết trực tiếp của Ban Quản Trị Hệ Thống LÀNH.',
       'time': 'Vừa xong',
     },
     {
       'sender': 'admin',
-      'text': 'Admin sẽ trực tiếp làm việc và xử lý nghiêm ngặt với các Nhà cung cấp / Hợp tác xã liên quan để bảo vệ tối đa quyền lợi của bạn. Bạn vui lòng chọn chủ đề và gửi mô tả vấn đề nhé!',
+      'text':
+          'Admin sẽ trực tiếp làm việc và xử lý nghiêm ngặt với các Nhà cung cấp / Hợp tác xã liên quan để bảo vệ tối đa quyền lợi của bạn. Bạn vui lòng chọn chủ đề và gửi mô tả vấn đề nhé!',
       'time': 'Vừa xong',
     },
   ];
@@ -69,7 +67,8 @@ class _AdminChatScreenState extends State<AdminChatScreen> {
         setState(() {
           _messages.add({
             'sender': 'admin',
-            'text': 'Admin đã tiếp nhận phản hồi về "$_selectedTopic". Đội ngũ Kiểm Soát Chất Lượng của LÀNH đang liên hệ ngay với Hợp tác xã cung cấp để xác minh lô hàng và sẽ phản hồi phương án xử lý (đổi hàng mới hoặc hoàn tiền) cho bạn trong ít phút!',
+            'text':
+                'Admin đã tiếp nhận phản hồi về "$_selectedTopic". Đội ngũ Kiểm Soát Chất Lượng của LÀNH đang liên hệ ngay với Hợp tác xã cung cấp để xác minh lô hàng và sẽ phản hồi phương án xử lý (đổi hàng mới hoặc hoàn tiền) cho bạn trong ít phút!',
             'time': 'Bây giờ',
           });
         });
@@ -106,7 +105,11 @@ class _AdminChatScreenState extends State<AdminChatScreen> {
                 const CircleAvatar(
                   radius: 18,
                   backgroundColor: Color(0xFF1B5E20),
-                  child: Icon(Icons.shield_outlined, color: Colors.white, size: 20),
+                  child: Icon(
+                    Icons.shield_outlined,
+                    color: Colors.white,
+                    size: 20,
+                  ),
                 ),
                 Positioned(
                   bottom: 0,
@@ -129,11 +132,21 @@ class _AdminChatScreenState extends State<AdminChatScreen> {
               children: [
                 Text(
                   isEn ? 'Admin Support Desk' : 'Ban Quản Trị Hệ Thống LÀNH',
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14.5, color: Color(0xFF1B3A20)),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14.5,
+                    color: Color(0xFF1B3A20),
+                  ),
                 ),
                 Text(
-                  isEn ? 'Direct consumer protection' : 'Bảo vệ quyền lợi người tiêu dùng',
-                  style: const TextStyle(fontSize: 10.5, color: Color(0xFF2E7D32), fontWeight: FontWeight.w600),
+                  isEn
+                      ? 'Direct consumer protection'
+                      : 'Bảo vệ quyền lợi người tiêu dùng',
+                  style: const TextStyle(
+                    fontSize: 10.5,
+                    color: Color(0xFF2E7D32),
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ],
             ),
@@ -148,7 +161,14 @@ class _AdminChatScreenState extends State<AdminChatScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Row(
               children: [
-                const Text('Chủ đề: ', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF1B3A20))),
+                const Text(
+                  'Chủ đề: ',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1B3A20),
+                  ),
+                ),
                 const SizedBox(width: 6),
                 Expanded(
                   child: SingleChildScrollView(
@@ -165,8 +185,12 @@ class _AdminChatScreenState extends State<AdminChatScreen> {
                             backgroundColor: const Color(0xFFF5F7F5),
                             labelStyle: TextStyle(
                               fontSize: 11,
-                              fontWeight: isSel ? FontWeight.bold : FontWeight.normal,
-                              color: isSel ? const Color(0xFF1B5E20) : Colors.black87,
+                              fontWeight: isSel
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                              color: isSel
+                                  ? const Color(0xFF1B5E20)
+                                  : Colors.black87,
                             ),
                             onSelected: (val) {
                               if (val) setState(() => _selectedTopic = t);
@@ -195,38 +219,63 @@ class _AdminChatScreenState extends State<AdminChatScreen> {
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 12),
                   child: Row(
-                    mainAxisAlignment: isAdmin ? MainAxisAlignment.start : MainAxisAlignment.end,
+                    mainAxisAlignment: isAdmin
+                        ? MainAxisAlignment.start
+                        : MainAxisAlignment.end,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       if (isAdmin) ...[
                         const CircleAvatar(
                           radius: 14,
                           backgroundColor: Color(0xFF1B5E20),
-                          child: Icon(Icons.security, size: 14, color: Colors.white),
+                          child: Icon(
+                            Icons.security,
+                            size: 14,
+                            color: Colors.white,
+                          ),
                         ),
                         const SizedBox(width: 8),
                       ],
                       Flexible(
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 10,
+                          ),
                           decoration: BoxDecoration(
-                            color: isAdmin ? Colors.white : const Color(0xFF2E7D32),
+                            color: isAdmin
+                                ? Colors.white
+                                : const Color(0xFF2E7D32),
                             borderRadius: BorderRadius.circular(16).copyWith(
-                              topLeft: isAdmin ? Radius.zero : const Radius.circular(16),
-                              topRight: !isAdmin ? Radius.zero : const Radius.circular(16),
+                              topLeft: isAdmin
+                                  ? Radius.zero
+                                  : const Radius.circular(16),
+                              topRight: !isAdmin
+                                  ? Radius.zero
+                                  : const Radius.circular(16),
                             ),
-                            border: isAdmin ? Border.all(color: const Color(0xFFE1EAE0)) : null,
+                            border: isAdmin
+                                ? Border.all(color: const Color(0xFFE1EAE0))
+                                : null,
                             boxShadow: [
-                              BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 4, offset: const Offset(0, 1)),
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.03),
+                                blurRadius: 4,
+                                offset: const Offset(0, 1),
+                              ),
                             ],
                           ),
                           child: Column(
-                            crossAxisAlignment: isAdmin ? CrossAxisAlignment.start : CrossAxisAlignment.end,
+                            crossAxisAlignment: isAdmin
+                                ? CrossAxisAlignment.start
+                                : CrossAxisAlignment.end,
                             children: [
                               Text(
                                 msg['text'] ?? '',
                                 style: TextStyle(
-                                  color: isAdmin ? const Color(0xFF1B3A20) : Colors.white,
+                                  color: isAdmin
+                                      ? const Color(0xFF1B3A20)
+                                      : Colors.white,
                                   fontSize: 13,
                                   height: 1.35,
                                 ),
@@ -265,12 +314,28 @@ class _AdminChatScreenState extends State<AdminChatScreen> {
                       onSubmitted: (_) => _sendMessage(),
                       decoration: InputDecoration(
                         hintText: 'Nhập nội dung gửi Ban Quản Trị...',
-                        hintStyle: const TextStyle(fontSize: 13, color: Colors.grey),
+                        hintStyle: const TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey,
+                        ),
                         filled: true,
                         fillColor: const Color(0xFFF7FAF7),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: const BorderSide(color: Color(0xFFE1EAE0))),
-                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: const BorderSide(color: Color(0xFFE1EAE0))),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 10,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(24),
+                          borderSide: const BorderSide(
+                            color: Color(0xFFE1EAE0),
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(24),
+                          borderSide: const BorderSide(
+                            color: Color(0xFFE1EAE0),
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -278,7 +343,11 @@ class _AdminChatScreenState extends State<AdminChatScreen> {
                   CircleAvatar(
                     backgroundColor: const Color(0xFF2E7D32),
                     child: IconButton(
-                      icon: const Icon(Icons.send, color: Colors.white, size: 18),
+                      icon: const Icon(
+                        Icons.send,
+                        color: Colors.white,
+                        size: 18,
+                      ),
                       onPressed: _sendMessage,
                     ),
                   ),

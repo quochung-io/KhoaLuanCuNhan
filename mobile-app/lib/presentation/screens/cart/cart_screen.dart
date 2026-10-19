@@ -22,22 +22,36 @@ class CartScreen extends StatefulWidget {
 class _CartScreenState extends State<CartScreen> {
   @override
   Widget build(BuildContext context) {
-    final totalAmount = widget.cartItems.fold<int>(0, (sum, item) => sum + item.product.price * item.qty);
+    final totalAmount = widget.cartItems.fold<int>(
+      0,
+      (sum, item) => sum + item.product.price * item.qty,
+    );
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Giỏ hàng của bạn'),
-      ),
+      appBar: AppBar(title: const Text('Giỏ hàng của bạn')),
       body: widget.cartItems.isEmpty
           ? Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.shopping_cart_outlined, size: 64, color: const Color(0xFF2E7D32).withValues(alpha: 0.2)),
+                  Icon(
+                    Icons.shopping_cart_outlined,
+                    size: 64,
+                    color: const Color(0xFF2E7D32).withValues(alpha: 0.2),
+                  ),
                   const SizedBox(height: 12),
-                  const Text('Giỏ hàng trống', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1B3A20))),
+                  const Text(
+                    'Giỏ hàng trống',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1B3A20),
+                    ),
+                  ),
                   const SizedBox(height: 6),
-                  const Text('Hãy chọn các bó rau tươi ngon ở tab Cửa hàng nhé.', style: TextStyle(color: Color(0xFF8D9E90), fontSize: 12)),
+                  const Text(
+                    'Hãy chọn các bó rau tươi ngon ở tab Cửa hàng nhé.',
+                    style: TextStyle(color: Color(0xFF8D9E90), fontSize: 12),
+                  ),
                 ],
               ),
             )
@@ -75,16 +89,26 @@ class _CartScreenState extends State<CartScreen> {
               width: 52,
               height: 52,
               color: item.product.color.withValues(alpha: 0.08),
-              child: (item.product.imageUrl != null && item.product.imageUrl!.isNotEmpty)
+              child:
+                  (item.product.imageUrl != null &&
+                      item.product.imageUrl!.isNotEmpty)
                   ? Image.network(
                       ApiService.fixImageUrl(item.product.imageUrl),
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) => Center(
-                        child: Icon(item.product.icon, color: item.product.color, size: 28),
+                        child: Icon(
+                          item.product.icon,
+                          color: item.product.color,
+                          size: 28,
+                        ),
                       ),
                     )
                   : Center(
-                      child: Icon(item.product.icon, color: item.product.color, size: 28),
+                      child: Icon(
+                        item.product.icon,
+                        color: item.product.color,
+                        size: 28,
+                      ),
                     ),
             ),
           ),
@@ -93,14 +117,51 @@ class _CartScreenState extends State<CartScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  item.product.name,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1B3A20)),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        item.product.name,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                          color: Color(0xFF1B3A20),
+                        ),
+                      ),
+                    ),
+                    if (item.product.isOutOfStock ||
+                        (item.product.stockQuantity != null &&
+                            item.product.stockQuantity! <= 0)) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFEE2E2),
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: const Color(0xFFFCA5A5)),
+                        ),
+                        child: const Text(
+                          'Hết hàng',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: Color(0xFFDC2626),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
                 const SizedBox(height: 2),
                 Text(
                   'Đơn giá: ${item.product.price.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}₫',
-                  style: const TextStyle(color: Color(0xFF8D9E90), fontSize: 11),
+                  style: const TextStyle(
+                    color: Color(0xFF8D9E90),
+                    fontSize: 11,
+                  ),
                 ),
               ],
             ),
@@ -113,21 +174,32 @@ class _CartScreenState extends State<CartScreen> {
                   widget.onUpdateQty(item.product.id, -1);
                   setState(() {});
                 },
-                icon: const Icon(Icons.remove_circle_outline, color: Color(0xFF8D9E90), size: 20),
+                icon: const Icon(
+                  Icons.remove_circle_outline,
+                  color: Color(0xFF8D9E90),
+                  size: 20,
+                ),
               ),
               Text(
                 item.qty.toString(),
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
               ),
               IconButton(
                 onPressed: () {
                   widget.onUpdateQty(item.product.id, 1);
                   setState(() {});
                 },
-                icon: const Icon(Icons.add_circle_outline, color: Color(0xFF2E7D32), size: 20),
+                icon: const Icon(
+                  Icons.add_circle_outline,
+                  color: Color(0xFF2E7D32),
+                  size: 20,
+                ),
               ),
             ],
-          )
+          ),
         ],
       ),
     );
@@ -154,10 +226,17 @@ class _CartScreenState extends State<CartScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Tổng tiền hàng:', style: TextStyle(color: Color(0xFF4B5D50))),
+                const Text(
+                  'Tổng tiền hàng:',
+                  style: TextStyle(color: Color(0xFF4B5D50)),
+                ),
                 Text(
                   '${totalAmount.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}₫',
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1B3A20)),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1B3A20),
+                  ),
                 ),
               ],
             ),
@@ -165,10 +244,17 @@ class _CartScreenState extends State<CartScreen> {
             const Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Phí vận chuyển:', style: TextStyle(color: Color(0xFF4B5D50))),
+                Text(
+                  'Phí vận chuyển:',
+                  style: TextStyle(color: Color(0xFF4B5D50)),
+                ),
                 Text(
                   'Miễn phí',
-                  style: TextStyle(color: Color(0xFF2E7D32), fontWeight: FontWeight.bold, fontSize: 13),
+                  style: TextStyle(
+                    color: Color(0xFF2E7D32),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                  ),
                 ),
               ],
             ),
@@ -176,10 +262,17 @@ class _CartScreenState extends State<CartScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Cần thanh toán:', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+                const Text(
+                  'Cần thanh toán:',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                ),
                 Text(
                   '${totalAmount.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}₫',
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF2E7D32)),
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF2E7D32),
+                  ),
                 ),
               ],
             ),
@@ -190,6 +283,32 @@ class _CartScreenState extends State<CartScreen> {
               height: 48,
               child: ElevatedButton(
                 onPressed: () {
+                  final outOfStockItems = widget.cartItems
+                      .where(
+                        (it) =>
+                            it.product.isOutOfStock ||
+                            (it.product.stockQuantity != null &&
+                                it.product.stockQuantity! <= 0),
+                      )
+                      .toList();
+
+                  if (outOfStockItems.isNotEmpty) {
+                    final names = outOfStockItems
+                        .map((e) => e.product.name)
+                        .join(', ');
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'Giỏ hàng có sản phẩm đã hết hàng: "$names". Vui lòng xóa trước khi thanh toán.',
+                        ),
+                        backgroundColor: Colors.red,
+                        duration: const Duration(seconds: 3),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                    return;
+                  }
+
                   Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -199,17 +318,22 @@ class _CartScreenState extends State<CartScreen> {
                       ),
                     ),
                   ).then((_) {
-                    setState((){});
+                    setState(() {});
                   });
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF2E7D32),
                   foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(999),
+                  ),
                 ),
-                child: const Text('Thanh toán', style: TextStyle(fontWeight: FontWeight.bold)),
+                child: const Text(
+                  'Thanh toán',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
               ),
-            )
+            ),
           ],
         ),
       ),

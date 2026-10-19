@@ -5,7 +5,8 @@ import '../../../data/api_service.dart';
 
 class AddressManagementScreen extends StatefulWidget {
   final int userId;
-  final bool isSelecting; // Nếu true, khi tap vào địa chỉ sẽ pop về trang Checkout
+  final bool
+  isSelecting; // Nếu true, khi tap vào địa chỉ sẽ pop về trang Checkout
   final Map<String, dynamic>? selectedAddress;
 
   const AddressManagementScreen({
@@ -16,7 +17,8 @@ class AddressManagementScreen extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<AddressManagementScreen> createState() => _AddressManagementScreenState();
+  State<AddressManagementScreen> createState() =>
+      _AddressManagementScreenState();
 }
 
 class _AddressManagementScreenState extends State<AddressManagementScreen> {
@@ -83,16 +85,20 @@ class _AddressManagementScreenState extends State<AddressManagementScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF7FAF7),
       appBar: AppBar(
-        title: Text(widget.isSelecting ? 'Chọn địa chỉ giao hàng' : 'Sổ địa chỉ'),
+        title: Text(
+          widget.isSelecting ? 'Chọn địa chỉ giao hàng' : 'Sổ địa chỉ',
+        ),
         backgroundColor: Colors.white,
         foregroundColor: const Color(0xFF1B3A20),
         elevation: 0,
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFF2E7D32)))
+          ? const Center(
+              child: CircularProgressIndicator(color: Color(0xFF2E7D32)),
+            )
           : _addresses.isEmpty
-              ? const Center(child: Text('Bạn chưa có địa chỉ nào.'))
-              : _buildAddressList(),
+          ? const Center(child: Text('Bạn chưa có địa chỉ nào.'))
+          : _buildAddressList(),
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -104,7 +110,9 @@ class _AddressManagementScreenState extends State<AddressManagementScreen> {
               backgroundColor: const Color(0xFF2E7D32),
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
           ),
         ),
@@ -131,22 +139,51 @@ class _AddressManagementScreenState extends State<AddressManagementScreen> {
       padding: const EdgeInsets.all(16),
       children: [
         if (defaultAddress != null) ...[
-          const Text('ĐỊA CHỈ MẶC ĐỊNH', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey, fontSize: 13)),
+          const Text(
+            'ĐỊA CHỈ MẶC ĐỊNH',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.grey,
+              fontSize: 13,
+            ),
+          ),
           const SizedBox(height: 8),
-          _buildAddressItem(defaultAddress, isDefault: true, index: _addresses.indexOf(defaultAddress)),
+          _buildAddressItem(
+            defaultAddress,
+            isDefault: true,
+            index: _addresses.indexOf(defaultAddress),
+          ),
           const SizedBox(height: 16),
         ],
         if (alternativeAddresses.isNotEmpty) ...[
-          const Text('ĐỊA CHỈ THAY THẾ', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey, fontSize: 13)),
+          const Text(
+            'ĐỊA CHỈ THAY THẾ',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.grey,
+              fontSize: 13,
+            ),
+          ),
           const SizedBox(height: 8),
-          ...alternativeAddresses.map((addr) => _buildAddressItem(addr, isDefault: false, index: _addresses.indexOf(addr))),
+          ...alternativeAddresses.map(
+            (addr) => _buildAddressItem(
+              addr,
+              isDefault: false,
+              index: _addresses.indexOf(addr),
+            ),
+          ),
         ],
       ],
     );
   }
 
-  Widget _buildAddressItem(Map<String, dynamic> addr, {required bool isDefault, required int index}) {
-    final isSelected = widget.isSelecting &&
+  Widget _buildAddressItem(
+    Map<String, dynamic> addr, {
+    required bool isDefault,
+    required int index,
+  }) {
+    final isSelected =
+        widget.isSelecting &&
         widget.selectedAddress != null &&
         widget.selectedAddress!['addressId'] == addr['addressId'];
 
@@ -159,7 +196,9 @@ class _AddressManagementScreenState extends State<AddressManagementScreen> {
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? const Color(0xFF2E7D32) : const Color(0xFFE1EAE0),
+            color: isSelected
+                ? const Color(0xFF2E7D32)
+                : const Color(0xFFE1EAE0),
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -173,7 +212,10 @@ class _AddressManagementScreenState extends State<AddressManagementScreen> {
                   children: [
                     Text(
                       addr['receiverName'] ?? 'Người nhận',
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
                     const SizedBox(width: 8),
                     const Text('|', style: TextStyle(color: Colors.grey)),
@@ -189,7 +231,9 @@ class _AddressManagementScreenState extends State<AddressManagementScreen> {
               ],
             ),
             const SizedBox(height: 8),
-            Text('${addr['addressDetail']}, ${addr['ward']}, ${addr['district']}, ${addr['province']}'),
+            Text(
+              '${addr['addressDetail']}, ${addr['ward']}, ${addr['district']}, ${addr['province']}',
+            ),
             const SizedBox(height: 12),
             if (!widget.isSelecting)
               Row(
@@ -197,20 +241,38 @@ class _AddressManagementScreenState extends State<AddressManagementScreen> {
                 children: [
                   isDefault
                       ? Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: const Color(0xFF2E7D32).withOpacity(0.1),
                             borderRadius: BorderRadius.circular(4),
                           ),
-                          child: const Text('Mặc định', style: TextStyle(color: Color(0xFF2E7D32), fontSize: 12)),
+                          child: const Text(
+                            'Mặc định',
+                            style: TextStyle(
+                              color: Color(0xFF2E7D32),
+                              fontSize: 12,
+                            ),
+                          ),
                         )
                       : InkWell(
                           onTap: () => _setAsDefault(index),
-                          child: const Text('Thiết lập mặc định', style: TextStyle(color: Color(0xFF2E7D32), fontSize: 12)),
+                          child: const Text(
+                            'Thiết lập mặc định',
+                            style: TextStyle(
+                              color: Color(0xFF2E7D32),
+                              fontSize: 12,
+                            ),
+                          ),
                         ),
                   InkWell(
                     onTap: () {},
-                    child: const Text('Sửa', style: TextStyle(color: Colors.blue, fontSize: 12)),
+                    child: const Text(
+                      'Sửa',
+                      style: TextStyle(color: Colors.blue, fontSize: 12),
+                    ),
                   ),
                 ],
               ),
@@ -224,7 +286,11 @@ class _AddressManagementScreenState extends State<AddressManagementScreen> {
 class AddAddressScreen extends StatefulWidget {
   final int userId;
   final bool isFirstAddress;
-  const AddAddressScreen({Key? key, required this.userId, this.isFirstAddress = false}) : super(key: key);
+  const AddAddressScreen({
+    Key? key,
+    required this.userId,
+    this.isFirstAddress = false,
+  }) : super(key: key);
 
   @override
   State<AddAddressScreen> createState() => _AddAddressScreenState();
@@ -253,7 +319,9 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
 
   Future<void> _fetchProvinces() async {
     try {
-      final res = await http.get(Uri.parse('https://provinces.open-api.vn/api/p/'));
+      final res = await http.get(
+        Uri.parse('https://provinces.open-api.vn/api/p/'),
+      );
       if (res.statusCode == 200) {
         setState(() {
           _provinces = jsonDecode(utf8.decode(res.bodyBytes));
@@ -272,7 +340,9 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
       _selectedWard = null;
     });
     try {
-      final res = await http.get(Uri.parse('https://provinces.open-api.vn/api/p/$provinceCode?depth=2'));
+      final res = await http.get(
+        Uri.parse('https://provinces.open-api.vn/api/p/$provinceCode?depth=2'),
+      );
       if (res.statusCode == 200) {
         setState(() {
           final data = jsonDecode(utf8.decode(res.bodyBytes));
@@ -288,7 +358,9 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
       _selectedWard = null;
     });
     try {
-      final res = await http.get(Uri.parse('https://provinces.open-api.vn/api/d/$districtCode?depth=2'));
+      final res = await http.get(
+        Uri.parse('https://provinces.open-api.vn/api/d/$districtCode?depth=2'),
+      );
       if (res.statusCode == 200) {
         setState(() {
           final data = jsonDecode(utf8.decode(res.bodyBytes));
@@ -316,10 +388,14 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
       await ApiService.createAddress(data);
       if (mounted) {
         Navigator.pop(context, true);
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Thêm địa chỉ thành công')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Thêm địa chỉ thành công')),
+        );
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.toString())));
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -339,7 +415,8 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
                 controller: _fullNameCtrl,
                 decoration: const InputDecoration(labelText: 'Họ và tên'),
                 validator: (v) {
-                  if (v == null || v.trim().length < 2) return 'Họ tên phải dài ít nhất 2 ký tự';
+                  if (v == null || v.trim().length < 2)
+                    return 'Họ tên phải dài ít nhất 2 ký tự';
                   return null;
                 },
               ),
@@ -349,9 +426,15 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
                 decoration: const InputDecoration(labelText: 'Số điện thoại'),
                 keyboardType: TextInputType.phone,
                 validator: (v) {
-                  if (v == null || v.trim().isEmpty) return 'Vui lòng nhập số điện thoại';
-                  final cleanPhone = v.replaceAll(' ', '').replaceAll('.', '').replaceAll('-', '');
-                  if (!RegExp(r'^(0|\+84)[3|5|7|8|9][0-9]{8}$').hasMatch(cleanPhone)) {
+                  if (v == null || v.trim().isEmpty)
+                    return 'Vui lòng nhập số điện thoại';
+                  final cleanPhone = v
+                      .replaceAll(' ', '')
+                      .replaceAll('.', '')
+                      .replaceAll('-', '');
+                  if (!RegExp(
+                    r'^(0|\+84)[3|5|7|8|9][0-9]{8}$',
+                  ).hasMatch(cleanPhone)) {
                     return 'SĐT không hợp lệ (10 số, đầu 03,05,07,08,09)';
                   }
                   return null;
@@ -361,25 +444,34 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
               DropdownButtonFormField<Map<String, dynamic>>(
                 decoration: const InputDecoration(labelText: 'Tỉnh/Thành phố'),
                 value: _selectedProvince,
-                items: _provinces.map((p) => DropdownMenuItem<Map<String, dynamic>>(
-                  value: p,
-                  child: Text(p['name'], overflow: TextOverflow.ellipsis),
-                )).toList(),
+                items: _provinces
+                    .map(
+                      (p) => DropdownMenuItem<Map<String, dynamic>>(
+                        value: p,
+                        child: Text(p['name'], overflow: TextOverflow.ellipsis),
+                      ),
+                    )
+                    .toList(),
                 onChanged: (val) {
                   setState(() => _selectedProvince = val);
                   if (val != null) _fetchDistricts(val['code']);
                 },
-                validator: (v) => v == null ? 'Vui lòng chọn Tỉnh/Thành phố' : null,
+                validator: (v) =>
+                    v == null ? 'Vui lòng chọn Tỉnh/Thành phố' : null,
                 isExpanded: true,
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<Map<String, dynamic>>(
                 decoration: const InputDecoration(labelText: 'Quận/Huyện'),
                 value: _selectedDistrict,
-                items: _districts.map((d) => DropdownMenuItem<Map<String, dynamic>>(
-                  value: d,
-                  child: Text(d['name'], overflow: TextOverflow.ellipsis),
-                )).toList(),
+                items: _districts
+                    .map(
+                      (d) => DropdownMenuItem<Map<String, dynamic>>(
+                        value: d,
+                        child: Text(d['name'], overflow: TextOverflow.ellipsis),
+                      ),
+                    )
+                    .toList(),
                 onChanged: (val) {
                   setState(() => _selectedDistrict = val);
                   if (val != null) _fetchWards(val['code']);
@@ -391,10 +483,14 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
               DropdownButtonFormField<Map<String, dynamic>>(
                 decoration: const InputDecoration(labelText: 'Phường/Xã'),
                 value: _selectedWard,
-                items: _wards.map((w) => DropdownMenuItem<Map<String, dynamic>>(
-                  value: w,
-                  child: Text(w['name'], overflow: TextOverflow.ellipsis),
-                )).toList(),
+                items: _wards
+                    .map(
+                      (w) => DropdownMenuItem<Map<String, dynamic>>(
+                        value: w,
+                        child: Text(w['name'], overflow: TextOverflow.ellipsis),
+                      ),
+                    )
+                    .toList(),
                 onChanged: (val) {
                   setState(() => _selectedWard = val);
                 },
@@ -404,8 +500,12 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
               const SizedBox(height: 12),
               TextFormField(
                 controller: _streetCtrl,
-                decoration: const InputDecoration(labelText: 'Tên đường, Tòa nhà, Số nhà'),
-                validator: (v) => v == null || v.trim().isEmpty ? 'Vui lòng nhập địa chỉ cụ thể' : null,
+                decoration: const InputDecoration(
+                  labelText: 'Tên đường, Tòa nhà, Số nhà',
+                ),
+                validator: (v) => v == null || v.trim().isEmpty
+                    ? 'Vui lòng nhập địa chỉ cụ thể'
+                    : null,
               ),
               const SizedBox(height: 32),
               SizedBox(
@@ -418,10 +518,14 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
                   child: _isSubmitting
-                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white))
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(color: Colors.white),
+                        )
                       : const Text('Hoàn thành'),
                 ),
-              )
+              ),
             ],
           ),
         ),

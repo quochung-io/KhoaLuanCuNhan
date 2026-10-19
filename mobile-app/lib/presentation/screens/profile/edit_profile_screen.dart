@@ -40,9 +40,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController(text: widget.initialProfile['fullName'] ?? '');
-    _emailController = TextEditingController(text: widget.initialProfile['email'] ?? '');
-    _phoneController = TextEditingController(text: widget.initialProfile['phone'] ?? '');
+    _nameController = TextEditingController(
+      text: widget.initialProfile['fullName'] ?? '',
+    );
+    _emailController = TextEditingController(
+      text: widget.initialProfile['email'] ?? '',
+    );
+    _phoneController = TextEditingController(
+      text: widget.initialProfile['phone'] ?? '',
+    );
     _avatarUrl = widget.initialProfile['avatarUrl'] ?? _presetAvatars[0];
   }
 
@@ -57,7 +63,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   void _showAvatarPicker() {
     showModalBottomSheet(
       context: context,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (ctx) => Container(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -66,7 +74,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           children: [
             const Text(
               'Chọn Ảnh Đại Diện Sinh Thái',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF1B3A20)),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: Color(0xFF1B3A20),
+              ),
             ),
             const SizedBox(height: 16),
             Wrap(
@@ -83,7 +95,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: isSelected ? const Color(0xFF2E7D32) : Colors.transparent,
+                        color: isSelected
+                            ? const Color(0xFF2E7D32)
+                            : Colors.transparent,
                         width: 3,
                       ),
                     ),
@@ -149,7 +163,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi cập nhật: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('Lỗi cập nhật: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } finally {
@@ -166,7 +183,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF7FAF7),
       appBar: AppBar(
-        title: Text(isEn ? 'Edit Profile' : 'Chỉnh Sửa Hồ Sơ', style: const TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(
+          isEn ? 'Edit Profile' : 'Chỉnh Sửa Hồ Sơ',
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
         backgroundColor: Colors.white,
         foregroundColor: const Color(0xFF1B3A20),
         elevation: 0,
@@ -185,17 +205,30 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       padding: const EdgeInsets.all(4),
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        border: Border.all(color: const Color(0xFF2E7D32), width: 2.5),
+                        border: Border.all(
+                          color: const Color(0xFF2E7D32),
+                          width: 2.5,
+                        ),
                         boxShadow: [
-                          BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 10, offset: const Offset(0, 4)),
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.08),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
                         ],
                       ),
                       child: CircleAvatar(
                         radius: 50,
                         backgroundColor: const Color(0xFFE8F5E9),
-                        backgroundImage: _avatarUrl.isNotEmpty ? NetworkImage(_avatarUrl) : null,
+                        backgroundImage: _avatarUrl.isNotEmpty
+                            ? NetworkImage(_avatarUrl)
+                            : null,
                         child: _avatarUrl.isEmpty
-                            ? const Icon(Icons.person, size: 50, color: Color(0xFF2E7D32))
+                            ? const Icon(
+                                Icons.person,
+                                size: 50,
+                                color: Color(0xFF2E7D32),
+                              )
                             : null,
                       ),
                     ),
@@ -210,7 +243,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             color: Color(0xFF2E7D32),
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.camera_alt, color: Colors.white, size: 18),
+                          child: const Icon(
+                            Icons.camera_alt,
+                            color: Colors.white,
+                            size: 18,
+                          ),
                         ),
                       ),
                     ),
@@ -238,45 +275,94 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   children: [
                     const Text(
                       'THÔNG TIN TÀI KHOẢN (BẢNG USERS)',
-                      style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Color(0xFF8D9E90), letterSpacing: 0.8),
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF8D9E90),
+                        letterSpacing: 0.8,
+                      ),
                     ),
                     const SizedBox(height: 16),
 
                     // Cột: FullName
-                    const Text('Họ và tên *', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF1B3A20))),
+                    const Text(
+                      'Họ và tên *',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                        color: Color(0xFF1B3A20),
+                      ),
+                    ),
                     const SizedBox(height: 6),
                     TextFormField(
                       controller: _nameController,
                       decoration: InputDecoration(
-                        prefixIcon: const Icon(Icons.badge_outlined, color: Color(0xFF2E7D32)),
+                        prefixIcon: const Icon(
+                          Icons.badge_outlined,
+                          color: Color(0xFF2E7D32),
+                        ),
                         hintText: 'Nhập họ và tên đầy đủ',
                         filled: true,
                         fillColor: const Color(0xFFF9FAF9),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFE1EAE0))),
-                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFE1EAE0))),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: const BorderSide(
+                            color: Color(0xFFE1EAE0),
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: const BorderSide(
+                            color: Color(0xFFE1EAE0),
+                          ),
+                        ),
                       ),
-                      validator: (val) => (val == null || val.trim().isEmpty) ? 'Vui lòng nhập họ tên' : null,
+                      validator: (val) => (val == null || val.trim().isEmpty)
+                          ? 'Vui lòng nhập họ tên'
+                          : null,
                     ),
 
                     const SizedBox(height: 16),
 
                     // Cột: Email
-                    const Text('Địa chỉ Email *', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF1B3A20))),
+                    const Text(
+                      'Địa chỉ Email *',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                        color: Color(0xFF1B3A20),
+                      ),
+                    ),
                     const SizedBox(height: 6),
                     TextFormField(
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
                       decoration: InputDecoration(
-                        prefixIcon: const Icon(Icons.email_outlined, color: Color(0xFF2E7D32)),
+                        prefixIcon: const Icon(
+                          Icons.email_outlined,
+                          color: Color(0xFF2E7D32),
+                        ),
                         hintText: 'Nhập địa chỉ email',
                         filled: true,
                         fillColor: const Color(0xFFF9FAF9),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFE1EAE0))),
-                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFE1EAE0))),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: const BorderSide(
+                            color: Color(0xFFE1EAE0),
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: const BorderSide(
+                            color: Color(0xFFE1EAE0),
+                          ),
+                        ),
                       ),
                       validator: (val) {
-                        if (val == null || val.trim().isEmpty) return 'Vui lòng nhập email';
-                        if (!val.contains('@') || !val.contains('.')) return 'Email không hợp lệ';
+                        if (val == null || val.trim().isEmpty)
+                          return 'Vui lòng nhập email';
+                        if (!val.contains('@') || !val.contains('.'))
+                          return 'Email không hợp lệ';
                         return null;
                       },
                     ),
@@ -284,22 +370,44 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     const SizedBox(height: 16),
 
                     // Cột: Phone
-                    const Text('Số điện thoại *', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF1B3A20))),
+                    const Text(
+                      'Số điện thoại *',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                        color: Color(0xFF1B3A20),
+                      ),
+                    ),
                     const SizedBox(height: 6),
                     TextFormField(
                       controller: _phoneController,
                       keyboardType: TextInputType.phone,
                       decoration: InputDecoration(
-                        prefixIcon: const Icon(Icons.phone_outlined, color: Color(0xFF2E7D32)),
+                        prefixIcon: const Icon(
+                          Icons.phone_outlined,
+                          color: Color(0xFF2E7D32),
+                        ),
                         hintText: 'Nhập số điện thoại (10 chữ số)',
                         filled: true,
                         fillColor: const Color(0xFFF9FAF9),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFE1EAE0))),
-                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFE1EAE0))),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: const BorderSide(
+                            color: Color(0xFFE1EAE0),
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: const BorderSide(
+                            color: Color(0xFFE1EAE0),
+                          ),
+                        ),
                       ),
                       validator: (val) {
-                        if (val == null || val.trim().isEmpty) return 'Vui lòng nhập số điện thoại';
-                        if (val.trim().length < 9) return 'Số điện thoại không hợp lệ';
+                        if (val == null || val.trim().isEmpty)
+                          return 'Vui lòng nhập số điện thoại';
+                        if (val.trim().length < 9)
+                          return 'Số điện thoại không hợp lệ';
                         return null;
                       },
                     ),
@@ -321,9 +429,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   children: [
                     _buildInfoRow('Mã tài khoản (UserId)', '#USR-$userId'),
                     const Divider(height: 16),
-                    _buildInfoRow('Vai trò thành viên (Role)', role.toString().toUpperCase()),
+                    _buildInfoRow(
+                      'Vai trò thành viên (Role)',
+                      role.toString().toUpperCase(),
+                    ),
                     const Divider(height: 16),
-                    _buildInfoRow('Trạng thái tài khoản (Status)', 'Đang hoạt động (Active)', isGreen: true),
+                    _buildInfoRow(
+                      'Trạng thái tài khoản (Status)',
+                      'Đang hoạt động (Active)',
+                      isGreen: true,
+                    ),
                   ],
                 ),
               ),
@@ -339,13 +454,18 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF2E7D32),
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
                   child: _isSaving
                       ? const CircularProgressIndicator(color: Colors.white)
                       : Text(
                           isEn ? 'Save Changes' : 'Lưu Thay Đổi',
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
                         ),
                 ),
               ),
@@ -360,7 +480,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+        Text(
+          label,
+          style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+        ),
         Text(
           value,
           style: TextStyle(

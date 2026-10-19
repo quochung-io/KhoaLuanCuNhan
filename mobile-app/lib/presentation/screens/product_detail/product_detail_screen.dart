@@ -36,6 +36,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   bool _isFavorite = false;
   dynamic _replyingReviewId;
 
+  // Trạng thái chỉnh sửa trực tiếp trên bình luận (Inline Editing)
+  int? _editingReviewId;
+  int? _editingReplyId;
+  int _editingRating = 5;
+  final TextEditingController _inlineEditController = TextEditingController();
+  bool _isSavingInlineEdit = false;
+
   // Thông tin người dùng hiện tại (Tự động tải từ phiên đăng nhập thực tế)
   int? _currentUserId;
   String _currentUserName = 'Khách vãng lai';
@@ -136,6 +143,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   void dispose() {
     _commentController.dispose();
     _replyController.dispose();
+    _inlineEditController.dispose();
     super.dispose();
   }
 
@@ -308,6 +316,492 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         ),
       );
     }
+  }
+
+  // Bật chế độ chỉnh sửa trực tiếp ngay tại bình luận (Inline Editing)
+  void _startInlineEdit(
+    Map<String, dynamic> rev, {
+    Map<String, dynamic>? parentRev,
+  }) {
+    if (_currentUserId == null || _currentUserId! <= 0) return;
+    final bool isReply = parentRev != null;
+    final int id = ((rev['reviewId'] ?? rev['id']) as num?)?.toInt() ?? 0;
+
+    setState(() {
+      _replyingReviewId = null; // Đóng form trả lời nếu đang mở
+      if (isReply) {
+        _editingReplyId = id;
+        _editingReviewId = null;
+      } else {
+        _editingReviewId = id;
+        _editingReplyId = null;
+        _editingRating = (rev['rating'] as num?)?.toInt() ?? 5;
+      }
+      _inlineEditController.text = rev['comment']?.toString() ?? '';
+    });
+  }
+
+  void _cancelInlineEdit() {
+    setState(() {
+      _editingReviewId = null;
+      _editingReplyId = null;
+      _inlineEditController.clear();
+      _isSavingInlineEdit = false;
+    });
+  }
+
+  // Lưu nội dung chỉnh sửa trực tiếp
+  Future<void> _saveInlineEdit(
+    Map<String, dynamic> rev, {
+    Map<String, dynamic>? parentRev,
+  }) async {
+    if (_currentUserId == null || _currentUserId! <= 0) return;
+    final bool isReply = parentRev != null;
+    final int reviewId = ((rev['reviewId'] ?? rev['id']) as num?)?.toInt() ?? 0;
+    final newText = _inlineEditController.text.trim();
+
+    if (newText.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Vui lòng nhập nội dung nhận xét!'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isSavingInlineEdit = true);
+    final success = await ApiService.updateReview(
+      reviewId: reviewId,
+      userId: _currentUserId!,
+      comment: newText,
+      rating: isReply ? null : _editingRating,
+    );
+
+    if (!mounted) return;
+    setState(() => _isSavingInlineEdit = false);
+
+    if (success) {
+      setState(() {
+        rev['comment'] = newText;
+        if (!isReply) {
+          rev['rating'] = _editingRating;
+        }
+        rev['updatedAt'] = 'Vừa cập nhật';
+        _editingReviewId = null;
+        _editingReplyId = null;
+        _inlineEditController.clear();
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            isReply
+                ? 'Đã cập nhật phản hồi thành công!'
+                : 'Đã cập nhật đánh giá thành công!',
+          ),
+          backgroundColor: const Color(0xFF2E7D32),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Không thể cập nhật đánh giá. Vui lòng thử lại!'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  // Thiết kế lại Menu khi ấn vào 3 chấm (dạng Bottom Sheet chứa các Thẻ Action sang trọng)
+  void _showReviewOptionsMenu(
+    Map<String, dynamic> rev, {
+    Map<String, dynamic>? parentRev,
+  }) {
+    final bool isReply = parentRev != null;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: 16,
+              offset: Offset(0, -4),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Thanh gạt modal bar
+            Container(
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Tiêu đề modal
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF3F4F6),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Icons.more_horiz_rounded,
+                    color: Color(0xFF374151),
+                    size: 18,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  isReply ? 'Tùy chọn phản hồi' : 'Tùy chọn đánh giá',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1F2937),
+                  ),
+                ),
+                const Spacer(),
+                InkWell(
+                  onTap: () => Navigator.pop(ctx),
+                  borderRadius: BorderRadius.circular(20),
+                  child: const Padding(
+                    padding: EdgeInsets.all(4),
+                    child: Icon(Icons.close, size: 20, color: Colors.grey),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            // Thẻ tùy chọn 1: Chỉnh sửa trực tiếp
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _startInlineEdit(rev, parentRev: parentRev);
+                },
+                borderRadius: BorderRadius.circular(14),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF9FAFB),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFFE5E7EB)),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 38,
+                        height: 38,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF3F4F6),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.edit_outlined,
+                          color: Color(0xFF374151),
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Text(
+                          isReply ? 'Chỉnh sửa phản hồi' : 'Chỉnh sửa đánh giá',
+                          style: const TextStyle(
+                            fontSize: 14.5,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF1F2937),
+                          ),
+                        ),
+                      ),
+                      const Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        size: 14,
+                        color: Color(0xFF9CA3AF),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+
+            // Thẻ tùy chọn 2: Xóa
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _showDeleteReviewDialog(rev, parentRev: parentRev);
+                },
+                borderRadius: BorderRadius.circular(14),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF9FAFB),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFFE5E7EB)),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 38,
+                        height: 38,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF3F4F6),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.delete_outline_rounded,
+                          color: Color(0xFF374151),
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Text(
+                          isReply ? 'Xóa phản hồi' : 'Xóa đánh giá',
+                          style: const TextStyle(
+                            fontSize: 14.5,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF1F2937),
+                          ),
+                        ),
+                      ),
+                      const Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        size: 14,
+                        color: Color(0xFF9CA3AF),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Thiết kế lại Form xác nhận xóa đánh giá (Hiện đại, bo góc 24, icon nổi bật, trích đoạn bình luận)
+  void _showDeleteReviewDialog(
+    Map<String, dynamic> rev, {
+    Map<String, dynamic>? parentRev,
+  }) {
+    if (_currentUserId == null || _currentUserId! <= 0) return;
+    final bool isReply = parentRev != null;
+    final int reviewId = ((rev['reviewId'] ?? rev['id']) as num?)?.toInt() ?? 0;
+    final String commentText = rev['comment']?.toString() ?? '';
+
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+        ),
+        elevation: 8,
+        backgroundColor: Colors.white,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Icon thùng rác nổi bật với nền đỏ nhạt
+              Container(
+                width: 64,
+                height: 64,
+                decoration: const BoxDecoration(
+                  color: Color(0xFFFEE2E2),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.delete_forever_rounded,
+                  color: Color(0xFFDC2626),
+                  size: 34,
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Tiêu đề
+              Text(
+                isReply ? 'Xác nhận xóa phản hồi?' : 'Xác nhận xóa đánh giá?',
+                style: const TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF111827),
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 10),
+
+              // Nội dung cảnh báo
+              Text(
+                isReply
+                    ? 'Phản hồi này sẽ bị xóa hoàn toàn khỏi cuộc trò chuyện và không thể hoàn tác.'
+                    : 'Đánh giá này cùng toàn bộ các câu trả lời kèm theo sẽ bị gỡ bỏ vĩnh viễn khỏi sản phẩm.',
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: Color(0xFF6B7280),
+                  height: 1.45,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 14),
+
+              // Khung trích dẫn nội dung sắp xóa
+              if (commentText.isNotEmpty)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF9FAFB),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFE5E7EB)),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(
+                        Icons.format_quote_rounded,
+                        size: 16,
+                        color: Colors.grey,
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          commentText,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontStyle: FontStyle.italic,
+                            color: Color(0xFF4B5563),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              const SizedBox(height: 22),
+
+              // Hàng nút bấm: Hủy bỏ & Xóa vĩnh viễn
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        side: const BorderSide(color: Color(0xFFD1D5DB)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'Hủy bỏ',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF4B5563),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () async {
+                        Navigator.pop(ctx);
+                        if (_editingReviewId == reviewId || _editingReplyId == reviewId) {
+                          _cancelInlineEdit();
+                        }
+
+                        final success = await ApiService.deleteReview(
+                          reviewId: reviewId,
+                          userId: _currentUserId!,
+                        );
+
+                        if (!mounted) return;
+
+                        if (success) {
+                          setState(() {
+                            if (isReply) {
+                              final repliesList = parentRev?['replies'] as List<dynamic>?;
+                              repliesList?.removeWhere(
+                                (r) => ((r['reviewId'] ?? r['id']) as num?)?.toInt() == reviewId,
+                              );
+                            } else {
+                              _realReviews.removeWhere(
+                                (r) => ((r['reviewId'] ?? r['id']) as num?)?.toInt() == reviewId,
+                              );
+                              if (_totalReviewCount > 0) _totalReviewCount -= 1;
+                            }
+                          });
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                isReply
+                                    ? 'Đã xóa phản hồi thành công!'
+                                    : 'Đã xóa đánh giá thành công!',
+                              ),
+                              backgroundColor: const Color(0xFF2E7D32),
+                            ),
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Xóa đánh giá thất bại. Vui lòng thử lại!'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      },
+                      icon: const Icon(Icons.delete_rounded, size: 16, color: Colors.white),
+                      label: const Text(
+                        'Xóa vĩnh viễn',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFDC2626),
+                        foregroundColor: Colors.white,
+                        elevation: 2,
+                        shadowColor: const Color(0xFFDC2626).withOpacity(0.4),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   int _selectedQty = 1;
@@ -901,6 +1395,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         final int helpfulCount = (rev['helpfulCount'] as num?)?.toInt() ?? 0;
                         final replies = (rev['replies'] as List<dynamic>?) ?? [];
                         final int starCount = (rev['rating'] as num?)?.toInt() ?? 5;
+                        final int revId = ((rev['reviewId'] ?? rev['id']) as num?)?.toInt() ?? (i + 1);
+                        final int reviewCustomerId = (rev['customerId'] as num?)?.toInt() ?? 0;
+                        final bool isMyReview = _currentUserId != null && _currentUserId! > 0 && reviewCustomerId == _currentUserId;
 
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -924,10 +1421,28 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                     children: [
                                       Row(
                                         children: [
-                                          Text(
-                                            rev['customerName'] ?? 'Khách hàng',
-                                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                                          Flexible(
+                                            child: Text(
+                                              rev['customerName'] ?? 'Khách hàng',
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                                            ),
                                           ),
+                                          if (isMyReview)
+                                            Container(
+                                              margin: const EdgeInsets.only(left: 6),
+                                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xFFE8F5E9),
+                                                borderRadius: BorderRadius.circular(4),
+                                                border: Border.all(color: const Color(0xFFC8E6C9), width: 0.8),
+                                              ),
+                                              child: const Text(
+                                                'Bạn',
+                                                style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: Color(0xFF2E7D32)),
+                                              ),
+                                            ),
                                           const SizedBox(width: 6),
                                           if (rev['roleLabel'] != null)
                                             Container(
@@ -960,23 +1475,158 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                             rev['createdAt'] ?? '',
                                             style: TextStyle(color: Colors.grey.shade500, fontSize: 11),
                                           ),
+                                          if (rev['updatedAt'] != null && rev['updatedAt'].toString().isNotEmpty) ...[
+                                            const SizedBox(width: 4),
+                                            const Text(
+                                              '(Đã sửa)',
+                                              style: TextStyle(color: Colors.grey, fontSize: 10, fontStyle: FontStyle.italic),
+                                            ),
+                                          ],
                                         ],
                                       ),
                                     ],
                                   ),
                                 ),
+                                if (isMyReview)
+                                  InkWell(
+                                    onTap: () => _showReviewOptionsMenu(rev),
+                                    borderRadius: BorderRadius.circular(16),
+                                    child: Container(
+                                      padding: const EdgeInsets.all(5),
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey.shade100,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(
+                                        Icons.more_vert,
+                                        size: 16,
+                                        color: Color(0xFF4B5563),
+                                      ),
+                                    ),
+                                  ),
                               ],
                             ),
                             const SizedBox(height: 8),
 
-                            // Nội dung nhận xét
-                            Padding(
-                              padding: const EdgeInsets.only(left: 42),
-                              child: Text(
-                                rev['comment'] ?? '',
-                                style: const TextStyle(fontSize: 13, color: Color(0xFF374151), height: 1.4),
+                            // Nội dung nhận xét (hoặc Ô chỉnh sửa trực tiếp)
+                            if (_editingReviewId != null && _editingReviewId == revId) ...[
+                              Container(
+                                margin: const EdgeInsets.only(left: 42, top: 4, bottom: 8),
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF9FAFB),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: const Color(0xFF2E7D32), width: 1.5),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.04),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        const Icon(Icons.edit_note_rounded, color: Color(0xFF2E7D32), size: 18),
+                                        const SizedBox(width: 6),
+                                        const Text(
+                                          'Chỉnh sửa đánh giá',
+                                          style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: Color(0xFF2E7D32)),
+                                        ),
+                                        const Spacer(),
+                                        InkWell(
+                                          onTap: _isSavingInlineEdit ? null : _cancelInlineEdit,
+                                          child: const Icon(Icons.close, size: 18, color: Colors.grey),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 8),
+                                    // Chọn số sao trực tiếp
+                                    Row(
+                                      children: [
+                                        const Text(
+                                          'Số sao:',
+                                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF374151)),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Row(
+                                          children: List.generate(5, (sIdx) {
+                                            final starVal = sIdx + 1;
+                                            return GestureDetector(
+                                              onTap: _isSavingInlineEdit ? null : () => setState(() => _editingRating = starVal),
+                                              child: Padding(
+                                                padding: const EdgeInsets.symmetric(horizontal: 2),
+                                                child: Icon(
+                                                  starVal <= _editingRating ? Icons.star_rounded : Icons.star_border_rounded,
+                                                  color: const Color(0xFFFF9800),
+                                                  size: 24,
+                                                ),
+                                              ),
+                                            );
+                                          }),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 8),
+                                    TextField(
+                                      controller: _inlineEditController,
+                                      maxLines: 3,
+                                      maxLength: 1000,
+                                      autofocus: true,
+                                      enabled: !_isSavingInlineEdit,
+                                      style: const TextStyle(fontSize: 13, color: Color(0xFF1F2937)),
+                                      decoration: InputDecoration(
+                                        hintText: 'Nhập nội dung nhận xét của bạn...',
+                                        hintStyle: const TextStyle(color: Colors.grey, fontSize: 12),
+                                        filled: true,
+                                        fillColor: Colors.white,
+                                        counterText: '',
+                                        contentPadding: const EdgeInsets.all(10),
+                                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
+                                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFF2E7D32), width: 1.5)),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.end,
+                                      children: [
+                                        TextButton(
+                                          onPressed: _isSavingInlineEdit ? null : _cancelInlineEdit,
+                                          child: const Text('Hủy', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        ElevatedButton.icon(
+                                          onPressed: _isSavingInlineEdit ? null : () => _saveInlineEdit(rev),
+                                          icon: _isSavingInlineEdit
+                                              ? const SizedBox(width: 12, height: 12, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                                              : const Icon(Icons.check, size: 14, color: Colors.white),
+                                          label: Text(
+                                            _isSavingInlineEdit ? 'Đang lưu...' : 'Lưu thay đổi',
+                                            style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                                          ),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: const Color(0xFF2E7D32),
+                                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
+                            ] else ...[
+                              Padding(
+                                padding: const EdgeInsets.only(left: 42),
+                                child: Text(
+                                  rev['comment'] ?? '',
+                                  style: const TextStyle(fontSize: 13, color: Color(0xFF374151), height: 1.4),
+                                ),
+                              ),
+                            ],
                             const SizedBox(height: 8),
 
                             // Nút Like / Unlike và Trả lời (Reply)
@@ -1137,6 +1787,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                   child: Column(
                                     children: replies.map((rep) {
                                       final r = Map<String, dynamic>.from(rep as Map);
+                                      final int replyCustomerId = (r['customerId'] as num?)?.toInt() ?? 0;
+                                      final int replyReviewId = ((r['reviewId'] ?? r['id']) as num?)?.toInt() ?? 0;
+                                      final bool isMyReply = _currentUserId != null && _currentUserId! > 0 && replyCustomerId == _currentUserId;
+
                                       return Padding(
                                         padding: const EdgeInsets.only(bottom: 8.0),
                                         child: Row(
@@ -1161,19 +1815,125 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                                         r['customerName'] ?? 'Thành viên LÀNH',
                                                         style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
                                                       ),
+                                                      if (isMyReply)
+                                                        Container(
+                                                          margin: const EdgeInsets.only(left: 4),
+                                                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                                                          decoration: BoxDecoration(
+                                                            color: const Color(0xFFE8F5E9),
+                                                            borderRadius: BorderRadius.circular(3),
+                                                          ),
+                                                          child: const Text(
+                                                            'Bạn',
+                                                            style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.bold, color: Color(0xFF2E7D32)),
+                                                          ),
+                                                        ),
                                                       const SizedBox(width: 6),
                                                       if (r['roleLabel'] != null)
                                                         Text(
                                                           r['roleLabel'],
                                                           style: const TextStyle(fontSize: 9, color: Color(0xFF2E7D32)),
                                                         ),
+                                                      const Spacer(),
+                                                      if (isMyReply)
+                                                        InkWell(
+                                                          onTap: () => _showReviewOptionsMenu(r, parentRev: rev),
+                                                          borderRadius: BorderRadius.circular(12),
+                                                          child: Container(
+                                                            padding: const EdgeInsets.all(3),
+                                                            decoration: BoxDecoration(
+                                                              color: Colors.grey.shade100,
+                                                              shape: BoxShape.circle,
+                                                            ),
+                                                            child: const Icon(
+                                                              Icons.more_vert,
+                                                              size: 13,
+                                                              color: Color(0xFF4B5563),
+                                                            ),
+                                                          ),
+                                                        ),
                                                     ],
                                                   ),
                                                   const SizedBox(height: 2),
-                                                  Text(
-                                                    r['comment'] ?? '',
-                                                    style: const TextStyle(fontSize: 12, color: Color(0xFF4B5563)),
-                                                  ),
+                                                  if (_editingReplyId != null && _editingReplyId == replyReviewId) ...[
+                                                    Container(
+                                                      margin: const EdgeInsets.only(top: 4, bottom: 6),
+                                                      padding: const EdgeInsets.all(8),
+                                                      decoration: BoxDecoration(
+                                                        color: Colors.white,
+                                                        borderRadius: BorderRadius.circular(8),
+                                                        border: Border.all(color: const Color(0xFF2E7D32), width: 1.5),
+                                                      ),
+                                                      child: Column(
+                                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                                        children: [
+                                                          Row(
+                                                            children: [
+                                                              const Icon(Icons.edit_note_rounded, color: Color(0xFF2E7D32), size: 15),
+                                                              const SizedBox(width: 4),
+                                                              const Text(
+                                                                'Chỉnh sửa phản hồi',
+                                                                style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF2E7D32)),
+                                                              ),
+                                                              const Spacer(),
+                                                              InkWell(
+                                                                onTap: _isSavingInlineEdit ? null : _cancelInlineEdit,
+                                                                child: const Icon(Icons.close, size: 15, color: Colors.grey),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                          const SizedBox(height: 6),
+                                                          TextField(
+                                                            controller: _inlineEditController,
+                                                            maxLines: 2,
+                                                            autofocus: true,
+                                                            enabled: !_isSavingInlineEdit,
+                                                            style: const TextStyle(fontSize: 12),
+                                                            decoration: InputDecoration(
+                                                              hintText: 'Chỉnh sửa phản hồi của bạn...',
+                                                              hintStyle: const TextStyle(color: Colors.grey, fontSize: 11),
+                                                              filled: true,
+                                                              fillColor: const Color(0xFFF9FAFB),
+                                                              contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: BorderSide(color: Colors.grey.shade300)),
+                                                              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(6), borderSide: const BorderSide(color: Color(0xFF2E7D32), width: 1.5)),
+                                                            ),
+                                                          ),
+                                                          const SizedBox(height: 6),
+                                                          Row(
+                                                            mainAxisAlignment: MainAxisAlignment.end,
+                                                            children: [
+                                                              TextButton(
+                                                                onPressed: _isSavingInlineEdit ? null : _cancelInlineEdit,
+                                                                child: const Text('Hủy', style: TextStyle(color: Colors.grey, fontSize: 11)),
+                                                              ),
+                                                              const SizedBox(width: 6),
+                                                              ElevatedButton.icon(
+                                                                onPressed: _isSavingInlineEdit ? null : () => _saveInlineEdit(r, parentRev: rev),
+                                                                icon: _isSavingInlineEdit
+                                                                    ? const SizedBox(width: 10, height: 10, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                                                                    : const Icon(Icons.check, size: 12, color: Colors.white),
+                                                                label: Text(
+                                                                  _isSavingInlineEdit ? 'Đang lưu' : 'Lưu',
+                                                                  style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                                                                ),
+                                                                style: ElevatedButton.styleFrom(
+                                                                  backgroundColor: const Color(0xFF2E7D32),
+                                                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                                                                ),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  ] else ...[
+                                                    Text(
+                                                      r['comment'] ?? '',
+                                                      style: const TextStyle(fontSize: 12, color: Color(0xFF4B5563)),
+                                                    ),
+                                                  ],
                                                 ],
                                               ),
                                             ),

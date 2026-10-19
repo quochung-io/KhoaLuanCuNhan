@@ -11,7 +11,10 @@ class PrivacyPolicyScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFFF7FAF7),
       appBar: AppBar(
-        title: Text(isEn ? 'Privacy Policy' : 'Chính Sách Bảo Mật', style: const TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(
+          isEn ? 'Privacy Policy' : 'Chính Sách Bảo Mật',
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
         backgroundColor: Colors.white,
         foregroundColor: const Color(0xFF1B3A20),
         elevation: 0,
@@ -29,8 +32,14 @@ class PrivacyPolicyScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                isEn ? 'LÀNH PLATFORM PRIVACY & DATA POLICY' : 'QUY ĐỊNH BẢO MẬT & DỮ LIỆU NGƯỜI DÙNG LÀNH',
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF1B3A20)),
+                isEn
+                    ? 'LÀNH PLATFORM PRIVACY & DATA POLICY'
+                    : 'QUY ĐỊNH BẢO MẬT & DỮ LIỆU NGƯỜI DÙNG LÀNH',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                  color: Color(0xFF1B3A20),
+                ),
               ),
               const SizedBox(height: 6),
               Text(
@@ -72,9 +81,23 @@ class PrivacyPolicyScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5, color: Color(0xFF1B3A20))),
+          Text(
+            title,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 13.5,
+              color: Color(0xFF1B3A20),
+            ),
+          ),
           const SizedBox(height: 4),
-          Text(content, style: TextStyle(fontSize: 12.5, color: Colors.grey.shade700, height: 1.45)),
+          Text(
+            content,
+            style: TextStyle(
+              fontSize: 12.5,
+              color: Colors.grey.shade700,
+              height: 1.45,
+            ),
+          ),
         ],
       ),
     );

@@ -39,19 +39,22 @@ class LocalizationService extends ChangeNotifier {
       'banner_desc': 'Thu hoạch tại vườn, giao tận tay trong ngày',
       'flash_sale': 'GIẢM GIÁ ĐẶC BIỆT TRONG NGÀY',
       'for_you': 'Gợi ý nông sản tươi lành hôm nay',
-      'for_you_subtitle': 'Lựa chọn các loại nông sản tươi ngon, vào độ thu hoạch tốt nhất trong ngày.',
+      'for_you_subtitle':
+          'Lựa chọn các loại nông sản tươi ngon, vào độ thu hoạch tốt nhất trong ngày.',
       'categories': 'Danh mục nông sản',
       'all': 'Tất cả',
       'add_to_cart': 'Thêm giỏ hàng',
 
       // Combos
       'combo_header': 'Gói Combo Dinh Dưỡng Định Kỳ',
-      'combo_subtitle': 'Giao định kỳ hàng tuần hoặc tháng với nông sản đạt chuẩn VietGAP',
+      'combo_subtitle':
+          'Giao định kỳ hàng tuần hoặc tháng với nông sản đạt chuẩn VietGAP',
       'combo_customize': 'Tùy chọn nông sản & Đặt combo',
       'view_details': 'Xem chi tiết',
       'nutrition_score': 'Điểm cân bằng dinh dưỡng',
       'auto_balance': 'Phân bổ tối ưu',
-      'auto_balance_success': '✨ Đã tự động chọn các loại rau củ quả tươi ngon, cân bằng dinh dưỡng cho bạn!',
+      'auto_balance_success':
+          '✨ Đã tự động chọn các loại rau củ quả tươi ngon, cân bằng dinh dưỡng cho bạn!',
 
       // Trace
       'trace_title': 'Truy Xuất Nguồn Gốc',
@@ -119,19 +122,22 @@ class LocalizationService extends ChangeNotifier {
       'banner_desc': 'Harvested at farms, delivered fresh today',
       'flash_sale': 'DAILY FLASH DEALS',
       'for_you': 'Fresh Produce Recommendations Today',
-      'for_you_subtitle': 'Selected fresh harvest at peak nutrition today for you.',
+      'for_you_subtitle':
+          'Selected fresh harvest at peak nutrition today for you.',
       'categories': 'Produce Categories',
       'all': 'All',
       'add_to_cart': 'Add to Cart',
 
       // Combos
       'combo_header': 'Regular Nutrition Combos',
-      'combo_subtitle': 'Delivered weekly or monthly with VietGAP certified produce',
+      'combo_subtitle':
+          'Delivered weekly or monthly with VietGAP certified produce',
       'combo_customize': 'Customize & Subscribe',
       'view_details': 'View Details',
       'nutrition_score': 'Nutrition Balance Score',
       'auto_balance': 'Optimal Balance',
-      'auto_balance_success': '✨ Fresh balanced veggies & fruits have been automatically selected for you!',
+      'auto_balance_success':
+          '✨ Fresh balanced veggies & fruits have been automatically selected for you!',
 
       // Trace
       'trace_title': 'Produce Traceability',
@@ -184,11 +190,13 @@ class LocalizationService extends ChangeNotifier {
       'total': 'Total',
       'buy_now': 'Buy Now',
       'buy_again': 'Buy Again',
-    }
+    },
   };
 
   String tr(String key) {
-    return _localizedValues[_currentLanguage]?[key] ?? _localizedValues['vi']?[key] ?? key;
+    return _localizedValues[_currentLanguage]?[key] ??
+        _localizedValues['vi']?[key] ??
+        key;
   }
 }
 

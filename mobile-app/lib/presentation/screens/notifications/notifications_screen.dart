@@ -69,13 +69,15 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       setState(() => _isLoading = false);
       return;
     }
-    
+
     try {
       final userId = widget.user!['userId'];
       final data = await ApiService.getUserNotifications(userId);
       if (mounted) {
         setState(() {
-          _notifications = data.map((json) => NotificationItem.fromJson(json)).toList();
+          _notifications = data
+              .map((json) => NotificationItem.fromJson(json))
+              .toList();
           _isLoading = false;
         });
       }
@@ -88,9 +90,15 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   List<NotificationItem> get _filteredNotifications {
     if (_selectedCategory == 'all') return _notifications;
-    if (_selectedCategory == 'order') return _notifications.where((n) => n.type == 'order').toList();
-    if (_selectedCategory == 'promo') return _notifications.where((n) => n.type == 'promotion' || n.type == 'promo').toList();
-    return _notifications.where((n) => n.type == 'system' || n.type == 'supplier').toList();
+    if (_selectedCategory == 'order')
+      return _notifications.where((n) => n.type == 'order').toList();
+    if (_selectedCategory == 'promo')
+      return _notifications
+          .where((n) => n.type == 'promotion' || n.type == 'promo')
+          .toList();
+    return _notifications
+        .where((n) => n.type == 'system' || n.type == 'supplier')
+        .toList();
   }
 
   Future<void> _markAllAsRead() async {
@@ -129,7 +137,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 color: const Color(0xFFE8F5E9),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(Icons.notifications_active_outlined, color: Color(0xFF2E7D32), size: 20),
+              child: const Icon(
+                Icons.notifications_active_outlined,
+                color: Color(0xFF2E7D32),
+                size: 20,
+              ),
             ),
             const SizedBox(width: 10),
             const Text(
@@ -150,7 +162,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 ),
                 child: Text(
                   '$unreadCount mới',
-                  style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],
@@ -159,8 +175,15 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         actions: [
           TextButton.icon(
             onPressed: _markAllAsRead,
-            icon: const Icon(Icons.done_all, size: 16, color: Color(0xFF2E7D32)),
-            label: const Text('Đã đọc hết', style: TextStyle(color: Color(0xFF2E7D32), fontSize: 12)),
+            icon: const Icon(
+              Icons.done_all,
+              size: 16,
+              color: Color(0xFF2E7D32),
+            ),
+            label: const Text(
+              'Đã đọc hết',
+              style: TextStyle(color: Color(0xFF2E7D32), fontSize: 12),
+            ),
           ),
         ],
       ),
@@ -191,14 +214,24 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.notifications_off_outlined, size: 64, color: Colors.grey.shade400),
+                        Icon(
+                          Icons.notifications_off_outlined,
+                          size: 64,
+                          color: Colors.grey.shade400,
+                        ),
                         const SizedBox(height: 12),
-                        const Text('Không có thông báo nào', style: TextStyle(color: Colors.grey, fontSize: 14)),
+                        const Text(
+                          'Không có thông báo nào',
+                          style: TextStyle(color: Colors.grey, fontSize: 14),
+                        ),
                       ],
                     ),
                   )
                 : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
                     itemCount: _filteredNotifications.length,
                     itemBuilder: (context, index) {
                       final item = _filteredNotifications[index];
@@ -269,7 +302,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           color: item.isRead ? Colors.white : const Color(0xFFF4FBF4),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: item.isRead ? const Color(0xFFE5ECE5) : const Color(0xFFA5D6A7),
+            color: item.isRead
+                ? const Color(0xFFE5ECE5)
+                : const Color(0xFFA5D6A7),
             width: item.isRead ? 1 : 1.5,
           ),
           boxShadow: [
@@ -300,7 +335,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                           item.title,
                           style: TextStyle(
                             fontSize: 14,
-                            fontWeight: item.isRead ? FontWeight.w600 : FontWeight.bold,
+                            fontWeight: item.isRead
+                                ? FontWeight.w600
+                                : FontWeight.bold,
                             color: const Color(0xFF1B3A20),
                           ),
                         ),

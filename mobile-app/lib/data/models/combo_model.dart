@@ -64,7 +64,8 @@ class ComboPlan {
           region: 'HTX Rau Miền Tây',
           category: 'Rau ăn lá',
           benefit: 'Nhuận tràng, thanh nhiệt, giàu chất nhầy tự nhiên',
-          imageUrl: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=300&auto=format&fit=crop&q=80',
+          imageUrl:
+              'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=300&auto=format&fit=crop&q=80',
         ),
         SelectableProduceItem(
           id: 202,
@@ -73,7 +74,8 @@ class ComboPlan {
           region: 'HTX Rau Miền Tây',
           category: 'Rau ăn lá',
           benefit: 'Lành tính, giàu đạm thực vật và canxi tốt cho mẹ & bé',
-          imageUrl: 'https://images.unsplash.com/photo-1576045057995-568f588f82fb?w=300&auto=format&fit=crop&q=80',
+          imageUrl:
+              'https://images.unsplash.com/photo-1576045057995-568f588f82fb?w=300&auto=format&fit=crop&q=80',
         ),
         SelectableProduceItem(
           id: 203,
@@ -82,7 +84,8 @@ class ComboPlan {
           region: 'HTX Rau Miền Tây',
           category: 'Củ quả',
           benefit: 'Vị ngọt thanh dịu mát, giải nhiệt mùa hè hiệu quả',
-          imageUrl: 'https://images.unsplash.com/photo-1598170845058-32b9d6a5c317?w=300&auto=format&fit=crop&q=80',
+          imageUrl:
+              'https://images.unsplash.com/photo-1598170845058-32b9d6a5c317?w=300&auto=format&fit=crop&q=80',
         ),
         SelectableProduceItem(
           id: 204,
@@ -90,8 +93,10 @@ class ComboPlan {
           weight: '1 quả (~900g)',
           region: 'HTX Rau Miền Tây',
           category: 'Củ quả',
-          benefit: 'Thịt bầu mềm ngọt, nấu canh tôm đồng hoặc luộc chấm kho quẹt',
-          imageUrl: 'https://images.unsplash.com/photo-1570586435880-8031c5107297?w=300&auto=format&fit=crop&q=80',
+          benefit:
+              'Thịt bầu mềm ngọt, nấu canh tôm đồng hoặc luộc chấm kho quẹt',
+          imageUrl:
+              'https://images.unsplash.com/photo-1570586435880-8031c5107297?w=300&auto=format&fit=crop&q=80',
         ),
         SelectableProduceItem(
           id: 205,
@@ -100,7 +105,8 @@ class ComboPlan {
           region: 'HTX Rau Miền Tây',
           category: 'Củ quả',
           benefit: 'Tốt cho khớp và dạ dày, ít calo giàu chất xơ',
-          imageUrl: 'https://images.unsplash.com/photo-1551754655-cd27e38d2076?w=300&auto=format&fit=crop&q=80',
+          imageUrl:
+              'https://images.unsplash.com/photo-1551754655-cd27e38d2076?w=300&auto=format&fit=crop&q=80',
         ),
         SelectableProduceItem(
           id: 206,
@@ -109,7 +115,8 @@ class ComboPlan {
           region: 'HTX Rau Miền Tây',
           category: 'Nấm sạch',
           benefit: 'Nấm rơm ủ rơm rạ tự nhiên, giòn béo giàu đạm',
-          imageUrl: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=300&auto=format&fit=crop&q=80',
+          imageUrl:
+              'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=300&auto=format&fit=crop&q=80',
         ),
       ];
     } else if (supplierId == 3) {
@@ -122,7 +129,8 @@ class ComboPlan {
           region: 'HTX Trái Cây Việt',
           category: 'Trái cây đặc sản',
           benefit: 'Tép bưởi mọng ngọt thanh, tróc vỏ dễ dàng, giàu Vitamin C',
-          imageUrl: 'https://images.unsplash.com/photo-1582979512210-99b6a53386f9?w=300&auto=format&fit=crop&q=80',
+          imageUrl:
+              'https://images.unsplash.com/photo-1582979512210-99b6a53386f9?w=300&auto=format&fit=crop&q=80',
         ),
         SelectableProduceItem(
           id: 302,
@@ -131,7 +139,8 @@ class ComboPlan {
           region: 'HTX Trái Cây Việt',
           category: 'Trái cây đặc sản',
           benefit: 'Mọng nước ngọt đậm, tăng cường sức đề kháng tối đa',
-          imageUrl: 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=300&auto=format&fit=crop&q=80',
+          imageUrl:
+              'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=300&auto=format&fit=crop&q=80',
         ),
         SelectableProduceItem(
           id: 303,
@@ -140,7 +149,8 @@ class ComboPlan {
           region: 'HTX Trái Cây Việt',
           category: 'Trái cây đặc sản',
           benefit: 'Thơm lừng, thịt xoài vàng óng mịn màng không xơ',
-          imageUrl: 'https://images.unsplash.com/photo-1553279768-865429fa0078?w=300&auto=format&fit=crop&q=80',
+          imageUrl:
+              'https://images.unsplash.com/photo-1553279768-865429fa0078?w=300&auto=format&fit=crop&q=80',
         ),
         SelectableProduceItem(
           id: 304,
@@ -149,7 +159,8 @@ class ComboPlan {
           region: 'HTX Trái Cây Việt',
           category: 'Trái cây đặc sản',
           benefit: 'Ruột đỏ au giòn ngọt, giải nhiệt tức thì trong ngày nóng',
-          imageUrl: 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=300&auto=format&fit=crop&q=80',
+          imageUrl:
+              'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=300&auto=format&fit=crop&q=80',
         ),
         SelectableProduceItem(
           id: 305,
@@ -158,7 +169,8 @@ class ComboPlan {
           region: 'HTX Trái Cây Việt',
           category: 'Trái cây đặc sản',
           benefit: 'Giòn xốp vị ngọt thanh, hàm lượng Vitamin C gấp 4 lần cam',
-          imageUrl: 'https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?w=300&auto=format&fit=crop&q=80',
+          imageUrl:
+              'https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?w=300&auto=format&fit=crop&q=80',
         ),
       ];
     } else if (supplierId == 4) {
@@ -171,7 +183,8 @@ class ComboPlan {
           region: 'HTX An Phú',
           category: 'Củ quả',
           benefit: 'Vị ngọt bùi béo tự nhiên, dễ nghiền mịn cho bé ăn dặm',
-          imageUrl: 'https://images.unsplash.com/photo-1570586435880-8031c5107297?w=300&auto=format&fit=crop&q=80',
+          imageUrl:
+              'https://images.unsplash.com/photo-1570586435880-8031c5107297?w=300&auto=format&fit=crop&q=80',
         ),
         SelectableProduceItem(
           id: 402,
@@ -180,7 +193,8 @@ class ComboPlan {
           region: 'HTX An Phú',
           category: 'Củ quả',
           benefit: 'Giàu Beta-carotene và vitamin nhóm B giúp bé sáng mắt',
-          imageUrl: 'https://images.unsplash.com/photo-1598170845058-32b9d6a5c317?w=300&auto=format&fit=crop&q=80',
+          imageUrl:
+              'https://images.unsplash.com/photo-1598170845058-32b9d6a5c317?w=300&auto=format&fit=crop&q=80',
         ),
         SelectableProduceItem(
           id: 403,
@@ -189,7 +203,8 @@ class ComboPlan {
           region: 'HTX An Phú',
           category: 'Trái cây đặc sản',
           benefit: 'Chua ngọt hài hòa, thơm ngào ngạt, kích thích vị giác bé',
-          imageUrl: 'https://images.unsplash.com/photo-1464965911861-746a04b4bca6?w=300&auto=format&fit=crop&q=80',
+          imageUrl:
+              'https://images.unsplash.com/photo-1464965911861-746a04b4bca6?w=300&auto=format&fit=crop&q=80',
         ),
         SelectableProduceItem(
           id: 404,
@@ -198,7 +213,8 @@ class ComboPlan {
           region: 'HTX An Phú',
           category: 'Củ quả',
           benefit: 'Giàu chất xơ tốt cho hệ tiêu hóa còn non nớt của trẻ',
-          imageUrl: 'https://images.unsplash.com/photo-1598170845058-32b9d6a5c317?w=300&auto=format&fit=crop&q=80',
+          imageUrl:
+              'https://images.unsplash.com/photo-1598170845058-32b9d6a5c317?w=300&auto=format&fit=crop&q=80',
         ),
       ];
     }
@@ -212,7 +228,8 @@ class ComboPlan {
         region: 'HTX Đà Lạt',
         category: 'Rau ăn lá',
         benefit: 'Giàu sắt, acid folic và chất chống oxy hóa tự nhiên',
-        imageUrl: 'https://images.unsplash.com/photo-1576045057995-568f588f82fb?w=300&auto=format&fit=crop&q=80',
+        imageUrl:
+            'https://images.unsplash.com/photo-1576045057995-568f588f82fb?w=300&auto=format&fit=crop&q=80',
       ),
       SelectableProduceItem(
         id: 2,
@@ -221,7 +238,8 @@ class ComboPlan {
         region: 'HTX Đà Lạt',
         category: 'Củ quả',
         benefit: 'Hàm lượng Beta-carotene dồi dào, tốt cho thị lực',
-        imageUrl: 'https://images.unsplash.com/photo-1598170845058-32b9d6a5c317?w=300&auto=format&fit=crop&q=80',
+        imageUrl:
+            'https://images.unsplash.com/photo-1598170845058-32b9d6a5c317?w=300&auto=format&fit=crop&q=80',
       ),
       SelectableProduceItem(
         id: 3,
@@ -230,7 +248,8 @@ class ComboPlan {
         region: 'HTX Đà Lạt',
         category: 'Rau ăn lá',
         benefit: 'Tươi giòn mọng nước, lý tưởng cho món salad trộn',
-        imageUrl: 'https://images.unsplash.com/photo-1622206151226-18ca2c9ab4a1?w=300&auto=format&fit=crop&q=80',
+        imageUrl:
+            'https://images.unsplash.com/photo-1622206151226-18ca2c9ab4a1?w=300&auto=format&fit=crop&q=80',
       ),
       SelectableProduceItem(
         id: 4,
@@ -239,7 +258,8 @@ class ComboPlan {
         region: 'HTX Đà Lạt',
         category: 'Củ quả',
         benefit: 'Vị ngọt bùi béo tự nhiên, bổ não và tăng đề kháng',
-        imageUrl: 'https://images.unsplash.com/photo-1570586435880-8031c5107297?w=300&auto=format&fit=crop&q=80',
+        imageUrl:
+            'https://images.unsplash.com/photo-1570586435880-8031c5107297?w=300&auto=format&fit=crop&q=80',
       ),
       SelectableProduceItem(
         id: 5,
@@ -248,7 +268,8 @@ class ComboPlan {
         region: 'HTX Đà Lạt',
         category: 'Rau ăn lá',
         benefit: 'Chứa Sulforaphane kháng viêm và thanh lọc tế bào',
-        imageUrl: 'https://images.unsplash.com/photo-1459411621453-7b03977f4bfc?w=300&auto=format&fit=crop&q=80',
+        imageUrl:
+            'https://images.unsplash.com/photo-1459411621453-7b03977f4bfc?w=300&auto=format&fit=crop&q=80',
       ),
       SelectableProduceItem(
         id: 6,
@@ -257,7 +278,8 @@ class ComboPlan {
         region: 'HTX Đà Lạt',
         category: 'Củ quả',
         benefit: 'Hàm lượng Lycopene cực cao, dưỡng da chống lão hóa',
-        imageUrl: 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=300&auto=format&fit=crop&q=80',
+        imageUrl:
+            'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=300&auto=format&fit=crop&q=80',
       ),
       SelectableProduceItem(
         id: 7,
@@ -266,7 +288,8 @@ class ComboPlan {
         region: 'HTX Đà Lạt',
         category: 'Trái cây đặc sản',
         benefit: 'Chứa acid béo Omega-3 không bão hòa tốt cho tim mạch',
-        imageUrl: 'https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?w=300&auto=format&fit=crop&q=80',
+        imageUrl:
+            'https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?w=300&auto=format&fit=crop&q=80',
       ),
       SelectableProduceItem(
         id: 8,
@@ -275,7 +298,8 @@ class ComboPlan {
         region: 'HTX Đà Lạt',
         category: 'Nấm sạch',
         benefit: 'Giòn ngọt thơm lừng, bổ sung protein thực vật lành tính',
-        imageUrl: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=300&auto=format&fit=crop&q=80',
+        imageUrl:
+            'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=300&auto=format&fit=crop&q=80',
       ),
       SelectableProduceItem(
         id: 9,
@@ -284,7 +308,8 @@ class ComboPlan {
         region: 'HTX Đà Lạt',
         category: 'Rau ăn lá',
         benefit: 'Nữ hoàng rau xanh giàu Vitamin K, Canxi và Lutein',
-        imageUrl: 'https://images.unsplash.com/photo-1524179091875-bf99a9a6fa57?w=300&auto=format&fit=crop&q=80',
+        imageUrl:
+            'https://images.unsplash.com/photo-1524179091875-bf99a9a6fa57?w=300&auto=format&fit=crop&q=80',
       ),
     ];
   }
@@ -295,13 +320,15 @@ class ComboPlan {
       const ComboPlan(
         id: 901,
         name: 'Combo Gia Đình Nhỏ (Tuần)',
-        desc: 'Phù hợp gia đình 2–3 người nấu ăn mỗi ngày. Nông sản tươi hái sớm trong ngày.',
+        desc:
+            'Phù hợp gia đình 2–3 người nấu ăn mỗi ngày. Nông sản tươi hái sớm trong ngày.',
         price: '189.000₫',
         rawPrice: 189000,
         badge: 'Phổ biến nhất',
         supplierId: 1,
         supplierName: 'Hợp tác xã Nông Sản Đà Lạt',
-        imageUrl: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600&auto=format&fit=crop&q=80',
+        imageUrl:
+            'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600&auto=format&fit=crop&q=80',
         type: 'combotuan',
         maxSelectableItems: 6,
         features: [
@@ -321,13 +348,15 @@ class ComboPlan {
       const ComboPlan(
         id: 902,
         name: 'Combo Gia Đình Lớn (Tuần)',
-        desc: 'Đáp ứng khẩu phần cho gia đình 4–6 thành viên. Đầy ắp rau xanh và trái cây chín cây.',
+        desc:
+            'Đáp ứng khẩu phần cho gia đình 4–6 thành viên. Đầy ắp rau xanh và trái cây chín cây.',
         price: '329.000₫',
         rawPrice: 329000,
         badge: 'Tiết kiệm 15%',
         supplierId: 1,
         supplierName: 'Hợp tác xã Nông Sản Đà Lạt',
-        imageUrl: 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=600&auto=format&fit=crop&q=80',
+        imageUrl:
+            'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=600&auto=format&fit=crop&q=80',
         type: 'combotuan',
         maxSelectableItems: 10,
         features: [
@@ -348,13 +377,15 @@ class ComboPlan {
       const ComboPlan(
         id: 903,
         name: 'Combo Thuần Chay Sạch (Tuần)',
-        desc: 'Giàu đạm thực vật, vitamin & khoáng chất dưỡng sinh thanh lọc cơ thể.',
+        desc:
+            'Giàu đạm thực vật, vitamin & khoáng chất dưỡng sinh thanh lọc cơ thể.',
         price: '249.000₫',
         rawPrice: 249000,
         badge: 'Thuần chay Organic',
         supplierId: 1,
         supplierName: 'Hợp tác xã Nông Sản Đà Lạt',
-        imageUrl: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=600&auto=format&fit=crop&q=80',
+        imageUrl:
+            'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=600&auto=format&fit=crop&q=80',
         type: 'combotuan',
         maxSelectableItems: 8,
         features: [
@@ -376,13 +407,15 @@ class ComboPlan {
       const ComboPlan(
         id: 904,
         name: 'Combo Gia Đình Nhỏ (Gói Tháng)',
-        desc: 'Giao 4 đợt / tháng (mỗi tuần 1 giỏ tươi mới) — Tiết kiệm chi phí và thời gian đi chợ.',
+        desc:
+            'Giao 4 đợt / tháng (mỗi tuần 1 giỏ tươi mới) — Tiết kiệm chi phí và thời gian đi chợ.',
         price: '680.000₫',
         rawPrice: 680000,
         badge: 'Tiết kiệm 10%',
         supplierId: 1,
         supplierName: 'Hợp tác xã Nông Sản Đà Lạt',
-        imageUrl: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600&auto=format&fit=crop&q=80',
+        imageUrl:
+            'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600&auto=format&fit=crop&q=80',
         type: 'combothang',
         maxSelectableItems: 6,
         features: [
@@ -399,13 +432,15 @@ class ComboPlan {
       const ComboPlan(
         id: 905,
         name: 'Combo Gia Đình Lớn (Gói Tháng)',
-        desc: 'Chăm sóc sức khỏe cả nhà trọn vẹn cả tháng với nông sản chuẩn xuất khẩu thượng hạng.',
+        desc:
+            'Chăm sóc sức khỏe cả nhà trọn vẹn cả tháng với nông sản chuẩn xuất khẩu thượng hạng.',
         price: '1.180.000₫',
         rawPrice: 1180000,
         badge: 'Tiết kiệm 18%',
         supplierId: 1,
         supplierName: 'Hợp tác xã Nông Sản Đà Lạt',
-        imageUrl: 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=600&auto=format&fit=crop&q=80',
+        imageUrl:
+            'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=600&auto=format&fit=crop&q=80',
         type: 'combothang',
         maxSelectableItems: 10,
         features: [
@@ -422,13 +457,15 @@ class ComboPlan {
       const ComboPlan(
         id: 906,
         name: 'Combo Thuần Chay Sạch (Gói Tháng)',
-        desc: 'Thanh lọc cơ thể, dinh dưỡng bền vững với đa dạng nấm hữu cơ và đậu hạt cao cấp.',
+        desc:
+            'Thanh lọc cơ thể, dinh dưỡng bền vững với đa dạng nấm hữu cơ và đậu hạt cao cấp.',
         price: '895.000₫',
         rawPrice: 895000,
         badge: 'Tiết kiệm 12%',
         supplierId: 1,
         supplierName: 'Hợp tác xã Nông Sản Đà Lạt',
-        imageUrl: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=600&auto=format&fit=crop&q=80',
+        imageUrl:
+            'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=600&auto=format&fit=crop&q=80',
         type: 'combothang',
         maxSelectableItems: 8,
         features: [
@@ -447,13 +484,15 @@ class ComboPlan {
       const ComboPlan(
         id: 907,
         name: 'Combo Ăn Dặm Hữu Cơ Bé Yêu',
-        desc: 'Nông sản công nghệ cao GlobalGAP chọn lọc độ tuổi ăn dặm từ HTX An Phú.',
+        desc:
+            'Nông sản công nghệ cao GlobalGAP chọn lọc độ tuổi ăn dặm từ HTX An Phú.',
         price: '195.000₫',
         rawPrice: 195000,
         badge: 'Chương trình HTX',
         supplierId: 4,
         supplierName: 'HTX Nông Nghiệp An Phú',
-        imageUrl: 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=600&auto=format&fit=crop&q=80',
+        imageUrl:
+            'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=600&auto=format&fit=crop&q=80',
         type: 'combokhac',
         maxSelectableItems: 4,
         features: [
@@ -472,13 +511,15 @@ class ComboPlan {
       const ComboPlan(
         id: 908,
         name: 'Combo Trái Cây Miệt Vườn Nam Bộ',
-        desc: 'Tuyển chọn trái cây nhiệt đới chín cây thơm ngọt từ HTX Trái Cây Việt.',
+        desc:
+            'Tuyển chọn trái cây nhiệt đới chín cây thơm ngọt từ HTX Trái Cây Việt.',
         price: '275.000₫',
         rawPrice: 275000,
         badge: 'Đặc sản chín cây',
         supplierId: 3,
         supplierName: 'Hợp tác xã Trái Cây Việt',
-        imageUrl: 'https://images.unsplash.com/photo-1619566636858-adf3ef46400b?w=600&auto=format&fit=crop&q=80',
+        imageUrl:
+            'https://images.unsplash.com/photo-1619566636858-adf3ef46400b?w=600&auto=format&fit=crop&q=80',
         type: 'combokhac',
         maxSelectableItems: 5,
         features: [

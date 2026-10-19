@@ -23,7 +23,8 @@ class CombosScreen extends StatefulWidget {
 }
 
 class _CombosScreenState extends State<CombosScreen> {
-  String _selectedType = 'combotuan'; // 'combotuan' | 'combothang' | 'combokhac'
+  String _selectedType =
+      'combotuan'; // 'combotuan' | 'combothang' | 'combokhac'
   String _selectedSupplier = 'all'; // 'all' | '1' | '2' | '3' | '4'
   final List<ComboPlan> _combos = ComboPlan.getSampleCombos();
   Set<int> _favoriteComboIds = {};
@@ -38,7 +39,9 @@ class _CombosScreenState extends State<CombosScreen> {
     final list = await FavoritesService.getFavoriteCombos();
     if (mounted) {
       setState(() {
-        _favoriteComboIds = list.map((c) => ((c['id'] ?? c['comboId']) as num).toInt()).toSet();
+        _favoriteComboIds = list
+            .map((c) => ((c['id'] ?? c['comboId']) as num).toInt())
+            .toSet();
       });
     }
   }
@@ -55,7 +58,11 @@ class _CombosScreenState extends State<CombosScreen> {
       });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(isFav ? 'Đã thêm combo "${combo.name}" vào yêu thích' : 'Đã xóa combo "${combo.name}" khỏi yêu thích'),
+          content: Text(
+            isFav
+                ? 'Đã thêm combo "${combo.name}" vào yêu thích'
+                : 'Đã xóa combo "${combo.name}" khỏi yêu thích',
+          ),
           duration: const Duration(seconds: 1),
           backgroundColor: const Color(0xFF2E7D32),
         ),
@@ -74,7 +81,9 @@ class _CombosScreenState extends State<CombosScreen> {
   List<ComboPlan> get _filteredCombos {
     return _combos.where((c) {
       final matchType = c.type == _selectedType;
-      final matchSupplier = _selectedSupplier == 'all' || c.supplierId.toString() == _selectedSupplier;
+      final matchSupplier =
+          _selectedSupplier == 'all' ||
+          c.supplierId.toString() == _selectedSupplier;
       return matchType && matchSupplier;
     }).toList();
   }
@@ -109,12 +118,18 @@ class _CombosScreenState extends State<CombosScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.chat_bubble_outline, color: Color(0xFF2E7D32)),
+            icon: const Icon(
+              Icons.chat_bubble_outline,
+              color: Color(0xFF2E7D32),
+            ),
             tooltip: 'Tư vấn nông sản',
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const ChatScreen(title: 'Tư vấn Gói Combo')),
+                MaterialPageRoute(
+                  builder: (context) =>
+                      const ChatScreen(title: 'Tư vấn Gói Combo'),
+                ),
               );
             },
           ),
@@ -122,7 +137,10 @@ class _CombosScreenState extends State<CombosScreen> {
             alignment: Alignment.center,
             children: [
               IconButton(
-                icon: const Icon(Icons.shopping_cart_outlined, color: Color(0xFF2E7D32)),
+                icon: const Icon(
+                  Icons.shopping_cart_outlined,
+                  color: Color(0xFF2E7D32),
+                ),
                 tooltip: 'Giỏ hàng',
                 onPressed: widget.onOpenCart,
               ),
@@ -132,11 +150,21 @@ class _CombosScreenState extends State<CombosScreen> {
                   right: 8,
                   child: Container(
                     padding: const EdgeInsets.all(4),
-                    decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
-                    constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                    decoration: const BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                    ),
+                    constraints: const BoxConstraints(
+                      minWidth: 16,
+                      minHeight: 16,
+                    ),
                     child: Text(
                       widget.cartCount > 99 ? '99+' : '${widget.cartCount}',
-                      style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                      ),
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -174,25 +202,40 @@ class _CombosScreenState extends State<CombosScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
                         decoration: BoxDecoration(
                           color: const Color(0xFFFF9800),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: const Text(
                           'TIẾT KIỆM ĐẾN 20% & FREESHIP TẬN BẾP',
-                          style: TextStyle(color: Colors.white, fontSize: 9.5, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 8),
                       const Text(
                         'Đi Chợ Định Kỳ Tiện Lợi',
-                        style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         'Khách hàng tự do chọn đổi nông sản cùng HTX trước mỗi đợt giao 24h. Thu hoạch sáng sớm và giao xe lạnh.',
-                        style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 11.5, height: 1.3),
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.9),
+                          fontSize: 11.5,
+                          height: 1.3,
+                        ),
                       ),
                     ],
                   ),
@@ -205,7 +248,11 @@ class _CombosScreenState extends State<CombosScreen> {
                     color: Colors.white.withValues(alpha: 0.15),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.local_shipping_outlined, color: Colors.white, size: 28),
+                  child: const Icon(
+                    Icons.local_shipping_outlined,
+                    color: Colors.white,
+                    size: 28,
+                  ),
                 ),
               ],
             ),
@@ -244,8 +291,12 @@ class _CombosScreenState extends State<CombosScreen> {
                       backgroundColor: const Color(0xFFF4F6F4),
                       labelStyle: TextStyle(
                         fontSize: 11.5,
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                        color: isSelected ? const Color(0xFF2E7D32) : const Color(0xFF4A5568),
+                        fontWeight: isSelected
+                            ? FontWeight.bold
+                            : FontWeight.w500,
+                        color: isSelected
+                            ? const Color(0xFF2E7D32)
+                            : const Color(0xFF4A5568),
                       ),
                       onSelected: (val) {
                         if (val) setState(() => _selectedSupplier = s['key']!);
@@ -271,20 +322,31 @@ class _CombosScreenState extends State<CombosScreen> {
                           const SizedBox(height: 12),
                           const Text(
                             'Hiện chưa có gói combo nào trong mục này',
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF1B3A20)),
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                              color: Color(0xFF1B3A20),
+                            ),
                           ),
                           const SizedBox(height: 6),
                           Text(
                             'Các gói combo ưu đãi mới sẽ sớm được cập nhật. Vui lòng chọn gói Combo Tuần hoặc Combo Tháng có sẵn.',
                             textAlign: TextAlign.center,
-                            style: TextStyle(fontSize: 12, color: Colors.grey.shade600, height: 1.4),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey.shade600,
+                              height: 1.4,
+                            ),
                           ),
                         ],
                       ),
                     ),
                   )
                 : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 4,
+                    ),
                     itemCount: _filteredCombos.length,
                     itemBuilder: (context, index) {
                       final combo = _filteredCombos[index];
@@ -306,7 +368,9 @@ class _CombosScreenState extends State<CombosScreen> {
           padding: const EdgeInsets.symmetric(vertical: 8),
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFF2E7D32) : const Color(0xFFF1F5F1),
+            color: isSelected
+                ? const Color(0xFF2E7D32)
+                : const Color(0xFFF1F5F1),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: isSelected ? const Color(0xFF2E7D32) : Colors.transparent,
@@ -334,7 +398,9 @@ class _CombosScreenState extends State<CombosScreen> {
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: combo.badge != null ? const Color(0xFF2E7D32) : const Color(0xFFE5ECE5),
+            color: combo.badge != null
+                ? const Color(0xFF2E7D32)
+                : const Color(0xFFE5ECE5),
             width: combo.badge != null ? 1.5 : 1.0,
           ),
           boxShadow: [
@@ -352,7 +418,9 @@ class _CombosScreenState extends State<CombosScreen> {
             Stack(
               children: [
                 ClipRRect(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(15),
+                  ),
                   child: Image.network(
                     ApiService.fixImageUrl(combo.imageUrl),
                     height: 120, // Chiều cao ảnh nhỏ gọn
@@ -361,7 +429,11 @@ class _CombosScreenState extends State<CombosScreen> {
                     errorBuilder: (context, error, stackTrace) => Container(
                       height: 120,
                       color: const Color(0xFFE8F5E9),
-                      child: const Icon(Icons.eco, size: 40, color: Color(0xFF2E7D32)),
+                      child: const Icon(
+                        Icons.eco,
+                        size: 40,
+                        color: Color(0xFF2E7D32),
+                      ),
                     ),
                   ),
                 ),
@@ -370,17 +442,27 @@ class _CombosScreenState extends State<CombosScreen> {
                     top: 12,
                     left: 12,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFFFF9800),
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
-                          BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 4),
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.15),
+                            blurRadius: 4,
+                          ),
                         ],
                       ),
                       child: Text(
                         combo.badge!,
-                        style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),
@@ -399,13 +481,20 @@ class _CombosScreenState extends State<CombosScreen> {
                           color: Colors.white.withValues(alpha: 0.9),
                           shape: BoxShape.circle,
                           boxShadow: [
-                            BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 4),
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.1),
+                              blurRadius: 4,
+                            ),
                           ],
                         ),
                         child: Icon(
-                          _favoriteComboIds.contains(combo.id) ? Icons.favorite : Icons.favorite_border,
+                          _favoriteComboIds.contains(combo.id)
+                              ? Icons.favorite
+                              : Icons.favorite_border,
                           size: 18,
-                          color: _favoriteComboIds.contains(combo.id) ? Colors.red : Colors.grey.shade600,
+                          color: _favoriteComboIds.contains(combo.id)
+                              ? Colors.red
+                              : Colors.grey.shade600,
                         ),
                       ),
                     ),
@@ -436,7 +525,10 @@ class _CombosScreenState extends State<CombosScreen> {
                       ),
                       const SizedBox(width: 8),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 3,
+                        ),
                         decoration: BoxDecoration(
                           color: const Color(0xFFF0FDF4),
                           borderRadius: BorderRadius.circular(6),
@@ -445,11 +537,19 @@ class _CombosScreenState extends State<CombosScreen> {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.storefront, size: 12, color: Color(0xFF166534)),
+                            const Icon(
+                              Icons.storefront,
+                              size: 12,
+                              color: Color(0xFF166534),
+                            ),
                             const SizedBox(width: 4),
                             Text(
                               combo.supplierName,
-                              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF166534)),
+                              style: const TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF166534),
+                              ),
                             ),
                           ],
                         ),
@@ -475,8 +575,13 @@ class _CombosScreenState extends State<CombosScreen> {
                       Text(
                         combo.type == 'combotuan'
                             ? '/ tuần'
-                            : (combo.type == 'combothang' ? '/ tháng' : '/ gói'),
-                        style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                            : (combo.type == 'combothang'
+                                  ? '/ tháng'
+                                  : '/ gói'),
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey.shade600,
+                        ),
                       ),
                     ],
                   ),
@@ -485,13 +590,17 @@ class _CombosScreenState extends State<CombosScreen> {
                   // Mô tả ngắn gọn
                   Text(
                     combo.desc,
-                    style: TextStyle(fontSize: 13, color: Colors.grey.shade700, height: 1.4),
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.grey.shade700,
+                      height: 1.4,
+                    ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  
+
                   const SizedBox(height: 12),
-                  
+
                   // Nút xem chi tiết ảo (chỉ để UI thêm rõ ràng)
                   Align(
                     alignment: Alignment.centerRight,
@@ -500,10 +609,18 @@ class _CombosScreenState extends State<CombosScreen> {
                       children: [
                         Text(
                           'Xem chi tiết',
-                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: const Color(0xFF2E7D32)),
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: const Color(0xFF2E7D32),
+                          ),
                         ),
                         const SizedBox(width: 4),
-                        const Icon(Icons.arrow_forward_ios, size: 10, color: Color(0xFF2E7D32)),
+                        const Icon(
+                          Icons.arrow_forward_ios,
+                          size: 10,
+                          color: Color(0xFF2E7D32),
+                        ),
                       ],
                     ),
                   ),

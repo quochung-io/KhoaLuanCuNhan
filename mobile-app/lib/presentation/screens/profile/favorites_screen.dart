@@ -14,7 +14,8 @@ class FavoritesScreen extends StatefulWidget {
   State<FavoritesScreen> createState() => _FavoritesScreenState();
 }
 
-class _FavoritesScreenState extends State<FavoritesScreen> with SingleTickerProviderStateMixin {
+class _FavoritesScreenState extends State<FavoritesScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   List<Product> _favoriteProducts = [];
   List<Map<String, dynamic>> _favoriteCombos = [];
@@ -53,7 +54,10 @@ class _FavoritesScreenState extends State<FavoritesScreen> with SingleTickerProv
     });
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Đã xóa nông sản khỏi danh sách yêu thích'), duration: Duration(seconds: 1)),
+        const SnackBar(
+          content: Text('Đã xóa nông sản khỏi danh sách yêu thích'),
+          duration: Duration(seconds: 1),
+        ),
       );
     }
   }
@@ -61,11 +65,16 @@ class _FavoritesScreenState extends State<FavoritesScreen> with SingleTickerProv
   Future<void> _removeFavoriteCombo(int id) async {
     await FavoritesService.removeFavoriteCombo(id);
     setState(() {
-      _favoriteCombos.removeWhere((c) => ((c['id'] ?? c['comboId']) as num).toInt() == id);
+      _favoriteCombos.removeWhere(
+        (c) => ((c['id'] ?? c['comboId']) as num).toInt() == id,
+      );
     });
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Đã xóa combo khỏi danh sách yêu thích'), duration: Duration(seconds: 1)),
+        const SnackBar(
+          content: Text('Đã xóa combo khỏi danh sách yêu thích'),
+          duration: Duration(seconds: 1),
+        ),
       );
     }
   }
@@ -75,7 +84,10 @@ class _FavoritesScreenState extends State<FavoritesScreen> with SingleTickerProv
     return Scaffold(
       backgroundColor: const Color(0xFFF7FAF7),
       appBar: AppBar(
-        title: const Text('Danh Sách Yêu Thích', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
+        title: const Text(
+          'Danh Sách Yêu Thích',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
+        ),
         backgroundColor: Colors.white,
         foregroundColor: const Color(0xFF1B3A20),
         elevation: 0.5,
@@ -85,7 +97,10 @@ class _FavoritesScreenState extends State<FavoritesScreen> with SingleTickerProv
           unselectedLabelColor: const Color(0xFF8D9E90),
           indicatorColor: const Color(0xFF2E7D32),
           indicatorWeight: 3,
-          labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+          labelStyle: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+          ),
           tabs: [
             Tab(text: 'Nông Sản (${_favoriteProducts.length})'),
             Tab(text: 'Gói Combo (${_favoriteCombos.length})'),
@@ -93,13 +108,12 @@ class _FavoritesScreenState extends State<FavoritesScreen> with SingleTickerProv
         ),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFF2E7D32)))
+          ? const Center(
+              child: CircularProgressIndicator(color: Color(0xFF2E7D32)),
+            )
           : TabBarView(
               controller: _tabController,
-              children: [
-                _buildProductsTab(),
-                _buildCombosTab(),
-              ],
+              children: [_buildProductsTab(), _buildCombosTab()],
             ),
     );
   }
@@ -136,7 +150,11 @@ class _FavoritesScreenState extends State<FavoritesScreen> with SingleTickerProv
             borderRadius: BorderRadius.circular(14),
             border: Border.all(color: const Color(0xFFE1EAE0)),
             boxShadow: [
-              BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 4, offset: const Offset(0, 2)),
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.03),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
             ],
           ),
           child: Row(
@@ -188,7 +206,8 @@ class _FavoritesScreenState extends State<FavoritesScreen> with SingleTickerProv
                       MaterialPageRoute(
                         builder: (ctx) => ProductDetailScreen(
                           product: p,
-                          onAddToCart: widget.onAddToCart ?? (prod, {qty = 1}) {},
+                          onAddToCart:
+                              widget.onAddToCart ?? (prod, {qty = 1}) {},
                         ),
                       ),
                     ).then((_) => _loadFavorites());
@@ -198,23 +217,41 @@ class _FavoritesScreenState extends State<FavoritesScreen> with SingleTickerProv
                     children: [
                       Text(
                         p.name,
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1B3A20)),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                          color: Color(0xFF1B3A20),
+                        ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 4),
                       Text(
                         '${p.cert} · ${p.region}',
-                        style: const TextStyle(fontSize: 11, color: Color(0xFF2E7D32), fontWeight: FontWeight.w600),
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: Color(0xFF2E7D32),
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                       const SizedBox(height: 6),
                       Row(
                         children: [
                           Text(
                             '${p.price.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}₫',
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF2E7D32)),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                              color: Color(0xFF2E7D32),
+                            ),
                           ),
-                          Text(' / ${p.unit}', style: const TextStyle(fontSize: 11.5, color: Colors.grey)),
+                          Text(
+                            ' / ${p.unit}',
+                            style: const TextStyle(
+                              fontSize: 11.5,
+                              color: Colors.grey,
+                            ),
+                          ),
                         ],
                       ),
                     ],
@@ -232,12 +269,17 @@ class _FavoritesScreenState extends State<FavoritesScreen> with SingleTickerProv
                   ),
                   if (widget.onAddToCart != null)
                     IconButton(
-                      icon: const Icon(Icons.add_shopping_cart, color: Color(0xFF2E7D32)),
+                      icon: const Icon(
+                        Icons.add_shopping_cart,
+                        color: Color(0xFF2E7D32),
+                      ),
                       onPressed: () {
                         widget.onAddToCart!(p, qty: 1);
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text('Đã thêm 1 ${p.unit} "${p.name}" vào giỏ hàng'),
+                            content: Text(
+                              'Đã thêm 1 ${p.unit} "${p.name}" vào giỏ hàng',
+                            ),
                             duration: const Duration(seconds: 1),
                             backgroundColor: const Color(0xFF2E7D32),
                           ),
@@ -260,7 +302,11 @@ class _FavoritesScreenState extends State<FavoritesScreen> with SingleTickerProv
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.inventory_2_outlined, size: 68, color: Colors.grey.shade400),
+            Icon(
+              Icons.inventory_2_outlined,
+              size: 68,
+              color: Colors.grey.shade400,
+            ),
             const SizedBox(height: 12),
             Text(
               'Bạn chưa lưu gói combo nào vào yêu thích',
@@ -280,7 +326,9 @@ class _FavoritesScreenState extends State<FavoritesScreen> with SingleTickerProv
         final name = (c['name'] ?? 'Gói Combo').toString();
         final price = (c['price'] ?? '0₫').toString();
         final rawPrice = (c['rawPrice'] as num?)?.toDouble() ?? 0.0;
-        final imageUrl = ApiService.fixImageUrl((c['imageUrl'] ?? '').toString());
+        final imageUrl = ApiService.fixImageUrl(
+          (c['imageUrl'] ?? '').toString(),
+        );
         final supplierName = (c['supplierName'] ?? 'HTX LÀNH').toString();
         final type = (c['type'] ?? 'combotuan').toString();
         final desc = (c['desc'] ?? '').toString();
@@ -293,7 +341,11 @@ class _FavoritesScreenState extends State<FavoritesScreen> with SingleTickerProv
             borderRadius: BorderRadius.circular(14),
             border: Border.all(color: const Color(0xFFE1EAE0)),
             boxShadow: [
-              BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 4, offset: const Offset(0, 2)),
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.03),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
             ],
           ),
           child: Row(
@@ -309,7 +361,11 @@ class _FavoritesScreenState extends State<FavoritesScreen> with SingleTickerProv
                     width: 75,
                     height: 75,
                     color: const Color(0xFFE8F5E9),
-                    child: const Icon(Icons.eco, color: Color(0xFF2E7D32), size: 36),
+                    child: const Icon(
+                      Icons.eco,
+                      color: Color(0xFF2E7D32),
+                      size: 36,
+                    ),
                   ),
                 ),
               ),
@@ -321,19 +377,31 @@ class _FavoritesScreenState extends State<FavoritesScreen> with SingleTickerProv
                   children: [
                     Text(
                       name,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1B3A20)),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                        color: Color(0xFF1B3A20),
+                      ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 4),
                     Text(
                       supplierName,
-                      style: const TextStyle(fontSize: 11, color: Color(0xFF2E7D32), fontWeight: FontWeight.w600),
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Color(0xFF2E7D32),
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     const SizedBox(height: 6),
                     Text(
                       price,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF2E7D32)),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                        color: Color(0xFF2E7D32),
+                      ),
                     ),
                   ],
                 ),
@@ -347,7 +415,10 @@ class _FavoritesScreenState extends State<FavoritesScreen> with SingleTickerProv
                     tooltip: 'Bỏ thích',
                   ),
                   IconButton(
-                    icon: const Icon(Icons.visibility_outlined, color: Color(0xFF2E7D32)),
+                    icon: const Icon(
+                      Icons.visibility_outlined,
+                      color: Color(0xFF2E7D32),
+                    ),
                     onPressed: () {
                       final sampleList = ComboPlan.getSampleCombos();
                       final plan = sampleList.firstWhere(
@@ -363,8 +434,14 @@ class _FavoritesScreenState extends State<FavoritesScreen> with SingleTickerProv
                           badge: c['badge']?.toString(),
                           imageUrl: imageUrl,
                           type: type,
-                          features: const ['Nông sản tươi thu hoạch sớm', 'Chuẩn VietGAP & Hữu cơ'],
-                          sampleItems: const ['Rau củ hữu cơ', 'Trái cây theo mùa'],
+                          features: const [
+                            'Nông sản tươi thu hoạch sớm',
+                            'Chuẩn VietGAP & Hữu cơ',
+                          ],
+                          sampleItems: const [
+                            'Rau củ hữu cơ',
+                            'Trái cây theo mùa',
+                          ],
                         ),
                       );
                       Navigator.push(
@@ -372,7 +449,8 @@ class _FavoritesScreenState extends State<FavoritesScreen> with SingleTickerProv
                         MaterialPageRoute(
                           builder: (ctx) => ComboCustomizeScreen(
                             combo: plan,
-                            onAddToCart: widget.onAddToCart ?? (prod, {qty = 1}) {},
+                            onAddToCart:
+                                widget.onAddToCart ?? (prod, {qty = 1}) {},
                           ),
                         ),
                       ).then((_) => _loadFavorites());

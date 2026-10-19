@@ -59,21 +59,30 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
 
     if (email.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Không tìm thấy email tài khoản. Vui lòng thử lại!'), backgroundColor: Colors.red),
+        const SnackBar(
+          content: Text('Không tìm thấy email tài khoản. Vui lòng thử lại!'),
+          backgroundColor: Colors.red,
+        ),
       );
       return;
     }
 
     if (newPass.length < 8) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Mật khẩu mới phải có tối thiểu 8 ký tự!'), backgroundColor: Colors.red),
+        const SnackBar(
+          content: Text('Mật khẩu mới phải có tối thiểu 8 ký tự!'),
+          backgroundColor: Colors.red,
+        ),
       );
       return;
     }
 
     if (newPass != confirmPass) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Mật khẩu xác nhận không trùng khớp!'), backgroundColor: Colors.red),
+        const SnackBar(
+          content: Text('Mật khẩu xác nhận không trùng khớp!'),
+          backgroundColor: Colors.red,
+        ),
       );
       return;
     }
@@ -97,17 +106,18 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (ctx) => OtpVerificationScreen(
-              email: email,
-              newPassword: newPass,
-            ),
+            builder: (ctx) =>
+                OtpVerificationScreen(email: email, newPassword: newPass),
           ),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi gửi OTP xác thực: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('Lỗi gửi OTP xác thực: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } finally {
@@ -120,7 +130,10 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF7FAF7),
       appBar: AppBar(
-        title: const Text('Đổi Mật Khẩu', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Đổi Mật Khẩu',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         backgroundColor: Colors.white,
         foregroundColor: const Color(0xFF1B3A20),
         elevation: 0,
@@ -146,79 +159,152 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
             children: [
               const Row(
                 children: [
-                  Icon(Icons.shield_outlined, color: Color(0xFF2E7D32), size: 24),
+                  Icon(
+                    Icons.shield_outlined,
+                    color: Color(0xFF2E7D32),
+                    size: 24,
+                  ),
                   SizedBox(width: 8),
                   Text(
                     'Thiết lập mật khẩu mới',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1B3A20)),
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1B3A20),
+                    ),
                   ),
                 ],
               ),
               const SizedBox(height: 6),
               Text(
                 'Sau khi nhập mật khẩu mới, hệ thống sẽ gửi mã OTP đến email ${_emailCtrl.text} để bạn xác nhận an toàn.',
-                style: TextStyle(fontSize: 12.5, color: Colors.grey.shade600, height: 1.4),
+                style: TextStyle(
+                  fontSize: 12.5,
+                  color: Colors.grey.shade600,
+                  height: 1.4,
+                ),
               ),
               const SizedBox(height: 20),
 
               // Email tài khoản (Chỉ đọc)
-              const Text('EMAIL TÀI KHOẢN', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Color(0xFF8D9E90))),
+              const Text(
+                'EMAIL TÀI KHOẢN',
+                style: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF8D9E90),
+                ),
+              ),
               const SizedBox(height: 6),
               TextField(
                 controller: _emailCtrl,
                 readOnly: true,
-                style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF1B3A20)),
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF1B3A20),
+                ),
                 decoration: InputDecoration(
-                  prefixIcon: const Icon(Icons.email_outlined, color: Color(0xFF2E7D32)),
+                  prefixIcon: const Icon(
+                    Icons.email_outlined,
+                    color: Color(0xFF2E7D32),
+                  ),
                   filled: true,
                   fillColor: const Color(0xFFF4F6F4),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide.none,
+                  ),
                 ),
               ),
 
               const SizedBox(height: 18),
 
               // Mật khẩu mới
-              const Text('MẬT KHẨU MỚI (TỐI THIỂU 8 KÝ TỰ)', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Color(0xFF8D9E90))),
+              const Text(
+                'MẬT KHẨU MỚI (TỐI THIỂU 8 KÝ TỰ)',
+                style: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF8D9E90),
+                ),
+              ),
               const SizedBox(height: 6),
               TextField(
                 controller: _newPassCtrl,
                 obscureText: _obscureNew,
                 decoration: InputDecoration(
                   hintText: 'Nhập mật khẩu mới',
-                  prefixIcon: const Icon(Icons.lock_outline, color: Color(0xFF2E7D32)),
+                  prefixIcon: const Icon(
+                    Icons.lock_outline,
+                    color: Color(0xFF2E7D32),
+                  ),
                   suffixIcon: IconButton(
-                    icon: Icon(_obscureNew ? Icons.visibility_off : Icons.visibility, color: Colors.grey),
+                    icon: Icon(
+                      _obscureNew ? Icons.visibility_off : Icons.visibility,
+                      color: Colors.grey,
+                    ),
                     onPressed: () => setState(() => _obscureNew = !_obscureNew),
                   ),
                   filled: true,
                   fillColor: const Color(0xFFF9FAF9),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFE1EAE0))),
-                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFE1EAE0))),
-                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFF2E7D32))),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: Color(0xFFE1EAE0)),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: Color(0xFFE1EAE0)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: Color(0xFF2E7D32)),
+                  ),
                 ),
               ),
 
               const SizedBox(height: 18),
 
               // Xác nhận mật khẩu mới
-              const Text('XÁC NHẬN MẬT KHẨU MỚI', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Color(0xFF8D9E90))),
+              const Text(
+                'XÁC NHẬN MẬT KHẨU MỚI',
+                style: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF8D9E90),
+                ),
+              ),
               const SizedBox(height: 6),
               TextField(
                 controller: _confirmPassCtrl,
                 obscureText: _obscureConfirm,
                 decoration: InputDecoration(
                   hintText: 'Nhập lại mật khẩu mới',
-                  prefixIcon: const Icon(Icons.lock_reset, color: Color(0xFF2E7D32)),
+                  prefixIcon: const Icon(
+                    Icons.lock_reset,
+                    color: Color(0xFF2E7D32),
+                  ),
                   suffixIcon: IconButton(
-                    icon: Icon(_obscureConfirm ? Icons.visibility_off : Icons.visibility, color: Colors.grey),
-                    onPressed: () => setState(() => _obscureConfirm = !_obscureConfirm),
+                    icon: Icon(
+                      _obscureConfirm ? Icons.visibility_off : Icons.visibility,
+                      color: Colors.grey,
+                    ),
+                    onPressed: () =>
+                        setState(() => _obscureConfirm = !_obscureConfirm),
                   ),
                   filled: true,
                   fillColor: const Color(0xFFF9FAF9),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFE1EAE0))),
-                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFE1EAE0))),
-                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFF2E7D32))),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: Color(0xFFE1EAE0)),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: Color(0xFFE1EAE0)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: Color(0xFF2E7D32)),
+                  ),
                 ),
               ),
 
@@ -231,16 +317,35 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 child: ElevatedButton.icon(
                   onPressed: _isSubmitting ? null : _handleProceed,
                   icon: _isSubmitting
-                      ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                      : const Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 20),
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Icon(
+                          Icons.arrow_forward_rounded,
+                          color: Colors.white,
+                          size: 20,
+                        ),
                   label: Text(
-                    _isSubmitting ? 'Đang gửi mã OTP...' : 'Tiếp tục nhận mã OTP',
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14.5, color: Colors.white),
+                    _isSubmitting
+                        ? 'Đang gửi mã OTP...'
+                        : 'Tiếp tục nhận mã OTP',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14.5,
+                      color: Colors.white,
+                    ),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF2E7D32),
                     elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
                 ),
               ),

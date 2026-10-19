@@ -110,16 +110,17 @@ class CreateReviewRequest {
     this.imageUrls,
   });
 
-  factory CreateReviewRequest.fromJson(Map<String, dynamic> json) => CreateReviewRequest(
-    productId: json['productId'],
-    customerId: json['customerId'],
-    customerName: json['customerName'],
-    email: json['email'],
-    orderId: json['orderId'],
-    rating: json['rating'],
-    comment: json['comment'],
-    imageUrls: json['imageUrls'],
-  );
+  factory CreateReviewRequest.fromJson(Map<String, dynamic> json) =>
+      CreateReviewRequest(
+        productId: json['productId'],
+        customerId: json['customerId'],
+        customerName: json['customerName'],
+        email: json['email'],
+        orderId: json['orderId'],
+        rating: json['rating'],
+        comment: json['comment'],
+        imageUrls: json['imageUrls'],
+      );
 
   Map<String, dynamic> toJson() => {
     'productId': productId,
@@ -136,73 +137,47 @@ class CreateReviewRequest {
 class ForgotPasswordRequest {
   final String? email;
 
-  ForgotPasswordRequest({
-    this.email,
-  });
+  ForgotPasswordRequest({this.email});
 
-  factory ForgotPasswordRequest.fromJson(Map<String, dynamic> json) => ForgotPasswordRequest(
-    email: json['email'],
-  );
+  factory ForgotPasswordRequest.fromJson(Map<String, dynamic> json) =>
+      ForgotPasswordRequest(email: json['email']);
 
-  Map<String, dynamic> toJson() => {
-    'email': email,
-  };
+  Map<String, dynamic> toJson() => {'email': email};
 }
 
 class HelpfulVoteRequest {
   final int? userId;
 
-  HelpfulVoteRequest({
-    this.userId,
-  });
+  HelpfulVoteRequest({this.userId});
 
-  factory HelpfulVoteRequest.fromJson(Map<String, dynamic> json) => HelpfulVoteRequest(
-    userId: json['userId'],
-  );
+  factory HelpfulVoteRequest.fromJson(Map<String, dynamic> json) =>
+      HelpfulVoteRequest(userId: json['userId']);
 
-  Map<String, dynamic> toJson() => {
-    'userId': userId,
-  };
+  Map<String, dynamic> toJson() => {'userId': userId};
 }
 
 class LoginDto {
   final String? username;
   final String? password;
 
-  LoginDto({
-    this.username,
-    this.password,
-  });
+  LoginDto({this.username, this.password});
 
-  factory LoginDto.fromJson(Map<String, dynamic> json) => LoginDto(
-    username: json['username'],
-    password: json['password'],
-  );
+  factory LoginDto.fromJson(Map<String, dynamic> json) =>
+      LoginDto(username: json['username'], password: json['password']);
 
-  Map<String, dynamic> toJson() => {
-    'username': username,
-    'password': password,
-  };
+  Map<String, dynamic> toJson() => {'username': username, 'password': password};
 }
 
 class LoginRequest {
   final String? email;
   final String? password;
 
-  LoginRequest({
-    this.email,
-    this.password,
-  });
+  LoginRequest({this.email, this.password});
 
-  factory LoginRequest.fromJson(Map<String, dynamic> json) => LoginRequest(
-    email: json['email'],
-    password: json['password'],
-  );
+  factory LoginRequest.fromJson(Map<String, dynamic> json) =>
+      LoginRequest(email: json['email'], password: json['password']);
 
-  Map<String, dynamic> toJson() => {
-    'email': email,
-    'password': password,
-  };
+  Map<String, dynamic> toJson() => {'email': email, 'password': password};
 }
 
 class Order {
@@ -706,14 +681,15 @@ class RegisterRequest {
     this.verifyMethod,
   });
 
-  factory RegisterRequest.fromJson(Map<String, dynamic> json) => RegisterRequest(
-    fullName: json['fullName'],
-    email: json['email'],
-    phone: json['phone'],
-    password: json['password'],
-    otp: json['otp'],
-    verifyMethod: json['verifyMethod'],
-  );
+  factory RegisterRequest.fromJson(Map<String, dynamic> json) =>
+      RegisterRequest(
+        fullName: json['fullName'],
+        email: json['email'],
+        phone: json['phone'],
+        password: json['password'],
+        otp: json['otp'],
+        verifyMethod: json['verifyMethod'],
+      );
 
   Map<String, dynamic> toJson() => {
     'fullName': fullName,
@@ -730,17 +706,14 @@ class ResetPasswordRequest {
   final String? otp;
   final String? newPassword;
 
-  ResetPasswordRequest({
-    this.email,
-    this.otp,
-    this.newPassword,
-  });
+  ResetPasswordRequest({this.email, this.otp, this.newPassword});
 
-  factory ResetPasswordRequest.fromJson(Map<String, dynamic> json) => ResetPasswordRequest(
-    email: json['email'],
-    otp: json['otp'],
-    newPassword: json['newPassword'],
-  );
+  factory ResetPasswordRequest.fromJson(Map<String, dynamic> json) =>
+      ResetPasswordRequest(
+        email: json['email'],
+        otp: json['otp'],
+        newPassword: json['newPassword'],
+      );
 
   Map<String, dynamic> toJson() => {
     'email': email,
@@ -753,20 +726,12 @@ class SendOtpRequest {
   final String? recipient;
   final String? type;
 
-  SendOtpRequest({
-    this.recipient,
-    this.type,
-  });
+  SendOtpRequest({this.recipient, this.type});
 
-  factory SendOtpRequest.fromJson(Map<String, dynamic> json) => SendOtpRequest(
-    recipient: json['recipient'],
-    type: json['type'],
-  );
+  factory SendOtpRequest.fromJson(Map<String, dynamic> json) =>
+      SendOtpRequest(recipient: json['recipient'], type: json['type']);
 
-  Map<String, dynamic> toJson() => {
-    'recipient': recipient,
-    'type': type,
-  };
+  Map<String, dynamic> toJson() => {'recipient': recipient, 'type': type};
 }
 
 class SyncProductImagesDto {
@@ -774,17 +739,14 @@ class SyncProductImagesDto {
   final bool? isPrimary;
   final int? sortOrder;
 
-  SyncProductImagesDto({
-    this.imageUrl,
-    this.isPrimary,
-    this.sortOrder,
-  });
+  SyncProductImagesDto({this.imageUrl, this.isPrimary, this.sortOrder});
 
-  factory SyncProductImagesDto.fromJson(Map<String, dynamic> json) => SyncProductImagesDto(
-    imageUrl: json['imageUrl'],
-    isPrimary: json['isPrimary'],
-    sortOrder: json['sortOrder'],
-  );
+  factory SyncProductImagesDto.fromJson(Map<String, dynamic> json) =>
+      SyncProductImagesDto(
+        imageUrl: json['imageUrl'],
+        isPrimary: json['isPrimary'],
+        sortOrder: json['sortOrder'],
+      );
 
   Map<String, dynamic> toJson() => {
     'imageUrl': imageUrl,
@@ -810,14 +772,15 @@ class TrackBehaviorDto {
     this.recommendationType,
   });
 
-  factory TrackBehaviorDto.fromJson(Map<String, dynamic> json) => TrackBehaviorDto(
-    userId: json['userId'],
-    sessionId: json['sessionId'],
-    productId: json['productId'],
-    actionType: json['actionType'],
-    searchKeyword: json['searchKeyword'],
-    recommendationType: json['recommendationType'],
-  );
+  factory TrackBehaviorDto.fromJson(Map<String, dynamic> json) =>
+      TrackBehaviorDto(
+        userId: json['userId'],
+        sessionId: json['sessionId'],
+        productId: json['productId'],
+        actionType: json['actionType'],
+        searchKeyword: json['searchKeyword'],
+        recommendationType: json['recommendationType'],
+      );
 
   Map<String, dynamic> toJson() => {
     'userId': userId,
@@ -834,17 +797,14 @@ class UpdateReviewRequest {
   final String? comment;
   final List<String>? imageUrls;
 
-  UpdateReviewRequest({
-    this.rating,
-    this.comment,
-    this.imageUrls,
-  });
+  UpdateReviewRequest({this.rating, this.comment, this.imageUrls});
 
-  factory UpdateReviewRequest.fromJson(Map<String, dynamic> json) => UpdateReviewRequest(
-    rating: json['rating'],
-    comment: json['comment'],
-    imageUrls: json['imageUrls'],
-  );
+  factory UpdateReviewRequest.fromJson(Map<String, dynamic> json) =>
+      UpdateReviewRequest(
+        rating: json['rating'],
+        comment: json['comment'],
+        imageUrls: json['imageUrls'],
+      );
 
   Map<String, dynamic> toJson() => {
     'rating': rating,
@@ -904,4 +864,3 @@ class User {
     'updatedAt': updatedAt,
   };
 }
-

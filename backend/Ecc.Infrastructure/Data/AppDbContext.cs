@@ -178,6 +178,9 @@ public class AppDbContext : DbContext
             e.Property(o => o.OrderStatus).HasColumnName("OrderStatus").HasMaxLength(50);
             e.Property(o => o.CreatedAt).HasColumnName("CreatedAt");
             e.Property(o => o.UpdatedAt).HasColumnName("UpdatedAt");
+            e.Property(o => o.MomoOrderId).HasColumnName("MomoOrderId").HasMaxLength(100);
+            e.Property(o => o.MomoRequestId).HasColumnName("MomoRequestId").HasMaxLength(100);
+            e.Property(o => o.MomoTransId).HasColumnName("MomoTransId").HasMaxLength(100);
 
             // Mối quan hệ với User (Customer)
             e.HasOne(o => o.Customer)

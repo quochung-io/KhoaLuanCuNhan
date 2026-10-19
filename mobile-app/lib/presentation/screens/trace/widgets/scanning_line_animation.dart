@@ -7,7 +7,8 @@ class ScanningLineAnimation extends StatefulWidget {
   State<ScanningLineAnimation> createState() => _ScanningLineAnimationState();
 }
 
-class _ScanningLineAnimationState extends State<ScanningLineAnimation> with SingleTickerProviderStateMixin {
+class _ScanningLineAnimationState extends State<ScanningLineAnimation>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
 
@@ -45,7 +46,7 @@ class _ScanningLineAnimationState extends State<ScanningLineAnimation> with Sing
                   color: const Color(0xFF4CAF50).withValues(alpha: 0.8),
                   blurRadius: 8,
                   spreadRadius: 2,
-                )
+                ),
               ],
             ),
           ),

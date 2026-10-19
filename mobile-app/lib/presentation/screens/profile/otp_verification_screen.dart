@@ -67,7 +67,10 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Không thể gửi lại OTP: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('Không thể gửi lại OTP: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } finally {
@@ -79,7 +82,10 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     final otp = _otpCtrl.text.trim();
     if (otp.isEmpty || otp.length < 6) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vui lòng nhập đầy đủ mã OTP 6 số!'), backgroundColor: Colors.red),
+        const SnackBar(
+          content: Text('Vui lòng nhập đầy đủ mã OTP 6 số!'),
+          backgroundColor: Colors.red,
+        ),
       );
       return;
     }
@@ -98,7 +104,9 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
           context: context,
           barrierDismissible: false,
           builder: (ctx) => AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
             title: Row(
               children: [
                 Container(
@@ -107,15 +115,26 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                     color: Color(0xFFE8F5E9),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.check_circle_rounded, color: Color(0xFF2E7D32), size: 26),
+                  child: const Icon(
+                    Icons.check_circle_rounded,
+                    color: Color(0xFF2E7D32),
+                    size: 26,
+                  ),
                 ),
                 const SizedBox(width: 12),
-                const Text('Thành công!', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
+                const Text(
+                  'Thành công!',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
+                ),
               ],
             ),
             content: const Text(
               'Mật khẩu tài khoản LÀNH Farm của bạn đã được thay đổi thành công. Bạn có thể sử dụng mật khẩu mới cho các lần đăng nhập tiếp theo.',
-              style: TextStyle(fontSize: 13.5, height: 1.4, color: Color(0xFF4B5563)),
+              style: TextStyle(
+                fontSize: 13.5,
+                height: 1.4,
+                color: Color(0xFF4B5563),
+              ),
             ),
             actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
             actions: [
@@ -125,15 +144,22 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                   onPressed: () {
                     Navigator.pop(ctx); // Đóng dialog
                     Navigator.pop(context); // Đóng OtpVerificationScreen
-                    Navigator.pop(context); // Đóng ChangePasswordScreen quay về SettingsScreen
+                    Navigator.pop(
+                      context,
+                    ); // Đóng ChangePasswordScreen quay về SettingsScreen
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF2E7D32),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
-                  child: const Text('Hoàn tất & Quay lại', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                  child: const Text(
+                    'Hoàn tất & Quay lại',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                  ),
                 ),
               ),
             ],
@@ -160,7 +186,10 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF7FAF7),
       appBar: AppBar(
-        title: const Text('Xác thực OTP', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Xác thực OTP',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         backgroundColor: Colors.white,
         foregroundColor: const Color(0xFF1B3A20),
         elevation: 0,
@@ -193,29 +222,47 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                   shape: BoxShape.circle,
                   border: Border.all(color: const Color(0xFFC8E6C9), width: 2),
                 ),
-                child: const Icon(Icons.mark_email_read_outlined, size: 36, color: Color(0xFF2E7D32)),
+                child: const Icon(
+                  Icons.mark_email_read_outlined,
+                  size: 36,
+                  color: Color(0xFF2E7D32),
+                ),
               ),
               const SizedBox(height: 18),
 
               const Text(
                 'Nhập mã xác thực',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF1B3A20)),
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1B3A20),
+                ),
               ),
               const SizedBox(height: 8),
               Text(
                 'Hệ thống đã gửi mã OTP 6 chữ số đến địa chỉ email:\n${widget.email}',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 13, color: Colors.grey.shade600, height: 1.4),
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.grey.shade600,
+                  height: 1.4,
+                ),
               ),
               const SizedBox(height: 28),
 
               // Ô nhập OTP cách điệu
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFF9FAF9),
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: const Color(0xFF2E7D32), width: 1.5),
+                  border: Border.all(
+                    color: const Color(0xFF2E7D32),
+                    width: 1.5,
+                  ),
                 ),
                 child: TextField(
                   controller: _otpCtrl,
@@ -279,17 +326,25 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                     backgroundColor: const Color(0xFF2E7D32),
                     foregroundColor: Colors.white,
                     elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                   child: _isSubmitting
                       ? const SizedBox(
                           width: 20,
                           height: 20,
-                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2.5,
+                          ),
                         )
                       : const Text(
                           'Xác nhận đổi mật khẩu',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                          ),
                         ),
                 ),
               ),

@@ -18,6 +18,10 @@ public class Order
     public DateTime? CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
 
+    public string? MomoOrderId { get; set; }
+    public string? MomoRequestId { get; set; }
+    public string? MomoTransId { get; set; }
+
     public User? Customer { get; set; }
     public Address? Address { get; set; }
     public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();

@@ -18,6 +18,9 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // ── Đăng ký dịch vụ gửi mã OTP qua Gmail thực tế ───────
 builder.Services.AddSingleton<IOtpService, OtpService>();
 
+// ── Đăng ký dịch vụ thanh toán MoMo ───────────────────
+builder.Services.AddSingleton<IMoMoPaymentService, MoMoPaymentService>();
+
 // ── Đăng ký Background Service tự động áp dụng FEFO Auto Markdown cho sản phẩm cận date ──
 builder.Services.AddSingleton<FefoClearanceBackgroundService>();
 builder.Services.AddHostedService(sp => sp.GetRequiredService<FefoClearanceBackgroundService>());
