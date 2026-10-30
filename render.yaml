@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: ecc-backend-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    envVars:
+      - key: ASPNETCORE_URLS
+        value: http://+:5023
+      - key: PORT
+        value: 5023
+      - key: USE_SQLITE
+        value: "true"
+    healthCheckPath: /api/health

@@ -41,9 +41,23 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// ── Đăng ký AppDbContext với SQL Server ──────────────
+// ── Đăng ký AppDbContext (Hỗ trợ cả SQL Server Local/Cloud và SQLite nhúng sẵn trên Cloud) ──
+var useSqlite = string.Equals(Environment.GetEnvironmentVariable("USE_SQLITE"), "true", StringComparison.OrdinalIgnoreCase);
+var appDataDir = Path.Combine(builder.Environment.ContentRootPath, "App_Data");
+Directory.CreateDirectory(appDataDir);
+var sqliteDbPath = Path.Combine(appDataDir, "QL_WebMuaBanNongSan.db");
+
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+{
+    if (useSqlite)
+    {
+        options.UseSqlite($"Data Source={sqliteDbPath}");
+    }
+    else
+    {
+        options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
+    }
+});
 
 // ── Cấu hình JWT Bearer Authentication ───────────────
 var jwtSecretKey = builder.Configuration["JwtSettings:SecretKey"] ?? "ECC_NongSanLanh_Secret_Key_Super_Secure_2026_JWT_Token_Key!#$";
@@ -108,13 +122,15 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// ── Tự động tạo bảng RefreshTokens trong CSDL nếu chưa tồn tại ──
+// ── Tự động tạo bảng RefreshTokens / Certificates và đồng bộ Cloud DB ──
 using (var scope = app.Services.CreateScope())
 {
     try
     {
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        var sql = @"
+        if (db.Database.IsSqlServer())
+        {
+            var sql = @"
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'RefreshTokens')
 BEGIN
     CREATE TABLE RefreshTokens (
@@ -171,29 +187,91 @@ BEGIN
     SELECT TOP 1 s.SupplierId, f.FarmId, 'GG-GLOBAL-8831', N'Chứng nhận Tiêu chuẩn Nông sản Toàn cầu GlobalG.A.P', 'GlobalGAP', N'Tổ chức Chứng nhận Quốc tế Control Union Certifications', DATEADD(month, -11, GETUTCDATE()), DATEADD(day, 20, GETUTCDATE()), 'https://images.unsplash.com/photo-1450133064473-71024230f91b?w=800', 'ExpiringSoon', 1, GETUTCDATE(), N'Hồ sơ nông sản xuất khẩu chất lượng cao, cảnh báo gia hạn trước 30 ngày.'
     FROM Suppliers s
     LEFT JOIN Farms f ON f.SupplierId = s.SupplierId;
+END
+
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE Name = N'MomoOrderId' AND Object_ID = Object_ID(N'Orders'))
+BEGIN
+    ALTER TABLE Orders ADD MomoOrderId NVARCHAR(100) NULL;
+END
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE Name = N'MomoRequestId' AND Object_ID = Object_ID(N'Orders'))
+BEGIN
+    ALTER TABLE Orders ADD MomoRequestId NVARCHAR(100) NULL;
+END
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE Name = N'MomoTransId' AND Object_ID = Object_ID(N'Orders'))
+BEGIN
+    ALTER TABLE Orders ADD MomoTransId NVARCHAR(100) NULL;
 END";
-        db.Database.ExecuteSqlRaw(sql);
+            db.Database.ExecuteSqlRaw(sql);
+
+            // Tự động xuất bản sao đầy đủ sang App_Data/QL_WebMuaBanNongSan.db để đóng gói lên Cloud 24/24
+            if (!File.Exists(sqliteDbPath))
+            {
+                app.Logger.LogInformation("[CLOUD DB EXPORT] Đang tạo bản sao SQLite từ SQL Server...");
+                var sqliteOptions = new DbContextOptionsBuilder<AppDbContext>()
+                    .UseSqlite($"Data Source={sqliteDbPath}")
+                    .Options;
+                using var sqliteDb = new AppDbContext(sqliteOptions);
+                sqliteDb.Database.EnsureCreated();
+                sqliteDb.Database.ExecuteSqlRaw("PRAGMA foreign_keys = OFF;");
+
+                sqliteDb.Users.AddRange(db.Users.AsNoTracking().ToList());
+                sqliteDb.Categories.AddRange(db.Categories.AsNoTracking().ToList());
+                sqliteDb.Suppliers.AddRange(db.Suppliers.AsNoTracking().ToList());
+                sqliteDb.Farms.AddRange(db.Farms.AsNoTracking().ToList());
+                sqliteDb.Products.AddRange(db.Products.AsNoTracking().ToList());
+                sqliteDb.ProductImages.AddRange(db.ProductImages.AsNoTracking().ToList());
+                sqliteDb.ProductBatches.AddRange(db.ProductBatches.AsNoTracking().ToList());
+                sqliteDb.ProductSeasons.AddRange(db.ProductSeasons.AsNoTracking().ToList());
+                sqliteDb.Promotions.AddRange(db.Promotions.AsNoTracking().ToList());
+                sqliteDb.Certificates.AddRange(db.Certificates.AsNoTracking().ToList());
+                sqliteDb.MembershipTiers.AddRange(db.MembershipTiers.AsNoTracking().ToList());
+                sqliteDb.UserLoyalties.AddRange(db.UserLoyalties.AsNoTracking().ToList());
+                sqliteDb.PointTransactions.AddRange(db.PointTransactions.AsNoTracking().ToList());
+                sqliteDb.UserVouchers.AddRange(db.UserVouchers.AsNoTracking().ToList());
+                sqliteDb.Addresses.AddRange(db.Addresses.AsNoTracking().ToList());
+                sqliteDb.Orders.AddRange(db.Orders.AsNoTracking().ToList());
+                sqliteDb.OrderItems.AddRange(db.OrderItems.AsNoTracking().ToList());
+                sqliteDb.Reviews.AddRange(db.Reviews.AsNoTracking().ToList());
+                sqliteDb.ReviewImages.AddRange(db.ReviewImages.AsNoTracking().ToList());
+                sqliteDb.ReviewHelpfulVotes.AddRange(db.ReviewHelpfulVotes.AsNoTracking().ToList());
+                sqliteDb.Notifications.AddRange(db.Notifications.AsNoTracking().ToList());
+                sqliteDb.SaveChanges();
+                sqliteDb.Database.ExecuteSqlRaw("PRAGMA foreign_keys = ON;");
+                app.Logger.LogInformation("[CLOUD DB EXPORT] Hoàn tất xuất dữ liệu sang App_Data/QL_WebMuaBanNongSan.db!");
+            }
+        }
+        else
+        {
+            db.Database.EnsureCreated();
+        }
     }
     catch (Exception ex)
     {
-        app.Logger.LogError($"[LỖI TẠO BẢNG RefreshTokens/Certificates]: {ex.Message}");
+        app.Logger.LogError($"[LỖI KHỞI TẠO CSDL]: {ex.Message}");
     }
 }
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+// Configure the HTTP request pipeline (cho phép Swagger cả trên Production Cloud).
+app.UseSwagger();
+app.UseSwaggerUI(c =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI(c =>
-    {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Ecc.WebApi v1");
-        c.RoutePrefix = string.Empty; // Mở http://localhost:5023 trực tiếp ra Swagger UI
-    });
-}
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Ecc.WebApi v1");
+    c.RoutePrefix = string.Empty; // Mở trực tiếp ra Swagger UI
+});
 
 // Route trạng thái và điều hướng
 app.MapGet("/api/health", () => Results.Ok(new { status = "Healthy", service = "Ecc.WebApi", port = 5023 }));
 app.MapGet("/swagger", () => Results.Redirect("/"));
+
+// Hỗ trợ Chrome/Edge Private Network Access (cho phép web HTTPS trên Vercel gọi về http://localhost:5023)
+app.Use(async (context, next) =>
+{
+    if (context.Request.Headers.ContainsKey("Access-Control-Request-Private-Network"))
+    {
+        context.Response.Headers["Access-Control-Allow-Private-Network"] = "true";
+    }
+    await next();
+});
 
 // Sử dụng CORS
 app.UseCors("AllowAll");

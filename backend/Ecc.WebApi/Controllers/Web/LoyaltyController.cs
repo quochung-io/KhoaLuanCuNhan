@@ -83,7 +83,10 @@ BEGIN
     );
 END";
 
-        await _context.Database.ExecuteSqlRawAsync(sql);
+        if (_context.Database.IsSqlServer())
+        {
+            await _context.Database.ExecuteSqlRawAsync(sql);
+        }
 
         if (!await _context.MembershipTiers.AnyAsync())
         {
