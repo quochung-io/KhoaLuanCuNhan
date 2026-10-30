@@ -240,7 +240,7 @@ export default function CheckoutPage() {
         setCart(parsedCart);
 
         // Đồng bộ giá mới nhất từ Server để tránh giá cũ (Stale Cart Data)
-        fetch('http://localhost:5023/api/products')
+        fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/products`)
           .then(res => res.json())
           .then((dbProducts: any[]) => {
             if (Array.isArray(dbProducts) && dbProducts.length > 0) {
@@ -290,7 +290,7 @@ export default function CheckoutPage() {
   const fetchUserVouchers = async (userId: number): Promise<Voucher[]> => {
     setLoadingVouchers(true);
     try {
-      const res = await fetch(`http://localhost:5023/api/loyalty/${userId}`);
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/loyalty/${userId}`);
       if (res.ok) {
         const data = await res.json();
         if (data.vouchers && Array.isArray(data.vouchers)) {
@@ -340,7 +340,7 @@ export default function CheckoutPage() {
   const fetchAddresses = async (userId: number) => {
     setIsLoadingAddresses(true);
     try {
-      const res = await fetch(`http://localhost:5023/api/addresses/user/${userId}`);
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/addresses/user/${userId}`);
       if (res.ok) {
         const data: CustomerAddress[] = await res.json();
         setAddresses(data);
@@ -578,7 +578,7 @@ export default function CheckoutPage() {
         isDefault: newIsDefault || addresses.length === 0
       };
 
-      const res = await fetch('http://localhost:5023/api/addresses', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/addresses`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -649,7 +649,7 @@ export default function CheckoutPage() {
         orderItems: orderItems
       };
 
-      const res = await fetch('http://localhost:5023/api/orders', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/orders`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)

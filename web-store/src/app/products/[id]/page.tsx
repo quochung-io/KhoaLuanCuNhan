@@ -500,7 +500,7 @@ export default function ProductDetailPage() {
         params.append('currentUserId', currentUid.toString());
       }
 
-      const res = await fetch(`http://localhost:5023/api/reviews/product/${productId}?${params.toString()}`);
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/reviews/product/${productId}?${params.toString()}`);
       if (res.ok) {
         const data = await res.json();
         if (data) {
@@ -579,7 +579,7 @@ export default function ProductDetailPage() {
 
     setIsSubmittingReply(true);
     try {
-      const res = await fetch(`http://localhost:5023/api/reviews/${reviewId}/reply`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/reviews/${reviewId}/reply`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -614,7 +614,7 @@ export default function ProductDetailPage() {
       return;
     }
     try {
-      const res = await fetch(`http://localhost:5023/api/reviews/${reviewId}/helpful?userId=${currentUid}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/reviews/${reviewId}/helpful?userId=${currentUid}`, {
         method: 'POST'
       });
       const data = await res.json();
@@ -641,7 +641,7 @@ export default function ProductDetailPage() {
     if (!confirm('Bạn có chắc chắn muốn báo cáo đánh giá này là vi phạm/spam?')) return;
     try {
       setReportedClicked(prev => [...prev, reviewId]);
-      await fetch(`http://localhost:5023/api/reviews/${reviewId}/report`, { method: 'POST' });
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/reviews/${reviewId}/report`, { method: 'POST' });
       alert('Cảm ơn bạn! Báo cáo vi phạm đã được gửi đến ban quản trị.');
     } catch (e) {
       console.error(e);
@@ -652,7 +652,7 @@ export default function ProductDetailPage() {
   const handleDeleteReview = async (reviewId: number) => {
     if (!confirm('Bạn có chắc muốn xóa vĩnh viễn nhận xét này?')) return;
     try {
-      const res = await fetch(`http://localhost:5023/api/reviews/${reviewId}`, { method: 'DELETE' });
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/reviews/${reviewId}`, { method: 'DELETE' });
       if (res.ok) {
         await fetchReviewsFromDb(currentPage, filterStar, filterHasImages, sortBy);
         alert('Đã xóa đánh giá thành công.');
@@ -767,7 +767,7 @@ export default function ProductDetailPage() {
     setLoading(true);
 
     // 1. Fetch chi tiết sản phẩm
-    fetch(`http://localhost:5023/api/products/${productId}`)
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/products/${productId}`)
       .then(res => {
         if (!res.ok) throw new Error('Sản phẩm không tồn tại');
         return res.json();
@@ -780,7 +780,7 @@ export default function ProductDetailPage() {
         trackBehavior({ productId: Number(data.productId), actionType: 'VIEW' });
 
         // Fetch sản phẩm liên quan cùng Category
-        fetch('http://localhost:5023/api/products')
+        fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/products`)
           .then(r => r.json())
           .then((all: any[]) => {
             if (all) {
@@ -798,7 +798,7 @@ export default function ProductDetailPage() {
       });
 
     // 2. Fetch lô hàng của sản phẩm
-    fetch(`http://localhost:5023/api/productbatches?productId=${productId}`)
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/productbatches?productId=${productId}`)
       .then(res => res.json())
       .then((batchList: BatchInfo[]) => {
         if (Array.isArray(batchList)) {
@@ -809,7 +809,7 @@ export default function ProductDetailPage() {
 
     // 3. Fetch gợi ý sản phẩm thường mua kèm (Top-6 MBA với Category Diversity)
     setLoadingRecommendations(true);
-    fetch(`http://localhost:5023/api/recommendations/frequently-bought-together/${productId}?limit=6`)
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/recommendations/frequently-bought-together/${productId}?limit=6`)
       .then(res => res.json())
       .then(recList => {
         if (Array.isArray(recList)) {
@@ -2484,7 +2484,7 @@ export default function ProductDetailPage() {
                       try {
                         if (editingReviewId) {
                           // Chế độ sửa đánh giá
-                          const res = await fetch(`http://localhost:5023/api/reviews/${editingReviewId}`, {
+                          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/reviews/${editingReviewId}`, {
                             method: 'PUT',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
@@ -2516,7 +2516,7 @@ export default function ProductDetailPage() {
                             imageUrls: revImages
                           };
 
-                          const res = await fetch('http://localhost:5023/api/reviews', {
+                          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/reviews`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify(payload)

@@ -1,6 +1,6 @@
 'use client';
 import React from 'react';
-import { Product } from '@ecc/shared';
+import { Product } from '@/types/product';
 import { ICONS } from '../icons';
 
 type ProductCardProps = {

@@ -77,7 +77,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:5023/api/auth/login', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: loginEmail.trim(), password: loginPassword })
@@ -132,7 +132,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
     setIsSendingOtp(true);
     try {
-      const res = await fetch('http://localhost:5023/api/auth/send-register-otp', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/auth/send-register-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ recipient, type: regOtpMethod })
@@ -181,7 +181,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:5023/api/auth/register', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -211,7 +211,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       // Auto login
       setTimeout(async () => {
         try {
-          const loginRes = await fetch('http://localhost:5023/api/auth/login', {
+          const loginRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email: regEmail.trim(), password: regPassword })
@@ -247,7 +247,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:5023/api/auth/forgot-password', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/auth/forgot-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: forgotEmail.trim() })
@@ -276,7 +276,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:5023/api/auth/reset-password', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/auth/reset-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

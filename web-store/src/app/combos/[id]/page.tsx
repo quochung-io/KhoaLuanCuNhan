@@ -676,7 +676,7 @@ export default function ComboDetailPage() {
   const fetchComboReviews = async () => {
     setLoadingReviews(true);
     try {
-      const res = await fetch(`http://localhost:5023/api/reviews/product/${comboId}`);
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/reviews/product/${comboId}`);
       if (res.ok) {
         const data = await res.json();
         const list = Array.isArray(data) ? data : (data.reviews || []);
@@ -725,7 +725,7 @@ export default function ComboDetailPage() {
       return;
     }
     try {
-      const res = await fetch(`http://localhost:5023/api/reviews/${reviewId}/helpful?userId=${uId}`, { method: 'POST' });
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/reviews/${reviewId}/helpful?userId=${uId}`, { method: 'POST' });
       const data = await res.json();
       if (res.ok) {
         setRealReviews(prev => prev.map(r => 
@@ -755,7 +755,7 @@ export default function ComboDetailPage() {
 
     setSubmittingReply(true);
     try {
-      const res = await fetch(`http://localhost:5023/api/reviews/${parentReviewId}/reply`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/reviews/${parentReviewId}/reply`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -794,7 +794,7 @@ export default function ComboDetailPage() {
     }
 
     try {
-      const res = await fetch('http://localhost:5023/api/reviews', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/reviews`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

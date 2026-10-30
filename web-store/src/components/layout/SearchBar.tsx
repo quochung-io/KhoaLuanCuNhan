@@ -39,7 +39,7 @@ export function SearchBar({
   const handleSearchChange = (val: string) => {
     setSearchQuery(val);
     if (val.trim().length > 0) {
-      fetch(`http://localhost:5023/api/products/autocomplete?prefix=${encodeURIComponent(val.trim())}`)
+      fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/products/autocomplete?prefix=${encodeURIComponent(val.trim())}`)
         .then(res => res.json())
         .then((data: SuggestionItem[]) => {
           setSuggestions(data || []);

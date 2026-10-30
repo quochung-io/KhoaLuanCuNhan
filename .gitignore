@@ -80,3 +80,7 @@ backend/Ecc.WebApi/wwwroot/uploads/*
 # Playwright MCP & Test Artifacts
 .playwright-mcp/
 *screenshot*.png
+
+# Vercel
+.vercel/
+!.env.example

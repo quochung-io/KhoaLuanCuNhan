@@ -461,7 +461,7 @@ function TraceabilityInner() {
   // Fetch danh sách lô hàng thật từ API Backend
   useEffect(() => {
     setLoading(true);
-    fetch('http://localhost:5023/api/productbatches')
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/productbatches`)
       .then(res => res.json())
       .then((data: DbBatch[]) => {
         if (Array.isArray(data) && data.length > 0) {

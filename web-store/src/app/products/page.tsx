@@ -153,7 +153,7 @@ function AllProductsInner() {
     if (quickViewProduct) {
       setLoadingRecommendations(true);
       // Ghi nhận hành vi QUICK_VIEW (thu thập hành vi người dùng)
-      fetch('http://localhost:5023/api/recommendations/track', {
+      fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/recommendations/track`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -164,7 +164,7 @@ function AllProductsInner() {
       }).catch(() => {});
 
       // Kiểm tra tồn kho lô hàng thực tế của món đang xem
-      fetch(`http://localhost:5023/api/productbatches?productId=${quickViewProduct.id}`)
+      fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/productbatches?productId=${quickViewProduct.id}`)
         .then(res => res.json())
         .then((batchList: any[]) => {
           if (Array.isArray(batchList)) {
@@ -191,7 +191,7 @@ function AllProductsInner() {
         });
 
       // Lấy danh sách Top-6 nông sản thường mua cùng từ mô-đun AI Recommendation
-      fetch(`http://localhost:5023/api/recommendations/frequently-bought-together/${quickViewProduct.id}?limit=6`)
+      fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/recommendations/frequently-bought-together/${quickViewProduct.id}?limit=6`)
         .then(res => res.json())
         .then(data => {
           if (Array.isArray(data)) {
@@ -252,7 +252,7 @@ function AllProductsInner() {
     addToCart(p, 1);
 
     // Ghi nhận sự kiện click vào gợi ý (phục vụ tính CTR & Conversion Rate trên Dashboard)
-    fetch('http://localhost:5023/api/recommendations/track', {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/recommendations/track`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -272,7 +272,7 @@ function AllProductsInner() {
     setQuickViewHistory(prev => [...prev, quickViewProduct]);
 
     // Ghi nhận sự kiện click vào gợi ý
-    fetch('http://localhost:5023/api/recommendations/track', {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/recommendations/track`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -293,7 +293,7 @@ function AllProductsInner() {
 
     // Nạp chi tiết từ API nếu cần
     try {
-      const res = await fetch(`http://localhost:5023/api/products/${item.productId}`);
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/products/${item.productId}`);
       if (res.ok) {
         const data = await res.json();
         const newP: Product = {
@@ -389,7 +389,7 @@ function AllProductsInner() {
       addToCart(p, 1);
 
       // Ghi nhận sự kiện click
-      fetch('http://localhost:5023/api/recommendations/track', {
+      fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/recommendations/track`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -414,7 +414,7 @@ function AllProductsInner() {
   // Gọi API lấy danh sách sản phẩm
   const fetchProducts = (searchVal = searchQuery, minP = minPrice, maxP = maxPrice) => {
     setLoading(true);
-    let url = 'http://localhost:5023/api/products';
+    let url = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/products`;
     const params: string[] = [];
     if (searchVal) params.push(`search=${encodeURIComponent(searchVal)}`);
     if (minP !== '') params.push(`minPrice=${minP}`);
@@ -483,7 +483,7 @@ function AllProductsInner() {
   const handleSearchChange = (val: string) => {
     setSearchQuery(val);
     if (val.trim().length > 0) {
-      fetch(`http://localhost:5023/api/products/autocomplete?prefix=${encodeURIComponent(val)}`)
+      fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/products/autocomplete?prefix=${encodeURIComponent(val)}`)
         .then(res => res.json())
         .then((data: SuggestionItem[]) => {
           setSuggestions(data || []);

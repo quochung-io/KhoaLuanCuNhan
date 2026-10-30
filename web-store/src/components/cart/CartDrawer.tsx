@@ -1,6 +1,6 @@
 'use client';
 import React from 'react';
-import { CartItem } from '@ecc/shared';
+import { CartItem } from '@/types/product';
 import { ICONS } from '../icons';
 
 type CartDrawerProps = {

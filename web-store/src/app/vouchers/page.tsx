@@ -38,7 +38,7 @@ export default function VouchersPage() {
     setLoading(true);
     try {
       // Ưu tiên gọi API vouchers/promotions từ backend
-      const res = await fetch('http://localhost:5023/api/vouchers');
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/vouchers`);
       if (res.ok) {
         const data = await res.json();
         const list = Array.isArray(data) ? data : (data.items || []);

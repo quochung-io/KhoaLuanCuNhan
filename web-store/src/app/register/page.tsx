@@ -132,7 +132,7 @@ export default function RegisterPage() {
   const handleSearchChange = (val: string) => {
     setSearchQuery(val);
     if (val.trim().length > 0) {
-      fetch(`http://localhost:5023/api/products/autocomplete?prefix=${encodeURIComponent(val)}`)
+      fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/products/autocomplete?prefix=${encodeURIComponent(val)}`)
         .then(res => res.json())
         .then((data: SuggestionItem[]) => {
           setSuggestions(data || []);
@@ -235,7 +235,7 @@ export default function RegisterPage() {
         certNumber: coopCertNumber.trim() || 'VG-VN-DL-2026'
       };
 
-      const res = await fetch('http://localhost:5023/api/users/supplier-register', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/users/supplier-register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -304,7 +304,7 @@ export default function RegisterPage() {
 
     setLoading(true);
     try {
-      const checkRes = await fetch('http://localhost:5023/api/auth/check-unique', {
+      const checkRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/auth/check-unique`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ fullName: fullName.trim(), email: email.trim(), phone: phone.trim() })
@@ -331,7 +331,7 @@ export default function RegisterPage() {
     setOtpModalMsg(null);
     try {
       const recipient = otpMethod === 'EMAIL' ? email.trim() : phone.trim();
-      const res = await fetch('http://localhost:5023/api/auth/send-register-otp', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/auth/send-register-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ recipient, type: otpMethod })
@@ -376,7 +376,7 @@ export default function RegisterPage() {
     setLoading(true);
     setOtpModalMsg(null);
     try {
-      const res = await fetch('http://localhost:5023/api/auth/register', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

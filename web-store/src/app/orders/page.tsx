@@ -693,7 +693,7 @@ export default function CustomerOrdersPage() {
   const loadOrders = async (userId: number) => {
     setLoading(true);
     try {
-      const res = await fetch(`http://localhost:5023/api/orders/customer/${userId}`);
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/orders/customer/${userId}`);
       if (!res.ok) {
         throw new Error('Không thể tải lịch sử đơn hàng.');
       }
@@ -765,7 +765,7 @@ export default function CustomerOrdersPage() {
 
     try {
       const custId = currentUser?.userId ? `?customerId=${currentUser.userId}` : '';
-      const res = await fetch(`http://localhost:5023/api/orders/${targetOrder.orderId}/cancel${custId}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/orders/${targetOrder.orderId}/cancel${custId}`, {
         method: 'POST'
       });
 
@@ -854,7 +854,7 @@ export default function CustomerOrdersPage() {
       const localClaims = JSON.parse(localStorage.getItem('user_fresh_claims') || '[]');
       setUserClaims(localClaims);
       // Đồng bộ từ Backend API
-      fetch(`http://localhost:5023/api/return-tickets/customer/${parsedUser.userId}`)
+      fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/return-tickets/customer/${parsedUser.userId}`)
         .then(res => res.ok ? res.json() : [])
         .then(apiTickets => {
           if (Array.isArray(apiTickets) && apiTickets.length > 0) {
@@ -870,7 +870,7 @@ export default function CustomerOrdersPage() {
     } catch (e) { }
 
     // Fetch số điểm thực
-    fetch(`http://localhost:5023/api/loyalty/${parsedUser.userId}`)
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/loyalty/${parsedUser.userId}`)
       .then(res => res.ok ? res.json() : null)
       .then(data => {
         if (data && data.currentPoints !== undefined) {
@@ -889,7 +889,7 @@ export default function CustomerOrdersPage() {
     const syncInterval = setInterval(() => {
       if (parsedUser?.userId) {
         // 1. Đồng bộ đơn hàng
-        fetch(`http://localhost:5023/api/orders/customer/${parsedUser.userId}`)
+        fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/orders/customer/${parsedUser.userId}`)
           .then(res => res.ok ? res.json() : null)
           .then(data => {
             if (Array.isArray(data)) {
@@ -904,7 +904,7 @@ export default function CustomerOrdersPage() {
           .catch(() => { });
 
         // 2. Đồng bộ khiếu nại / thẩm định từ Admin
-        fetch(`http://localhost:5023/api/return-tickets/customer/${parsedUser.userId}`)
+        fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/return-tickets/customer/${parsedUser.userId}`)
           .then(res => res.ok ? res.json() : null)
           .then(apiTickets => {
             if (Array.isArray(apiTickets)) {
@@ -915,7 +915,7 @@ export default function CustomerOrdersPage() {
           .catch(() => { });
 
         // 3. Đồng bộ ví điểm thưởng / bồi hoàn
-        fetch(`http://localhost:5023/api/loyalty/${parsedUser.userId}`)
+        fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/loyalty/${parsedUser.userId}`)
           .then(res => res.ok ? res.json() : null)
           .then(data => {
             if (data && data.currentPoints !== undefined) {

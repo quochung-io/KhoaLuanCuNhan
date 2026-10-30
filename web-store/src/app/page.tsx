@@ -219,7 +219,7 @@ export default function LanhLandingPage() {
     const sid = getSessionId();
     const uid = getCurrentUserId();
     setLoadingForYou(true);
-    fetch(`http://localhost:5023/api/recommendations/for-you?userId=${uid || ''}&sessionId=${sid || ''}&limit=6`)
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/recommendations/for-you?userId=${uid || ''}&sessionId=${sid || ''}&limit=6`)
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data) && data.length > 0) {
@@ -290,8 +290,8 @@ export default function LanhLandingPage() {
     setLoadingReviews(true);
     const uId = currentUser?.id || currentUser?.userId;
     const url = uId
-      ? `http://localhost:5023/api/reviews/featured?currentUserId=${uId}`
-      : 'http://localhost:5023/api/reviews/featured';
+      ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/reviews/featured?currentUserId=${uId}`
+      : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/reviews/featured`;
 
     fetch(url)
       .then(res => res.json())
@@ -313,7 +313,7 @@ export default function LanhLandingPage() {
       return;
     }
     try {
-      const res = await fetch(`http://localhost:5023/api/reviews/${reviewId}/helpful?userId=${uId}`, { method: 'POST' });
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/reviews/${reviewId}/helpful?userId=${uId}`, { method: 'POST' });
       const data = await res.json();
       if (res.ok) {
         setReviewsList(prev => prev.map(r =>
@@ -344,7 +344,7 @@ export default function LanhLandingPage() {
 
     setSubmittingReply(true);
     try {
-      const res = await fetch(`http://localhost:5023/api/reviews/${parentReviewId}/reply`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/reviews/${parentReviewId}/reply`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -434,7 +434,7 @@ export default function LanhLandingPage() {
     if (quickViewProduct) {
       setLoadingRecommendations(true);
       // Ghi nhận hành vi người dùng (QUICK_VIEW)
-      fetch('http://localhost:5023/api/recommendations/track', {
+      fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/recommendations/track`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -445,7 +445,7 @@ export default function LanhLandingPage() {
       }).catch(() => { });
 
       // Kiểm tra tồn kho lô hàng thực tế của món đang xem
-      fetch(`http://localhost:5023/api/productbatches?productId=${quickViewProduct.id}`)
+      fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/productbatches?productId=${quickViewProduct.id}`)
         .then(res => res.json())
         .then((batchList: any[]) => {
           if (Array.isArray(batchList)) {
@@ -472,7 +472,7 @@ export default function LanhLandingPage() {
         });
 
       // Lấy danh sách Top-6 nông sản thường mua cùng
-      fetch(`http://localhost:5023/api/recommendations/frequently-bought-together/${quickViewProduct.id}?limit=6`)
+      fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/recommendations/frequently-bought-together/${quickViewProduct.id}?limit=6`)
         .then(res => res.json())
         .then(data => {
           if (Array.isArray(data)) {
@@ -533,7 +533,7 @@ export default function LanhLandingPage() {
     addToCart(p, 1);
 
     // Ghi nhận sự kiện click vào gợi ý
-    fetch('http://localhost:5023/api/recommendations/track', {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/recommendations/track`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -553,7 +553,7 @@ export default function LanhLandingPage() {
     setQuickViewHistory(prev => [...prev, quickViewProduct]);
 
     // Ghi nhận sự kiện click vào gợi ý
-    fetch('http://localhost:5023/api/recommendations/track', {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/recommendations/track`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -574,7 +574,7 @@ export default function LanhLandingPage() {
 
     // Nạp chi tiết từ API nếu cần
     try {
-      const res = await fetch(`http://localhost:5023/api/products/${item.productId}`);
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/products/${item.productId}`);
       if (res.ok) {
         const data = await res.json();
         const newP: Product = {
@@ -669,7 +669,7 @@ export default function LanhLandingPage() {
       };
       addToCart(p, 1);
 
-      fetch('http://localhost:5023/api/recommendations/track', {
+      fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/recommendations/track`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -693,7 +693,7 @@ export default function LanhLandingPage() {
 
   // Lấy dữ liệu sản phẩm từ backend
   const fetchProducts = (searchVal = searchQuery) => {
-    let url = 'http://localhost:5023/api/products';
+    let url = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/products`;
     if (searchVal) url += `?search=${encodeURIComponent(searchVal)}`;
 
     fetch(url)
@@ -785,7 +785,7 @@ export default function LanhLandingPage() {
   const handleSearchChange = (val: string) => {
     setSearchQuery(val);
     if (val.trim().length > 0) {
-      fetch(`http://localhost:5023/api/products/autocomplete?prefix=${encodeURIComponent(val)}`)
+      fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/products/autocomplete?prefix=${encodeURIComponent(val)}`)
         .then(res => res.json())
         .then((data: SuggestionItem[]) => {
           setSuggestions(data || []);
@@ -888,7 +888,7 @@ export default function LanhLandingPage() {
 
     setSubmittingReview(true);
     try {
-      const res = await fetch('http://localhost:5023/api/reviews', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/reviews`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

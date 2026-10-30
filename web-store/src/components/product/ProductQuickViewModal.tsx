@@ -53,7 +53,7 @@ export const ProductQuickViewModal: React.FC<ProductQuickViewModalProps> = ({
 
     setLoading(true);
     // 1. Fetch chi tiết sản phẩm
-    fetch(`http://localhost:5023/api/products/${productId}`)
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/products/${productId}`)
       .then(res => {
         if (!res.ok) throw new Error('Không thể tải thông tin sản phẩm');
         return res.json();
@@ -75,13 +75,13 @@ export const ProductQuickViewModal: React.FC<ProductQuickViewModalProps> = ({
       });
 
     // 3. Fetch nông sản gợi ý liên quan (chuẩn Mobile App)
-    fetch(`http://localhost:5023/api/ai/cars-recommendations?productId=${productId}&limit=4`)
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/ai/cars-recommendations?productId=${productId}&limit=4`)
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data) && data.length > 0) {
           setRelatedProducts(data);
         } else {
-          fetch('http://localhost:5023/api/products?pageSize=6')
+          fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/products?pageSize=6`)
             .then(res => res.json())
             .then(pData => {
               const list = pData.items || (Array.isArray(pData) ? pData : []);
@@ -91,7 +91,7 @@ export const ProductQuickViewModal: React.FC<ProductQuickViewModalProps> = ({
         }
       })
       .catch(() => {
-        fetch('http://localhost:5023/api/products?pageSize=6')
+        fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/products?pageSize=6`)
           .then(res => res.json())
           .then(pData => {
             const list = pData.items || (Array.isArray(pData) ? pData : []);
@@ -101,7 +101,7 @@ export const ProductQuickViewModal: React.FC<ProductQuickViewModalProps> = ({
       });
 
     // 2. Fetch lô hàng
-    fetch(`http://localhost:5023/api/productbatches?productId=${productId}`)
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/productbatches?productId=${productId}`)
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data)) {

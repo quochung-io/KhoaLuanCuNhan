@@ -92,7 +92,7 @@ export default function LoginPage() {
   const handleSearchChange = (val: string) => {
     setSearchQuery(val);
     if (val.trim().length > 0) {
-      fetch(`http://localhost:5023/api/products/autocomplete?prefix=${encodeURIComponent(val)}`)
+      fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/products/autocomplete?prefix=${encodeURIComponent(val)}`)
         .then(res => res.json())
         .then((data: SuggestionItem[]) => {
           setSuggestions(data || []);
@@ -152,7 +152,7 @@ export default function LoginPage() {
 
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:5023/api/auth/login', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: email.trim(), password })

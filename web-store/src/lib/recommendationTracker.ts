@@ -33,7 +33,7 @@ export function trackBehavior(params: {
   const sessionId = getSessionId();
   const userId = getCurrentUserId();
 
-  fetch('http://localhost:5023/api/recommendations/track', {
+  fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/recommendations/track`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({

@@ -228,7 +228,7 @@ export default function ProfilePage() {
   const handleSearchChange = (val: string) => {
     setSearchQuery(val);
     if (val.trim().length > 0) {
-      fetch(`http://localhost:5023/api/products/autocomplete?prefix=${encodeURIComponent(val)}`)
+      fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/products/autocomplete?prefix=${encodeURIComponent(val)}`)
         .then(res => res.json())
         .then((data: SuggestionItem[]) => {
           setSuggestions(data || []);
@@ -278,7 +278,7 @@ export default function ProfilePage() {
   const fetchAddresses = async (userId: number) => {
     setAddressLoading(true);
     try {
-      const res = await fetch(`http://localhost:5023/api/addresses/user/${userId}`);
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/addresses/user/${userId}`);
       if (res.ok) {
         const data: CustomerAddress[] = await res.json();
         setAddresses(data || []);
@@ -293,7 +293,7 @@ export default function ProfilePage() {
   const fetchOrders = async (userId: number) => {
     setOrdersLoading(true);
     try {
-      const res = await fetch(`http://localhost:5023/api/orders/customer/${userId}`);
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/orders/customer/${userId}`);
       if (res.ok) {
         const data = await res.json();
         setOrders(data || []);
@@ -485,7 +485,7 @@ export default function ProfilePage() {
 
   const fetchLoyalty = async (userId: number) => {
     try {
-      const res = await fetch(`http://localhost:5023/api/loyalty/${userId}`);
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/loyalty/${userId}`);
       if (res.ok) {
         const data = await res.json();
         setLoyaltyPoints(data.currentPoints ?? 0);
@@ -534,7 +534,7 @@ export default function ProfilePage() {
         minOrderAmount
       };
 
-      const res = await fetch('http://localhost:5023/api/loyalty/redeem', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/loyalty/redeem`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -613,7 +613,7 @@ export default function ProfilePage() {
 
     setChangePassLoading(true);
     try {
-      const res = await fetch(`http://localhost:5023/api/users/${user.userId}/change-password`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/users/${user.userId}/change-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ oldPassword: oldPassword.trim(), newPassword: newPassword.trim() })
@@ -644,7 +644,7 @@ export default function ProfilePage() {
     setEmailOtpError('');
     setEmailOtpMsg('');
     try {
-      const res = await fetch(`http://localhost:5023/api/users/${user.userId}/send-email-otp`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/users/${user.userId}/send-email-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ newEmail: email.trim().toLowerCase() })
@@ -674,7 +674,7 @@ export default function ProfilePage() {
     setEmailOtpLoading(true);
     setEmailOtpError('');
     try {
-      const res = await fetch(`http://localhost:5023/api/users/${user.userId}/verify-email-otp`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/users/${user.userId}/verify-email-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ newEmail: email.trim().toLowerCase(), otpCode: emailOtpCode.trim() })
@@ -709,7 +709,7 @@ export default function ProfilePage() {
       dateOfBirth: dob || null
     };
 
-    const res = await fetch(`http://localhost:5023/api/users/${user.userId}`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/users/${user.userId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -756,7 +756,7 @@ export default function ProfilePage() {
         payload.password = password.trim();
       }
 
-      const res = await fetch(`http://localhost:5023/api/users/${user.userId}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/users/${user.userId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -925,7 +925,7 @@ export default function ProfilePage() {
   // Thiết lập địa chỉ mặc định
   const handleSetDefault = async (addressId: number) => {
     try {
-      const res = await fetch(`http://localhost:5023/api/addresses/${addressId}/set-default`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/addresses/${addressId}/set-default`, {
         method: 'PUT'
       });
       if (!res.ok) {
@@ -945,7 +945,7 @@ export default function ProfilePage() {
     if (!confirm('Bạn có chắc chắn muốn xóa địa chỉ nhận hàng này?')) return;
 
     try {
-      const res = await fetch(`http://localhost:5023/api/addresses/${addressId}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/addresses/${addressId}`, {
         method: 'DELETE'
       });
       if (!res.ok) {
@@ -986,13 +986,13 @@ export default function ProfilePage() {
 
       let res;
       if (editingAddressId) {
-        res = await fetch(`http://localhost:5023/api/addresses/${editingAddressId}`, {
+        res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/addresses/${editingAddressId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         });
       } else {
-        res = await fetch('http://localhost:5023/api/addresses', {
+        res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/addresses`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)

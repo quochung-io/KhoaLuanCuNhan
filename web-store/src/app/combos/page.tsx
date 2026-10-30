@@ -161,7 +161,7 @@ export default function CombosPage() {
   const [dynamicPlans, setDynamicPlans] = useState<Record<string, ComboPlan[]>>(subPlans);
 
   useEffect(() => {
-    fetch('http://localhost:5023/api/products?categoryId=5')
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/products?categoryId=5`)
       .then(res => res.json())
       .then((products: any[]) => {
         if (!Array.isArray(products)) return;
