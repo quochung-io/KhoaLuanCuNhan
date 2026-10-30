@@ -320,22 +320,22 @@ function generateBatchTimeline(batch: DbBatch) {
     ? hDate.toLocaleDateString('vi-VN') + ' (05:30 AM)'
     : '20/08/2026 (05:30 AM)';
 
-  // Ngày gieo/chuẩn bị (tính lùi theo chu kỳ sinh học thực tế của loại cây)
+  // Ngày gieo hạt
   const sowDate = new Date(hDate.getTime() - crop.cycleDays * 24 * 60 * 60 * 1000);
   const sowStr = !isNaN(sowDate.getTime()) ? sowDate.toLocaleDateString('vi-VN') : '05/07/2026';
 
-  // Khoảng thời gian chăm sóc sinh học
+  // Chăm sóc VietGAP
   const careStart = new Date(sowDate.getTime() + 4 * 24 * 60 * 60 * 1000);
   const careEnd = new Date(hDate.getTime() - 2 * 24 * 60 * 60 * 1000);
   const careStr = (!isNaN(careStart.getTime()) && !isNaN(careEnd.getTime()))
     ? `${careStart.toLocaleDateString('vi-VN')} – ${careEnd.toLocaleDateString('vi-VN')}`
     : '10/07 – 18/08/2026';
 
-  // Hạn sử dụng
+  // Hạn dùng
   const expDate = new Date(batch.expiryDate);
   const expStr = !isNaN(expDate.getTime()) ? expDate.toLocaleDateString('vi-VN') : '28/08/2026';
 
-  // Ngày nhập kho
+  // Ngày nhập kho và giao hàng
   const recDate = new Date(batch.receivedDate);
   const recStr = !isNaN(recDate.getTime())
     ? recDate.toLocaleDateString('vi-VN') + ' (14:00 PM)'
@@ -344,46 +344,46 @@ function generateBatchTimeline(batch: DbBatch) {
   return [
     {
       stepNumber: '01',
-      stepTitle: crop.seedStageName,
+      stepTitle: 'Gieo hạt & Khởi tạo giá thể hữu cơ',
       date: sowStr,
       stage: 'Nguồn giống & Khởi tạo giá thể',
       location: farm.farmName,
       inspector: farm.inspectorSeed,
       recordNo: `HỒ SƠ GIỐNG: #SEED-${batch.batchCode}`,
-      desc: crop.seedDesc(farm),
+      desc: `Tuyển chọn hạt giống thuần chủng F1 đạt chuẩn tỷ lệ nảy mầm >95%. Giá thể đất đồi khử trùng nhiệt kết hợp phân trùn quế vi sinh tại ${farm.farmName}.`,
       iotParams: crop.seedIot
     },
     {
       stepNumber: '02',
-      stepTitle: crop.careStageName,
+      stepTitle: 'Chăm sóc VietGAP & Giám sát IoT tự động',
       date: careStr,
-      stage: 'Canh tác sinh thái & Giám sát IoT',
+      stage: 'Canh tác sinh thái VietGAP',
       location: `${farm.location}`,
       inspector: farm.inspectorCare,
       recordNo: `NHẬT KÝ CANH TÁC: #LOG-${batch.batchCode}`,
-      desc: crop.careDesc(farm),
+      desc: `Ứng dụng quy trình canh tác sinh thái đạt chuẩn VietGAP/GlobalGAP: tưới nhỏ giọt công nghệ Israel, cảm biến vi khí hậu theo dõi độ ẩm đất và nhiệt độ tự động, nhật ký cách ly sinh học nghiêm ngặt.`,
       iotParams: crop.careIot
     },
     {
       stepNumber: '03',
-      stepTitle: 'Thu hoạch sương sớm & Phân loại quả chuẩn',
+      stepTitle: 'Thu hoạch hái sáng (05:00 - 06:30 AM)',
       date: harvestStr,
       stage: 'Thu hái thủ công tại vườn',
       location: `Trạm thu hái tại nguồn - ${farm.farmName}`,
       inspector: farm.inspectorHarvest,
       recordNo: `BIÊN BẢN THU HOẠCH: #HRV-${batch.batchCode}`,
-      desc: crop.harvestDesc(batch),
+      desc: `Thu hái thủ công lúc sương sớm khi nông sản đạt độ ngọt đậm đà và hàm lượng vitamin cao nhất. Lô hàng đạt ${batch.initialQuantity} ${batch.unit}, loại bỏ 100% quả dập xước.`,
       iotParams: crop.harvestIot(batch)
     },
     {
       stepNumber: '04',
-      stepTitle: `Kiểm nghiệm chất lượng an toàn thực phẩm`,
+      stepTitle: 'Kiểm định chất lượng phòng Lab ISO/IEC 17025',
       date: `${hDate.toLocaleDateString('vi-VN')} (08:30 AM)`,
-      stage: 'Xét nghiệm độc lập ISO/IEC 17025',
-      location: 'Phòng Phân Tích & Kiểm Định Nông Sản Độc Lập ISO/IEC 17025',
+      stage: 'Xét nghiệm độc lập an toàn thực phẩm',
+      location: 'Trung Tâm Phân Tích & Kiểm Định Nông Sản Độc Lập ISO/IEC 17025',
       inspector: 'KTV. Đỗ Thu Trang (Chuyên viên vi sinh & hóa nghiệm)',
       recordNo: `PHIẾU KIỂM ĐỊNH: #QC-${batch.batchCode}`,
-      desc: `Lấy mẫu ngẫu nhiên từ chính lô hàng này để xét nghiệm toàn diện các chỉ tiêu an toàn: kiểm tra dư lượng hoạt chất bảo vệ thực vật, kim loại nặng và vi sinh. Tất cả chỉ số đều đạt mức an toàn tuyệt đối theo chuẩn ${farm.standard}.`,
+      desc: `Lấy mẫu ngẫu nhiên từ lô hàng để xét nghiệm toàn diện: Dư lượng thuốc BVTV = 0.00 ppm (24 hoạt chất không phát hiện), hàm lượng nitrat an toàn, vi khuẩn E.coli & Salmonella âm tính theo chuẩn ${farm.standard}.`,
       iotParams: [
         { label: 'Dư lượng BVTV', val: '0.00 ppm (Đạt)' },
         { label: 'Kim loại nặng', val: 'Âm tính' },
@@ -392,32 +392,17 @@ function generateBatchTimeline(batch: DbBatch) {
     },
     {
       stepNumber: '05',
-      stepTitle: `Vận chuyển chuỗi lạnh FreshLock (${crop.coldChainTemp.split(' ')[0]})`,
-      date: `${hDate.toLocaleDateString('vi-VN')} (10:30 AM)`,
-      stage: 'Logistics lạnh kiểm soát GPS',
-      location: 'Đoàn xe lạnh chuyên dụng LÀNH Express (Biển số: 49C-184.22)',
-      inspector: 'Tài xế vận hành: Phạm Quốc Hưng',
-      recordNo: `VẬN ĐƠN XE LẠNH: #SHIP-${batch.batchCode}`,
-      desc: `Nông sản được đóng gói bảo quản và vận chuyển bằng xe lạnh chuyên dụng ở nhiệt độ ${crop.coldChainTemp}. Cảm biến IoT trên xe kiểm soát nhiệt độ liên tục và truyền dữ liệu GPS Live về máy chủ mỗi 5 phút.`,
-      iotParams: [
-        { label: 'Nhiệt độ thùng xe', val: crop.coldChainTemp.split(' ')[0] },
-        { label: 'Vận tốc trung bình', val: '58 km/h' },
-        { label: 'Trạng thái GPS', val: 'Đang kết nối Live' }
-      ]
-    },
-    {
-      stepNumber: '06',
-      stepTitle: 'Nhập tổng kho & Đến bàn ăn gia đình',
+      stepTitle: 'Bảo quản lạnh giao đến tay (FreshLock 4°C - 8°C)',
       date: recStr,
-      stage: 'Giao tận tay người tiêu dùng',
-      location: 'Tổng kho phân phối trung tâm TP.HCM / Hà Nội',
+      stage: 'Logistics lạnh & Giao hỏa tốc 2 giờ',
+      location: 'Xe lạnh chuyên dụng LÀNH Express -> Bàn ăn gia đình',
       inspector: 'Bộ phận điều phối xuất kho LÀNH',
       recordNo: `MÃ QR TRÊN BAO BÌ: ${batch.batchCode}`,
-      desc: `Hàng về kho trung tâm được điều phối xuất kho theo quy trình kiểm soát hạn dùng nghiêm ngặt. Giao nhanh 2 giờ đến tận gian bếp người dùng, khuyên dùng trước ngày ${expStr} để đảm bảo vị ngon ngọt trọn vẹn nhất.`,
+      desc: `Đóng thùng xốp đá khô FreshLock giữ lạnh ổn định 4°C - 8°C, xe lạnh chuyên dụng kiểm soát GPS liên tục, giao hỏa tốc 2 giờ đến tận gian bếp người dùng. Hạn dùng tốt nhất: ${expStr}.`,
       iotParams: [
-        { label: 'Hạn dùng tốt nhất', val: expStr },
+        { label: 'Nhiệt độ bảo quản', val: '4°C - 8°C' },
         { label: 'Thời gian giao', val: 'Hỏa tốc 2 giờ' },
-        { label: 'Bao bì bảo quản', val: 'Túi FreshLock 100%' }
+        { label: 'Bao bì bảo quản', val: 'Thùng xốp đá khô' }
       ]
     }
   ];
@@ -579,10 +564,7 @@ function TraceabilityInner() {
               <span className="topbar-link">Hotline: <strong>1900 8899</strong> (7:00 - 21:00)</span>
             </div>
             <div className="topbar-right">
-              <a href="http://localhost:5174" target="_blank" rel="noreferrer" className="topbar-link">
-                Kênh Đối Tác / HTX
-              </a>
-              <span style={{ opacity: 0.4 }}>|</span>
+              
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <button className="icon-btn" onClick={toggleTheme} style={{ width: '24px', height: '24px' }} title="Sáng / Tối">
                   {theme === 'light' ? 'Tối' : 'Sáng'}
@@ -887,7 +869,7 @@ function TraceabilityInner() {
             boxShadow: '0 2px 10px rgba(0,0,0,0.03)'
           }}>
             <h3 style={{ margin: '0 0 18px 0', fontSize: '15px', color: 'var(--ink-soft)', textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              6 Mốc Nhật Ký Hành Trình Thuộc Mã Lô: <strong style={{ color: 'var(--green-900)' }}>{selectedBatch.batchCode}</strong>
+              5 Mốc Nhật Ký Canh Tác Tinh Gọn Thuộc Mã Lô: <strong style={{ color: 'var(--green-900)' }}>{selectedBatch.batchCode}</strong>
             </h3>
 
             <div style={{

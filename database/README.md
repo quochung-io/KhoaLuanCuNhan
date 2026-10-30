@@ -6,12 +6,12 @@ Module chứa các script khởi tạo cơ sở dữ liệu, dữ liệu mẫu t
 
 ## 📁 Danh sách tệp & Scripts
 
-### 🌟 Bản sao lưu đầy đủ (Khuyên dùng)
+### 🌟 Bản sao lưu duy nhất & hoàn chỉnh nhất (Single Source of Truth)
 - **`QL_WebMuaBanNongSan_Full.sql`**:
-  - **Bản sao lưu hoàn chỉnh nhất (Full Schema 31 bảng + 131 Nông sản + 520 Hình ảnh + Seed Data thực tế)**.
-  - Bao gồm: DDL 31 bảng chuẩn, các cột nghiệp vụ mới (`AddressType`, `ApprovedBy`, `ApprovedAt`, `RejectReason`), tài khoản chuẩn BCrypt (`Demo@123`), 31 đơn hàng, 68 chi tiết đơn, điểm thưởng (`UserLoyalties`, `PointTransactions`, `MembershipTiers`), ví voucher (`UserVouchers`), và trigger nghiệp vụ lô hàng.
-  - Tự động tạo CSDL `QL_WebMuaBanNongSan` nếu chưa có và tự động xử lý `IDENTITY_INSERT` cũng như vô hiệu hóa/bật lại ràng buộc khóa ngoại an toàn.
-  - Mã hóa: UTF-8 with BOM chuẩn hiển thị tiếng Việt.
+  - **Bản CSDL hoàn chỉnh cuối cùng (Full Schema 32 bảng chuẩn + 131 Nông sản + 520 Hình ảnh + Seed Data thực tế)**.
+  - Bao gồm: DDL 32 bảng chuẩn (bao gồm `Certificates`, `RefreshTokens`, `UserLoyalties`, `PointTransactions`, `MembershipTiers`, `UserVouchers`, `ProductBatches`, `Farms`...), các cột nghiệp vụ mới (`AddressType`, `ApprovedBy`, `ApprovedAt`, `RejectReason`), tài khoản chuẩn BCrypt (`Demo@123`), 31 đơn hàng, 68 chi tiết đơn, giấy chứng nhận VietGAP/GlobalGAP thực tế và trigger kiểm tra nghiệp vụ lô hàng.
+  - Tự động tạo CSDL `QL_WebMuaBanNongSan` nếu chưa có, tự động xử lý `IDENTITY_INSERT` cũng như vô hiệu hóa/bật lại ràng buộc khóa ngoại an toàn.
+  - Mã hóa: UTF-8 with BOM chuẩn tiếng Việt có dấu.
 
 ---
 

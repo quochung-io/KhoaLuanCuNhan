@@ -125,6 +125,7 @@ export default function CheckoutPage() {
   const [customVoucherCode, setCustomVoucherCode] = useState('');
   const [voucherError, setVoucherError] = useState('');
   const [voucherSuccessMsg, setVoucherSuccessMsg] = useState('');
+  const [systemVouchers, setSystemVouchers] = useState<Voucher[]>(SYSTEM_VOUCHERS);
   const [walletVouchers, setWalletVouchers] = useState<Voucher[]>([]);
   const [loadingVouchers, setLoadingVouchers] = useState(false);
   const [voucherModalTab, setVoucherModalTab] = useState<'wallet' | 'all'>('wallet');
@@ -699,10 +700,6 @@ export default function CheckoutPage() {
               <span className="topbar-link">Hotline: <strong>1900 8899</strong> (7:00 - 21:00)</span>
             </div>
             <div className="topbar-right">
-              <a href="http://localhost:5174" target="_blank" rel="noreferrer" className="topbar-link">
-                Kênh Đối Tác / HTX
-              </a>
-              <span style={{ opacity: 0.4 }}>|</span>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <button className="icon-btn" onClick={toggleTheme} style={{ width: '24px', height: '24px' }} title="Sáng / Tối">
                   {theme === "light" ? "Tối" : "Sáng"}
@@ -2025,7 +2022,7 @@ export default function CheckoutPage() {
               {/* TAB 2: MÃ ƯU ĐÃI TOÀN SÀN */}
               {voucherModalTab === 'all' && (
                 <>
-                  {SYSTEM_VOUCHERS.map(v => {
+                  {systemVouchers.map(v => {
                     const isEligible = subtotal >= v.minOrder;
                     const isSelected = selectedVoucher?.code === v.code;
 
@@ -2237,10 +2234,10 @@ export default function CheckoutPage() {
                   marginBottom: '16px'
                 }}>
                   <div style={{ color: '#991b1b', fontWeight: '600', fontSize: '14px', marginBottom: '6px' }}>
-                    Mã thanh toán đã hết thời gian (10 phút)
+                    Mã QR đã hết hạn thanh toán (15 phút) - Đơn hàng đã tự động hủy
                   </div>
                   <p style={{ color: '#64748b', fontSize: '12.5px', margin: '0 0 14px 0', lineHeight: 1.5 }}>
-                    Đơn hàng của bạn vẫn được lưu. Bạn có thể tạo mã mới để tiếp tục chuyển tiền.
+                    Hệ thống đã tự động hủy đơn theo chính sách kiểm soát tồn kho thời gian thực. Quý khách vui lòng đặt lại đơn mới.
                   </p>
                   <button
                     type="button"

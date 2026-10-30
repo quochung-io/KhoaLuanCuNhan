@@ -239,10 +239,6 @@ export default function ForgotPasswordPage() {
               <span className="topbar-link">Hotline: <strong>1900 8899</strong> (7:00 - 21:00)</span>
             </div>
             <div className="topbar-right">
-              <a href="http://localhost:5174" target="_blank" rel="noreferrer" className="topbar-link">
-                Kênh Đối Tác / HTX
-              </a>
-              <span style={{ opacity: 0.4 }}>|</span>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <button className="icon-btn" onClick={toggleTheme} style={{ width: '24px', height: '24px' }} title="Sáng / Tối">
                   {theme === "light" ? "Tối" : "Sáng"}

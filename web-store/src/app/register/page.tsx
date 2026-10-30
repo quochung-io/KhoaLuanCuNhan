@@ -38,6 +38,24 @@ export default function RegisterPage() {
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
   const [isSendingOtp, setIsSendingOtp] = useState(false);
+
+  // Tab chọn loại tài khoản: Khách hàng cá nhân vs Hợp tác xã
+  const [accountType, setAccountType] = useState<'customer' | 'cooperative'>('customer');
+
+  // Các trường hồ sơ Hợp Tác Xã chuyên sâu
+  const [coopName, setCoopName] = useState('');
+  const [representative, setRepresentative] = useState('');
+  const [taxCode, setTaxCode] = useState('');
+  const [coopProvince, setCoopProvince] = useState('Lâm Đồng');
+  const [coopDistrict, setCoopDistrict] = useState('Đà Lạt');
+  const [coopAddress, setCoopAddress] = useState('');
+  const [coopArea, setCoopArea] = useState('5.5');
+  const [coopCropType, setCoopCropType] = useState('Rau ăn lá & củ quả ôn đới');
+  const [coopStandard, setCoopStandard] = useState('VietGAP');
+  const [coopCertNumber, setCoopCertNumber] = useState('');
+  const [coopLoading, setCoopLoading] = useState(false);
+  const [coopSuccessMsg, setCoopSuccessMsg] = useState('');
+  const [coopErrorMsg, setCoopErrorMsg] = useState('');
   
   // Header, theme, cart, search đồng bộ 100%
   const [theme, setTheme] = useState('light');
@@ -166,6 +184,81 @@ export default function RegisterPage() {
   const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
   const phoneRegex = /^(03|05|07|08|09)\d{8}$/;
   const nameRegex = /^[a-zA-ZÀ-ỹ\s]+$/;
+
+  // Xử lý gửi hồ sơ đăng ký Hợp Tác Xã
+  const handleCooperativeRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCoopErrorMsg('');
+    setCoopSuccessMsg('');
+
+    if (!coopName.trim() || !representative.trim() || !email.trim() || !phone.trim() || !password || !confirmPassword) {
+      setCoopErrorMsg('Vui lòng điền đầy đủ các thông tin bắt buộc (*).');
+      return;
+    }
+
+    if (!emailRegex.test(email.trim())) {
+      setCoopErrorMsg('Định dạng email của Hợp tác xã không hợp lệ.');
+      return;
+    }
+
+    if (!phoneRegex.test(phone.trim())) {
+      setCoopErrorMsg('Số điện thoại liên hệ phải có đúng 10 chữ số hợp lệ.');
+      return;
+    }
+
+    if (password.length < 8) {
+      setCoopErrorMsg('Mật khẩu quản trị phải có tối thiểu 8 ký tự.');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setCoopErrorMsg('Xác nhận mật khẩu không trùng khớp!');
+      return;
+    }
+
+    setCoopLoading(true);
+    try {
+      const payload = {
+        fullName: representative.trim(),
+        storeName: coopName.trim(),
+        farmName: coopName.trim(),
+        email: email.trim().toLowerCase(),
+        phone: phone.trim(),
+        password: password,
+        businessLicense: taxCode.trim() || 'Đang cập nhật',
+        province: coopProvince,
+        district: coopDistrict,
+        address: coopAddress.trim() || `Thôn 1, ${coopDistrict}, ${coopProvince}`,
+        area: parseFloat(coopArea) || 1.0,
+        cropType: coopCropType,
+        productionStandard: coopStandard,
+        certNumber: coopCertNumber.trim() || 'VG-VN-DL-2026'
+      };
+
+      const res = await fetch('http://localhost:5023/api/users/supplier-register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        throw new Error(data.message || 'Đăng ký Hợp tác xã thất bại. Vui lòng kiểm tra lại thông tin.');
+      }
+
+      setCoopSuccessMsg(data.message || `Đăng ký hồ sơ Hợp tác xã "${coopName}" thành công! Hồ sơ đã được chuyển đến Ban Quản Trị LÀNH Farm để thẩm định và kích hoạt.`);
+      
+      // Tự động chuyển trang sau 3 giây
+      setTimeout(() => {
+        router.push('/login?type=supplier');
+      }, 3500);
+    } catch (err: any) {
+      setCoopErrorMsg(err.message || 'Có lỗi xảy ra khi gửi hồ sơ đăng ký.');
+    } finally {
+      setCoopLoading(false);
+    }
+  };
 
   const handleOpenOtpModal = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -338,10 +431,7 @@ export default function RegisterPage() {
               <span className="topbar-link">Hotline: <strong>1900 8899</strong> (7:00 - 21:00)</span>
             </div>
             <div className="topbar-right">
-              <a href="http://localhost:5174" target="_blank" rel="noreferrer" className="topbar-link">
-                Kênh Đối Tác / HTX
-              </a>
-              <span style={{ opacity: 0.4 }}>|</span>
+              
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <button className="icon-btn" onClick={toggleTheme} style={{ width: '24px', height: '24px' }} title="Sáng / Tối">
                   {theme === "light" ? "Tối" : "Sáng"}
@@ -734,8 +824,85 @@ export default function RegisterPage() {
                 Trở thành thành viên của LÀNH Farm để nhận nhiều quyền lợi mua sắm.
               </p>
             </div>
+            {/* TAB CHỌN LOẠI TÀI KHOẢN (KHÁCH HÀNG VS HỢP TÁC XÃ) */}
+            <div style={{
+              display: 'flex',
+              backgroundColor: 'var(--bg)',
+              padding: '4px',
+              borderRadius: '12px',
+              border: '1.5px solid var(--line)',
+              marginBottom: '20px',
+              gap: '6px'
+            }}>
+              <button
+                type="button"
+                onClick={() => setAccountType('customer')}
+                style={{
+                  flex: 1,
+                  padding: '10px 14px',
+                  borderRadius: '9px',
+                  border: 'none',
+                  backgroundColor: accountType === 'customer' ? 'var(--surface)' : 'transparent',
+                  color: accountType === 'customer' ? 'var(--green-700)' : 'var(--ink-soft)',
+                  fontWeight: accountType === 'customer' ? 800 : 600,
+                  fontSize: '13.5px',
+                  boxShadow: accountType === 'customer' ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px'
+                }}
+              >
+                <span>🛒</span>
+                <span>Khách hàng cá nhân</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setAccountType('cooperative')}
+                style={{
+                  flex: 1,
+                  padding: '10px 14px',
+                  borderRadius: '9px',
+                  border: 'none',
+                  backgroundColor: accountType === 'cooperative' ? 'var(--surface)' : 'transparent',
+                  color: accountType === 'cooperative' ? 'var(--green-700)' : 'var(--ink-soft)',
+                  fontWeight: accountType === 'cooperative' ? 800 : 600,
+                  fontSize: '13.5px',
+                  boxShadow: accountType === 'cooperative' ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px'
+                }}
+              >
+                <span>🌾</span>
+                <span>Hợp tác xã / Nhà vườn</span>
+              </button>
+            </div>
 
-            {/* Thông báo lỗi nếu có */}
+
+                        {/* Box thông báo cơ chế 1 Email dùng chung 2 Vai trò */}
+            <div style={{
+              backgroundColor: '#F0FDF4',
+              border: '1px solid #BBF7D0',
+              borderRadius: '12px',
+              padding: '12px 16px',
+              marginBottom: '20px',
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '10px'
+            }}>
+              <span style={{ fontSize: '18px', marginTop: '1px' }}>💡</span>
+              <div style={{ fontSize: '12.5px', color: '#166534', lineHeight: 1.5 }}>
+                <strong>Tài khoản hợp nhất:</strong> Bạn hoàn toàn có thể dùng chung <strong>1 địa chỉ Email</strong> cho cả 2 vai trò (Khách hàng mua nông sản &amp; Hợp tác xã bán hàng). Khi đăng ký thêm vai trò, hệ thống sẽ tự động liên kết vào tài khoản hiện có của bạn mà không lo trùng lặp.
+              </div>
+            </div>
+
+{/* Thông báo lỗi nếu có */}
             {error && (
               <div style={{
                 backgroundColor: '#fef2f2',
@@ -774,7 +941,9 @@ export default function RegisterPage() {
             )}
 
             {/* Form */}
-            <form onSubmit={handleOpenOtpModal}>
+            
+            {accountType === 'customer' ? (
+              <form onSubmit={handleOpenOtpModal}>
               {/* Họ và tên */}
               <div style={{ marginBottom: '14px' }}>
                 <label style={{ display: 'block', marginBottom: '5px', fontSize: '13px', fontWeight: '600', color: 'var(--ink)' }}>
@@ -1116,6 +1285,205 @@ export default function RegisterPage() {
                 )}
               </button>
             </form>
+            ) : (
+              /* FORM ĐĂNG KÝ DÀNH RIÊNG CHO HỢP TÁC XÃ / ĐỐI TÁC NÔNG SẢN */
+              <form onSubmit={handleCooperativeRegister}>
+                {coopErrorMsg && (
+                  <div style={{ backgroundColor: '#fef2f2', border: '1px solid #fecaca', color: '#991b1b', padding: '11px 14px', borderRadius: '10px', marginBottom: '16px', fontSize: '13px' }}>
+                    ⚠️ {coopErrorMsg}
+                  </div>
+                )}
+                {coopSuccessMsg && (
+                  <div style={{ backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', color: '#166534', padding: '11px 14px', borderRadius: '10px', marginBottom: '16px', fontSize: '13px' }}>
+                    ✓ {coopSuccessMsg}
+                  </div>
+                )}
+
+                {/* Tên HTX & Người đại diện */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginBottom: '12px' }}>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '4px', fontSize: '12.5px', fontWeight: 600, color: 'var(--ink)' }}>
+                      Tên Hợp tác xã / Trang trại *
+                    </label>
+                    <input
+                      type="text"
+                      value={coopName}
+                      onChange={(e) => setCoopName(e.target.value)}
+                      placeholder="Ví dụ: HTX Rau Sạch Đà Lạt"
+                      required
+                      style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1.5px solid var(--line)', fontSize: '13px', outline: 'none' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '4px', fontSize: '12.5px', fontWeight: 600, color: 'var(--ink)' }}>
+                      Đại diện pháp luật *
+                    </label>
+                    <input
+                      type="text"
+                      value={representative}
+                      onChange={(e) => setRepresentative(e.target.value)}
+                      placeholder="Họ và tên Chủ nhiệm HTX"
+                      required
+                      style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1.5px solid var(--line)', fontSize: '13px', outline: 'none' }}
+                    />
+                  </div>
+                </div>
+
+                {/* Mã số thuế & Diện tích */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginBottom: '12px' }}>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '4px', fontSize: '12.5px', fontWeight: 600, color: 'var(--ink)' }}>
+                      Mã số thuế / GPKD *
+                    </label>
+                    <input
+                      type="text"
+                      value={taxCode}
+                      onChange={(e) => setTaxCode(e.target.value)}
+                      placeholder="VD: 5801234567"
+                      required
+                      style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1.5px solid var(--line)', fontSize: '13px', outline: 'none' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '4px', fontSize: '12.5px', fontWeight: 600, color: 'var(--ink)' }}>
+                      Quy mô diện tích (Hecta)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      value={coopArea}
+                      onChange={(e) => setCoopArea(e.target.value)}
+                      placeholder="VD: 5.5"
+                      style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1.5px solid var(--line)', fontSize: '13px', outline: 'none' }}
+                    />
+                  </div>
+                </div>
+
+                {/* Tỉnh / TP & Địa chỉ vùng canh tác */}
+                <div style={{ marginBottom: '12px' }}>
+                  <label style={{ display: 'block', marginBottom: '4px', fontSize: '12.5px', fontWeight: 600, color: 'var(--ink)' }}>
+                    Địa chỉ vùng canh tác nông sản *
+                  </label>
+                  <input
+                    type="text"
+                    value={coopAddress}
+                    onChange={(e) => setCoopAddress(e.target.value)}
+                    placeholder="Thôn, Xã, Huyện, Tỉnh..."
+                    required
+                    style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1.5px solid var(--line)', fontSize: '13px', outline: 'none' }}
+                  />
+                </div>
+
+                {/* Tiêu chuẩn chứng nhận & Số chứng nhận */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginBottom: '12px' }}>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '4px', fontSize: '12.5px', fontWeight: 600, color: 'var(--ink)' }}>
+                      Tiêu chuẩn canh tác
+                    </label>
+                    <select
+                      value={coopStandard}
+                      onChange={(e) => setCoopStandard(e.target.value)}
+                      style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1.5px solid var(--line)', fontSize: '13px', outline: 'none', backgroundColor: '#fff' }}
+                    >
+                      <option value="VietGAP">Chuẩn VietGAP Nông sản</option>
+                      <option value="GlobalGAP">Chuẩn GlobalGAP Xuất khẩu</option>
+                      <option value="Hữu cơ (Organic)">Canh tác Hữu cơ (Organic)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '4px', fontSize: '12.5px', fontWeight: 600, color: 'var(--ink)' }}>
+                      Mã số chứng nhận VietGAP
+                    </label>
+                    <input
+                      type="text"
+                      value={coopCertNumber}
+                      onChange={(e) => setCoopCertNumber(e.target.value)}
+                      placeholder="VD: VG-2026-DL-889"
+                      style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1.5px solid var(--line)', fontSize: '13px', outline: 'none' }}
+                    />
+                  </div>
+                </div>
+
+                {/* Email & Số điện thoại liên hệ */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginBottom: '12px' }}>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '4px', fontSize: '12.5px', fontWeight: 600, color: 'var(--ink)' }}>
+                      Email liên hệ HTX *
+                    </label>
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="htx@nongsan.vn"
+                      required
+                      style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1.5px solid var(--line)', fontSize: '13px', outline: 'none' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '4px', fontSize: '12.5px', fontWeight: 600, color: 'var(--ink)' }}>
+                      Số điện thoại HTX *
+                    </label>
+                    <input
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="0912345678"
+                      required
+                      style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1.5px solid var(--line)', fontSize: '13px', outline: 'none' }}
+                    />
+                  </div>
+                </div>
+
+                {/* Mật khẩu & Xác nhận */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginBottom: '18px' }}>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '4px', fontSize: '12.5px', fontWeight: 600, color: 'var(--ink)' }}>
+                      Mật khẩu quản trị *
+                    </label>
+                    <input
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Tối thiểu 8 ký tự"
+                      required
+                      style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1.5px solid var(--line)', fontSize: '13px', outline: 'none' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '4px', fontSize: '12.5px', fontWeight: 600, color: 'var(--ink)' }}>
+                      Xác nhận mật khẩu *
+                    </label>
+                    <input
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="Nhập lại mật khẩu"
+                      required
+                      style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1.5px solid var(--line)', fontSize: '13px', outline: 'none' }}
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={coopLoading}
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    borderRadius: '10px',
+                    backgroundColor: 'var(--green-700)',
+                    color: '#ffffff',
+                    fontWeight: 700,
+                    fontSize: '14.5px',
+                    border: 'none',
+                    cursor: coopLoading ? 'not-allowed' : 'pointer',
+                    boxShadow: '0 4px 14px rgba(22, 101, 52, 0.3)'
+                  }}
+                >
+                  {coopLoading ? 'Đang gửi hồ sơ xét duyệt...' : '🌾 Nộp Hồ Sơ Đăng Ký Hợp Tác Xã'}
+                </button>
+              </form>
+            )}
 
             {/* Phân cách */}
             <div style={{

@@ -106,10 +106,38 @@ export default function ProfilePage() {
   const [avatarUrl, setAvatarUrl] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  
+
   const [profileError, setProfileError] = useState('');
   const [profileSuccess, setProfileSuccess] = useState('');
   const [profileLoading, setProfileLoading] = useState(false);
+
+  // Thông tin mở rộng khách hàng từ database
+  const [gender, setGender] = useState<'Nam' | 'Nữ' | 'Khác'>('Nam');
+  const [dob, setDob] = useState<string>('1998-05-15');
+
+  // Modal Đổi Mật Khẩu Riêng Biệt (Có xác thực mật khẩu cũ)
+  const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
+  const [oldPassword, setOldPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [showOldPass, setShowOldPass] = useState(false);
+  const [showNewPass, setShowNewPass] = useState(false);
+  const [changePassLoading, setChangePassLoading] = useState(false);
+  const [changePassError, setChangePassError] = useState('');
+  const [changePassSuccess, setChangePassSuccess] = useState('');
+
+  // Email OTP States
+  const [originalEmail, setOriginalEmail] = useState('');
+  const [showEmailOtpModal, setShowEmailOtpModal] = useState(false);
+  const [emailOtpCode, setEmailOtpCode] = useState('');
+  const [emailOtpCountdown, setEmailOtpCountdown] = useState(60);
+  const [emailOtpLoading, setEmailOtpLoading] = useState(false);
+  const [emailOtpError, setEmailOtpError] = useState('');
+  const [emailOtpMsg, setEmailOtpMsg] = useState('');
+
+  // Phân trang Lịch sử Đơn hàng
+  const [orderCurrentPage, setOrderCurrentPage] = useState(1);
+  const orderPageSize = 5;
 
   // Sổ địa chỉ
   const [addresses, setAddresses] = useState<CustomerAddress[]>([]);
@@ -144,7 +172,7 @@ export default function ProfilePage() {
   const [lang, setLang] = useState<'vi' | 'en'>('vi');
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
-  
+
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [cartBounce, setCartBounce] = useState(false);
@@ -167,12 +195,13 @@ export default function ProfilePage() {
       router.push('/login');
       return;
     }
-    
+
     const userData = JSON.parse(stored);
     setUser(userData);
     setCurrentUser(userData);
     setFullName(userData.fullName || '');
     setEmail(userData.email || '');
+    setOriginalEmail(userData.email || '');
     setPhone(userData.phone || '');
     setAvatarUrl(userData.avatarUrl || '');
 
@@ -184,7 +213,7 @@ export default function ProfilePage() {
     if (storedCart) {
       try {
         setCart(JSON.parse(storedCart));
-      } catch {}
+      } catch { }
     }
   }, [router]);
 
@@ -279,11 +308,11 @@ export default function ProfilePage() {
   // Mua lại các sản phẩm trong đơn hàng
   const handleReorder = (order: any) => {
     if (!order.orderItems || order.orderItems.length === 0) return;
-    
+
     let currentCart: CartItem[] = [];
     const stored = localStorage.getItem('cart');
     if (stored) {
-      try { currentCart = JSON.parse(stored); } catch {}
+      try { currentCart = JSON.parse(stored); } catch { }
     }
 
     order.orderItems.forEach((item: any) => {
@@ -463,7 +492,7 @@ export default function ProfilePage() {
         setTotalSpentYear(data.totalSpentYear ?? 0);
         setUserTier(data.tier ?? 'Mới');
         setPointRate(data.pointRate ?? 0.01);
-        
+
         if (data.tiers && Array.isArray(data.tiers)) {
           const currentTotal = data.totalSpentYear ?? 0;
           const nextTier = data.tiers.find((t: any) => t.minSpend > currentTotal);
@@ -475,7 +504,7 @@ export default function ProfilePage() {
             setNextTierName('Max');
           }
         }
-        
+
         if (data.history) setPointHistory(data.history);
         if (data.vouchers) setUserVouchers(data.vouchers);
       }
@@ -528,7 +557,7 @@ export default function ProfilePage() {
   const handleUseVoucherNow = (voucher: any) => {
     if (voucher.isUsed) return;
     localStorage.setItem('pending_voucher_code', voucher.code);
-    
+
     // Kiểm tra giỏ hàng
     try {
       const storedCart = localStorage.getItem('cart');
@@ -553,6 +582,158 @@ export default function ProfilePage() {
   };
 
   // Cập nhật thông tin cá nhân
+  
+  useEffect(() => {
+    let timer: any;
+    if (showEmailOtpModal && emailOtpCountdown > 0) {
+      timer = setInterval(() => setEmailOtpCountdown(prev => prev - 1), 1000);
+    }
+    return () => clearInterval(timer);
+  }, [showEmailOtpModal, emailOtpCountdown]);
+
+
+  // Xử lý đổi mật khẩu an toàn qua API Backend (BCrypt)
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setChangePassError('');
+    setChangePassSuccess('');
+
+    if (!oldPassword.trim()) {
+      setChangePassError('Vui lòng nhập mật khẩu hiện tại.');
+      return;
+    }
+    if (newPassword.length < 8) {
+      setChangePassError('Mật khẩu mới phải có tối thiểu 8 ký tự.');
+      return;
+    }
+    if (newPassword !== confirmNewPassword) {
+      setChangePassError('Xác nhận mật khẩu mới không trùng khớp.');
+      return;
+    }
+
+    setChangePassLoading(true);
+    try {
+      const res = await fetch(`http://localhost:5023/api/users/${user.userId}/change-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ oldPassword: oldPassword.trim(), newPassword: newPassword.trim() })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.message || 'Đổi mật khẩu thất bại.');
+      }
+
+      setChangePassSuccess('Đổi mật khẩu thành công! Bạn có thể sử dụng mật khẩu mới cho các lần đăng nhập tiếp theo.');
+      setTimeout(() => {
+        setShowChangePasswordModal(false);
+        setChangePassSuccess('');
+        setOldPassword('');
+        setNewPassword('');
+        setConfirmNewPassword('');
+      }, 2500);
+    } catch (err: any) {
+      setChangePassError(err.message || 'Lỗi khi kết nối đổi mật khẩu.');
+    } finally {
+      setChangePassLoading(false);
+    }
+  };
+
+  // Gửi OTP xác thực khi đổi email
+  const handleRequestEmailOtp = async () => {
+    setEmailOtpLoading(true);
+    setEmailOtpError('');
+    setEmailOtpMsg('');
+    try {
+      const res = await fetch(`http://localhost:5023/api/users/${user.userId}/send-email-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ newEmail: email.trim().toLowerCase() })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.message || 'Không thể gửi mã OTP.');
+      }
+      setShowEmailOtpModal(true);
+      setEmailOtpCountdown(60);
+      setEmailOtpMsg(data.message || `Mã OTP đã được gửi tới ${email.trim()}.`);
+    } catch (err: any) {
+      setProfileError(err.message);
+    } finally {
+      setEmailOtpLoading(false);
+    }
+  };
+
+  // Xác thực mã OTP và lưu Email mới
+  const handleVerifyEmailOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!emailOtpCode.trim()) {
+      setEmailOtpError('Vui lòng nhập mã OTP 6 số.');
+      return;
+    }
+
+    setEmailOtpLoading(true);
+    setEmailOtpError('');
+    try {
+      const res = await fetch(`http://localhost:5023/api/users/${user.userId}/verify-email-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ newEmail: email.trim().toLowerCase(), otpCode: emailOtpCode.trim() })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.message || 'Xác thực mã OTP thất bại.');
+      }
+
+      setShowEmailOtpModal(false);
+      setOriginalEmail(email.trim().toLowerCase());
+      setEmailOtpCode('');
+
+      // Tiếp tục lưu các thông tin còn lại của Profile
+      await saveProfileData(email.trim().toLowerCase());
+      setProfileSuccess('Xác thực OTP thành công! Đã cập nhật địa chỉ Email mới.');
+    } catch (err: any) {
+      setEmailOtpError(err.message || 'Mã OTP không đúng hoặc đã hết hạn.');
+    } finally {
+      setEmailOtpLoading(false);
+    }
+  };
+
+  // Lưu thông tin cá nhân
+  const saveProfileData = async (validEmail?: string) => {
+    const payload: any = {
+      fullName: fullName.trim(),
+      email: validEmail || email.trim(),
+      phone: phone.trim(),
+      avatarUrl: avatarUrl.trim(),
+      gender: gender,
+      dateOfBirth: dob || null
+    };
+
+    const res = await fetch(`http://localhost:5023/api/users/${user.userId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.message || 'Cập nhật thông tin thất bại.');
+    }
+
+    const updatedUser = {
+      ...user,
+      fullName: fullName.trim(),
+      email: validEmail || email.trim(),
+      phone: phone.trim(),
+      avatarUrl: avatarUrl.trim(),
+      gender: gender,
+      dateOfBirth: dob
+    };
+    localStorage.setItem('customer_user', JSON.stringify(updatedUser));
+    setUser(updatedUser);
+    setCurrentUser(updatedUser);
+  };
+
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setProfileError('');
@@ -857,10 +1038,7 @@ export default function ProfilePage() {
               <span className="topbar-link">Hotline: <strong>1900 8899</strong> (7:00 - 21:00)</span>
             </div>
             <div className="topbar-right">
-              <a href="http://localhost:5174" target="_blank" rel="noreferrer" className="topbar-link">
-                Kênh Đối Tác / HTX
-              </a>
-              <span style={{ opacity: 0.4 }}>|</span>
+              
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <button className="icon-btn" onClick={toggleTheme} style={{ width: '24px', height: '24px' }} title="Sáng / Tối">
                   {theme === "light" ? "Tối" : "Sáng"}
@@ -878,9 +1056,9 @@ export default function ProfilePage() {
         <div className="wrap nav-row">
           <Link href="/" className="logo">
             <svg className="mark" viewBox="0 0 40 40" fill="none">
-              <circle cx="20" cy="20" r="20" fill="var(--green-700)"/>
-              <path d="M20 30C20 30 12 26 12 18C12 13 16 10 20 10C24 10 28 13 28 18C28 26 20 30 20 30Z" fill="var(--green-500)"/>
-              <path d="M20 30V16" stroke="var(--green-900)" strokeWidth="1.4" strokeLinecap="round"/>
+              <circle cx="20" cy="20" r="20" fill="var(--green-700)" />
+              <path d="M20 30C20 30 12 26 12 18C12 13 16 10 20 10C24 10 28 13 28 18C28 26 20 30 20 30Z" fill="var(--green-500)" />
+              <path d="M20 30V16" stroke="var(--green-900)" strokeWidth="1.4" strokeLinecap="round" />
             </svg>
             <div>
               <span style={{ letterSpacing: '1px' }}>LÀNH</span>
@@ -895,17 +1073,17 @@ export default function ProfilePage() {
           <div className="header-actions">
             {/* Mục Tài khoản */}
             <div style={{ position: 'relative' }}>
-              <button 
-                className="header-action-item" 
-                onClick={() => setShowUserDropdown(!showUserDropdown)} 
+              <button
+                className="header-action-item"
+                onClick={() => setShowUserDropdown(!showUserDropdown)}
                 style={{ border: 'none', background: 'none' }}
               >
                 <span className="header-action-icon">
                   {user && user.avatarUrl ? (
-                    <img 
-                      src={user.avatarUrl} 
-                      alt="Avatar" 
-                      style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--green-700)' }} 
+                    <img
+                      src={user.avatarUrl}
+                      alt="Avatar"
+                      style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--green-700)' }}
                     />
                   ) : ''}
                 </span>
@@ -916,7 +1094,7 @@ export default function ProfilePage() {
                   </span>
                 </div>
               </button>
-              
+
               {showUserDropdown && (
                 <div style={{
                   position: 'absolute',
@@ -935,7 +1113,7 @@ export default function ProfilePage() {
                     <div style={{ fontWeight: '700', color: 'var(--ink)', fontSize: '13.5px' }}>{user.fullName}</div>
                     <div style={{ marginTop: '2px' }}>{user.email}</div>
                   </div>
-                  <Link 
+                  <Link
                     href="/profile"
                     style={{
                       display: 'flex',
@@ -952,7 +1130,7 @@ export default function ProfilePage() {
                   >
                     Hồ sơ & Sổ địa chỉ
                   </Link>
-                  <Link 
+                  <Link
                     href="/orders"
                     style={{
                       display: 'flex',
@@ -968,7 +1146,7 @@ export default function ProfilePage() {
                   >
                     Lịch sử đơn hàng
                   </Link>
-                  <button 
+                  <button
                     onClick={handleCustomerLogout}
                     style={{
                       width: '100%',
@@ -992,12 +1170,12 @@ export default function ProfilePage() {
             </div>
 
             {/* Nút Giỏ Hàng nổi bật */}
-            <div 
+            <div
               className={`header-cart-btn ${cartBounce ? "bounce" : ''}`}
               onClick={() => setIsDrawerOpen(true)}
               title="Xem giỏ hàng"
             >
-              <div className="header-action-icon" style={{ display: 'flex', alignItems: 'center' }}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg><span className="badge">{cart.reduce((s, i) => s + i.qty, 0)}</span>
+              <div className="header-action-icon" style={{ display: 'flex', alignItems: 'center' }}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" /><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" /></svg><span className="badge">{cart.reduce((s, i) => s + i.qty, 0)}</span>
               </div>
               <div className="header-action-text">
                 <span className="header-action-label">Giỏ hàng</span>
@@ -1052,10 +1230,10 @@ export default function ProfilePage() {
           }}>
             {/* User Mini Card */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', paddingBottom: '16px', borderBottom: '1px solid var(--line)', marginBottom: '14px' }}>
-              <img 
-                src={avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150&q=80'} 
-                alt="Avatar" 
-                style={{ width: '46px', height: '46px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--green-700)' }} 
+              <img
+                src={avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150&q=80'}
+                alt="Avatar"
+                style={{ width: '46px', height: '46px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--green-700)' }}
               />
               <div style={{ minWidth: 0 }}>
                 <div style={{ fontSize: '14.5px', fontWeight: '700', color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -1089,7 +1267,7 @@ export default function ProfilePage() {
                   transition: 'all 0.15s ease'
                 }}
               >
-                
+
                 <span>Thông tin cá nhân</span>
               </button>
 
@@ -1113,7 +1291,7 @@ export default function ProfilePage() {
                   transition: 'all 0.15s ease'
                 }}
               >
-                
+
                 <span>Sổ địa chỉ nhận hàng</span>
               </button>
 
@@ -1137,7 +1315,7 @@ export default function ProfilePage() {
                   transition: 'all 0.15s ease'
                 }}
               >
-                
+
                 <span>Điểm & Hạng thành viên</span>
               </button>
 
@@ -1161,7 +1339,7 @@ export default function ProfilePage() {
                   transition: 'all 0.15s ease'
                 }}
               >
-                
+
                 <span>Kho lưu trữ Voucher</span>
               </button>
 
@@ -1185,7 +1363,7 @@ export default function ProfilePage() {
                   transition: 'all 0.15s ease'
                 }}
               >
-                
+
                 <span>Lịch sử đơn hàng</span>
               </button>
             </div>
@@ -1218,46 +1396,213 @@ export default function ProfilePage() {
             </div>
             {/* TAB 1: THÔNG TIN CÁ NHÂN */}
             {activeTab === 'profile' && (
-              <div>
-                {profileError && (
-                  <div style={{ backgroundColor: '#ffebee', border: '1px solid #ffcdd2', color: '#c62828', padding: '10px 14px', borderRadius: '8px', marginBottom: '18px', fontSize: '13.5px' }}>
-                    {profileError}
-                  </div>
-                )}
-
-                {profileSuccess && (
-                  <div style={{ backgroundColor: 'var(--green-100)', border: '1px solid var(--green-500)', color: 'var(--green-900)', padding: '10px 14px', borderRadius: '8px', marginBottom: '18px', fontSize: '13.5px' }}>
-                    {profileSuccess}
-                  </div>
-                )}
-
-                <form onSubmit={handleUpdateProfile} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '6px' }}>
-                    <img 
-                      src={avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150&q=80'} 
-                      alt="Avatar" 
-                      style={{
-                        width: '80px',
-                        height: '80px',
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                {/* ── THẺ THÔNG TIN TỔNG QUAN KHÁCH HÀNG TỪ DATABASE ── */}
+                <div style={{
+                  backgroundColor: 'var(--surface)',
+                  borderRadius: '16px',
+                  border: '1.5px solid var(--line)',
+                  padding: '24px',
+                  boxShadow: '0 4px 16px rgba(0,0,0,0.03)'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                      <div style={{
+                        width: '64px',
+                        height: '64px',
                         borderRadius: '50%',
-                        objectFit: 'cover',
-                        border: '3px solid var(--green-700)',
-                        backgroundColor: 'var(--green-100)'
+                        backgroundColor: '#dcfce7',
+                        border: '2px solid #86efac',
+                        overflow: 'hidden',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '24px',
+                        color: '#15803d',
+                        fontWeight: '800'
+                      }}>
+                        {avatarUrl ? (
+                          <img src={avatarUrl} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { (e.target as any).style.display = 'none'; }} />
+                        ) : (
+                          fullName.charAt(0).toUpperCase() || 'U'
+                        )}
+                      </div>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                          <h3 style={{ margin: 0, fontSize: '20px', fontWeight: '800', color: 'var(--ink)' }}>
+                            {fullName || 'Khách hàng LÀNH Farm'}
+                          </h3>
+                          <span style={{
+                            padding: '3px 10px',
+                            borderRadius: '999px',
+                            fontSize: '11px',
+                            fontWeight: '800',
+                            backgroundColor: userTier === 'Kim Cương' ? '#ede9fe' : userTier === 'Vàng' ? '#fef3c7' : userTier === 'Bạc' ? '#f1f5f9' : '#dcfce7',
+                            color: userTier === 'Kim Cương' ? '#6d28d9' : userTier === 'Vàng' ? '#b45309' : userTier === 'Bạc' ? '#475569' : '#166534',
+                            border: '1px solid currentColor'
+                          }}>
+                            ★ Thành viên {userTier}
+                          </span>
+                        </div>
+                        <div style={{ fontSize: '12.5px', color: 'var(--ink-soft)', marginTop: '4px' }}>
+                          Mã khách hàng: <strong>#CUST-{user?.userId}</strong> • Trạng thái: <span style={{ color: '#15803d', fontWeight: '700' }}>● Đang hoạt động</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setChangePassError('');
+                        setOldPassword('');
+                        setNewPassword('');
+                        setConfirmNewPassword('');
+                        setShowChangePasswordModal(true);
+                      }}
+                      className="btn"
+                      style={{
+                        padding: '9px 18px',
+                        fontSize: '13px',
+                        fontWeight: '700',
+                        backgroundColor: '#f1f5f9',
+                        color: '#334155',
+                        border: '1.5px solid #cbd5e1',
+                        borderRadius: '8px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
+                      <span>Đổi mật khẩu</span>
+                    </button>
+                  </div>
+
+                  {/* 4 Thống kê tài khoản từ Database */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px', borderTop: '1px solid var(--line)', paddingTop: '18px' }}>
+                    <div style={{ backgroundColor: 'var(--bg)', padding: '12px 16px', borderRadius: '10px', border: '1px solid var(--line)' }}>
+                      <div style={{ fontSize: '11px', color: 'var(--ink-soft)', textTransform: 'uppercase', fontWeight: '700' }}>Điểm thưởng LÀNH</div>
+                      <div style={{ fontSize: '20px', fontWeight: '800', color: '#15803d', marginTop: '4px' }}>
+                        {loyaltyPoints.toLocaleString('vi-VN')} <span style={{ fontSize: '12px', fontWeight: '600' }}>điểm</span>
+                      </div>
+                    </div>
+                    <div style={{ backgroundColor: 'var(--bg)', padding: '12px 16px', borderRadius: '10px', border: '1px solid var(--line)' }}>
+                      <div style={{ fontSize: '11px', color: 'var(--ink-soft)', textTransform: 'uppercase', fontWeight: '700' }}>Tổng chi tiêu năm</div>
+                      <div style={{ fontSize: '20px', fontWeight: '800', color: 'var(--ink)', marginTop: '4px' }}>
+                        {totalSpentYear.toLocaleString('vi-VN')}₫
+                      </div>
+                    </div>
+                    <div style={{ backgroundColor: 'var(--bg)', padding: '12px 16px', borderRadius: '10px', border: '1px solid var(--line)' }}>
+                      <div style={{ fontSize: '11px', color: 'var(--ink-soft)', textTransform: 'uppercase', fontWeight: '700' }}>Đơn hàng đã đặt</div>
+                      <div style={{ fontSize: '20px', fontWeight: '800', color: 'var(--ink)', marginTop: '4px' }}>
+                        {orders.length} <span style={{ fontSize: '12px', fontWeight: '600' }}>đơn</span>
+                      </div>
+                    </div>
+                    <div style={{ backgroundColor: 'var(--bg)', padding: '12px 16px', borderRadius: '10px', border: '1px solid var(--line)' }}>
+                      <div style={{ fontSize: '11px', color: 'var(--ink-soft)', textTransform: 'uppercase', fontWeight: '700' }}>Địa chỉ nhận mặc định</div>
+                      <div style={{ fontSize: '12px', fontWeight: '600', color: 'var(--ink)', marginTop: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {addresses.find(a => a.isDefault)?.district ? `${addresses.find(a => a.isDefault)?.district}, ${addresses.find(a => a.isDefault)?.province}` : 'Chưa thiết lập'}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* ── FORM CHỈNH SỬA THÔNG TIN CÁ NHÂN ── */}
+                <form onSubmit={handleUpdateProfile} style={{
+                  backgroundColor: 'var(--surface)',
+                  borderRadius: '16px',
+                  border: '1.5px solid var(--line)',
+                  padding: '24px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '18px'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <h4 style={{ margin: 0, fontSize: '16px', fontWeight: '800', color: 'var(--ink)' }}>
+                      Chi Tiết Thông Tin Hồ Sơ
+                    </h4>
+                    <span style={{ fontSize: '12px', color: 'var(--ink-soft)' }}>
+                      * Thông tin dùng để xuất hóa đơn và nhận hàng
+                    </span>
+                  </div>
+
+                  {profileSuccess && (
+                    <div style={{ backgroundColor: 'var(--green-100)', border: '1px solid var(--green-500)', color: 'var(--green-900)', padding: '11px 14px', borderRadius: '8px', fontSize: '13.5px' }}>
+                      {profileSuccess}
+                    </div>
+                  )}
+
+                  {profileError && (
+                    <div style={{ backgroundColor: '#ffebee', border: '1px solid #ffcdd2', color: '#c62828', padding: '11px 14px', borderRadius: '8px', fontSize: '13.5px' }}>
+                      {profileError}
+                    </div>
+                  )}
+
+                  {/* Ảnh đại diện URL */}
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: '600', color: 'var(--ink)' }}>
+                      Đường dẫn URL ảnh đại diện
+                    </label>
+                    <input
+                      type="text"
+                      value={avatarUrl}
+                      onChange={(e) => setAvatarUrl(e.target.value)}
+                      placeholder="https://example.com/avatar.jpg"
+                      style={{
+                        width: '100%',
+                        padding: '11px 14px',
+                        borderRadius: '8px',
+                        border: '1px solid var(--line)',
+                        backgroundColor: 'var(--bg)',
+                        color: 'var(--ink)',
+                        fontSize: '13.5px',
+                        outline: 'none',
+                        boxSizing: 'border-box'
                       }}
                     />
-                    <div style={{ flex: 1 }}>
-                      <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: 'var(--ink)', marginBottom: '5px' }}>
-                        Đường dẫn URL ảnh đại diện
+                  </div>
+
+                  {/* Họ tên và SĐT */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: '600', color: 'var(--ink)' }}>
+                        Họ và tên *
                       </label>
                       <input
                         type="text"
-                        value={avatarUrl}
-                        onChange={(e) => setAvatarUrl(e.target.value)}
-                        placeholder="Dán URL ảnh đại diện của bạn"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        placeholder="Nhập họ và tên đầy đủ"
+                        required
                         style={{
                           width: '100%',
                           padding: '11px 14px',
-                          borderRadius: 'var(--radius-sm)',
+                          borderRadius: '8px',
+                          border: '1px solid var(--line)',
+                          backgroundColor: 'var(--bg)',
+                          color: 'var(--ink)',
+                          fontSize: '13.5px',
+                          outline: 'none',
+                          boxSizing: 'border-box'
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: '600', color: 'var(--ink)' }}>
+                        Số điện thoại liên hệ *
+                      </label>
+                      <input
+                        type="tel"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        placeholder="0912345678"
+                        required
+                        style={{
+                          width: '100%',
+                          padding: '11px 14px',
+                          borderRadius: '8px',
                           border: '1px solid var(--line)',
                           backgroundColor: 'var(--bg)',
                           color: 'var(--ink)',
@@ -1269,42 +1614,24 @@ export default function ProfilePage() {
                     </div>
                   </div>
 
+                  {/* Email kèm cảnh báo OTP */}
                   <div>
-                    <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: '600', color: 'var(--ink)' }}>
-                      Họ và tên
-                    </label>
-                    <input
-                      type="text"
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      placeholder="Nhập họ và tên"
-                      style={{
-                        width: '100%',
-                        padding: '11px 14px',
-                        borderRadius: 'var(--radius-sm)',
-                        border: '1px solid var(--line)',
-                        backgroundColor: 'var(--bg)',
-                        color: 'var(--ink)',
-                        fontSize: '13.5px',
-                        outline: 'none',
-                        boxSizing: 'border-box'
-                      }}
-                    />
-                  </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                      <label style={{ fontSize: '13px', fontWeight: '600', color: 'var(--ink)' }}>
+                        Địa chỉ Email *
+                      </label>
 
-                  <div>
-                    <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: '600', color: 'var(--ink)' }}>
-                      Địa chỉ Email
-                    </label>
+                    </div>
                     <input
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="Nhập địa chỉ email"
+                      placeholder="name@example.com"
+                      required
                       style={{
                         width: '100%',
                         padding: '11px 14px',
-                        borderRadius: 'var(--radius-sm)',
+                        borderRadius: '8px',
                         border: '1px solid var(--line)',
                         backgroundColor: 'var(--bg)',
                         color: 'var(--ink)',
@@ -1315,44 +1642,44 @@ export default function ProfilePage() {
                     />
                   </div>
 
-                  <div>
-                    <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: '600', color: 'var(--ink)' }}>
-                      Số điện thoại
-                    </label>
-                    <input
-                      type="text"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      placeholder="Nhập số điện thoại"
-                      style={{
-                        width: '100%',
-                        padding: '11px 14px',
-                        borderRadius: 'var(--radius-sm)',
-                        border: '1px solid var(--line)',
-                        backgroundColor: 'var(--bg)',
-                        color: 'var(--ink)',
-                        fontSize: '13.5px',
-                        outline: 'none',
-                        boxSizing: 'border-box'
-                      }}
-                    />
-                  </div>
-
-                  <div style={{ borderTop: '1px solid var(--line)', paddingTop: '16px' }}>
-                    <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: '600', color: 'var(--ink)' }}>
-                      Đổi mật khẩu mới (Để trống nếu không đổi)
-                    </label>
-                    <div style={{ position: 'relative' }}>
-                      <input
-                        type={showPassword ? "text" : "password"}
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder="••••••••"
+                  {/* Giới tính và Ngày sinh */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: '600', color: 'var(--ink)' }}>
+                        Giới tính
+                      </label>
+                      <select
+                        value={gender}
+                        onChange={(e) => setGender(e.target.value as any)}
                         style={{
                           width: '100%',
                           padding: '11px 14px',
-                          paddingRight: '40px',
-                          borderRadius: 'var(--radius-sm)',
+                          borderRadius: '8px',
+                          border: '1px solid var(--line)',
+                          backgroundColor: 'var(--bg)',
+                          color: 'var(--ink)',
+                          fontSize: '13.5px',
+                          outline: 'none',
+                          boxSizing: 'border-box'
+                        }}
+                      >
+                        <option value="Nam">Nam</option>
+                        <option value="Nữ">Nữ</option>
+                        <option value="Khác">Khác / Không tiết lộ</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: '600', color: 'var(--ink)' }}>
+                        Ngày sinh
+                      </label>
+                      <input
+                        type="date"
+                        value={dob}
+                        onChange={(e) => setDob(e.target.value)}
+                        style={{
+                          width: '100%',
+                          padding: '11px 14px',
+                          borderRadius: '8px',
                           border: '1px solid var(--line)',
                           backgroundColor: 'var(--bg)',
                           color: 'var(--ink)',
@@ -1361,37 +1688,28 @@ export default function ProfilePage() {
                           boxSizing: 'border-box'
                         }}
                       />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        style={{ position: 'absolute', right: '12px', top: '12px', color: 'var(--ink-soft)' }}
-                        aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-                      >
-                        {showPassword ? (
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-                        ) : (
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                        )}
-                      </button>
                     </div>
                   </div>
 
-                  <button
-                    type="submit"
-                    disabled={profileLoading}
-                    className="btn btn-dark"
-                    style={{
-                      width: '100%',
-                      padding: '14px',
-                      fontSize: '15px',
-                      fontWeight: 'bold',
-                      cursor: 'pointer',
-                      opacity: profileLoading ? 0.7 : 1,
-                      marginTop: '8px'
-                    }}
-                  >
-                    {profileLoading ? 'ĐANG LƯU THAY ĐỔI...' : 'LƯU THÔNG TIN CÁ NHÂN'}
-                  </button>
+                  {/* Nút hành động */}
+                  <div style={{ display: 'flex', gap: '12px', marginTop: '10px' }}>
+                    <button
+                      type="submit"
+                      disabled={profileLoading}
+                      className="btn btn-dark"
+                      style={{
+                        flex: 1,
+                        padding: '14px',
+                        fontSize: '14.5px',
+                        fontWeight: '800',
+                        cursor: 'pointer',
+                        opacity: profileLoading ? 0.7 : 1,
+                        borderRadius: '8px'
+                      }}
+                    >
+                      {profileLoading ? 'ĐANG LƯU THAY ĐỔI...' : 'LƯU THÔNG TIN CÁ NHÂN'}
+                    </button>
+                  </div>
                 </form>
               </div>
             )}
@@ -1440,7 +1758,7 @@ export default function ProfilePage() {
                   </div>
                 ) : addresses.length === 0 ? (
                   <div style={{ textAlign: 'center', padding: '40px 20px', backgroundColor: 'var(--bg)', borderRadius: 'var(--radius-md)', border: '1px dashed var(--line)' }}>
-                    
+
                     <h4 style={{ margin: '0 0 6px 0', color: 'var(--ink)' }}>Bạn chưa lưu địa chỉ nào</h4>
                     <p style={{ margin: '0 0 18px 0', color: 'var(--ink-soft)', fontSize: '13.5px' }}>
                       Hãy thêm địa chỉ nhận hàng để việc đặt hàng thuận tiện hơn.
@@ -1895,10 +2213,10 @@ export default function ProfilePage() {
             {/* TAB 4: KHO LƯU TRỮ VOUCHER */}
             {activeTab === 'vouchers' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                {/* Banner thông báo đồng bộ với trang thanh toán */}
+                {/* Banner thông báo đồng bộ nhẹ nhàng */}
                 <div style={{
-                  backgroundColor: '#F0FDF4',
-                  border: '1.5px solid #86EFAC',
+                  backgroundColor: '#f8fafc',
+                  border: '1px solid #e2e8f0',
                   borderRadius: '12px',
                   padding: '14px 18px',
                   display: 'flex',
@@ -1908,13 +2226,13 @@ export default function ProfilePage() {
                   gap: '12px'
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <span style={{ fontSize: '22px' }}>🔄</span>
+                    <span style={{ fontSize: '20px' }}>🎟️</span>
                     <div>
-                      <div style={{ fontSize: '13.5px', fontWeight: '700', color: '#166534' }}>
-                        Kho voucher được đồng bộ tự động với Trang Thanh Toán (Checkout)
+                      <div style={{ fontSize: '13.5px', fontWeight: '700', color: '#1e293b' }}>
+                        Kho Voucher Ưu Đãi Nông Sản LÀNH
                       </div>
-                      <div style={{ fontSize: '12px', color: '#15803d', marginTop: '2px' }}>
-                        Bạn có thể bấm &quot;Dùng ngay&quot; để áp dụng nhanh mã ưu đãi khi mua sắm nông sản sạch!
+                      <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
+                        Mã giảm giá được lấy trực tiếp từ hệ thống và tự động liên kết với Trang Thanh Toán (Checkout).
                       </div>
                     </div>
                   </div>
@@ -1927,30 +2245,28 @@ export default function ProfilePage() {
                       borderRadius: '8px',
                       fontSize: '12px',
                       fontWeight: '700',
-                      textDecoration: 'none',
-                      boxShadow: '0 2px 6px rgba(21, 128, 61, 0.2)'
+                      textDecoration: 'none'
                     }}
                   >
-                    Đến trang thanh toán →
+                    Đến thanh toán →
                   </Link>
                 </div>
 
-                {/* Thanh điều khiển: Bộ lọc & Đổi điểm */}
+                {/* Bộ lọc tối giản */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
-                  {/* Bộ lọc trạng thái */}
                   <div style={{ display: 'flex', gap: '6px', backgroundColor: 'var(--bg)', padding: '3px', borderRadius: '8px', border: '1px solid var(--line)' }}>
                     <button
                       type="button"
                       onClick={() => setVoucherFilter('all')}
                       style={{
-                        padding: '6px 12px',
+                        padding: '6px 14px',
                         borderRadius: '6px',
                         border: 'none',
                         fontSize: '12px',
                         fontWeight: voucherFilter === 'all' ? '700' : '500',
                         backgroundColor: voucherFilter === 'all' ? 'var(--surface)' : 'transparent',
-                        color: voucherFilter === 'all' ? 'var(--green-900)' : 'var(--ink-soft)',
-                        boxShadow: voucherFilter === 'all' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                        color: voucherFilter === 'all' ? 'var(--ink)' : 'var(--ink-soft)',
+                        boxShadow: voucherFilter === 'all' ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
                         cursor: 'pointer'
                       }}
                     >
@@ -1960,14 +2276,14 @@ export default function ProfilePage() {
                       type="button"
                       onClick={() => setVoucherFilter('available')}
                       style={{
-                        padding: '6px 12px',
+                        padding: '6px 14px',
                         borderRadius: '6px',
                         border: 'none',
                         fontSize: '12px',
                         fontWeight: voucherFilter === 'available' ? '700' : '500',
                         backgroundColor: voucherFilter === 'available' ? 'var(--surface)' : 'transparent',
-                        color: voucherFilter === 'available' ? 'var(--green-900)' : 'var(--ink-soft)',
-                        boxShadow: voucherFilter === 'available' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                        color: voucherFilter === 'available' ? '#15803d' : 'var(--ink-soft)',
+                        boxShadow: voucherFilter === 'available' ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
                         cursor: 'pointer'
                       }}
                     >
@@ -1977,18 +2293,18 @@ export default function ProfilePage() {
                       type="button"
                       onClick={() => setVoucherFilter('used')}
                       style={{
-                        padding: '6px 12px',
+                        padding: '6px 14px',
                         borderRadius: '6px',
                         border: 'none',
                         fontSize: '12px',
                         fontWeight: voucherFilter === 'used' ? '700' : '500',
                         backgroundColor: voucherFilter === 'used' ? 'var(--surface)' : 'transparent',
-                        color: voucherFilter === 'used' ? 'var(--green-900)' : 'var(--ink-soft)',
-                        boxShadow: voucherFilter === 'used' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                        color: voucherFilter === 'used' ? 'var(--ink)' : 'var(--ink-soft)',
+                        boxShadow: voucherFilter === 'used' ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
                         cursor: 'pointer'
                       }}
                     >
-                      Đã sử dụng ({userVouchers.filter(v => v.isUsed).length})
+                      Đã dùng / Hết hạn ({userVouchers.filter(v => v.isUsed).length})
                     </button>
                   </div>
 
@@ -1998,15 +2314,26 @@ export default function ProfilePage() {
                       setActiveTab('loyalty');
                       setLoyaltySubTab('rewards');
                     }}
-                    className="btn btn-accent"
-                    style={{ padding: '7px 14px', fontSize: '12.5px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                    style={{
+                      padding: '7px 14px',
+                      fontSize: '12.5px',
+                      fontWeight: '700',
+                      color: '#15803d',
+                      backgroundColor: '#f0fdf4',
+                      border: '1px solid #86efac',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px'
+                    }}
                   >
                     <span>🎁</span>
                     <span>Đổi thêm voucher từ Điểm</span>
                   </button>
                 </div>
 
-                {/* Grid danh sách Voucher */}
+                {/* Grid danh sách Voucher Tối Giản, Dịu Mắt */}
                 {userVouchers.filter(v => {
                   if (voucherFilter === 'available') return !v.isUsed;
                   if (voucherFilter === 'used') return v.isUsed;
@@ -2016,98 +2343,98 @@ export default function ProfilePage() {
                     textAlign: 'center',
                     padding: '40px 20px',
                     backgroundColor: 'var(--surface)',
-                    borderRadius: 'var(--radius-md)',
+                    borderRadius: '12px',
                     border: '1px dashed var(--line)'
                   }}>
-                    <div style={{ fontSize: '36px', marginBottom: '8px' }}>🎟️</div>
+                    <div style={{ fontSize: '32px', marginBottom: '8px' }}>🎟️</div>
                     <div style={{ fontSize: '14px', fontWeight: '700', color: 'var(--ink)', marginBottom: '4px' }}>
-                      Không có voucher nào trong danh mục này
+                      Không có voucher nào trong mục này
                     </div>
                     <div style={{ fontSize: '12.5px', color: 'var(--ink-soft)' }}>
-                      Tích lũy điểm khi mua sắm để đổi các mã giảm giá và Freeship hấp dẫn!
+                      Tích lũy điểm khi mua nông sản để đổi lấy các ưu đãi giá trị!
                     </div>
                   </div>
                 ) : (
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '16px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px' }}>
                     {userVouchers.filter(v => {
                       if (voucherFilter === 'available') return !v.isUsed;
                       if (voucherFilter === 'used') return v.isUsed;
                       return true;
                     }).map(v => (
                       <div
-                        key={v.voucherId || v.id}
+                        key={v.voucherId || v.id || v.code}
                         style={{
-                          border: v.isUsed ? '1px dashed var(--line)' : '1.5px solid var(--line)',
-                          borderRadius: 'var(--radius-md)',
-                          backgroundColor: v.isUsed ? 'var(--bg)' : 'var(--surface)',
-                          padding: '18px',
+                          border: v.isUsed ? '1px dashed #cbd5e1' : '1px solid #e2e8f0',
+                          borderRadius: '12px',
+                          backgroundColor: v.isUsed ? '#f8fafc' : '#ffffff',
+                          padding: '16px 18px',
                           display: 'flex',
                           flexDirection: 'column',
                           justifyContent: 'space-between',
-                          opacity: v.isUsed ? 0.65 : 1,
-                          position: 'relative',
-                          boxShadow: v.isUsed ? 'none' : '0 2px 8px rgba(0,0,0,0.04)',
+                          opacity: v.isUsed ? 0.6 : 1,
+                          boxShadow: v.isUsed ? 'none' : '0 1px 4px rgba(0,0,0,0.03)',
                           transition: 'all 0.2s'
                         }}
                       >
                         <div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
                             <span style={{
-                              padding: '3px 8px',
+                              padding: '2px 8px',
                               borderRadius: '4px',
                               fontSize: '11px',
                               fontWeight: '700',
-                              backgroundColor: v.voucherType === 'ship' ? '#EBF8FF' : '#FEF3C7',
-                              color: v.voucherType === 'ship' ? '#2B6CB0' : '#B45309'
+                              backgroundColor: v.discountType === 'ship' ? '#eff6ff' : '#f0fdf4',
+                              color: v.discountType === 'ship' ? '#1d4ed8' : '#15803d',
+                              border: `1px solid ${v.discountType === 'ship' ? '#bfdbfe' : '#bbf7d0'}`
                             }}>
-                              {v.voucherType === 'ship' ? 'FREESHIP' : 'GIẢM GIÁ'}
+                              {v.discountType === 'ship' ? 'FREESHIP' : 'GIẢM GIÁ'}
                             </span>
                             {v.isUsed ? (
-                              <span style={{ fontSize: '11.5px', fontWeight: '700', color: 'var(--ink-soft)', backgroundColor: '#F1F5F9', padding: '2px 6px', borderRadius: '4px' }}>
+                              <span style={{ fontSize: '11px', fontWeight: '600', color: '#64748b' }}>
                                 Đã sử dụng
                               </span>
                             ) : (
-                              <span style={{ fontSize: '11.5px', fontWeight: '700', color: '#15803d', backgroundColor: '#F0FDF4', padding: '2px 6px', borderRadius: '4px', border: '1px solid #BBF7D0' }}>
+                              <span style={{ fontSize: '11px', fontWeight: '700', color: '#166534' }}>
                                 ● Khả dụng
                               </span>
                             )}
                           </div>
 
-                          <h4 style={{ margin: '0 0 6px 0', fontSize: '15px', color: 'var(--ink)', fontWeight: '700' }}>
+                          <h4 style={{ margin: '0 0 6px 0', fontSize: '14.5px', color: '#1e293b', fontWeight: '700' }}>
                             {v.title || v.name}
                           </h4>
 
-                          <div style={{ fontSize: '13px', fontWeight: '700', color: '#15803d', marginBottom: '4px' }}>
-                            {v.voucherType === 'ship'
-                              ? `Giảm ${Number(v.discountValue).toLocaleString('vi-VN')}₫ phí giao hàng`
-                              : v.voucherType === 'percent' || v.voucherType === 'discount'
+                          <div style={{ fontSize: '14px', fontWeight: '800', color: '#15803d', marginBottom: '6px' }}>
+                            {v.discountType === 'percent'
                               ? `Giảm ${v.discountValue}% giá trị đơn hàng`
-                              : `Giảm trực tiếp ${Number(v.discountValue).toLocaleString('vi-VN')}₫`}
+                              : v.discountType === 'ship'
+                                ? `Giảm ${v.discountValue ? v.discountValue.toLocaleString('vi-VN') + '₫' : '30.000₫'} phí giao hàng`
+                                : `Giảm trực tiếp ${v.discountValue ? v.discountValue.toLocaleString('vi-VN') + '₫' : ''}`}
                           </div>
 
-                          <div style={{ fontSize: '12px', color: 'var(--ink-soft)', marginBottom: '12px' }}>
-                            Áp dụng đơn từ: <strong>{(v.minOrderAmount || v.minOrder || 0).toLocaleString('vi-VN')}₫</strong>
+                          <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '14px' }}>
+                            Áp dụng đơn từ: <strong>{(v.minOrderAmount || 0).toLocaleString('vi-VN')}₫</strong>
                           </div>
-                        </div>
 
-                        <div>
-                          <div style={{ borderTop: '1px dashed var(--line)', paddingTop: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                          {/* Mã voucher và HSD */}
+                          <div style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            backgroundColor: '#f8fafc',
+                            padding: '8px 12px',
+                            borderRadius: '8px',
+                            border: '1px dashed #cbd5e1',
+                            marginBottom: '12px'
+                          }}>
                             <div>
-                              <div style={{ fontSize: '10.5px', color: 'var(--ink-soft)', textTransform: 'uppercase' }}>Mã Voucher</div>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
-                                <code style={{ fontSize: '14px', fontWeight: '800', color: 'var(--green-700)', letterSpacing: '0.5px' }}>{v.code}</code>
+                              <div style={{ fontSize: '10px', color: '#94a3b8', textTransform: 'uppercase', fontWeight: '700' }}>MÃ VOUCHER</div>
+                              <div style={{ fontSize: '13px', fontWeight: '800', color: '#0f172a', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <span>{v.code}</span>
                                 <button
                                   type="button"
                                   onClick={() => handleCopyVoucherCode(v.code)}
-                                  style={{
-                                    border: 'none',
-                                    background: 'none',
-                                    cursor: 'pointer',
-                                    padding: '2px 4px',
-                                    fontSize: '12px',
-                                    color: 'var(--ink-soft)',
-                                    borderRadius: '4px'
-                                  }}
+                                  style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 0, fontSize: '12px' }}
                                   title="Sao chép mã"
                                 >
                                   📋
@@ -2115,9 +2442,9 @@ export default function ProfilePage() {
                               </div>
                             </div>
                             <div style={{ textAlign: 'right' }}>
-                              <div style={{ fontSize: '10.5px', color: 'var(--ink-soft)', textTransform: 'uppercase' }}>Hạn dùng</div>
-                              <div style={{ fontSize: '12px', fontWeight: '600', color: 'var(--ink)', marginTop: '2px' }}>
-                                {v.expiryDate ? new Date(v.expiryDate).toLocaleDateString('vi-VN') : v.expiry || ''}
+                              <div style={{ fontSize: '10px', color: '#94a3b8', textTransform: 'uppercase', fontWeight: '700' }}>HẠN DÙNG</div>
+                              <div style={{ fontSize: '12px', fontWeight: '600', color: '#334155' }}>
+                                {v.expiryDate ? new Date(v.expiryDate).toLocaleDateString('vi-VN') : '29/12/2026'}
                               </div>
                             </div>
                           </div>
@@ -2129,7 +2456,7 @@ export default function ProfilePage() {
                               onClick={() => handleUseVoucherNow(v)}
                               style={{
                                 width: '100%',
-                                padding: '8px',
+                                padding: '9px',
                                 backgroundColor: '#15803d',
                                 color: '#ffffff',
                                 border: 'none',
@@ -2140,23 +2467,14 @@ export default function ProfilePage() {
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                gap: '6px',
-                                boxShadow: '0 2px 6px rgba(21, 128, 61, 0.2)',
-                                transition: 'all 0.2s'
+                                gap: '6px'
                               }}
                             >
                               <span>🛒 Dùng ngay khi thanh toán</span>
                             </button>
                           ) : (
-                            <div style={{
-                              textAlign: 'center',
-                              fontSize: '12px',
-                              color: 'var(--ink-soft)',
-                              padding: '6px',
-                              backgroundColor: 'var(--bg)',
-                              borderRadius: '6px'
-                            }}>
-                              Mã này đã được sử dụng cho đơn hàng trước
+                            <div style={{ textAlign: 'center', fontSize: '11.5px', color: '#94a3b8', padding: '6px' }}>
+                              Mã này đã dùng cho đơn hàng trước
                             </div>
                           )}
                         </div>
@@ -2191,7 +2509,7 @@ export default function ProfilePage() {
                         boxShadow: '0 2px 6px rgba(0,0,0,0.03)'
                       }}
                     />
-                    <svg style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-soft)' }} width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                    <svg style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--ink-soft)' }} width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" /></svg>
                     {searchOrderQuery && (
                       <button
                         type="button"
@@ -2289,7 +2607,7 @@ export default function ProfilePage() {
                           gap: '6px'
                         }}
                       >
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" /></svg>
                         Làm mới
                       </button>
                     </div>
@@ -2331,13 +2649,13 @@ export default function ProfilePage() {
                       })
                       .map(order => {
                         const oStatus = order.orderStatus?.toLowerCase() || 'pending';
-                        const statusColor = 
+                        const statusColor =
                           (oStatus === 'delivered' || oStatus === 'completed') ? { bg: 'var(--green-100)', color: 'var(--green-700)', text: 'Hoàn tất' } :
-                          oStatus === 'shipping' ? { bg: '#E0F2FE', color: '#0284C7', text: 'Đang giao hàng' } :
-                          oStatus === 'confirmed' ? { bg: '#F3E8FF', color: '#7E22CE', text: 'Đã xác nhận' } :
-                          oStatus === 'returned' ? { bg: '#FFEDD5', color: '#C2410C', text: 'Trả hàng / Hoàn tiền' } :
-                          oStatus === 'cancelled' ? { bg: '#FFEBEE', color: '#C62828', text: 'Đã hủy' } :
-                          { bg: '#FEF9C3', color: '#854D0E', text: 'Chờ xác nhận' };
+                            oStatus === 'shipping' ? { bg: '#E0F2FE', color: '#0284C7', text: 'Đang giao hàng' } :
+                              oStatus === 'confirmed' ? { bg: '#F3E8FF', color: '#7E22CE', text: 'Đã xác nhận' } :
+                                oStatus === 'returned' ? { bg: '#FFEDD5', color: '#C2410C', text: 'Trả hàng / Hoàn tiền' } :
+                                  oStatus === 'cancelled' ? { bg: '#FFEBEE', color: '#C62828', text: 'Đã hủy' } :
+                                    { bg: '#FEF9C3', color: '#854D0E', text: 'Chờ xác nhận' };
 
                         return (
                           <div
@@ -2392,9 +2710,9 @@ export default function ProfilePage() {
                                         style={{ cursor: 'pointer', position: 'relative', flexShrink: 0 }}
                                         title="Nhấp để xem thông tin chi tiết sản phẩm"
                                       >
-                                        <img 
-                                          src={imgUrl} 
-                                          alt={item.product?.productName || 'Nông sản'} 
+                                        <img
+                                          src={imgUrl}
+                                          alt={item.product?.productName || 'Nông sản'}
                                           style={{
                                             width: '44px',
                                             height: '44px',
@@ -2477,7 +2795,7 @@ export default function ProfilePage() {
                                     transition: 'all 0.15s'
                                   }}
                                 >
-                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
                                   Chi tiết
                                 </button>
 
@@ -2501,7 +2819,7 @@ export default function ProfilePage() {
                                   }}
                                   title="In hoặc tải hóa đơn PDF chuẩn A4"
                                 >
-                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9V2h12v7" /><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" /><rect x="6" y="14" width="12" height="8" /></svg>
                                   In PDF
                                 </button>
 
@@ -2525,7 +2843,7 @@ export default function ProfilePage() {
                                     transition: 'all 0.15s'
                                   }}
                                 >
-                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 2v6h6M21 12A9 9 0 0 0 6 5.3L3 8M21 22v-6h-6M3 12a9 9 0 0 0 15 6.7l3-2.7"/></svg>
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 2v6h6M21 12A9 9 0 0 0 6 5.3L3 8M21 22v-6h-6M3 12a9 9 0 0 0 15 6.7l3-2.7" /></svg>
                                   Mua lại
                                 </button>
                               </div>
@@ -2539,6 +2857,241 @@ export default function ProfilePage() {
             )}
           </div>
         </div>
+      
+      {/* ── MODAL ĐỔI MẬT KHẨU TÀI KHOẢN AN TOÀN (Bcrypt) ── */}
+      {showChangePasswordModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(15, 23, 42, 0.65)',
+          backdropFilter: 'blur(6px)',
+          zIndex: 10000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '20px'
+        }}>
+          <div style={{
+            backgroundColor: '#FFFFFF',
+            borderRadius: '20px',
+            maxWidth: '460px',
+            width: '100%',
+            padding: '30px 28px',
+            boxShadow: '0 25px 60px rgba(0,0,0,0.25)',
+            border: '1px solid #E2E8F0',
+            position: 'relative'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '20px' }}>🔐</span>
+                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 800, color: '#0F172A' }}>
+                  Đổi Mật Khẩu Tài Khoản
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowChangePasswordModal(false)}
+                style={{ border: 'none', background: '#F1F5F9', width: '32px', height: '32px', borderRadius: '50%', cursor: 'pointer', fontSize: '14px', color: '#64748B' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <p style={{ fontSize: '13px', color: '#64748B', margin: '0 0 20px 0', lineHeight: 1.5 }}>
+              Để bảo mật tài khoản, vui lòng nhập mật khẩu hiện tại trước khi thiết lập mật khẩu mới.
+            </p>
+
+            {changePassError && (
+              <div style={{ backgroundColor: '#FEF2F2', border: '1px solid #FECACA', color: '#991B1B', padding: '10px 14px', borderRadius: '8px', fontSize: '13px', marginBottom: '16px' }}>
+                ⚠️ {changePassError}
+              </div>
+            )}
+
+            {changePassSuccess && (
+              <div style={{ backgroundColor: '#F0FDF4', border: '1px solid #BBF7D0', color: '#166534', padding: '10px 14px', borderRadius: '8px', fontSize: '13px', marginBottom: '16px' }}>
+                ✓ {changePassSuccess}
+              </div>
+            )}
+
+            <form onSubmit={handleChangePassword}>
+              <div style={{ marginBottom: '14px' }}>
+                <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: 600, color: '#1E293B' }}>
+                  Mật khẩu hiện tại (Cũ) *
+                </label>
+                <input
+                  type="password"
+                  value={oldPassword}
+                  onChange={(e) => setOldPassword(e.target.value)}
+                  placeholder="Nhập mật khẩu đang dùng"
+                  required
+                  style={{ width: '100%', padding: '11px 14px', borderRadius: '10px', border: '1.5px solid #CBD5E1', fontSize: '13.5px', outline: 'none' }}
+                />
+              </div>
+
+              <div style={{ marginBottom: '14px' }}>
+                <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: 600, color: '#1E293B' }}>
+                  Mật khẩu mới *
+                </label>
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="Tối thiểu 8 ký tự (chữ hoa, chữ thường, số, ký tự đặc biệt)"
+                  required
+                  style={{ width: '100%', padding: '11px 14px', borderRadius: '10px', border: '1.5px solid #CBD5E1', fontSize: '13.5px', outline: 'none' }}
+                />
+              </div>
+
+              <div style={{ marginBottom: '22px' }}>
+                <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: 600, color: '#1E293B' }}>
+                  Xác nhận mật khẩu mới *
+                </label>
+                <input
+                  type="password"
+                  value={confirmNewPassword}
+                  onChange={(e) => setConfirmNewPassword(e.target.value)}
+                  placeholder="Nhập lại mật khẩu mới"
+                  required
+                  style={{ width: '100%', padding: '11px 14px', borderRadius: '10px', border: '1.5px solid #CBD5E1', fontSize: '13.5px', outline: 'none' }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowChangePasswordModal(false)}
+                  style={{ flex: 1, padding: '12px', borderRadius: '10px', border: '1px solid #CBD5E1', backgroundColor: '#F8FAFC', color: '#475569', fontWeight: 600, fontSize: '13.5px', cursor: 'pointer' }}
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  disabled={changePassLoading}
+                  style={{ flex: 1.5, padding: '12px', borderRadius: '10px', border: 'none', backgroundColor: '#15803D', color: '#FFFFFF', fontWeight: 700, fontSize: '13.5px', cursor: changePassLoading ? 'not-allowed' : 'pointer', boxShadow: '0 4px 12px rgba(21,128,61,0.3)' }}
+                >
+                  {changePassLoading ? 'Đang kiểm tra...' : 'Xác nhận đổi mật khẩu'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── MODAL XÁC THỰC MÃ OTP KHI THAY ĐỔI EMAIL ── */}
+      {showEmailOtpModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(15, 23, 42, 0.65)',
+          backdropFilter: 'blur(6px)',
+          zIndex: 10000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '20px'
+        }}>
+          <div style={{
+            backgroundColor: '#FFFFFF',
+            borderRadius: '20px',
+            maxWidth: '440px',
+            width: '100%',
+            padding: '30px 28px',
+            boxShadow: '0 25px 60px rgba(0,0,0,0.25)',
+            border: '1px solid #E2E8F0',
+            textAlign: 'center'
+          }}>
+            <div style={{ width: '56px', height: '56px', borderRadius: '16px', backgroundColor: '#DCFCE7', color: '#15803D', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '26px', margin: '0 auto 16px' }}>
+              📧
+            </div>
+            <h3 style={{ margin: '0 0 8px 0', fontSize: '19px', fontWeight: 800, color: '#0F172A' }}>
+              Xác Thực Thay Đổi Email
+            </h3>
+            <p style={{ fontSize: '13.5px', color: '#64748B', margin: '0 0 18px 0', lineHeight: 1.5 }}>
+              Mã xác thực 6 chữ số đã được gửi tới email mới: <br />
+              <strong style={{ color: '#15803D' }}>{email}</strong>
+            </p>
+
+            {emailOtpMsg && (
+              <div style={{ backgroundColor: '#F0FDF4', border: '1px solid #BBF7D0', color: '#166534', padding: '9px 12px', borderRadius: '8px', fontSize: '12.5px', marginBottom: '14px' }}>
+                {emailOtpMsg}
+              </div>
+            )}
+
+            {emailOtpError && (
+              <div style={{ backgroundColor: '#FEF2F2', border: '1px solid #FECACA', color: '#991B1B', padding: '9px 12px', borderRadius: '8px', fontSize: '12.5px', marginBottom: '14px' }}>
+                ⚠️ {emailOtpError}
+              </div>
+            )}
+
+            <form onSubmit={handleVerifyEmailOtp}>
+              <div style={{ marginBottom: '18px' }}>
+                <input
+                  type="text"
+                  maxLength={6}
+                  value={emailOtpCode}
+                  onChange={(e) => setEmailOtpCode(e.target.value.replace(/[^0-9]/g, ''))}
+                  placeholder="• • • • • •"
+                  style={{
+                    width: '200px',
+                    margin: '0 auto',
+                    padding: '12px',
+                    borderRadius: '12px',
+                    border: '2px solid #86EFAC',
+                    fontSize: '24px',
+                    textAlign: 'center',
+                    fontWeight: 800,
+                    letterSpacing: '8px',
+                    outline: 'none',
+                    backgroundColor: '#F8FAFC'
+                  }}
+                  autoFocus
+                />
+              </div>
+
+              <div style={{ fontSize: '12.5px', color: '#64748B', marginBottom: '20px' }}>
+                {emailOtpCountdown > 0 ? (
+                  <span>Mã có hiệu lực trong: <strong style={{ color: '#DC2626' }}>{emailOtpCountdown}s</strong></span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleRequestEmailOtp}
+                    style={{ border: 'none', background: 'none', color: '#15803D', fontWeight: 700, cursor: 'pointer', fontSize: '12.5px' }}
+                  >
+                    🔄 Gửi lại mã OTP mới
+                  </button>
+                )}
+              </div>
+
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowEmailOtpModal(false);
+                    setEmail(originalEmail);
+                  }}
+                  style={{ flex: 1, padding: '12px', borderRadius: '10px', border: '1px solid #CBD5E1', backgroundColor: '#F8FAFC', color: '#475569', fontWeight: 600, fontSize: '13.5px', cursor: 'pointer' }}
+                >
+                  Hủy bỏ
+                </button>
+                <button
+                  type="submit"
+                  disabled={emailOtpLoading || emailOtpCode.length < 6}
+                  style={{ flex: 1.5, padding: '12px', borderRadius: '10px', border: 'none', backgroundColor: '#15803D', color: '#FFFFFF', fontWeight: 700, fontSize: '13.5px', cursor: (emailOtpLoading || emailOtpCode.length < 6) ? 'not-allowed' : 'pointer', boxShadow: '0 4px 12px rgba(21,128,61,0.3)', opacity: (emailOtpLoading || emailOtpCode.length < 6) ? 0.6 : 1 }}
+                >
+                  {emailOtpLoading ? 'Đang xác thực...' : 'Xác thực & Lưu Email'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       </main>
 
       {/* Modal Thêm / Chỉnh sửa địa chỉ */}
@@ -2916,7 +3469,7 @@ export default function ProfilePage() {
         <div className="drawer-head">
           <h3>Giỏ hàng của bạn</h3>
           <button className="icon-btn" onClick={() => setIsDrawerOpen(false)} aria-label="Đóng giỏ hàng">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M6 6l12 12M18 6L6 18"/></svg>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M6 6l12 12M18 6L6 18" /></svg>
           </button>
         </div>
         <div className="drawer-body">
@@ -2940,7 +3493,7 @@ export default function ProfilePage() {
                   </div>
                 </div>
                 <button className="remove-btn" onClick={() => removeFromCart(item.product.id)} aria-label="Xóa">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6"/></svg>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6" /></svg>
                 </button>
               </div>
             ))
@@ -2948,12 +3501,12 @@ export default function ProfilePage() {
         </div>
         <div className="drawer-foot">
           <div className="row"><span>Tạm tính</span><span>{toVND(totalCart)}</span></div>
-          <button 
-            className="btn btn-accent" 
+          <button
+            className="btn btn-accent"
             onClick={() => {
               setIsDrawerOpen(false);
               router.push('/checkout');
-            }} 
+            }}
           >
             Thanh toán ngay
           </button>
@@ -3167,7 +3720,7 @@ export default function ProfilePage() {
                   gap: '8px'
                 }}
               >
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9V2h12v7" /><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" /><rect x="6" y="14" width="12" height="8" /></svg>
                 In hóa đơn PDF
               </button>
 
@@ -3193,7 +3746,7 @@ export default function ProfilePage() {
                     boxShadow: '0 2px 8px rgba(46,125,50,0.25)'
                   }}
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 2v6h6M21 12A9 9 0 0 0 6 5.3L3 8M21 22v-6h-6M3 12a9 9 0 0 0 15 6.7l3-2.7"/></svg>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 2v6h6M21 12A9 9 0 0 0 6 5.3L3 8M21 22v-6h-6M3 12a9 9 0 0 0 15 6.7l3-2.7" /></svg>
                   Mua lại đơn này
                 </button>
 
@@ -3253,7 +3806,7 @@ export default function ProfilePage() {
           let currentCart: CartItem[] = [];
           const stored = localStorage.getItem('cart');
           if (stored) {
-            try { currentCart = JSON.parse(stored); } catch {}
+            try { currentCart = JSON.parse(stored); } catch { }
           }
           const existing = currentCart.find(c => c.product.id === p.id);
           if (existing) {

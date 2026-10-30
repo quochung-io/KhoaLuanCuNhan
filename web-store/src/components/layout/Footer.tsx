@@ -1,4 +1,7 @@
+'use client';
+
 import React from 'react';
+import Link from 'next/link';
 
 export const Footer: React.FC = () => {
   return (
@@ -17,7 +20,7 @@ export const Footer: React.FC = () => {
           <div>
             <h5>Liên hệ</h5>
             <ul>
-              <li>1900 6868 (7:00–21:00)</li>
+              <li>1900 8899 (7:00–21:00)</li>
               <li>hello@lanh.vn</li>
               <li>92 Nguyễn Huệ, Q.1, TP.HCM</li>
             </ul>
@@ -25,10 +28,26 @@ export const Footer: React.FC = () => {
           <div>
             <h5>Chính sách</h5>
             <ul>
-              <li>Vận chuyển &amp; giao nhận</li>
-              <li>Đổi trả trong 24h</li>
-              <li>Bảo mật thông tin</li>
-              <li>Điều khoản dịch vụ</li>
+              <li>
+                <Link href="/shipping-policy" style={{ color: '#D9E6D9', textDecoration: 'none', transition: 'color 0.2s', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span>🚚</span> Vận chuyển &amp; giao nhận
+                </Link>
+              </li>
+              <li>
+                <Link href="/return-policy" style={{ color: '#D9E6D9', textDecoration: 'none', transition: 'color 0.2s', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span>🔄</span> Đổi trả trong 24h
+                </Link>
+              </li>
+              <li>
+                <Link href="/privacy-policy" style={{ color: '#D9E6D9', textDecoration: 'none', transition: 'color 0.2s', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span>🔒</span> Bảo mật thông tin
+                </Link>
+              </li>
+              <li>
+                <Link href="/terms" style={{ color: '#D9E6D9', textDecoration: 'none', transition: 'color 0.2s', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span>📜</span> Điều khoản dịch vụ
+                </Link>
+              </li>
             </ul>
           </div>
           <div>
@@ -39,10 +58,12 @@ export const Footer: React.FC = () => {
           </div>
         </div>
         <div className="foot-bottom">
-          <span>© 2026 LÀNH — Đồ án tốt nghiệp UI/UX, Đại học ABC.</span>
-          <span>Thiết kế minh họa cho mục đích học thuật.</span>
+          <span>© 2026 LÀNH — Nông sản sạch minh bạch chuẩn VietGAP &amp; Hữu cơ.</span>
+          <span>Hệ thống chuỗi cung ứng trực tiếp từ Nông trại đến Bàn ăn.</span>
         </div>
       </div>
     </footer>
   );
 };
+
+export default Footer;

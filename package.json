@@ -4,16 +4,14 @@
   "private": true,
   "workspaces": [
     "shared",
-    "web-admin",
-    "web-supplier",
+    "web-portal",
     "web-store"
   ],
   "scripts": {
     "generate:contracts": "node generate_contracts.js",
     "dev": "npm run dev:all",
-    "dev:all": "concurrently -n \"admin,supplier,store\" -c \"blue,green,magenta\" \"npm run web-admin:dev\" \"npm run web-supplier:dev\" \"npm run web-store:dev\"",
-    "web-admin:dev": "npm run dev --workspace=web-admin",
-    "web-supplier:dev": "npm run dev --workspace=web-supplier",
+    "dev:all": "concurrently -n \"portal,store\" -c \"blue,magenta\" \"npm run web-portal:dev\" \"npm run web-store:dev\"",
+    "web-portal:dev": "npm run dev --workspace=web-portal",
     "web-store:dev": "npm run dev --workspace=web-store"
   },
   "devDependencies": {

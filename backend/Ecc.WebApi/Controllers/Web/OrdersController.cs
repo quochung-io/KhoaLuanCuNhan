@@ -5,6 +5,8 @@ using Ecc.Infrastructure.Entities;
 using Ecc.Infrastructure.Services;
 using System.Net;
 using System.Net.Mail;
+using Microsoft.AspNetCore.SignalR;
+using Ecc.WebApi.Hubs;
 
 namespace Ecc.WebApi.Controllers;
 
@@ -15,12 +17,14 @@ public class OrdersController : ControllerBase
     private readonly AppDbContext _context;
     private readonly IConfiguration _config;
     private readonly ILogger<OrdersController> _logger;
+    private readonly IHubContext<OrderNotificationHub> _hubContext;
 
-    public OrdersController(AppDbContext context, IConfiguration config, ILogger<OrdersController> logger)
+    public OrdersController(AppDbContext context, IConfiguration config, ILogger<OrdersController> logger, IHubContext<OrderNotificationHub> hubContext)
     {
         _context = context;
         _config = config;
         _logger = logger;
+        _hubContext = hubContext;
     }
 
     [HttpGet]
@@ -69,6 +73,139 @@ public class OrdersController : ControllerBase
             .Where(o => o.CustomerId == customerId)
             .OrderByDescending(o => o.CreatedAt)
             .ToListAsync();
+    }
+
+    // ── 0. Danh sách đơn hàng trực thuộc một Nhà Cung Cấp (Supplier) ──
+    [HttpGet("supplier/{supplierId}")]
+    public async Task<IActionResult> GetOrdersBySupplier(long supplierId)
+    {
+        try
+        {
+            var orders = await _context.Orders
+                .Include(o => o.Customer)
+                .Include(o => o.Address)
+                .Include(o => o.OrderItems)
+                    .ThenInclude(oi => oi.Product)
+                        .ThenInclude(p => p.ProductImages)
+                .Where(o => o.OrderItems.Any(oi => oi.Product.SupplierId == supplierId))
+                .OrderByDescending(o => o.CreatedAt)
+                .ToListAsync();
+
+            var result = orders.Select(o =>
+            {
+                var supplierItems = o.OrderItems.Where(oi => oi.Product.SupplierId == supplierId).ToList();
+                return new
+                {
+                    orderId = o.OrderId,
+                    orderCode = o.OrderCode,
+                    customerId = o.CustomerId,
+                    customer = o.Customer != null ? new 
+                    { 
+                        fullName = o.Customer.FullName, 
+                        email = o.Customer.Email, 
+                        phone = o.Customer.Phone 
+                    } : null,
+                    address = o.Address != null ? new 
+                    { 
+                        receiverName = o.Address.ReceiverName, 
+                        phone = o.Address.Phone, 
+                        province = o.Address.Province, 
+                        district = o.Address.District, 
+                        ward = o.Address.Ward, 
+                        addressDetail = o.Address.AddressDetail 
+                    } : null,
+                    orderStatus = o.OrderStatus,
+                    paymentStatus = o.PaymentStatus,
+                    paymentMethod = o.PaymentMethod,
+                    totalAmount = o.TotalAmount,
+                    supplierSubtotal = supplierItems.Sum(oi => oi.TotalAmount),
+                    supplierItemCount = supplierItems.Sum(oi => oi.Quantity),
+                    createdAt = o.CreatedAt,
+                    updatedAt = o.UpdatedAt,
+                    items = supplierItems.Select(oi => new
+                    {
+                        orderItemId = oi.OrderItemId,
+                        productId = oi.ProductId,
+                        productName = oi.Product?.ProductName,
+                        productImage = oi.Product?.ProductImages?.FirstOrDefault()?.ImageUrl,
+                        unit = oi.Product?.Unit,
+                        batchId = oi.BatchId,
+                        quantity = oi.Quantity,
+                        unitPrice = oi.UnitPrice,
+                        discountAmount = oi.DiscountAmount,
+                        totalAmount = oi.TotalAmount
+                    }).ToList()
+                };
+            }).ToList();
+
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"[LỖI LẤY ĐƠN HÀNG NCC]: {ex.Message}");
+            return StatusCode(500, new { message = $"Lỗi khi tải đơn hàng của nhà cung cấp: {ex.Message}" });
+        }
+    }
+
+    // ── Cập nhật trạng thái chuẩn bị đơn hàng từ phía Nhà Cung Cấp ──
+    [HttpPut("{id}/supplier-status")]
+    public async Task<IActionResult> UpdateSupplierOrderStatus(long id, [FromQuery] long supplierId, [FromBody] UpdateOrderStatusDto dto)
+    {
+        using var transaction = await _context.Database.BeginTransactionAsync();
+        try
+        {
+            var order = await _context.Orders
+                .Include(o => o.OrderItems)
+                    .ThenInclude(oi => oi.Product)
+                .FirstOrDefaultAsync(o => o.OrderId == id);
+
+            if (order == null)
+            {
+                return NotFound(new { message = "Không tìm thấy đơn hàng cần cập nhật." });
+            }
+
+            var hasSupplierProduct = order.OrderItems.Any(oi => oi.Product.SupplierId == supplierId);
+            if (!hasSupplierProduct)
+            {
+                return Forbid("Đơn hàng này không thuộc quyền quản lý của đơn vị bạn.");
+            }
+
+            var requestedStatus = dto.OrderStatus?.Trim();
+            if (string.IsNullOrWhiteSpace(requestedStatus))
+            {
+                return BadRequest(new { message = "Trạng thái mới không được để trống." });
+            }
+
+            order.OrderStatus = requestedStatus;
+            order.UpdatedAt = DateTime.Now;
+
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            try
+            {
+                await _hubContext.Clients.All.SendAsync("OrderStatusChanged", new
+                {
+                    orderId = order.OrderId,
+                    orderCode = order.OrderCode,
+                    orderStatus = order.OrderStatus,
+                    updatedBySupplierId = supplierId,
+                    message = $"Đơn hàng #{order.OrderCode} vừa được NCC #{supplierId} chuyển sang trạng thái: {order.OrderStatus}",
+                    updatedAt = DateTime.UtcNow
+                });
+            }
+            catch (Exception hubEx)
+            {
+                _logger.LogWarning($"[SignalR Warning]: Không thể gửi broadcast OrderStatusChanged: {hubEx.Message}");
+            }
+
+            return Ok(new { message = "Cập nhật tiến độ đơn hàng thành công!", orderId = order.OrderId, orderStatus = order.OrderStatus });
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            return StatusCode(500, new { message = $"Lỗi khi cập nhật trạng thái đơn hàng: {ex.Message}" });
+        }
     }
 
     // ── 1. Thống kê tổng quan (Summary) ──────────────────────
@@ -425,11 +562,14 @@ public class OrdersController : ControllerBase
         return order;
     }
 
-    // ── 5. Cải tiến tạo đơn hàng từ DTO chứa thông tin địa chỉ người nhận thật ──
+    // ── 5. Cải tiến tạo đơn hàng từ DTO chứa thông tin địa chỉ người nhận thật (ACID Transaction) ──
     [HttpPost]
     public async Task<ActionResult<Order>> CreateOrder(OrderCreateDto dto)
     {
-        long finalAddressId;
+        using var transaction = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.RepeatableRead);
+        try
+        {
+            long finalAddressId;
 
         // Nếu client đã chọn sẵn một địa chỉ từ danh sách địa chỉ đã lưu
         if (dto.AddressId.HasValue && dto.AddressId.Value > 0)
@@ -877,6 +1017,24 @@ public class OrdersController : ControllerBase
 
         _context.Orders.Add(order);
         await _context.SaveChangesAsync();
+        await transaction.CommitAsync();
+
+        try
+        {
+            await _hubContext.Clients.All.SendAsync("OrderCreated", new
+            {
+                orderId = order.OrderId,
+                orderCode = order.OrderCode,
+                totalAmount = order.TotalAmount,
+                customerId = order.CustomerId,
+                message = $"Có đơn hàng mới #{order.OrderCode} với tổng giá trị {order.TotalAmount:N0} đ",
+                createdAt = DateTime.UtcNow
+            });
+        }
+        catch (Exception hubEx)
+        {
+            _logger.LogWarning($"[SignalR Warning]: Không thể gửi broadcast OrderCreated: {hubEx.Message}");
+        }
 
         // 4. Gửi hóa đơn xác nhận mua hàng về Email của Khách hàng
         _ = Task.Run(async () =>
@@ -902,6 +1060,19 @@ public class OrdersController : ControllerBase
         });
 
         return CreatedAtAction(nameof(GetOrder), new { id = order.OrderId }, order);
+        }
+        catch (DbUpdateConcurrencyException ex)
+        {
+            await transaction.RollbackAsync();
+            _logger.LogError($"[XUNG ĐỘT TỒN KHO - CONCURRENCY]: {ex.Message}");
+            return Conflict(new { message = "Số lượng tồn kho lô hàng vừa có biến động do có khách hàng khác đặt mua cùng lúc. Vui lòng thử lại!" });
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            _logger.LogError($"[LỖI TẠO ĐƠN HÀNG]: {ex.Message}");
+            return StatusCode(500, new { message = $"Lỗi khi tạo đơn hàng: {ex.Message}" });
+        }
     }
 
     // ── 6. Hủy đơn hàng trong vòng 30 phút kể từ lúc đặt (Khách hàng) ──
@@ -986,6 +1157,22 @@ public class OrdersController : ControllerBase
             order.UpdatedAt = DateTime.Now;
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
+
+            try
+            {
+                await _hubContext.Clients.All.SendAsync("OrderStatusChanged", new
+                {
+                    orderId = order.OrderId,
+                    orderCode = order.OrderCode,
+                    orderStatus = "Cancelled",
+                    message = $"Đơn hàng #{order.OrderCode} đã bị hủy và hoàn trả tồn kho.",
+                    updatedAt = DateTime.UtcNow
+                });
+            }
+            catch (Exception hubEx)
+            {
+                _logger.LogWarning($"[SignalR Warning]: Không thể gửi broadcast: {hubEx.Message}");
+            }
 
             _logger.LogInformation($"[HỦY ĐƠN HÀNG - ACID] Đơn #{order.OrderCode} đã được hủy thành công và hoàn tồn kho.");
 
@@ -1165,6 +1352,23 @@ public class OrdersController : ControllerBase
 
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
+
+            try
+            {
+                await _hubContext.Clients.All.SendAsync("OrderStatusChanged", new
+                {
+                    orderId = order.OrderId,
+                    orderCode = order.OrderCode,
+                    orderStatus = normalizedStatus,
+                    paymentStatus = order.PaymentStatus,
+                    message = $"Đơn hàng #{order.OrderCode ?? order.OrderId.ToString()} vừa chuyển sang trạng thái: {normalizedStatus}",
+                    updatedAt = DateTime.UtcNow
+                });
+            }
+            catch (Exception hubEx)
+            {
+                _logger.LogWarning($"[SignalR Warning]: Không thể gửi broadcast: {hubEx.Message}");
+            }
 
             _logger.LogInformation($"[STATE MACHINE & ACID] Đơn #{order.OrderCode ?? order.OrderId.ToString()} chuyển từ '{currentStatus}' -> '{normalizedStatus}', đã cập nhật kho hàng và thanh toán đồng bộ.");
 

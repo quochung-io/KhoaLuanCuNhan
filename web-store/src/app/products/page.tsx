@@ -611,10 +611,7 @@ function AllProductsInner() {
               <span className="topbar-link">Hotline: <strong>1900 8899</strong> (7:00 - 21:00)</span>
             </div>
             <div className="topbar-right">
-              <a href="http://localhost:5174" target="_blank" rel="noreferrer" className="topbar-link">
-                Kênh Đối Tác / HTX
-              </a>
-              <span style={{ opacity: 0.4 }}>|</span>
+              
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <button className="icon-btn" onClick={toggleTheme} style={{ width: '24px', height: '24px' }} title="Sáng / Tối">
                   {theme === "light" ? "Tối" : "Sáng"}
@@ -1600,25 +1597,23 @@ function AllProductsInner() {
               </div>
             </div>
 
-            {/* ── TẦNG 2: SẢN PHẨM ĐI KÈM (CAROUSEL TOP-6 & HỘP COMBO ƯU ĐÃI 5%) ── */}
+            {/* ── TẦNG 2: GỢI Ý NÔNG SẢN LIÊN QUAN (CHUẨN GIAO DIỆN MOBILE-APP, KHÔNG CHECKBOX COMBO) ── */}
             {boughtTogether.length > 0 && (
               <div style={{
                 borderTop: '1px solid var(--line)',
                 backgroundColor: '#FAFAFA',
-                padding: '16px 22px',
+                padding: '16px 24px',
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '12px'
               }}>
-                {/* Header thanh điều hướng Carousel & Lịch sử */}
+                {/* Tiêu đề ngắn gọn + Nút điều hướng Carousel */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <h3 style={{ margin: 0, fontSize: '15px', fontWeight: '700', color: 'var(--ink)' }}>
-                      Thường mua kèm
+                    <span style={{ fontSize: '18px' }}>🌿</span>
+                    <h3 style={{ margin: 0, fontSize: '15px', fontWeight: '800', color: 'var(--ink)' }}>
+                      Gợi ý nông sản cùng loại & tươi ngon
                     </h3>
-                    <span style={{ fontSize: '12px', color: 'var(--green-700)', fontWeight: '600' }}>
-                      • Tiết kiệm thêm 5% khi mua trọn combo
-                    </span>
                   </div>
 
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -1692,273 +1687,149 @@ function AllProductsInner() {
                   </div>
                 </div>
 
-                {/* Bố cục 2 phần: Dải trượt ngang (Left) & Hộp Tổng Tiền Cố Định (Right) */}
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'minmax(0, 1fr) 230px',
-                  gap: '14px',
-                  alignItems: 'center'
-                }}>
-                  {/* Cột Trái: Dải trượt ngang mượt mà (Carousel) */}
-                  <div 
-                    ref={quickViewCarouselRef}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '10px',
-                      overflowX: 'auto',
-                      paddingBottom: '4px',
-                      scrollBehavior: 'smooth'
-                    }}
-                  >
-                    {/* Card 1: Món chính (Luôn chọn) */}
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      padding: '8px 10px',
-                      borderRadius: '10px',
-                      backgroundColor: isQuickViewOutOfStock ? '#FEF2F2' : '#FFFFFF',
-                      border: isQuickViewOutOfStock ? '1px solid #FCA5A5' : '1px solid var(--line)',
-                      minWidth: '185px',
-                      flexShrink: 0
-                    }}>
-                      <div style={{
-                        width: '18px',
-                        height: '18px',
-                        borderRadius: '50%',
-                        backgroundColor: isQuickViewOutOfStock ? '#DC2626' : 'var(--green-700)',
-                        color: '#FFFFFF',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '10px',
-                        fontWeight: '900',
-                        flexShrink: 0
-                      }}>
-                        {isQuickViewOutOfStock ? '✕' : '✓'}
-                      </div>
-                      <img
-                        src={quickViewProduct.imageUrl || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=100'}
-                        alt={quickViewProduct.name}
-                        style={{ width: '42px', height: '42px', borderRadius: '6px', objectFit: 'cover', border: '1px solid #E2E8F0', flexShrink: 0 }}
-                      />
-                      <div style={{ minWidth: 0 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <span style={{ fontSize: '10px', color: '#64748B', fontWeight: '700' }}>
-                            Món đang xem
-                          </span>
-                          {isQuickViewOutOfStock && (
-                            <span style={{ fontSize: '9px', fontWeight: '800', color: '#DC2626', backgroundColor: '#FEE2E2', padding: '1px 4px', borderRadius: '3px' }}>
-                              Tạm hết
-                            </span>
-                          )}
-                        </div>
-                        <div style={{ fontSize: '12.5px', fontWeight: '700', color: 'var(--ink)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={quickViewProduct.name}>
-                          {quickViewProduct.name}
-                        </div>
-                        <div style={{ fontSize: '12px', fontWeight: '700', color: isQuickViewOutOfStock ? '#DC2626' : 'var(--green-700)' }}>
-                          {isQuickViewOutOfStock ? 'Hết hàng' : quickViewProduct.price}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Dấu cộng + */}
-                    <div style={{ color: '#94A3B8', fontSize: '15px', fontWeight: '700', flexShrink: 0 }}>
-                      +
-                    </div>
-
-                    {/* Danh sách các món gợi ý Top-6 */}
-                    {boughtTogether.map((item: any, idx: number) => {
-                      const isSelected = selectedTopKIds.includes(item.productId) && !item.isOutOfStock;
-                      return (
-                        <React.Fragment key={item.productId}>
+                {/* Dải trượt ngang các thẻ gợi ý mượt mà */}
+                <div 
+                  ref={quickViewCarouselRef}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'stretch',
+                    gap: '12px',
+                    overflowX: 'auto',
+                    paddingBottom: '6px',
+                    scrollBehavior: 'smooth'
+                  }}
+                >
+                  {boughtTogether.map((item) => {
+                    const isItemOutOfStock = !!item.isOutOfStock;
+                    return (
+                      <div
+                        key={item.productId}
+                        style={{
+                          width: '180px',
+                          flexShrink: 0,
+                          backgroundColor: '#FFFFFF',
+                          borderRadius: '12px',
+                          border: '1px solid var(--line)',
+                          padding: '10px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          justifyContent: 'space-between',
+                          boxShadow: '0 1px 4px rgba(0,0,0,0.03)',
+                          opacity: isItemOutOfStock ? 0.7 : 1
+                        }}
+                      >
+                        <div>
+                          {/* Ảnh sản phẩm */}
                           <div 
                             onClick={() => handleDrillDownProduct(item)}
-                            title={item.isOutOfStock ? `${item.productName} (Tạm hết hàng - Bấm để xem chi tiết)` : "Bấm để xem chi tiết sản phẩm này"}
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '8px',
-                              padding: '8px 10px',
-                              borderRadius: '10px',
-                              backgroundColor: item.isOutOfStock ? '#F8FAFC' : '#FFFFFF',
-                              border: isSelected ? '1.5px solid var(--green-700)' : '1px solid var(--line)',
-                              cursor: 'pointer',
-                              transition: 'all 0.15s',
-                              minWidth: '190px',
-                              flexShrink: 0,
-                              position: 'relative',
-                              opacity: item.isOutOfStock ? 0.6 : 1
-                            }}
+                            style={{ position: 'relative', width: '100%', height: '110px', borderRadius: '8px', overflow: 'hidden', cursor: 'pointer', marginBottom: '8px' }}
                           >
-                            {/* Checkbox chọn vào combo */}
-                            <div 
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                if (item.isOutOfStock) {
-                                  alert('Sản phẩm này hiện đang tạm hết hàng, không thể chọn vào combo.');
-                                  return;
-                                }
-                                toggleTopKSelection(item.productId);
-                              }}
-                              title={item.isOutOfStock ? 'Sản phẩm tạm hết hàng' : (isSelected ? 'Bỏ chọn khỏi combo' : 'Chọn vào combo')}
-                              style={{
-                                width: '18px',
-                                height: '18px',
-                                borderRadius: '4px',
-                                border: item.isOutOfStock ? '1.5px solid #E2E8F0' : (isSelected ? 'none' : '1.5px solid #CBD5E1'),
-                                backgroundColor: item.isOutOfStock ? '#F1F5F9' : (isSelected ? 'var(--green-700)' : '#FFFFFF'),
-                                color: '#FFFFFF',
+                            <img
+                              src={item.imageUrl || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=200'}
+                              alt={item.productName}
+                              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            />
+                            <span style={{
+                              position: 'absolute',
+                              top: '4px',
+                              left: '4px',
+                              backgroundColor: 'rgba(22, 163, 74, 0.9)',
+                              color: '#FFFFFF',
+                              fontSize: '9px',
+                              fontWeight: 700,
+                              padding: '1px 5px',
+                              borderRadius: '4px'
+                            }}>
+                              {item.categoryName || 'VietGAP'}
+                            </span>
+                            {isItemOutOfStock && (
+                              <div style={{
+                                position: 'absolute',
+                                inset: 0,
+                                backgroundColor: 'rgba(0,0,0,0.45)',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                fontSize: '10px',
-                                fontWeight: '900',
-                                flexShrink: 0,
-                                cursor: item.isOutOfStock ? 'not-allowed' : 'pointer'
-                              }}
-                            >
-                              {isSelected && '✓'}
-                            </div>
-
-                            <img
-                              src={item.imageUrl || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=100'}
-                              alt={item.productName}
-                              style={{ width: '42px', height: '42px', borderRadius: '6px', objectFit: 'cover', border: '1px solid #E2E8F0', flexShrink: 0 }}
-                            />
-
-                            <div style={{ minWidth: 0, flex: 1 }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                <span style={{ fontSize: '9.5px', color: '#15803D', fontWeight: '700' }}>
-                                  {item.recommendationReason || item.categoryName || 'Món bổ trợ'}
-                                </span>
-                                {item.isOutOfStock && (
-                                  <span style={{ fontSize: '8.5px', fontWeight: '800', color: '#DC2626', backgroundColor: '#FEE2E2', padding: '1px 3px', borderRadius: '3px' }}>
-                                    Hết hàng
-                                  </span>
-                                )}
+                                color: '#FFFFFF',
+                                fontWeight: 700,
+                                fontSize: '11px'
+                              }}>
+                                Tạm hết
                               </div>
-                              <div style={{ fontSize: '12px', fontWeight: '700', color: 'var(--ink)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={item.productName}>
-                                {item.productName}
-                              </div>
-                              <div style={{ fontSize: '11.5px', fontWeight: '700', color: item.isOutOfStock ? '#DC2626' : 'var(--green-700)' }}>
-                                {item.isOutOfStock ? 'Tạm hết' : item.formattedPrice}
-                              </div>
-                            </div>
-
-                            {/* Nút thêm lẻ */}
-                            <button
-                              type="button"
-                              disabled={item.isOutOfStock}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleAddRecommendedToCart(item);
-                              }}
-                              title={item.isOutOfStock ? 'Sản phẩm tạm hết hàng' : 'Thêm riêng món này vào giỏ hàng'}
-                              style={{
-                                padding: '3px 7px',
-                                borderRadius: '5px',
-                                backgroundColor: item.isOutOfStock ? '#F1F5F9' : '#F8FAFC',
-                                color: item.isOutOfStock ? '#94A3B8' : 'var(--green-700)',
-                                border: '1px solid #CBD5E1',
-                                fontSize: '10.5px',
-                                fontWeight: '700',
-                                cursor: item.isOutOfStock ? 'not-allowed' : 'pointer',
-                                flexShrink: 0
-                              }}
-                            >
-                              + Lẻ
-                            </button>
+                            )}
                           </div>
 
-                          {idx < boughtTogether.length - 1 && (
-                            <div style={{ color: '#94A3B8', fontSize: '14px', fontWeight: '700', flexShrink: 0 }}>
-                              +
-                            </div>
-                          )}
-                        </React.Fragment>
-                      );
-                    })}
-                  </div>
+                          {/* Tên sản phẩm */}
+                          <h4 
+                            onClick={() => handleDrillDownProduct(item)}
+                            title={item.productName}
+                            style={{
+                              margin: '0 0 4px 0',
+                              fontSize: '12.5px',
+                              fontWeight: 700,
+                              color: 'var(--ink)',
+                              cursor: 'pointer',
+                              display: '-webkit-box',
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: 'vertical',
+                              overflow: 'hidden',
+                              lineHeight: 1.3,
+                              minHeight: '32px'
+                            }}
+                          >
+                            {item.productName}
+                          </h4>
 
-                  {/* Cột Phải: Hộp Cố Định Tổng Tiền Combo & Ưu Đãi 5% */}
-                  {(() => {
-                    const mainRawPrice = quickViewProduct.rawPrice || parseInt((quickViewProduct.price || '').replace(/[^\d]/g, ''), 10) || 0;
-                    const selectedRecItems = boughtTogether.filter((item: any) => selectedTopKIds.includes(item.productId) && !item.isOutOfStock);
-                    const rawTotal = (mainRawPrice * quickViewQty) + selectedRecItems.reduce((sum: number, item: any) => sum + (item.price || 0), 0);
-                    const selectedCount = (isQuickViewOutOfStock ? 0 : 1) + selectedRecItems.length;
-                    const hasDiscount = !isQuickViewOutOfStock && selectedCount >= 2;
-                    const discountAmount = hasDiscount ? Math.round(rawTotal * 0.05) : 0;
-                    const finalComboTotal = rawTotal - discountAmount;
-
-                    return (
-                      <div style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '6px',
-                        padding: '10px 14px',
-                        borderRadius: '12px',
-                        backgroundColor: '#FFFFFF',
-                        border: isQuickViewOutOfStock ? '1.5px dashed #FCA5A5' : '1.5px solid #86EFAC',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-                        flexShrink: 0
-                      }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontSize: '11px', color: '#64748B', fontWeight: '600' }}>
-                            Combo ({selectedCount} món):
-                          </span>
-                          {hasDiscount && (
-                            <span style={{ fontSize: '10px', fontWeight: '800', color: '#15803D', backgroundColor: '#DCFCE7', padding: '1px 5px', borderRadius: '4px' }}>
-                              -5% Giảm
-                            </span>
-                          )}
+                          {/* Giá bán */}
+                          <div style={{ fontSize: '13px', fontWeight: 800, color: 'var(--green-700)', marginBottom: '8px' }}>
+                            {item.formattedPrice || (item.price ? (item.price + '₫') : '25.000₫')}
+                          </div>
                         </div>
 
-                        {isQuickViewOutOfStock ? (
-                          <div style={{ fontSize: '11px', color: '#DC2626', fontWeight: '700', lineHeight: 1.3 }}>
-                            ⚠️ Món chính đang hết hàng, không thể mua combo
-                          </div>
-                        ) : (
-                          <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
-                            {hasDiscount && (
-                              <span style={{ fontSize: '12px', color: '#94A3B8', textDecoration: 'line-through' }}>
-                                {rawTotal.toLocaleString('vi-VN')}₫
-                              </span>
-                            )}
-                            <span style={{ fontSize: '16px', fontWeight: '900', color: 'var(--green-700)' }}>
-                              {finalComboTotal.toLocaleString('vi-VN')} ₫
-                            </span>
-                          </div>
-                        )}
-
-                        <button
-                          type="button"
-                          disabled={isQuickViewOutOfStock}
-                          onClick={handleAddAllComboToCart}
-                          style={{
-                            width: '100%',
-                            padding: '8px 10px',
-                            borderRadius: '6px',
-                            backgroundColor: isQuickViewOutOfStock ? '#CBD5E1' : 'var(--green-700)',
-                            color: isQuickViewOutOfStock ? '#64748B' : '#FFFFFF',
-                            border: 'none',
-                            fontSize: '12px',
-                            fontWeight: '800',
-                            cursor: isQuickViewOutOfStock ? 'not-allowed' : 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '5px',
-                            boxShadow: isQuickViewOutOfStock ? 'none' : '0 1px 3px rgba(0,0,0,0.1)'
-                          }}
-                        >
-                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
-                          {isQuickViewOutOfStock ? 'Combo tạm khóa' : 'Thêm cả combo'}
-                        </button>
+                        {/* Nút tác vụ trực tiếp */}
+                        <div style={{ display: 'flex', gap: '6px', marginTop: 'auto' }}>
+                          <button
+                            type="button"
+                            onClick={() => handleDrillDownProduct(item)}
+                            style={{
+                              flex: 1,
+                              padding: '5px 6px',
+                              borderRadius: '6px',
+                              backgroundColor: '#F1F5F9',
+                              color: '#334155',
+                              border: 'none',
+                              fontSize: '11px',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              textAlign: 'center'
+                            }}
+                          >
+                            Xem
+                          </button>
+                          <button
+                            type="button"
+                            disabled={isItemOutOfStock}
+                            onClick={() => handleAddRecommendedToCart(item)}
+                            title={isItemOutOfStock ? 'Sản phẩm tạm hết hàng' : 'Thêm vào giỏ hàng'}
+                            style={{
+                              flex: 1.2,
+                              padding: '5px 6px',
+                              borderRadius: '6px',
+                              backgroundColor: isItemOutOfStock ? '#E2E8F0' : 'var(--green-700)',
+                              color: isItemOutOfStock ? '#94A3B8' : '#FFFFFF',
+                              border: 'none',
+                              fontSize: '11px',
+                              fontWeight: 700,
+                              cursor: isItemOutOfStock ? 'not-allowed' : 'pointer',
+                              textAlign: 'center'
+                            }}
+                          >
+                            + Giỏ
+                          </button>
+                        </div>
                       </div>
                     );
-                  })()}
+                  })}
                 </div>
               </div>
             )}

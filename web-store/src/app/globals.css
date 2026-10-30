@@ -384,10 +384,14 @@ footer{background:var(--green-900); color:var(--bg); margin-top:40px; padding-to
 [data-theme="dark"] footer{background:var(--surface); border-top:1px solid var(--line); color:var(--ink);}
 .foot-grid{display:grid; grid-template-columns:1.4fr 1fr 1fr 1fr; gap:40px; padding-bottom:44px;}
 @media (max-width:800px){.foot-grid{grid-template-columns:1fr 1fr; row-gap:32px;}}
-.foot-grid h5{font-size:12.5px; text-transform:uppercase; letter-spacing:.08em; color:#8FAE93; margin-bottom:16px; font-family:var(--font-mono);}
-[data-theme="dark"] .foot-grid h5{color:#C5D2C8;}
-.foot-grid li{margin-bottom:10px; font-size:13.5px; color:#D9E6D9;}
+.foot-grid h5{font-size:13.5px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:#D1E7D4; margin-bottom:16px; font-family:var(--font-sans, "Be Vietnam Pro", sans-serif);}
+[data-theme="dark"] .foot-grid h5{color:#E2E8F0;}
+.foot-grid li{margin-bottom:12px; font-size:13.5px; color:#D9E6D9; font-family:var(--font-sans, "Be Vietnam Pro", sans-serif);}
+.foot-grid li a{color:#D9E6D9; text-decoration:none; transition:all 0.2s ease; display:inline-flex; align-items:center; gap:8px; font-family:var(--font-sans, "Be Vietnam Pro", sans-serif);}
+.foot-grid li a:hover{color:#A3E635; transform:translateX(3px);}
 [data-theme="dark"] .foot-grid li{color:#BFCDBF;}
+[data-theme="dark"] .foot-grid li a{color:#CBD5E1;}
+[data-theme="dark"] .foot-grid li a:hover{color:#4ADE80;}
 .foot-grid .logo{color:var(--bg); margin-bottom:14px;}
 [data-theme="dark"] .foot-grid .logo{color:var(--ink);}
 .foot-grid > div:first-child p{font-size:13.5px; color:#AEC4B1; max-width:280px; line-height:1.6;}

@@ -13,11 +13,13 @@ public class AuthController : ControllerBase
 {
     private readonly AppDbContext _context;
     private readonly IOtpService _otpService;
+    private readonly Ecc.WebApi.Services.IJwtService _jwtService;
 
-    public AuthController(AppDbContext context, IOtpService otpService)
+    public AuthController(AppDbContext context, IOtpService otpService, Ecc.WebApi.Services.IJwtService jwtService)
     {
         _context = context;
         _otpService = otpService;
+        _jwtService = jwtService;
     }
 
     [HttpPost("login")]
@@ -108,10 +110,26 @@ public class AuthController : ControllerBase
                 }
             }
 
+            // Sinh JWT Access Token chuẩn và Refresh Token bảo mật
+            var accessToken = _jwtService.GenerateAccessToken(user, supplierId, farmId);
+            var refreshTokenStr = _jwtService.GenerateRefreshToken();
+
+            var refreshToken = new RefreshToken
+            {
+                UserId = user.UserId,
+                Token = refreshTokenStr,
+                ExpiresAt = DateTime.UtcNow.AddDays(7),
+                CreatedAt = DateTime.UtcNow,
+                IsRevoked = false
+            };
+            _context.RefreshTokens.Add(refreshToken);
+            await _context.SaveChangesAsync();
+
             return Ok(new
             {
                 message = "Đăng nhập thành công!",
-                token = $"demo-jwt-token-{user.UserId}-{Guid.NewGuid()}",
+                token = accessToken,
+                refreshToken = refreshTokenStr,
                 user = new
                 {
                     userId = user.UserId,
@@ -390,6 +408,89 @@ public class AuthController : ControllerBase
             return StatusCode(500, new { message = $"Lỗi đặt lại mật khẩu: {ex.Message}" });
         }
     }
+
+    [HttpPost("refresh-token")]
+    public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest request)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(request.RefreshToken))
+            {
+                return BadRequest(new { message = "RefreshToken là bắt buộc" });
+            }
+
+            var storedToken = await _context.RefreshTokens
+                .Include(r => r.User)
+                .FirstOrDefaultAsync(r => r.Token == request.RefreshToken && !r.IsRevoked);
+
+            if (storedToken == null || storedToken.ExpiresAt < DateTime.UtcNow || storedToken.User == null)
+            {
+                return Unauthorized(new { message = "Phiên làm việc đã hết hạn hoặc RefreshToken không hợp lệ. Vui lòng đăng nhập lại!" });
+            }
+
+            // Thu hồi RefreshToken cũ (Rotate Refresh Token)
+            storedToken.IsRevoked = true;
+
+            long? supplierId = null;
+            long? farmId = null;
+            var supplier = await _context.Suppliers.FirstOrDefaultAsync(s => s.UserId == storedToken.User.UserId);
+            if (supplier != null)
+            {
+                supplierId = supplier.SupplierId;
+                var farm = await _context.Farms.FirstOrDefaultAsync(f => f.SupplierId == supplier.SupplierId);
+                if (farm != null) farmId = farm.FarmId;
+            }
+
+            var newAccessToken = _jwtService.GenerateAccessToken(storedToken.User, supplierId, farmId);
+            var newRefreshTokenStr = _jwtService.GenerateRefreshToken();
+
+            var newRefreshToken = new RefreshToken
+            {
+                UserId = storedToken.User.UserId,
+                Token = newRefreshTokenStr,
+                ExpiresAt = DateTime.UtcNow.AddDays(7),
+                CreatedAt = DateTime.UtcNow,
+                IsRevoked = false
+            };
+            storedToken.ReplacedByToken = newRefreshTokenStr;
+
+            _context.RefreshTokens.Add(newRefreshToken);
+            await _context.SaveChangesAsync();
+
+            return Ok(new
+            {
+                token = newAccessToken,
+                refreshToken = newRefreshTokenStr
+            });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = $"Lỗi cấp mới token: {ex.Message}" });
+        }
+    }
+
+    [HttpPost("logout")]
+    public async Task<IActionResult> Logout([FromBody] LogoutRequest request)
+    {
+        try
+        {
+            if (!string.IsNullOrWhiteSpace(request.RefreshToken))
+            {
+                var storedToken = await _context.RefreshTokens
+                    .FirstOrDefaultAsync(r => r.Token == request.RefreshToken && !r.IsRevoked);
+                if (storedToken != null)
+                {
+                    storedToken.IsRevoked = true;
+                    await _context.SaveChangesAsync();
+                }
+            }
+            return Ok(new { message = "Đăng xuất thành công!" });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = $"Lỗi khi đăng xuất: {ex.Message}" });
+        }
+    }
 }
 
 public class SendOtpRequest
@@ -431,5 +532,16 @@ public class CheckUniqueRequest
     public string? FullName { get; set; }
     public string? Email { get; set; }
     public string? Phone { get; set; }
+}
+
+public class RefreshTokenRequest
+{
+    public string? AccessToken { get; set; }
+    public string RefreshToken { get; set; } = string.Empty;
+}
+
+public class LogoutRequest
+{
+    public string? RefreshToken { get; set; }
 }
 

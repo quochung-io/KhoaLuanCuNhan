@@ -855,4 +855,55 @@ class ApiService {
       return {'shopVouchers': [], 'platformVouchers': []};
     }
   }
+
+  // ── TẢI TỆP LÊN MÁY CHỦ (UPLOAD IMAGE) ───────────────────────────
+  static Future<String?> uploadImage(String filePath) async {
+    final url = Uri.parse('${AppConstants.baseUrl}/api/upload/single');
+    try {
+      final request = http.MultipartRequest('POST', url);
+      request.files.add(await http.MultipartFile.fromPath('file', filePath));
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final urls = data['urls'] as List<dynamic>?;
+        if (urls != null && urls.isNotEmpty) {
+          return urls.first.toString();
+        }
+        return data['url']?.toString();
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  // ── TRUY XUẤT CHI TIẾT LÔ HÀNG KÈM CHỨNG NHẬN & VÙNG TRỒNG ─────
+  static Future<Map<String, dynamic>?> getProductBatchDetails(int batchId) async {
+    final url = Uri.parse('${AppConstants.baseUrl}/api/productbatches/$batchId');
+    try {
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  // ── TRA CỨU TÍNH PHÁP LÝ GIẤY CHỨNG NHẬN (VIETGAP / GLOBALGAP) ──
+  static Future<Map<String, dynamic>?> verifyCertificate(String certificateCode) async {
+    final url = Uri.parse('${AppConstants.baseUrl}/api/certificates/verify/${Uri.encodeComponent(certificateCode)}');
+    try {
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
 }
+

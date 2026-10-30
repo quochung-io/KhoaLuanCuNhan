@@ -60,7 +60,7 @@ export default function CustomerOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  
+
   // Theme, Lang, Points
   const [theme, setTheme] = useState('light');
   const [lang, setLang] = useState<'vi' | 'en'>('vi');
@@ -93,14 +93,14 @@ export default function CustomerOrdersPage() {
     let allowedHours = 3;
     let typeName = 'Hàng tươi sống / Ăn liền';
 
-    if (name.includes('sầu riêng') || name.includes('cherry') || name.includes('nho mẫu đơn') || 
-        name.includes('dưa lưới huỳnh long') || name.includes('nhập khẩu') || name.includes('cao cấp')) {
+    if (name.includes('sầu riêng') || name.includes('cherry') || name.includes('nho mẫu đơn') ||
+      name.includes('dưa lưới huỳnh long') || name.includes('nhập khẩu') || name.includes('cao cấp')) {
       categoryType = 'PREMIUM_PREORDER';
       allowedHours = 12;
       typeName = 'Hàng cao cấp / Đặt trước';
-    } else if (name.includes('khoai') || name.includes('bí') || name.includes('cà rốt') || 
-               name.includes('hành') || name.includes('tỏi') || name.includes('đông lạnh') || 
-               name.includes('đồ khô') || name.includes('sấy') || name.includes('gạo') || name.includes('hạt')) {
+    } else if (name.includes('khoai') || name.includes('bí') || name.includes('cà rốt') ||
+      name.includes('hành') || name.includes('tỏi') || name.includes('đông lạnh') ||
+      name.includes('đồ khô') || name.includes('sấy') || name.includes('gạo') || name.includes('hạt')) {
       categoryType = 'COOL_LONGS';
       allowedHours = 24;
       typeName = 'Hàng củ quả / Đông lạnh';
@@ -243,7 +243,7 @@ export default function CustomerOrdersPage() {
           fontSize: '12.5px',
           fontWeight: '600'
         }}>
-          <span>❌ Đơn hàng đã bị hủy và hoàn trả số lượng về kho.</span>
+          <span> Đơn hàng đã bị hủy </span>
         </div>
       );
     }
@@ -789,11 +789,11 @@ export default function CustomerOrdersPage() {
   // Mua lại các sản phẩm trong đơn hàng
   const handleReorder = (order: Order) => {
     if (!order.orderItems || order.orderItems.length === 0) return;
-    
+
     let currentCart: CartItem[] = [];
     const stored = localStorage.getItem('cart');
     if (stored) {
-      try { currentCart = JSON.parse(stored); } catch {}
+      try { currentCart = JSON.parse(stored); } catch { }
     }
 
     order.orderItems.forEach(item => {
@@ -824,9 +824,9 @@ export default function CustomerOrdersPage() {
   const filteredOrders = orders.filter(order => {
     const unified = getOrderUnifiedStatus(order);
     const hasClaimInOrder = userClaims.some(c => c.orderId === order.orderId || c.orderCode === order.orderCode);
-    const matchesTab = orderFilterStatus === 'all' 
+    const matchesTab = orderFilterStatus === 'all'
       || (orderFilterStatus === 'returned' ? (unified.key === 'returned' || hasClaimInOrder) : unified.key === orderFilterStatus);
-    
+
     if (!matchesTab) return false;
     if (!searchOrderQuery.trim()) return true;
 
@@ -841,7 +841,7 @@ export default function CustomerOrdersPage() {
     // Load tài khoản
     const storedUser = localStorage.getItem('customer_user');
     if (!storedUser) {
-      
+
       router.push('/login');
       return;
     }
@@ -866,8 +866,8 @@ export default function CustomerOrdersPage() {
             localStorage.setItem('user_fresh_claims', JSON.stringify(merged));
           }
         })
-        .catch(() => {});
-    } catch (e) {}
+        .catch(() => { });
+    } catch (e) { }
 
     // Fetch số điểm thực
     fetch(`http://localhost:5023/api/loyalty/${parsedUser.userId}`)
@@ -877,7 +877,7 @@ export default function CustomerOrdersPage() {
           setUserPoints(data.currentPoints);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
 
     // Load giỏ hàng
     const storedCart = localStorage.getItem('cart');
@@ -901,7 +901,7 @@ export default function CustomerOrdersPage() {
               });
             }
           })
-          .catch(() => {});
+          .catch(() => { });
 
         // 2. Đồng bộ khiếu nại / thẩm định từ Admin
         fetch(`http://localhost:5023/api/return-tickets/customer/${parsedUser.userId}`)
@@ -912,7 +912,7 @@ export default function CustomerOrdersPage() {
               localStorage.setItem('user_fresh_claims', JSON.stringify(apiTickets));
             }
           })
-          .catch(() => {});
+          .catch(() => { });
 
         // 3. Đồng bộ ví điểm thưởng / bồi hoàn
         fetch(`http://localhost:5023/api/loyalty/${parsedUser.userId}`)
@@ -922,7 +922,7 @@ export default function CustomerOrdersPage() {
               setUserPoints(data.currentPoints);
             }
           })
-          .catch(() => {});
+          .catch(() => { });
       }
     }, 10000);
 
@@ -1011,10 +1011,6 @@ export default function CustomerOrdersPage() {
               <span className="topbar-link">Hotline: <strong>1900 8899</strong> (7:00 - 21:00)</span>
             </div>
             <div className="topbar-right">
-              <a href="http://localhost:5174" target="_blank" rel="noreferrer" className="topbar-link">
-                Kênh Đối Tác / HTX
-              </a>
-              <span style={{ opacity: 0.4 }}>|</span>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <button className="icon-btn" onClick={toggleTheme} style={{ width: '24px', height: '24px' }} title="Sáng / Tối">
                   {theme === "light" ? "Tối" : "Sáng"}
@@ -1032,9 +1028,9 @@ export default function CustomerOrdersPage() {
         <div className="wrap nav-row">
           <Link href="/" className="logo">
             <svg className="mark" viewBox="0 0 40 40" fill="none">
-              <circle cx="20" cy="20" r="20" fill="var(--green-700)"/>
-              <path d="M20 30C20 30 12 26 12 18C12 13 16 10 20 10C24 10 28 13 28 18C28 26 20 30 20 30Z" fill="var(--green-500)"/>
-              <path d="M20 30V16" stroke="var(--green-900)" strokeWidth="1.4" strokeLinecap="round"/>
+              <circle cx="20" cy="20" r="20" fill="var(--green-700)" />
+              <path d="M20 30C20 30 12 26 12 18C12 13 16 10 20 10C24 10 28 13 28 18C28 26 20 30 20 30Z" fill="var(--green-500)" />
+              <path d="M20 30V16" stroke="var(--green-900)" strokeWidth="1.4" strokeLinecap="round" />
             </svg>
             <div>
               <span style={{ letterSpacing: '1px' }}>LÀNH</span>
@@ -1049,17 +1045,17 @@ export default function CustomerOrdersPage() {
           <div className="header-actions">
             {/* Mục Tài khoản */}
             <div style={{ position: 'relative' }}>
-              <button 
-                className="header-action-item" 
-                onClick={() => setShowUserDropdown(!showUserDropdown)} 
+              <button
+                className="header-action-item"
+                onClick={() => setShowUserDropdown(!showUserDropdown)}
                 style={{ border: 'none', background: 'none' }}
               >
                 <span className="header-action-icon">
                   {currentUser && currentUser.avatarUrl ? (
-                    <img 
-                      src={currentUser.avatarUrl} 
-                      alt="Avatar" 
-                      style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--green-700)' }} 
+                    <img
+                      src={currentUser.avatarUrl}
+                      alt="Avatar"
+                      style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--green-700)' }}
                     />
                   ) : ''}
                 </span>
@@ -1070,7 +1066,7 @@ export default function CustomerOrdersPage() {
                   </span>
                 </div>
               </button>
-              
+
               {showUserDropdown && (
                 <div style={{
                   position: 'absolute',
@@ -1089,7 +1085,7 @@ export default function CustomerOrdersPage() {
                     <div style={{ fontWeight: '700', color: 'var(--ink)', fontSize: '13.5px' }}>{currentUser?.fullName}</div>
                     <div style={{ marginTop: '2px' }}>{currentUser?.email}</div>
                   </div>
-                  <Link 
+                  <Link
                     href="/profile"
                     style={{
                       display: 'flex',
@@ -1105,7 +1101,7 @@ export default function CustomerOrdersPage() {
                   >
                     Hồ sơ & Sổ địa chỉ
                   </Link>
-                  <Link 
+                  <Link
                     href="/orders"
                     style={{
                       display: 'flex',
@@ -1122,7 +1118,7 @@ export default function CustomerOrdersPage() {
                   >
                     Lịch sử đơn hàng
                   </Link>
-                  <button 
+                  <button
                     onClick={handleCustomerLogout}
                     style={{
                       width: '100%',
@@ -1146,12 +1142,12 @@ export default function CustomerOrdersPage() {
             </div>
 
             {/* Nút Giỏ Hàng nổi bật */}
-            <div 
+            <div
               className={`header-cart-btn ${cartBounce ? "bounce" : ''}`}
               onClick={() => setIsDrawerOpen(true)}
               title="Xem giỏ hàng"
             >
-              <div className="header-action-icon" style={{ display: 'flex', alignItems: 'center' }}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg><span className="badge">{cart.reduce((s, i) => s + i.qty, 0)}</span>
+              <div className="header-action-icon" style={{ display: 'flex', alignItems: 'center' }}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" /><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" /></svg><span className="badge">{cart.reduce((s, i) => s + i.qty, 0)}</span>
               </div>
               <div className="header-action-text">
                 <span className="header-action-label">Giỏ hàng</span>
@@ -1192,7 +1188,7 @@ export default function CustomerOrdersPage() {
         color: 'var(--ink)'
       }}>
         <div style={{ maxWidth: '1080px', margin: '0 auto' }}>
-          
+
           {/* Breadcrumb điều hướng */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'var(--ink-soft)', marginBottom: '20px' }}>
             <Link href="/" style={{ textDecoration: 'none', color: 'var(--ink-soft)' }}>Trang chủ</Link>
@@ -1224,16 +1220,16 @@ export default function CustomerOrdersPage() {
                 Theo dõi quá trình vận chuyển, kiểm tra chứng nhận nông sản & hóa đơn giao dịch.
               </p>
             </div>
-            
+
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <button 
-                onClick={() => currentUser && loadOrders(currentUser.userId)} 
-                style={{ 
-                  backgroundColor: 'var(--surface)', 
-                  border: '1px solid var(--line)', 
+              <button
+                onClick={() => currentUser && loadOrders(currentUser.userId)}
+                style={{
+                  backgroundColor: 'var(--surface)',
+                  border: '1px solid var(--line)',
                   color: 'var(--ink)',
-                  padding: '8px 16px', 
-                  borderRadius: '8px', 
+                  padding: '8px 16px',
+                  borderRadius: '8px',
                   cursor: 'pointer',
                   fontSize: '13px',
                   fontWeight: '600',
@@ -1246,14 +1242,14 @@ export default function CustomerOrdersPage() {
               >
                 Làm mới
               </button>
-              <Link 
-                href="/profile" 
-                style={{ 
-                  backgroundColor: 'var(--green-100)', 
-                  border: '1px solid var(--green-500)', 
+              <Link
+                href="/profile"
+                style={{
+                  backgroundColor: 'var(--green-100)',
+                  border: '1px solid var(--green-500)',
                   color: 'var(--green-900)',
-                  padding: '8px 16px', 
-                  borderRadius: '8px', 
+                  padding: '8px 16px',
+                  borderRadius: '8px',
                   textDecoration: 'none',
                   fontSize: '13px',
                   fontWeight: '600',
@@ -1339,10 +1335,10 @@ export default function CustomerOrdersPage() {
             boxShadow: 'var(--shadow)'
           }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ink-soft)" strokeWidth="2.2" strokeLinecap="round">
-              <circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>
+              <circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" />
             </svg>
-            <input 
-              type="text" 
+            <input
+              type="text"
               placeholder="Tra cứu nhanh theo Mã đơn hàng (VD: ORD...) hoặc tên sản phẩm..."
               value={searchOrderQuery}
               onChange={(e) => setSearchOrderQuery(e.target.value)}
@@ -1356,7 +1352,7 @@ export default function CustomerOrdersPage() {
               }}
             />
             {searchOrderQuery && (
-              <button 
+              <button
                 onClick={() => setSearchOrderQuery('')}
                 style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--ink-soft)', fontSize: '13px' }}
               >
@@ -1385,7 +1381,7 @@ export default function CustomerOrdersPage() {
               borderRadius: '16px',
               boxShadow: 'var(--shadow)'
             }}>
-              
+
               <h3 style={{ fontSize: '18px', color: 'var(--ink)', margin: '0 0 8px 0', fontWeight: '700' }}>
                 {searchOrderQuery ? `Không tìm thấy đơn hàng nào khớp với "${searchOrderQuery}"` : 'Chưa có đơn hàng nào trong mục này'}
               </h3>
@@ -1468,7 +1464,7 @@ export default function CustomerOrdersPage() {
                           fontSize: '13px'
                         }}>
                           <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-                            
+
                             <div>
                               <div style={{ color: 'var(--ink)', fontWeight: '600' }}>
                                 Người nhận: {order.address.receiverName} <span style={{ color: 'var(--ink-soft)', fontWeight: 'normal' }}>({order.address.phone})</span>
@@ -1515,9 +1511,9 @@ export default function CustomerOrdersPage() {
                               style={{ cursor: 'pointer', position: 'relative', flexShrink: 0 }}
                               title="Nhấp để xem thông tin chi tiết sản phẩm"
                             >
-                              <img 
-                                src={getProductImage(item)} 
-                                alt={item.product?.productName} 
+                              <img
+                                src={getProductImage(item)}
+                                alt={item.product?.productName}
                                 style={{
                                   width: '54px',
                                   height: '54px',
@@ -1538,7 +1534,7 @@ export default function CustomerOrdersPage() {
                             </div>
                             <div>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                                <strong 
+                                <strong
                                   onClick={() => openProductQuickView(item.productId, item)}
                                   style={{
                                     color: 'var(--ink)',
@@ -1751,42 +1747,42 @@ export default function CustomerOrdersPage() {
 
                         {/* Nút Hủy Đơn Hàng (Chỉ hiển thị khi đơn Chờ xác nhận và trong vòng 30 phút) */}
                         {(() => {
-  if (order.orderStatus?.toLowerCase() !== 'pending') return null;
-  const minsLeft = getRemainingMinutes(order.createdAt);
-  const canCancel = minsLeft > 0;
+                          if (order.orderStatus?.toLowerCase() !== 'pending') return null;
+                          const minsLeft = getRemainingMinutes(order.createdAt);
+                          const canCancel = minsLeft > 0;
 
-  if (!canCancel) {
-    return (
-      <span style={{ fontSize: '11.5px', color: 'var(--ink-soft)', fontStyle: 'italic', maxWidth: '140px', textAlign: 'right' }}>
-        Quá 30 phút, không thể tự hủy
-      </span>
-    );
-  }
+                          if (!canCancel) {
+                            return (
+                              <span style={{ fontSize: '11.5px', color: 'var(--ink-soft)', fontStyle: 'italic', maxWidth: '140px', textAlign: 'right' }}>
+                                Quá 30 phút, không thể tự hủy
+                              </span>
+                            );
+                          }
 
-  return (
-    <button
-      onClick={() => onCancelClick(order)}
-      disabled={cancellingId === order.orderId}
-      title={`Bạn có thể hủy đơn này trong vòng ${minsLeft} phút tới`}
-      style={{
-        padding: '9px 14px',
-        borderRadius: '8px',
-        border: '1px solid #FEB2B2',
-        backgroundColor: '#FFF5F5',
-        color: '#C53030',
-        fontWeight: '700',
-        fontSize: '12.5px',
-        cursor: cancellingId === order.orderId ? 'not-allowed' : 'pointer',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '6px',
-        transition: 'all .2s'
-      }}
-    >
-      {cancellingId === order.orderId ? 'Đang hủy...' : `Hủy đơn (${minsLeft}p)`}
-    </button>
-  );
-})()}
+                          return (
+                            <button
+                              onClick={() => onCancelClick(order)}
+                              disabled={cancellingId === order.orderId}
+                              title={`Bạn có thể hủy đơn này trong vòng ${minsLeft} phút tới`}
+                              style={{
+                                padding: '9px 14px',
+                                borderRadius: '8px',
+                                border: '1px solid #FEB2B2',
+                                backgroundColor: '#FFF5F5',
+                                color: '#C53030',
+                                fontWeight: '700',
+                                fontSize: '12.5px',
+                                cursor: cancellingId === order.orderId ? 'not-allowed' : 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                transition: 'all .2s'
+                              }}
+                            >
+                              {cancellingId === order.orderId ? 'Đang hủy...' : `Hủy đơn (${minsLeft}p)`}
+                            </button>
+                          );
+                        })()}
 
                         {/* Nút Quét mã thanh toán lại (chỉ hiển thị khi còn trong hạn 30 phút) */}
                         {order.orderStatus?.toLowerCase() === 'pending' && order.paymentStatus?.toLowerCase() !== 'paid' && order.paymentMethod !== 'COD' && getRemainingMinutes(order.createdAt) > 0 && (
@@ -1856,7 +1852,7 @@ export default function CustomerOrdersPage() {
                             transition: 'all 0.15s'
                           }}
                         >
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9V2h12v7" /><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" /><rect x="6" y="14" width="12" height="8" /></svg>
                           In hóa đơn PDF
                         </button>
 
@@ -1889,7 +1885,7 @@ export default function CustomerOrdersPage() {
             </div>
           )}
 
-        
+
         </div>
       </main>
 
@@ -1982,7 +1978,7 @@ export default function CustomerOrdersPage() {
         </div>
       )}
 
-      
+
       {/* MODAL QUÉT MÃ THANH TOÁN LẠI (Dành cho khách hàng bị out ra hoặc chuyển tab) */}
       {orderToPay && (
         <div style={{
@@ -2030,7 +2026,7 @@ export default function CustomerOrdersPage() {
             <h3 style={{ fontSize: '18.5px', fontWeight: '800', color: '#1A202C', margin: '0 0 4px 0' }}>
               Thanh toán lại cho đơn #{orderToPay.orderCode}
             </h3>
-            
+
             <p style={{ fontSize: '13px', color: '#718096', margin: '0 0 12px 0' }}>
               Số tiền cần chuyển: <strong style={{ color: '#E53E3E', fontSize: '16px' }}>{toVND(orderToPay.totalAmount)}</strong>
             </p>
@@ -2244,16 +2240,16 @@ export default function CustomerOrdersPage() {
           fontWeight: '600',
           maxWidth: '420px'
         }}>
-          
+
           <span>{toast.message}</span>
         </div>
       )}
 
 
       {/* ── FOOTER GIỐNG TRANG CHỦ ── */}
-            {/* ── MODAL CHI TIẾT ĐƠN HÀNG ── */}
+      {/* ── MODAL CHI TIẾT ĐƠN HÀNG ── */}
       {selectedOrderDetails && (
-        <div 
+        <div
           style={{
             position: 'fixed',
             top: 0,
@@ -2270,7 +2266,7 @@ export default function CustomerOrdersPage() {
           }}
           onClick={() => setSelectedOrderDetails(null)}
         >
-          <div 
+          <div
             style={{
               backgroundColor: '#ffffff',
               borderRadius: '14px',
@@ -2511,7 +2507,7 @@ export default function CustomerOrdersPage() {
                   gap: '8px'
                 }}
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9V2h12v7" /><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" /><rect x="6" y="14" width="12" height="8" /></svg>
                 In hóa đơn PDF
               </button>
 
@@ -2667,7 +2663,7 @@ export default function CustomerOrdersPage() {
             <div className="drawer-head" style={{ padding: '20px', borderBottom: '1px solid #edf2f7', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h3 style={{ margin: 0, fontSize: '18px', color: '#2d3748' }}>Giỏ hàng của bạn</h3>
               <button className="icon-btn" onClick={() => setIsDrawerOpen(false)} aria-label="Đóng giỏ hàng" style={{ cursor: 'pointer', border: 'none', background: 'none' }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M6 6l12 12M18 6L6 18"/></svg>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M6 6l12 12M18 6L6 18" /></svg>
               </button>
             </div>
             <div className="drawer-body" style={{ padding: '20px', overflowY: 'auto', flex: 1 }}>
@@ -2678,10 +2674,10 @@ export default function CustomerOrdersPage() {
                   {cart.map(item => (
                     <div key={item.product.id} className="drawer-item" style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                       <div className="thumb" style={{ width: '50px', height: '50px', borderRadius: '6px', overflow: 'hidden', border: '1px solid #edf2f7' }}>
-                        <img 
-                          src={item.product.imageUrl || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=120&h=120&q=80'} 
-                          alt={item.product.name} 
-                          style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                        <img
+                          src={item.product.imageUrl || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=120&h=120&q=80'}
+                          alt={item.product.name}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                         />
                       </div>
                       <div className="info" style={{ flex: 1 }}>
@@ -2694,7 +2690,7 @@ export default function CustomerOrdersPage() {
                         </div>
                       </div>
                       <button className="remove-btn" onClick={() => removeFromCart(item.product.id)} aria-label="Xóa" style={{ cursor: 'pointer', border: 'none', background: 'none', color: '#e53e3e' }}>
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6"/></svg>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6" /></svg>
                       </button>
                     </div>
                   ))}
@@ -2706,8 +2702,8 @@ export default function CustomerOrdersPage() {
                 <span>Tạm tính</span>
                 <span>{toVND(totalCart)}</span>
               </div>
-              <button 
-                className="btn btn-accent" 
+              <button
+                className="btn btn-accent"
                 onClick={() => { setIsDrawerOpen(false); router.push('/checkout'); }}
                 style={{ width: '100%', padding: '12px', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' }}
               >
@@ -2729,7 +2725,7 @@ export default function CustomerOrdersPage() {
           let currentCart: any[] = [];
           const stored = localStorage.getItem('cart');
           if (stored) {
-            try { currentCart = JSON.parse(stored); } catch {}
+            try { currentCart = JSON.parse(stored); } catch { }
           }
           const existing = currentCart.find(c => c.product.id === p.id);
           if (existing) {

@@ -110,8 +110,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         const role = (data.user.role || '').toUpperCase();
         if (role === 'ADMIN') {
           window.location.href = 'http://localhost:5173/dashboard';
-        } else if (role === 'SUPPLIER') {
-          window.location.href = 'http://localhost:5174/dashboard';
         }
       }, 900);
     } catch (err: any) {

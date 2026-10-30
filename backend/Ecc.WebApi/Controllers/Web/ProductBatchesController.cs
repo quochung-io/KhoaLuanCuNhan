@@ -32,14 +32,62 @@ public class ProductBatchesController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<ProductBatch>> GetProductBatch(long id)
+    public async Task<IActionResult> GetProductBatch(long id)
     {
         var batch = await _context.ProductBatches
             .Include(b => b.Product)
             .FirstOrDefaultAsync(b => b.BatchId == id);
 
-        if (batch == null) return NotFound();
-        return batch;
+        if (batch == null) return NotFound(new { message = "Không tìm thấy lô hàng." });
+
+        // Lấy thông tin nông trại / vùng trồng
+        var farm = await _context.Farms.FirstOrDefaultAsync(f => f.FarmId == batch.FarmId);
+
+        // Lấy thông tin giấy chứng nhận chất lượng (VietGAP, GlobalGAP) gắn với Farm hoặc Supplier
+        var cert = await _context.Certificates
+            .Where(c => (c.FarmId == batch.FarmId || (farm != null && c.SupplierId == farm.SupplierId && c.FarmId == null)))
+            .OrderByDescending(c => c.ExpiryDate)
+            .FirstOrDefaultAsync();
+
+        return Ok(new {
+            batch.BatchId,
+            batch.ProductId,
+            productName = batch.Product?.ProductName,
+            productUnit = batch.Product?.Unit,
+            batch.FarmId,
+            batch.BatchCode,
+            batch.HarvestDate,
+            batch.ReceivedDate,
+            batch.ExpiryDate,
+            batch.InitialQuantity,
+            batch.Unit,
+            batch.Status,
+            batch.CreatedAt,
+            farm = farm != null ? new {
+                farm.FarmId,
+                farm.FarmName,
+                farm.Address,
+                farm.Province,
+                farm.District,
+                farm.Latitude,
+                farm.Longitude,
+                farm.Area,
+                farm.CropType,
+                farm.ProductionStandard
+            } : null,
+            certificate = cert != null ? new {
+                cert.CertificateId,
+                cert.CertificateCode,
+                cert.CertificateName,
+                cert.StandardType,
+                cert.IssuedBy,
+                cert.IssueDate,
+                cert.ExpiryDate,
+                cert.CertificateUrl,
+                cert.Status,
+                isValid = cert.Status == "Valid" && cert.ExpiryDate >= DateTime.UtcNow
+            } : null
+        });
     }
 
     [HttpPost]

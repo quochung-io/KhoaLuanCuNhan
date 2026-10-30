@@ -1,4 +1,4 @@
-﻿-- ==============================================================================
+-- ==============================================================================
 -- BẢN SAO LƯU TOÀN DIỆN CƠ SỞ DỮ LIỆU: QL_WebMuaBanNongSan (HOÀN CHỈNH NHẤT)
 -- Hệ thống Mua Bán Nông Sản Sạch & Truy Xuất Nguồn Gốc (Web Store + Admin + Mobile App)
 -- Ngày biên soạn & chuẩn hóa: 2026-09-11
@@ -231,6 +231,39 @@ PRIMARY KEY CLUSTERED
 
 SET ANSI_PADDING OFF
 ALTER TABLE [dbo].[Certifications] ADD  DEFAULT ('Active') FOR [Status]
+END;
+GO
+
+-- -------------------------------------------------------------
+-- Table: [dbo].[Certificates]
+-- -------------------------------------------------------------
+IF OBJECT_ID('[dbo].[Certificates]', 'U') IS NULL
+BEGIN
+SET ANSI_NULLS ON
+SET QUOTED_IDENTIFIER ON
+CREATE TABLE [dbo].[Certificates](
+	[CertificateId] [bigint] IDENTITY(1,1) NOT NULL,
+	[SupplierId] [bigint] NOT NULL,
+	[FarmId] [bigint] NULL,
+	[CertificateCode] [nvarchar](100) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+	[CertificateName] [nvarchar](200) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+	[StandardType] [nvarchar](50) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+	[IssuedBy] [nvarchar](255) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,
+	[IssueDate] [datetime2](7) NOT NULL,
+	[ExpiryDate] [datetime2](7) NOT NULL,
+	[CertificateUrl] [nvarchar](500) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	[Status] [nvarchar](50) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL DEFAULT ('Valid'),
+	[ApprovedBy] [bigint] NULL,
+	[ApprovedAt] [datetime2](7) NULL,
+	[RejectReason] [nvarchar](255) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	[Notes] [nvarchar](500) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	[CreatedAt] [datetime2](7) NOT NULL DEFAULT (getutcdate()),
+	[UpdatedAt] [datetime2](7) NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[CertificateId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
 END;
 GO
 
@@ -694,6 +727,7 @@ CREATE TABLE [dbo].[RefreshTokens](
 	[RevokedAt] [datetime2](7) NULL,
 	[RevokedByIp] [varchar](50) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
 	[ReplacedByToken] [varchar](255) COLLATE SQL_Latin1_General_CP1_CI_AS NULL,
+	[IsRevoked] [bit] NOT NULL DEFAULT (0),
 PRIMARY KEY CLUSTERED 
 (
 	[TokenId] ASC
@@ -1123,6 +1157,11 @@ REFERENCES [dbo].[Users] ([UserId])
 ON DELETE CASCADE
 ALTER TABLE [dbo].[RefreshTokens] CHECK CONSTRAINT [FK_RefreshTokens_Users]
 GO
+ALTER TABLE [dbo].[Certificates]  WITH CHECK ADD  CONSTRAINT [FK_Certificates_Suppliers] FOREIGN KEY([SupplierId])
+REFERENCES [dbo].[Suppliers] ([SupplierId])
+ON DELETE CASCADE
+ALTER TABLE [dbo].[Certificates] CHECK CONSTRAINT [FK_Certificates_Suppliers]
+GO
 ALTER TABLE [dbo].[ReviewImages]  WITH CHECK ADD  CONSTRAINT [FK_ReviewImages_Reviews] FOREIGN KEY([ReviewId])
 REFERENCES [dbo].[Reviews] ([ReviewId])
 ON DELETE CASCADE
@@ -1241,6 +1280,18 @@ INSERT INTO [dbo].[Suppliers] ([SupplierId], [UserId], [SupplierName], [Represen
 INSERT INTO [dbo].[Suppliers] ([SupplierId], [UserId], [SupplierName], [Representative], [BusinessLicense], [Address], [Province], [Description], [ApprovalStatus], [ApprovedBy], [ApprovedAt], [RejectReason], [CreatedAt]) VALUES (2, 3, N'Hợp tác xã Rau Sạch Miền Tây', N'Trần Quốc Hùng', N'MT-HTX-002', N'Huyện Châu Thành', N'Đồng Tháp', N'Chuyên rau ăn lá và rau gia vị, cung cấp cho khu vực TP.HCM.', N'Approved', 1, '2026-08-01 12:00:00.000', NULL, '2026-08-01 08:20:00.000');
 INSERT INTO [dbo].[Suppliers] ([SupplierId], [UserId], [SupplierName], [Representative], [BusinessLicense], [Address], [Province], [Description], [ApprovalStatus], [ApprovedBy], [ApprovedAt], [RejectReason], [CreatedAt]) VALUES (3, 4, N'Hợp tác xã Trái Cây Việt', N'Phạm Thành Long', N'TC-HTX-003', N'Thành phố Long Khánh', N'Đồng Nai', N'Chuyên trái cây theo mùa, ưu tiên truy xuất nguồn gốc theo lô.', N'Approved', 1, '2026-08-01 12:00:00.000', NULL, '2026-08-01 08:30:00.000');
 SET IDENTITY_INSERT [dbo].[Suppliers] OFF;
+GO
+
+-- -------------------------------------------------------------
+-- Data for: [dbo].[Certificates] (3 rows)
+-- -------------------------------------------------------------
+SET IDENTITY_INSERT [dbo].[Certificates] ON;
+INSERT INTO [dbo].[Certificates] ([CertificateId], [SupplierId], [FarmId], [CertificateCode], [CertificateName], [StandardType], [IssuedBy], [IssueDate], [ExpiryDate], [CertificateUrl], [Status], [ApprovedBy], [ApprovedAt], [Notes], [CreatedAt]) 
+VALUES 
+(1, 1, 1, 'VG-2024-VN-0892', N'Chứng nhận Tiêu chuẩn Thực hành Nông nghiệp Tốt VietGAP', 'VietGAP', N'Trung tâm Kiểm nghiệm & Chứng nhận Chất lượng Nông nghiệp Quốc gia', '2025-06-01 00:00:00.000', '2027-06-01 00:00:00.000', 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=800', 'Valid', 1, '2025-06-01 10:00:00.000', N'Chứng nhận đạt chuẩn VietGAP toàn diện cho vùng trồng trọt và đóng gói rau củ an toàn.', '2025-06-01 09:00:00.000'),
+(2, 1, 1, 'GG-GLOBAL-8831', N'Chứng nhận Tiêu chuẩn Nông sản Toàn cầu GlobalG.A.P', 'GlobalGAP', N'Tổ chức Chứng nhận Quốc tế Control Union Certifications', '2025-01-15 00:00:00.000', '2026-11-20 00:00:00.000', 'https://images.unsplash.com/photo-1450133064473-71024230f91b?w=800', 'ExpiringSoon', 1, '2025-01-15 14:00:00.000', N'Hồ sơ nông sản xuất khẩu chất lượng cao, cảnh báo gia hạn trước 30 ngày.', '2025-01-15 13:00:00.000'),
+(3, 2, 2, 'ORG-VN-2025-003', N'Chứng nhận Nông nghiệp Hữu cơ Organic Quốc Gia', 'Organic', N'Hiệp hội Nông nghiệp Hữu cơ Việt Nam (VOAA)', '2025-03-10 00:00:00.000', '2027-03-10 00:00:00.000', 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=800', 'Valid', 1, '2025-03-10 09:30:00.000', N'Chứng nhận không sử dụng phân bón hóa học và thuốc BVTV sinh học.', '2025-03-10 08:30:00.000');
+SET IDENTITY_INSERT [dbo].[Certificates] OFF;
 GO
 
 -- -------------------------------------------------------------

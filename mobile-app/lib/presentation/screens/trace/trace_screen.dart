@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../../data/models/product_model.dart';
 import '../../../data/api_service.dart';
 import '../../../core/utils/traceability_utils.dart';
-import 'widgets/scanning_line_animation.dart';
+import 'farming_diary_screen.dart';
 
 class TraceScreen extends StatefulWidget {
   final String? initialLotCode;
@@ -16,17 +17,24 @@ class TraceScreen extends StatefulWidget {
 
 class _TraceScreenState extends State<TraceScreen> {
   final TextEditingController _controller = TextEditingController();
+  final MobileScannerController _scannerController = MobileScannerController(
+    detectionSpeed: DetectionSpeed.noDuplicates,
+    facing: CameraFacing.back,
+    torchEnabled: false,
+  );
+
   bool _hasSearched = false;
   bool _isScanning = false;
-  String? _scannedCode;
+  bool _isTorchOn = false;
   Product? _tracedProduct;
-
+  Map<String, dynamic>? _batchDetails;
+  Map<String, dynamic>? _verifiedCertificate;
   bool _isLoadingTrace = false;
 
   @override
   void initState() {
     super.initState();
-    if (widget.initialLotCode != null) {
+    if (widget.initialLotCode != null && widget.initialLotCode!.isNotEmpty) {
       _controller.text = widget.initialLotCode!;
       _performTrace(widget.initialLotCode!);
       if (widget.onClearCode != null) widget.onClearCode!();
@@ -36,33 +44,55 @@ class _TraceScreenState extends State<TraceScreen> {
   @override
   void didUpdateWidget(covariant TraceScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.initialLotCode != null) {
+    if (widget.initialLotCode != null && widget.initialLotCode!.isNotEmpty) {
       _controller.text = widget.initialLotCode!;
       _performTrace(widget.initialLotCode!);
       if (widget.onClearCode != null) widget.onClearCode!();
     }
   }
 
+  @override
+  void dispose() {
+    _controller.dispose();
+    _scannerController.dispose();
+    super.dispose();
+  }
+
   Future<void> _performTrace(String lotCode) async {
+    final query = lotCode.trim();
+    if (query.isEmpty) return;
+
     setState(() {
       _isLoadingTrace = true;
       _hasSearched = true;
       _tracedProduct = null;
+      _batchDetails = null;
+      _verifiedCertificate = null;
     });
 
     try {
-      // 1. Lấy danh sách lô hàng từ API
+      // 1. Lấy danh sách lô hàng từ cơ sở dữ liệu backend
       final batches = await ApiService.getProductBatches();
 
       // 2. Tìm lô hàng khớp mã
       final foundBatch = batches.firstWhere(
         (b) =>
-            (b['batchCode'] ?? '').toString().toLowerCase() ==
-            lotCode.trim().toLowerCase(),
+            (b['batchCode'] ?? '').toString().toLowerCase() == query.toLowerCase() ||
+            (b['batchId'] ?? '').toString() == query,
         orElse: () => null,
       );
 
       if (foundBatch != null && mounted) {
+        final int batchId = foundBatch['batchId'] is int
+            ? foundBatch['batchId']
+            : int.tryParse(foundBatch['batchId'].toString()) ?? 0;
+
+        // Lấy chi tiết lô hàng bao gồm Nông trại vùng trồng & Giấy chứng nhận pháp lý (VietGAP/GlobalGAP)
+        Map<String, dynamic>? fullDetails;
+        if (batchId > 0) {
+          fullDetails = await ApiService.getProductBatchDetails(batchId);
+        }
+
         final productData = foundBatch['product'];
         Product? product;
         if (productData != null) {
@@ -72,64 +102,88 @@ class _TraceScreenState extends State<TraceScreen> {
 
         setState(() {
           _tracedProduct = product;
+          _batchDetails = fullDetails ?? foundBatch;
           _isLoadingTrace = false;
         });
-      } else if (mounted) {
-        setState(() {
-          _tracedProduct = null;
-          _isLoadingTrace = false;
-        });
+      } else {
+        // 3. Nếu không tìm thấy lô hàng, thử tra cứu xem đây có phải mã giấy chứng nhận (VietGAP/GlobalGAP)
+        final certResult = await ApiService.verifyCertificate(query);
+        if (certResult != null && certResult['verified'] == true && mounted) {
+          setState(() {
+            _verifiedCertificate = certResult;
+            _isLoadingTrace = false;
+          });
+        } else if (mounted) {
+          setState(() {
+            _tracedProduct = null;
+            _batchDetails = null;
+            _isLoadingTrace = false;
+          });
+        }
       }
-    } catch (e) {
+    } catch (_) {
       if (mounted) {
         setState(() {
           _tracedProduct = null;
+          _batchDetails = null;
           _isLoadingTrace = false;
         });
       }
     }
   }
 
-  // Quét mã QR mẫu từ dữ liệu lô hàng thực tế
-  void _startQrScan() {
-    setState(() {
-      _isScanning = true;
-    });
-    Future.delayed(const Duration(milliseconds: 1500), () async {
-      if (mounted && _isScanning) {
-        String codeToUse = 'BATCH-001';
-        try {
-          final batches = await ApiService.getProductBatches();
-          if (batches.isNotEmpty) {
-            codeToUse = batches[0]['batchCode'] ?? 'BATCH-001';
-          }
-        } catch (_) {}
-
-        if (mounted) {
-          setState(() {
-            _isScanning = false;
-            _scannedCode = codeToUse;
-            _controller.text = _scannedCode!;
-            _performTrace(_scannedCode!);
-          });
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Quét mã QR thành công!'),
-              backgroundColor: Color(0xFF2E7D32),
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        }
+  void _onBarcodeDetected(BarcodeCapture capture) {
+    if (!_isScanning) return;
+    final barcode = capture.barcodes.firstOrNull;
+    if (barcode != null && barcode.rawValue != null) {
+      final code = barcode.rawValue!.trim();
+      if (code.isNotEmpty) {
+        setState(() {
+          _isScanning = false;
+          _controller.text = code;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Đã quét mã: $code'),
+            backgroundColor: const Color(0xFF2E7D32),
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 1),
+          ),
+        );
+        _performTrace(code);
       }
+    }
+  }
+
+  void _toggleTorch() {
+    _scannerController.toggleTorch();
+    setState(() {
+      _isTorchOn = !_isTorchOn;
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Truy xuất nguồn gốc')),
+      appBar: AppBar(
+        title: const Text('Truy xuất nguồn gốc'),
+        actions: [
+          if (_isScanning) ...[
+            IconButton(
+              icon: Icon(_isTorchOn ? Icons.flash_on : Icons.flash_off),
+              onPressed: _toggleTorch,
+              tooltip: 'Bật/Tắt đèn Flash',
+            ),
+            IconButton(
+              icon: const Icon(Icons.flip_camera_ios),
+              onPressed: () => _scannerController.switchCamera(),
+              tooltip: 'Đổi camera trước/sau',
+            ),
+          ]
+        ],
+      ),
       body: _isScanning
-          ? _buildQrScannerOverlay()
+          ? _buildRealCameraScanner()
           : SingleChildScrollView(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -137,7 +191,7 @@ class _TraceScreenState extends State<TraceScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'NHẬT KÝ HÀNH TRÌNH NÔNG SẢN',
+                      'MINH BẠCH HÓA CHUỖI CUNG ỨNG NÔNG SẢN',
                       style: TextStyle(
                         color: Color(0xFF2E7D32),
                         fontSize: 10,
@@ -147,7 +201,7 @@ class _TraceScreenState extends State<TraceScreen> {
                     ),
                     const SizedBox(height: 6),
                     const Text(
-                      'Nhập mã lô hoặc Quét QR',
+                      'Quét Camera hoặc Nhập Mã Lô',
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
@@ -156,14 +210,14 @@ class _TraceScreenState extends State<TraceScreen> {
                     ),
                     const SizedBox(height: 14),
 
-                    // Thanh nhập mã + Button Scan
+                    // Thanh nhập mã + Button Scan Camera Thật
                     Row(
                       children: [
                         Expanded(
                           child: TextField(
                             controller: _controller,
                             decoration: InputDecoration(
-                              hintText: 'Nhập mã ví dụ: LOT#VN-DL-0842',
+                              hintText: 'Nhập mã lô hoặc mã VietGAP...',
                               hintStyle: const TextStyle(
                                 color: Color(0xFF8D9E90),
                                 fontSize: 13,
@@ -191,26 +245,33 @@ class _TraceScreenState extends State<TraceScreen> {
                                 ),
                               ),
                             ),
+                            onSubmitted: _performTrace,
                           ),
                         ),
                         const SizedBox(width: 10),
-                        GestureDetector(
-                          onTap: _startQrScan,
-                          child: Container(
-                            height: 48,
-                            width: 48,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFE3F1E3),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: const Color(
-                                  0xFF2E7D32,
-                                ).withValues(alpha: 0.2),
+                        Tooltip(
+                          message: 'Bật Camera quét mã QR trực tiếp',
+                          child: GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                _isScanning = true;
+                              });
+                            },
+                            child: Container(
+                              height: 48,
+                              width: 48,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFE3F1E3),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: const Color(0xFF2E7D32).withValues(alpha: 0.2),
+                                ),
                               ),
-                            ),
-                            child: const Icon(
-                              Icons.qr_code_scanner,
-                              color: Color(0xFF2E7D32),
+                              child: const Icon(
+                                Icons.qr_code_scanner,
+                                color: Color(0xFF2E7D32),
+                                size: 26,
+                              ),
                             ),
                           ),
                         ),
@@ -220,7 +281,8 @@ class _TraceScreenState extends State<TraceScreen> {
                     SizedBox(
                       width: double.infinity,
                       height: 44,
-                      child: ElevatedButton(
+                      child: ElevatedButton.icon(
+                        icon: const Icon(Icons.travel_explore, size: 18),
                         onPressed: () => _performTrace(_controller.text),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF2E7D32),
@@ -229,24 +291,33 @@ class _TraceScreenState extends State<TraceScreen> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        child: const Text(
-                          'Truy xuất',
+                        label: const Text(
+                          'Tra Cứu Dữ Liệu Nguồn Gốc',
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ),
                     ),
                     const SizedBox(height: 24),
 
-                    // Kết quả truy xuất
+                    // KẾT QUẢ TRUY XUẤT
                     if (_isLoadingTrace) ...[
                       const SizedBox(height: 60),
                       const Center(
-                        child: CircularProgressIndicator(
-                          color: Color(0xFF2E7D32),
+                        child: Column(
+                          children: [
+                            CircularProgressIndicator(color: Color(0xFF2E7D32)),
+                            SizedBox(height: 14),
+                            Text(
+                              'Đang đối soát chuỗi dữ liệu nguồn gốc và chứng nhận...',
+                              style: TextStyle(color: Color(0xFF8D9E90), fontSize: 12),
+                            ),
+                          ],
                         ),
                       ),
                     ] else if (_hasSearched && _tracedProduct != null) ...[
                       _buildTracedProductHeader(_tracedProduct!),
+                      const SizedBox(height: 16),
+                      _buildFarmAndCertificateCard(),
                       const SizedBox(height: 24),
                       const Text(
                         'HÀNH TRÌNH CANH TÁC & VẬN CHUYỂN',
@@ -259,6 +330,8 @@ class _TraceScreenState extends State<TraceScreen> {
                       ),
                       const SizedBox(height: 16),
                       _buildTraceTimeline(),
+                    ] else if (_hasSearched && _verifiedCertificate != null) ...[
+                      _buildStandaloneCertificateView(_verifiedCertificate!),
                     ] else if (_hasSearched && _tracedProduct == null) ...[
                       Center(
                         child: Column(
@@ -271,7 +344,7 @@ class _TraceScreenState extends State<TraceScreen> {
                             ),
                             const SizedBox(height: 12),
                             const Text(
-                              'Không tìm thấy lô hàng',
+                              'Không tìm thấy mã nguồn gốc',
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16,
@@ -280,11 +353,9 @@ class _TraceScreenState extends State<TraceScreen> {
                             ),
                             const SizedBox(height: 6),
                             Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 24.0,
-                              ),
+                              padding: const EdgeInsets.symmetric(horizontal: 24.0),
                               child: Text(
-                                'Mã lô "${_controller.text}" không tồn tại trong hệ thống hoặc chưa được kích hoạt nhật ký canh tác.',
+                                'Mã "${_controller.text}" không tồn tại trong hệ thống ECC Agri-Chain hoặc chưa được kích hoạt nhật ký canh tác.',
                                 textAlign: TextAlign.center,
                                 style: const TextStyle(
                                   color: Color(0xFF8D9E90),
@@ -297,7 +368,6 @@ class _TraceScreenState extends State<TraceScreen> {
                         ),
                       ),
                     ] else if (!_hasSearched) ...[
-                      // Giao diện chào khi chưa tìm kiếm
                       Center(
                         child: Column(
                           children: [
@@ -305,13 +375,11 @@ class _TraceScreenState extends State<TraceScreen> {
                             Icon(
                               Icons.history_edu_outlined,
                               size: 72,
-                              color: const Color(
-                                0xFF2E7D32,
-                              ).withValues(alpha: 0.15),
+                              color: const Color(0xFF2E7D32).withValues(alpha: 0.15),
                             ),
                             const SizedBox(height: 12),
                             const Text(
-                              'Nhật ký Farm-to-Table',
+                              'Nhật ký Farm-to-Table Đích Thực',
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 color: Color(0xFF1B3A20),
@@ -321,7 +389,7 @@ class _TraceScreenState extends State<TraceScreen> {
                             const Padding(
                               padding: EdgeInsets.symmetric(horizontal: 24.0),
                               child: Text(
-                                'Quét mã QR trên tem nhãn nông sản LÀNH để kiểm tra nguồn gốc, hạt giống, quá trình thu hoạch và chứng nhận kiểm định.',
+                                'Bật camera quét mã QR trên tem nhãn nông sản để kiểm tra nguồn gốc vùng trồng, quy trình thu hoạch và chứng nhận VietGAP/GlobalGAP.',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   color: Color(0xFF8D9E90),
@@ -341,74 +409,73 @@ class _TraceScreenState extends State<TraceScreen> {
     );
   }
 
-  // UI quét mã QR giả lập
-  Widget _buildQrScannerOverlay() {
-    return Container(
-      color: Colors.black.withValues(alpha: 0.9),
-      width: double.infinity,
-      height: double.infinity,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          // Lớp hướng dẫn quét
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text(
-                'QUÉT MÃ QR NÔNG SẢN LÀNH',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.2,
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Đặt mã QR nằm bên trong khung quét',
-                style: TextStyle(color: Colors.white70, fontSize: 11),
-              ),
-              const SizedBox(height: 32),
-              // Khung quét
-              Container(
-                width: 240,
-                height: 240,
-                decoration: BoxDecoration(
-                  border: Border.all(color: const Color(0xFF4CAF50), width: 3),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: const Stack(
-                  children: [
-                    // Hiệu ứng tia quét di chuyển giả lập (Animated line)
-                    ScanningLineAnimation(),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 48),
-              // Nút hủy
-              OutlinedButton(
-                onPressed: () {
-                  setState(() {
-                    _isScanning = false;
-                  });
-                },
-                style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Colors.white54),
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                ),
-                child: const Text('Hủy bỏ'),
-              ),
-            ],
+  // Camera Scanner Thật bằng MobileScanner
+  Widget _buildRealCameraScanner() {
+    return Stack(
+      children: [
+        MobileScanner(
+          controller: _scannerController,
+          onDetect: _onBarcodeDetected,
+        ),
+        // Khung quét và chỉ dẫn
+        Center(
+          child: Container(
+            width: 250,
+            height: 250,
+            decoration: BoxDecoration(
+              border: Border.all(color: const Color(0xFF4CAF50), width: 3),
+              borderRadius: BorderRadius.circular(20),
+              color: Colors.transparent,
+            ),
           ),
-        ],
-      ),
+        ),
+        Positioned(
+          top: 30,
+          left: 0,
+          right: 0,
+          child: Center(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.65),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: const Text(
+                'Hướng camera về phía mã QR trên tem nông sản',
+                style: TextStyle(color: Colors.white, fontSize: 13),
+              ),
+            ),
+          ),
+        ),
+        Positioned(
+          bottom: 40,
+          left: 0,
+          right: 0,
+          child: Center(
+            child: ElevatedButton.icon(
+              icon: const Icon(Icons.close),
+              label: const Text('Đóng Camera'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white.withValues(alpha: 0.9),
+                foregroundColor: Colors.black87,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24),
+                ),
+              ),
+              onPressed: () {
+                setState(() {
+                  _isScanning = false;
+                });
+              },
+            ),
+          ),
+        ),
+      ],
     );
   }
 
-  // Header thông tin sản phẩm được truy xuất
+  // Header thông tin sản phẩm
   Widget _buildTracedProductHeader(Product product) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -443,7 +510,7 @@ class _TraceScreenState extends State<TraceScreen> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'Lô sản xuất: ${product.lot}',
+                  'Mã Lô: ${product.lot}',
                   style: const TextStyle(
                     color: Color(0xFF2E7D32),
                     fontWeight: FontWeight.bold,
@@ -452,7 +519,7 @@ class _TraceScreenState extends State<TraceScreen> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'Chuẩn: ${product.cert} · Nguồn gốc: ${product.region}',
+                  'Tiêu chuẩn: ${product.cert} · Vùng: ${product.region}',
                   style: const TextStyle(
                     color: Color(0xFF8D9E90),
                     fontSize: 11,
@@ -466,11 +533,172 @@ class _TraceScreenState extends State<TraceScreen> {
     );
   }
 
+  // Thẻ thông tin Nông trại & Giấy chứng nhận pháp lý (VietGAP / GlobalGAP)
+  Widget _buildFarmAndCertificateCard() {
+    final farm = _batchDetails?['farm'] as Map<String, dynamic>?;
+    final cert = _batchDetails?['certificate'] as Map<String, dynamic>?;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF9FCF9),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFD6E8D6)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.verified, color: Color(0xFF2E7D32), size: 20),
+              const SizedBox(width: 8),
+              const Text(
+                'CHỨNG NHẬN PHÁP LÝ & VÙNG CANH TÁC',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                  color: Color(0xFF1B3A20),
+                  letterSpacing: 0.8,
+                ),
+              ),
+            ],
+          ),
+          const Divider(height: 20, color: Color(0xFFE1EAE0)),
+          if (cert != null) ...[
+            _buildInfoRow('Hệ tiêu chuẩn:', cert['standardType'] ?? 'VietGAP', isBold: true, highlightColor: const Color(0xFF2E7D32)),
+            _buildInfoRow('Số giấy phép:', cert['certificateCode'] ?? 'Chưa cấp', isBold: true),
+            _buildInfoRow('Cơ quan cấp:', cert['issuedBy'] ?? 'Trung tâm Chứng nhận Nông nghiệp Quốc gia'),
+            _buildInfoRow('Hiệu lực:', '${(cert['issueDate'] ?? '').toString().split('T')[0]} ➔ ${(cert['expiryDate'] ?? '').toString().split('T')[0]}'),
+          ] else ...[
+            _buildInfoRow('Tiêu chuẩn cơ sở:', 'VietGAP Trồng trọt & An toàn Sinh học', highlightColor: const Color(0xFF2E7D32)),
+          ],
+          if (farm != null) ...[
+            const SizedBox(height: 6),
+            _buildInfoRow('Nông trại / HTX:', farm['farmName'] ?? 'Hợp tác xã nông sản', isBold: true),
+            _buildInfoRow('Địa chỉ vùng trồng:', '${farm['district'] ?? ''}, ${farm['province'] ?? 'Việt Nam'}'),
+            if (farm['area'] != null)
+              _buildInfoRow('Quy mô canh tác:', '${farm['area']} hecta'),
+          ],
+          const SizedBox(height: 10),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton.icon(
+              icon: const Icon(Icons.menu_book, size: 16),
+              label: const Text('Xem Nhật Ký Canh Tác'),
+              style: TextButton.styleFrom(foregroundColor: const Color(0xFF2E7D32)),
+              onPressed: () {
+                if (_tracedProduct != null) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => FarmingDiaryScreen(
+                        lotCode: _tracedProduct!.lot,
+                        productName: _tracedProduct!.name,
+                        farmName: _tracedProduct!.originFarm ?? 'Hợp tác xã Nông Sản Đà Lạt (Lâm Đồng)',
+                      ),
+                    ),
+                  );
+                }
+              },
+            ),
+          )
+        ],
+      ),
+    );
+  }
+
+  // Hiển thị tra cứu khi quét trực tiếp mã chứng nhận
+  Widget _buildStandaloneCertificateView(Map<String, dynamic> certData) {
+    final bool isValid = certData['isLegallyValid'] ?? false;
+    final supplier = certData['supplier'] as Map<String, dynamic>?;
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: isValid ? const Color(0xFF4CAF50) : Colors.red),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                isValid ? Icons.check_circle : Icons.warning_amber,
+                color: isValid ? const Color(0xFF2E7D32) : Colors.red,
+                size: 28,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  isValid ? 'CHỨNG NHẬN HỢP LỆ' : 'CẢNH BÁO HIỆU LỰC',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: isValid ? const Color(0xFF1B3A20) : Colors.red,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            certData['certificateName'] ?? 'Giấy chứng nhận an toàn thực phẩm',
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            certData['legalNotice'] ?? '',
+            style: TextStyle(
+              color: isValid ? const Color(0xFF2E7D32) : Colors.red,
+              fontSize: 12,
+            ),
+          ),
+          const Divider(height: 24),
+          _buildInfoRow('Mã chứng nhận:', certData['certificateCode'] ?? '', isBold: true),
+          _buildInfoRow('Hệ tiêu chuẩn:', certData['standardType'] ?? 'VietGAP', isBold: true),
+          _buildInfoRow('Cơ quan thẩm quyền:', certData['issuedBy'] ?? ''),
+          if (supplier != null)
+            _buildInfoRow('Đơn vị sở hữu:', supplier['supplierName'] ?? ''),
+          _buildInfoRow('Hạn sử dụng:', '${(certData['expiryDate'] ?? '').toString().split('T')[0]} (${certData['daysRemaining']} ngày)'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(String label, String value, {bool isBold = false, Color? highlightColor}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 130,
+            child: Text(
+              label,
+              style: const TextStyle(color: Color(0xFF6B7280), fontSize: 12),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: TextStyle(
+                color: highlightColor ?? const Color(0xFF1F2937),
+                fontSize: 12,
+                fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   // Timeline hành trình Farm-to-Table
   Widget _buildTraceTimeline() {
     if (_tracedProduct == null) return const SizedBox();
 
-    // Sử dụng Utils để sinh timeline động khớp với Web
     final List<Map<String, dynamic>> steps = TraceabilityUtils.generateTimeline(
       _tracedProduct!.lot,
       _tracedProduct!.name,
@@ -485,18 +713,32 @@ class _TraceScreenState extends State<TraceScreen> {
         final step = steps[index];
         final isLast = index == steps.length - 1;
 
-        // Map IconData từ Utils sang text emoji tạm thời hoặc dùng trực tiếp IconData
-        final iconData = step['icon'] as IconData;
+        IconData iconData = Icons.radio_button_checked;
+        final iconStr = step['icon'] as String? ?? '';
+        if (iconStr.contains('grass') || iconStr.contains('seed')) {
+          iconData = Icons.eco;
+        } else if (iconStr.contains('water') || iconStr.contains('spa')) {
+          iconData = Icons.water_drop;
+        } else if (iconStr.contains('agriculture') || iconStr.contains('cut')) {
+          iconData = Icons.content_cut;
+        } else if (iconStr.contains('verified') || iconStr.contains('security')) {
+          iconData = Icons.verified_user;
+        } else if (iconStr.contains('inventory') || iconStr.contains('package')) {
+          iconData = Icons.inventory_2;
+        } else if (iconStr.contains('local_shipping') || iconStr.contains('truck')) {
+          iconData = Icons.local_shipping;
+        } else if (iconStr.contains('storefront') || iconStr.contains('home')) {
+          iconData = Icons.storefront;
+        }
 
         return Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Cột bên trái: Timeline và đường thẳng nối
             Column(
               children: [
                 Container(
-                  width: 32,
-                  height: 32,
+                  width: 28,
+                  height: 28,
                   alignment: Alignment.center,
                   decoration: const BoxDecoration(
                     color: Color(0xFFE3F1E3),
@@ -511,13 +753,12 @@ class _TraceScreenState extends State<TraceScreen> {
                 if (!isLast)
                   Container(
                     width: 2,
-                    height: 80, // Tăng chiều cao để đủ chỗ cho text
+                    height: 80,
                     color: const Color(0xFFE1EAE0),
                   ),
               ],
             ),
             const SizedBox(width: 14),
-            // Cột bên phải: Thông tin bước
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -527,9 +768,7 @@ class _TraceScreenState extends State<TraceScreen> {
                     children: [
                       Expanded(
                         child: Text(
-                          (step['stage'] as String).split(
-                            ': ',
-                          )[1], // Lấy phần sau dấu ':' để làm title
+                          (step['stage'] as String).split(': ')[1],
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 13,
@@ -541,9 +780,7 @@ class _TraceScreenState extends State<TraceScreen> {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        (step['date'] as String).split(
-                          ' ',
-                        )[0], // Chỉ lấy phần ngày
+                        (step['date'] as String).split(' ')[0],
                         style: const TextStyle(
                           color: Color(0xFF8D9E90),
                           fontSize: 11,

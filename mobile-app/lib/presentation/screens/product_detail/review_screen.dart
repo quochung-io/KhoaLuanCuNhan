@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../data/api_service.dart';
 import '../../../data/models/product_model.dart';
 import '../../../core/localization_service.dart';
@@ -25,14 +27,10 @@ class _ReviewScreenState extends State<ReviewScreen> {
   double _sellerRating = 5.0;
   bool _isSubmitting = false;
 
-  // Danh sách hình ảnh và video người dùng đính kèm
-  final List<Map<String, String>> _mediaList = [
-    {
-      'type': 'image',
-      'url':
-          'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=500',
-    },
-  ];
+  // Danh sách hình ảnh người dùng đính kèm thực tế
+  final List<Map<String, String>> _mediaList = [];
+  final ImagePicker _picker = ImagePicker();
+  bool _isUploadingMedia = false;
 
   final List<String> _quickTags = [
     'Rau củ rất tươi ngon 🌱',
@@ -49,36 +47,91 @@ class _ReviewScreenState extends State<ReviewScreen> {
     super.dispose();
   }
 
-  void _addMediaMock(String type) {
-    if (type == 'image') {
-      setState(() {
-        _mediaList.add({
-          'type': 'image',
-          'url':
-              'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=500',
-        });
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Đã thêm 1 ảnh chụp nông sản thực tế!'),
-          duration: Duration(seconds: 1),
-        ),
+  Future<void> _pickAndUploadMedia(ImageSource source) async {
+    try {
+      final XFile? pickedFile = await _picker.pickImage(
+        source: source,
+        maxWidth: 1600,
+        maxHeight: 1600,
+        imageQuality: 85,
       );
-    } else {
-      setState(() {
-        _mediaList.add({
-          'type': 'video',
-          'url':
-              'https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?w=500',
-        });
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Đã đính kèm 1 clip video mở hộp nông sản!'),
-          duration: Duration(seconds: 1),
-        ),
-      );
+
+      if (pickedFile == null) return;
+
+      setState(() => _isUploadingMedia = true);
+
+      // Gọi API thật upload lên server
+      final uploadedUrl = await ApiService.uploadImage(pickedFile.path);
+
+      if (mounted) {
+        if (uploadedUrl != null && uploadedUrl.isNotEmpty) {
+          setState(() {
+            _mediaList.add({
+              'type': 'image',
+              'url': uploadedUrl,
+            });
+            _isUploadingMedia = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Đã tải ảnh chụp thực tế lên máy chủ thành công!'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 1),
+            ),
+          );
+        } else {
+          // Lưu path cục bộ làm fallback
+          setState(() {
+            _mediaList.add({
+              'type': 'image',
+              'url': pickedFile.path,
+            });
+            _isUploadingMedia = false;
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isUploadingMedia = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Không thể chọn ảnh: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
+  }
+
+  void _showMediaPickerOptions() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt, color: Color(0xFF2E7D32)),
+              title: const Text('Chụp ảnh thực tế bằng Camera'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _pickAndUploadMedia(ImageSource.camera);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library, color: Colors.blue),
+              title: const Text('Chọn ảnh từ Thư viện'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _pickAndUploadMedia(ImageSource.gallery);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   void _removeMedia(int index) {
@@ -447,9 +500,9 @@ class _ReviewScreenState extends State<ReviewScreen> {
                     scrollDirection: Axis.horizontal,
                     child: Row(
                       children: [
-                        // Nút thêm ảnh
+                        // Nút thêm ảnh chụp thực tế
                         GestureDetector(
-                          onTap: () => _addMediaMock('image'),
+                          onTap: _isUploadingMedia ? null : _showMediaPickerOptions,
                           child: Container(
                             width: 70,
                             height: 70,
@@ -462,54 +515,29 @@ class _ReviewScreenState extends State<ReviewScreen> {
                                 style: BorderStyle.solid,
                               ),
                             ),
-                            child: const Column(
+                            child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(
-                                  Icons.add_a_photo_outlined,
-                                  color: Color(0xFF2E7D32),
-                                  size: 24,
-                                ),
-                                SizedBox(height: 4),
+                                _isUploadingMedia
+                                    ? const SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Color(0xFF2E7D32),
+                                        ),
+                                      )
+                                    : const Icon(
+                                        Icons.add_a_photo_outlined,
+                                        color: Color(0xFF2E7D32),
+                                        size: 24,
+                                      ),
+                                const SizedBox(height: 4),
                                 Text(
-                                  'Thêm ảnh',
-                                  style: TextStyle(
+                                  _isUploadingMedia ? 'Đang tải' : 'Thêm ảnh',
+                                  style: const TextStyle(
                                     fontSize: 10,
                                     color: Color(0xFF2E7D32),
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-
-                        // Nút thêm clip video
-                        GestureDetector(
-                          onTap: () => _addMediaMock('video'),
-                          child: Container(
-                            width: 70,
-                            height: 70,
-                            margin: const EdgeInsets.only(right: 10),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFFF8E1),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: Colors.orange),
-                            ),
-                            child: const Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.videocam_outlined,
-                                  color: Colors.orange,
-                                  size: 24,
-                                ),
-                                SizedBox(height: 4),
-                                Text(
-                                  'Thêm clip',
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    color: Colors.orange,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -521,7 +549,16 @@ class _ReviewScreenState extends State<ReviewScreen> {
                         // Danh sách thumbnail đã thêm
                         ...List.generate(_mediaList.length, (index) {
                           final item = _mediaList[index];
-                          final isVideo = item['type'] == 'video';
+                          final url = item['url'] ?? '';
+
+                          ImageProvider imageProvider;
+                          if (url.startsWith('http')) {
+                            imageProvider = NetworkImage(url);
+                          } else if (url.startsWith('/uploads')) {
+                            imageProvider = NetworkImage(ApiService.fixImageUrl(url));
+                          } else {
+                            imageProvider = FileImage(File(url));
+                          }
 
                           return Stack(
                             children: [
@@ -532,29 +569,10 @@ class _ReviewScreenState extends State<ReviewScreen> {
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(12),
                                   image: DecorationImage(
-                                    image: NetworkImage(item['url']!),
+                                    image: imageProvider,
                                     fit: BoxFit.cover,
                                   ),
                                 ),
-                                child: isVideo
-                                    ? Container(
-                                        decoration: BoxDecoration(
-                                          color: Colors.black.withValues(
-                                            alpha: 0.35,
-                                          ),
-                                          borderRadius: BorderRadius.circular(
-                                            12,
-                                          ),
-                                        ),
-                                        child: const Center(
-                                          child: Icon(
-                                            Icons.play_circle_fill,
-                                            color: Colors.white,
-                                            size: 28,
-                                          ),
-                                        ),
-                                      )
-                                    : null,
                               ),
                               Positioned(
                                 top: 2,

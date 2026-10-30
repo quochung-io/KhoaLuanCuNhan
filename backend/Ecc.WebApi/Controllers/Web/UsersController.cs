@@ -4,6 +4,7 @@ using Ecc.Infrastructure.Data;
 using Ecc.Infrastructure.Entities;
 using System.Security.Cryptography;
 using System.Text;
+using System.Collections.Concurrent;
 
 namespace Ecc.WebApi.Controllers;
 
@@ -320,50 +321,85 @@ public class UsersController : ControllerBase
         if (!dto.Password.Any(ch => !char.IsLetterOrDigit(ch)))
             return BadRequest(new { message = "Mật khẩu phải chứa ít nhất 1 ký tự đặc biệt (!@#$%^&*...)!" });
 
-        // Ràng buộc tính duy nhất trong database
-        if (await _context.Users.AnyAsync(u => u.Email.ToLower() == cleanEmail))
-            return BadRequest(new { message = $"Email '{cleanEmail}' đã tồn tại trong hệ thống! Mỗi email chỉ được đăng ký 1 tài khoản." });
+        // Cắt độ dài chuỗi an toàn tương ứng với độ dài cột trong CSDL
+        var safeStoreName = storeName.Length > 150 ? storeName.Substring(0, 150) : storeName;
+        var safeRepresentative = representative.Length > 100 ? representative.Substring(0, 100) : representative;
+        var rawLicense = !string.IsNullOrWhiteSpace(dto.BusinessLicense) ? dto.BusinessLicense.Trim() : (!string.IsNullOrWhiteSpace(dto.IdentityCard) ? dto.IdentityCard.Trim() : $"BL-{DateTime.UtcNow:yyyyMMdd}");
+        var safeLicense = rawLicense.Length > 50 ? rawLicense.Substring(0, 50) : rawLicense;
+        var safeAddress = (dto.Address?.Trim() ?? "Đang cập nhật");
+        if (safeAddress.Length > 255) safeAddress = safeAddress.Substring(0, 255);
+        var safeProvince = (dto.Province?.Trim() ?? "Tỉnh Lâm Đồng");
+        if (safeProvince.Length > 100) safeProvince = safeProvince.Substring(0, 100);
+        var safeDistrict = (dto.District?.Trim() ?? "Thành phố Đà Lạt");
+        if (safeDistrict.Length > 100) safeDistrict = safeDistrict.Substring(0, 100);
+        var safeFarmName = !string.IsNullOrWhiteSpace(dto.FarmName) ? dto.FarmName.Trim() : $"{safeStoreName} Farm";
+        if (safeFarmName.Length > 150) safeFarmName = safeFarmName.Substring(0, 150);
+        var safeCropType = (dto.CropType?.Trim() ?? "Rau củ quả sạch");
+        if (safeCropType.Length > 150) safeCropType = safeCropType.Substring(0, 150);
+        var safeStandard = (dto.ProductionStandard?.Trim() ?? "VietGAP");
+        if (safeStandard.Length > 100) safeStandard = safeStandard.Substring(0, 100);
 
-        if (await _context.Users.AnyAsync(u => u.Phone == cleanPhone))
-            return BadRequest(new { message = $"Số điện thoại '{cleanPhone}' đã tồn tại trong hệ thống! Mỗi số điện thoại chỉ được đăng ký 1 tài khoản." });
-
-        if (await _context.Suppliers.AnyAsync(s => s.SupplierName.ToLower() == storeName.ToLower()))
-            return BadRequest(new { message = $"Tên đơn vị / Hợp tác xã '{storeName}' đã tồn tại trên hệ thống! Vui lòng chọn tên khác." });
+        // Xử lý lưu chuỗi hình ảnh chứng nhận nếu có upload nhiều tệp
+        var desc = $"Chuyên nông sản sạch, đạt chuẩn {safeStandard}";
+        if (dto.CertImages != null && dto.CertImages.Count > 0)
+        {
+            var validImages = dto.CertImages.Where(x => !string.IsNullOrWhiteSpace(x)).ToList();
+            if (validImages.Count > 0)
+            {
+                var json = System.Text.Json.JsonSerializer.Serialize(validImages);
+                desc += $" | CERT_IMAGES:{json}";
+            }
+        }
 
         try
         {
-            // Cắt độ dài chuỗi an toàn tương ứng với độ dài cột trong CSDL
-            var safeStoreName = storeName.Length > 150 ? storeName.Substring(0, 150) : storeName;
-            var safeRepresentative = representative.Length > 100 ? representative.Substring(0, 100) : representative;
-            var rawLicense = !string.IsNullOrWhiteSpace(dto.BusinessLicense) ? dto.BusinessLicense.Trim() : (!string.IsNullOrWhiteSpace(dto.IdentityCard) ? dto.IdentityCard.Trim() : $"BL-{DateTime.UtcNow:yyyyMMdd}");
-            var safeLicense = rawLicense.Length > 50 ? rawLicense.Substring(0, 50) : rawLicense;
-            var safeAddress = (dto.Address?.Trim() ?? "Đang cập nhật");
-            if (safeAddress.Length > 255) safeAddress = safeAddress.Substring(0, 255);
-            var safeProvince = (dto.Province?.Trim() ?? "Tỉnh Lâm Đồng");
-            if (safeProvince.Length > 100) safeProvince = safeProvince.Substring(0, 100);
-            var safeDistrict = (dto.District?.Trim() ?? "Thành phố Đà Lạt");
-            if (safeDistrict.Length > 100) safeDistrict = safeDistrict.Substring(0, 100);
-            var safeFarmName = !string.IsNullOrWhiteSpace(dto.FarmName) ? dto.FarmName.Trim() : $"{safeStoreName} Farm";
-            if (safeFarmName.Length > 150) safeFarmName = safeFarmName.Substring(0, 150);
-            var safeCropType = (dto.CropType?.Trim() ?? "Rau củ quả sạch");
-            if (safeCropType.Length > 150) safeCropType = safeCropType.Substring(0, 150);
-            var safeStandard = (dto.ProductionStandard?.Trim() ?? "VietGAP");
-            if (safeStandard.Length > 100) safeStandard = safeStandard.Substring(0, 100);
-
-            // Xử lý lưu chuỗi hình ảnh chứng nhận nếu có upload nhiều tệp
-            var desc = $"Chuyên nông sản sạch, đạt chuẩn {safeStandard}";
-            if (dto.CertImages != null && dto.CertImages.Count > 0)
+            User user;
+            var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == cleanEmail);
+            if (existingUser != null)
             {
-                var validImages = dto.CertImages.Where(x => !string.IsNullOrWhiteSpace(x)).ToList();
-                if (validImages.Count > 0)
+                // Kiểm tra xem tài khoản này đã đăng ký HTX trước đó chưa
+                var alreadySupplier = await _context.Suppliers.AnyAsync(s => s.UserId == existingUser.UserId);
+                if (alreadySupplier)
                 {
-                    var json = System.Text.Json.JsonSerializer.Serialize(validImages);
-                    desc += $" | CERT_IMAGES:{json}";
+                    return BadRequest(new { message = $"Email '{cleanEmail}' đã đăng ký vai trò Hợp tác xã trước đó! Vui lòng đăng nhập vào Cổng HTX." });
                 }
+
+            // Xác thực mật khẩu của tài khoản hiện tại để đảm bảo chính chủ
+            bool isPasswordValid = false;
+            try
+            {
+                isPasswordValid = BCrypt.Net.BCrypt.Verify(dto.Password, existingUser.PasswordHash);
+            }
+            catch
+            {
+                isPasswordValid = (existingUser.PasswordHash == dto.Password);
             }
 
-            // 1. Tạo tài khoản User (Role = 2 SUPPLIER, Status = "Pending")
-            var user = new User
+            if (!isPasswordValid)
+            {
+                return BadRequest(new { message = $"Email '{cleanEmail}' đã tồn tại trên hệ thống (Khách hàng). Vui lòng nhập đúng mật khẩu của tài khoản để kích hoạt thêm vai trò Hợp tác xã (1 Email dùng chung cả 2 hệ thống)!" });
+            }
+
+            // Nâng cấp / Gán thêm quyền Nhà cung cấp (RoleId = 2) cho tài khoản này
+            existingUser.RoleId = 2;
+            if (string.IsNullOrWhiteSpace(existingUser.Phone) && !string.IsNullOrWhiteSpace(cleanPhone))
+            {
+                existingUser.Phone = cleanPhone;
+            }
+            existingUser.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+
+            user = existingUser;
+        }
+        else
+        {
+            if (await _context.Users.AnyAsync(u => u.Phone == cleanPhone))
+                return BadRequest(new { message = $"Số điện thoại '{cleanPhone}' đã tồn tại trong hệ thống! Mỗi số điện thoại chỉ được đăng ký 1 tài khoản." });
+
+            if (await _context.Suppliers.AnyAsync(s => s.SupplierName.ToLower() == storeName.ToLower()))
+                return BadRequest(new { message = $"Tên đơn vị / Hợp tác xã '{storeName}' đã tồn tại trên hệ thống! Vui lòng chọn tên khác." });
+
+            user = new User
             {
                 FullName = safeRepresentative,
                 Email = cleanEmail,
@@ -376,6 +412,7 @@ public class UsersController : ControllerBase
             };
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
+        }
 
             // 2. Tạo bản ghi Supplier trong bảng Suppliers
             var supplier = new Supplier
@@ -538,6 +575,139 @@ public class UsersController : ControllerBase
         return Ok(new { message = "Đã xóa người dùng thành công khỏi cơ sở dữ liệu.", softDeleted = false });
     }
 
+    private static readonly ConcurrentDictionary<long, (string Code, string Email, DateTime ExpireAt)> _emailOtps = new();
+
+    // Đổi mật khẩu có xác thực mật khẩu cũ
+    [HttpPost("{id}/change-password")]
+    public async Task<IActionResult> ChangePassword(long id, [FromBody] ChangePasswordDto dto)
+    {
+        var user = await _context.Users.FindAsync(id);
+        if (user == null) return NotFound(new { message = "Không tìm thấy người dùng." });
+
+        if (string.IsNullOrWhiteSpace(dto.OldPassword))
+            return BadRequest(new { message = "Vui lòng nhập mật khẩu hiện tại." });
+
+        if (string.IsNullOrWhiteSpace(dto.NewPassword))
+            return BadRequest(new { message = "Vui lòng nhập mật khẩu mới." });
+
+        // Kiểm tra mật khẩu cũ khớp không
+        bool isOldPasswordValid = false;
+        try
+        {
+            isOldPasswordValid = BCrypt.Net.BCrypt.Verify(dto.OldPassword, user.PasswordHash);
+        }
+        catch
+        {
+            isOldPasswordValid = (user.PasswordHash == dto.OldPassword || user.PasswordHash == HashPassword(dto.OldPassword));
+        }
+
+        if (!isOldPasswordValid)
+        {
+            return BadRequest(new { message = "Mật khẩu hiện tại không chính xác! Vui lòng kiểm tra lại." });
+        }
+
+        // Validate độ mạnh mật khẩu mới: tối thiểu 8 ký tự, có chữ hoa, thường, số, ký tự đặc biệt
+        if (dto.NewPassword.Length < 8)
+            return BadRequest(new { message = "Mật khẩu mới phải có tối thiểu 8 ký tự!" });
+
+        if (!dto.NewPassword.Any(char.IsUpper))
+            return BadRequest(new { message = "Mật khẩu mới phải chứa ít nhất 1 chữ cái in hoa (A-Z)!" });
+
+        if (!dto.NewPassword.Any(char.IsLower))
+            return BadRequest(new { message = "Mật khẩu mới phải chứa ít nhất 1 chữ cái thường (a-z)!" });
+
+        if (!dto.NewPassword.Any(char.IsDigit))
+            return BadRequest(new { message = "Mật khẩu mới phải chứa ít nhất 1 chữ số (0-9)!" });
+
+        if (!dto.NewPassword.Any(ch => !char.IsLetterOrDigit(ch)))
+            return BadRequest(new { message = "Mật khẩu mới phải chứa ít nhất 1 ký tự đặc biệt (!@#$%^&*...)!" });
+
+        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.NewPassword);
+        user.UpdatedAt = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new { message = "Đổi mật khẩu thành công! Bạn có thể sử dụng mật khẩu mới để đăng nhập." });
+    }
+
+    // Gửi mã OTP xác thực thay đổi Email
+    [HttpPost("{id}/send-email-otp")]
+    public async Task<IActionResult> SendEmailOtp(long id, [FromBody] SendEmailOtpDto dto)
+    {
+        var user = await _context.Users.FindAsync(id);
+        if (user == null) return NotFound(new { message = "Không tìm thấy người dùng." });
+
+        var newEmail = dto.NewEmail?.Trim().ToLower();
+        if (string.IsNullOrWhiteSpace(newEmail))
+            return BadRequest(new { message = "Vui lòng nhập địa chỉ email mới." });
+
+        var emailRegex = new System.Text.RegularExpressions.Regex(@"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$");
+        if (!emailRegex.IsMatch(newEmail))
+            return BadRequest(new { message = "Định dạng email không hợp lệ." });
+
+        // Kiểm tra xem email có trùng với user khác không
+        if (await _context.Users.AnyAsync(u => u.UserId != id && u.Email.ToLower() == newEmail))
+        {
+            return BadRequest(new { message = $"Email '{newEmail}' đã được liên kết với một tài khoản khác trong hệ thống." });
+        }
+
+        // Tạo mã OTP ngẫu nhiên 6 chữ số
+        var random = new Random();
+        var otpCode = random.Next(100000, 999999).ToString();
+        var expireAt = DateTime.UtcNow.AddMinutes(5);
+
+        _emailOtps[id] = (otpCode, newEmail, expireAt);
+
+        // Ghi log hoặc trả về OTP phục vụ môi trường kiểm thử (Development)
+        return Ok(new { 
+            message = $"Mã OTP 6 chữ số đã được gửi tới email '{newEmail}'. Vui lòng kiểm tra hộp thư để xác nhận.",
+            otpForDev = otpCode,
+            expiresInSeconds = 300
+        });
+    }
+
+    // Xác nhận mã OTP và cập nhật Email
+    [HttpPost("{id}/verify-email-otp")]
+    public async Task<IActionResult> VerifyEmailOtp(long id, [FromBody] VerifyEmailOtpDto dto)
+    {
+        var user = await _context.Users.FindAsync(id);
+        if (user == null) return NotFound(new { message = "Không tìm thấy người dùng." });
+
+        var newEmail = dto.NewEmail?.Trim().ToLower();
+        var code = dto.OtpCode?.Trim();
+
+        if (string.IsNullOrWhiteSpace(newEmail) || string.IsNullOrWhiteSpace(code))
+            return BadRequest(new { message = "Vui lòng cung cấp đầy đủ email mới và mã OTP." });
+
+        if (!_emailOtps.TryGetValue(id, out var session) || session.Email != newEmail)
+        {
+            return BadRequest(new { message = "Yêu cầu đổi email không tồn tại hoặc đã hết hạn. Vui lòng nhấn gửi lại mã OTP." });
+        }
+
+        if (DateTime.UtcNow > session.ExpireAt)
+        {
+            _emailOtps.TryRemove(id, out _);
+            return BadRequest(new { message = "Mã OTP đã hết hạn (chỉ có hiệu lực trong 5 phút). Vui lòng yêu cầu gửi mã mới." });
+        }
+
+        if (session.Code != code)
+        {
+            return BadRequest(new { message = "Mã xác thực OTP không chính xác. Vui lòng kiểm tra lại!" });
+        }
+
+        // Cập nhật email người dùng
+        user.Email = newEmail;
+        user.UpdatedAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+
+        _emailOtps.TryRemove(id, out _);
+
+        return Ok(new { 
+            message = $"Cập nhật địa chỉ email thành công thành '{newEmail}'.",
+            email = newEmail
+        });
+    }
+
     private static string HashPassword(string password)
     {
         var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(password));
@@ -548,6 +718,23 @@ public class UsersController : ControllerBase
         }
         return builder.ToString();
     }
+}
+
+public class ChangePasswordDto
+{
+    public string OldPassword { get; set; } = null!;
+    public string NewPassword { get; set; } = null!;
+}
+
+public class SendEmailOtpDto
+{
+    public string NewEmail { get; set; } = null!;
+}
+
+public class VerifyEmailOtpDto
+{
+    public string NewEmail { get; set; } = null!;
+    public string OtpCode { get; set; } = null!;
 }
 
 public class RegisterDto

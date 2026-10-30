@@ -29,6 +29,8 @@ public class AppDbContext : DbContext
     public DbSet<Farm> Farms => Set<Farm>();
     public DbSet<Supplier> Suppliers => Set<Supplier>();
     public DbSet<Promotion> Promotions => Set<Promotion>();
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<Certificate> Certificates => Set<Certificate>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -507,6 +509,59 @@ public class AppDbContext : DbContext
             e.Property(p => p.MaxDiscount).HasColumnName("MaxDiscount").HasColumnType("decimal(18,2)");
             e.Property(p => p.UsageLimit).HasColumnName("UsageLimit");
             e.Property(p => p.Status).HasColumnName("Status").HasMaxLength(50);
+        });
+
+        // ── RefreshToken ──────────────────────────────
+        modelBuilder.Entity<RefreshToken>(e =>
+        {
+            e.ToTable("RefreshTokens");
+            e.HasKey(r => r.Id);
+            e.Property(r => r.Id).HasColumnName("TokenId");
+            e.Property(r => r.UserId).HasColumnName("UserId").IsRequired();
+            e.Property(r => r.Token).HasColumnName("Token").HasMaxLength(255).IsRequired();
+            e.Property(r => r.ExpiresAt).HasColumnName("ExpiresAt").IsRequired();
+            e.Property(r => r.IsRevoked).HasColumnName("IsRevoked").HasDefaultValue(false);
+            e.Property(r => r.CreatedAt).HasColumnName("CreatedAt");
+            e.Property(r => r.ReplacedByToken).HasColumnName("ReplacedByToken").HasMaxLength(255);
+
+            e.HasOne(r => r.User)
+             .WithMany()
+             .HasForeignKey(r => r.UserId)
+             .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // ── Certificate ───────────────────────────────
+        modelBuilder.Entity<Certificate>(e =>
+        {
+            e.ToTable("Certificates");
+            e.HasKey(c => c.CertificateId);
+            e.Property(c => c.CertificateId).HasColumnName("CertificateId");
+            e.Property(c => c.SupplierId).HasColumnName("SupplierId").IsRequired();
+            e.Property(c => c.FarmId).HasColumnName("FarmId");
+            e.Property(c => c.CertificateCode).HasColumnName("CertificateCode").HasMaxLength(100).IsRequired();
+            e.Property(c => c.CertificateName).HasColumnName("CertificateName").HasMaxLength(200).IsRequired();
+            e.Property(c => c.StandardType).HasColumnName("StandardType").HasMaxLength(50).IsRequired();
+            e.Property(c => c.IssuedBy).HasColumnName("IssuedBy").HasMaxLength(255).IsRequired();
+            e.Property(c => c.IssueDate).HasColumnName("IssueDate").IsRequired();
+            e.Property(c => c.ExpiryDate).HasColumnName("ExpiryDate").IsRequired();
+            e.Property(c => c.CertificateUrl).HasColumnName("CertificateUrl").HasMaxLength(500);
+            e.Property(c => c.Status).HasColumnName("Status").HasMaxLength(50).IsRequired();
+            e.Property(c => c.ApprovedBy).HasColumnName("ApprovedBy");
+            e.Property(c => c.ApprovedAt).HasColumnName("ApprovedAt");
+            e.Property(c => c.RejectReason).HasColumnName("RejectReason").HasMaxLength(255);
+            e.Property(c => c.Notes).HasColumnName("Notes").HasMaxLength(500);
+            e.Property(c => c.CreatedAt).HasColumnName("CreatedAt");
+            e.Property(c => c.UpdatedAt).HasColumnName("UpdatedAt");
+
+            e.HasOne(c => c.Supplier)
+             .WithMany()
+             .HasForeignKey(c => c.SupplierId)
+             .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasOne(c => c.Farm)
+             .WithMany()
+             .HasForeignKey(c => c.FarmId)
+             .OnDelete(DeleteBehavior.NoAction);
         });
     }
 }

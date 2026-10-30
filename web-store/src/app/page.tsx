@@ -6,13 +6,13 @@ import SearchBar from '@/components/layout/SearchBar';
 import { trackBehavior, getSessionId, getCurrentUserId } from '@/lib/recommendationTracker';
 
 const ICONS: Record<string, React.ReactNode> = {
-  leaf: <svg viewBox="0 0 24 24" fill="none" stroke="#2E7D32" strokeWidth="1.8"><path d="M12 21c-5-1-8-5-8-10A7 7 0 0112 3a7 7 0 018 8c0 5-3 9-8 10z"/><path d="M12 21V9"/></svg>,
-  carrot: <svg viewBox="0 0 24 24" fill="none" stroke="#FF9800" strokeWidth="1.8"><path d="M14 3l3 3M17 2l2 2M19 5l2-1M4 20l9-9 3 3-9 9-4 1 1-4z"/></svg>,
-  citrus: <svg viewBox="0 0 24 24" fill="none" stroke="#FF9800" strokeWidth="1.8"><circle cx="12" cy="13" r="7"/><path d="M12 6c1-2 3-3 4-3"/><path d="M12 13l4-4M12 13l-4 4M12 13l4 4M12 13l-4-4"/></svg>,
-  egg: <svg viewBox="0 0 24 24" fill="none" stroke="#C0392B" strokeWidth="1.8"><path d="M12 21c4 0 7-3.5 7-8 0-5-4-10-7-10S5 8 5 13c0 4.5 3 8 7 8z"/></svg>,
-  jar: <svg viewBox="0 0 24 24" fill="none" stroke="#2E5C8A" strokeWidth="1.8"><path d="M8 3h8v3H8z"/><path d="M6 6h12l-1 15H7L6 6z"/></svg>,
-  berry: <svg viewBox="0 0 24 24" fill="none" stroke="#8E44AD" strokeWidth="1.8"><circle cx="9" cy="14" r="4"/><circle cx="15" cy="14" r="4"/><path d="M12 10V5M12 5c1-1.5 3-2 4-1.5"/></svg>,
-  check: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 7l-9 9-4-4"/></svg>
+  leaf: <svg viewBox="0 0 24 24" fill="none" stroke="#2E7D32" strokeWidth="1.8"><path d="M12 21c-5-1-8-5-8-10A7 7 0 0112 3a7 7 0 018 8c0 5-3 9-8 10z" /><path d="M12 21V9" /></svg>,
+  carrot: <svg viewBox="0 0 24 24" fill="none" stroke="#FF9800" strokeWidth="1.8"><path d="M14 3l3 3M17 2l2 2M19 5l2-1M4 20l9-9 3 3-9 9-4 1 1-4z" /></svg>,
+  citrus: <svg viewBox="0 0 24 24" fill="none" stroke="#FF9800" strokeWidth="1.8"><circle cx="12" cy="13" r="7" /><path d="M12 6c1-2 3-3 4-3" /><path d="M12 13l4-4M12 13l-4 4M12 13l4 4M12 13l-4-4" /></svg>,
+  egg: <svg viewBox="0 0 24 24" fill="none" stroke="#C0392B" strokeWidth="1.8"><path d="M12 21c4 0 7-3.5 7-8 0-5-4-10-7-10S5 8 5 13c0 4.5 3 8 7 8z" /></svg>,
+  jar: <svg viewBox="0 0 24 24" fill="none" stroke="#2E5C8A" strokeWidth="1.8"><path d="M8 3h8v3H8z" /><path d="M6 6h12l-1 15H7L6 6z" /></svg>,
+  berry: <svg viewBox="0 0 24 24" fill="none" stroke="#8E44AD" strokeWidth="1.8"><circle cx="9" cy="14" r="4" /><circle cx="15" cy="14" r="4" /><path d="M12 10V5M12 5c1-1.5 3-2 4-1.5" /></svg>,
+  check: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 7l-9 9-4-4" /></svg>
 };
 
 type Product = {
@@ -191,6 +191,8 @@ export default function LanhLandingPage() {
   // Tin tức / Blog Nông sản lấy từ API các tờ báo có thật
   const [newsArticles, setNewsArticles] = useState<any[]>([]);
   const [loadingNews, setLoadingNews] = useState(true);
+  const [flashSalePage, setFlashSalePage] = useState<number>(1);
+  const flashSalePageSize = 8;
   const [newsFilter, setNewsFilter] = useState('all');
 
   // Quick View Modal State
@@ -226,7 +228,7 @@ export default function LanhLandingPage() {
           setProducts(prevProducts => {
             if (!prevProducts || prevProducts.length === 0) return prevProducts;
             const recMap = new Map(data.map(item => [item.productId, item]));
-            
+
             const clearanceItems: Product[] = [];
             const recItems: Product[] = [];
             const otherItems: Product[] = [];
@@ -287,7 +289,7 @@ export default function LanhLandingPage() {
   const fetchFeaturedReviews = () => {
     setLoadingReviews(true);
     const uId = currentUser?.id || currentUser?.userId;
-    const url = uId 
+    const url = uId
       ? `http://localhost:5023/api/reviews/featured?currentUserId=${uId}`
       : 'http://localhost:5023/api/reviews/featured';
 
@@ -314,9 +316,9 @@ export default function LanhLandingPage() {
       const res = await fetch(`http://localhost:5023/api/reviews/${reviewId}/helpful?userId=${uId}`, { method: 'POST' });
       const data = await res.json();
       if (res.ok) {
-        setReviewsList(prev => prev.map(r => 
-          r.id === reviewId 
-            ? { ...r, helpfulCount: data.helpfulCount, isHelpfulByMe: data.liked } 
+        setReviewsList(prev => prev.map(r =>
+          r.id === reviewId
+            ? { ...r, helpfulCount: data.helpfulCount, isHelpfulByMe: data.liked }
             : r
         ));
       } else {
@@ -376,14 +378,14 @@ export default function LanhLandingPage() {
         const u = JSON.parse(storedUser);
         setCurrentUser(u);
         setNewReviewName(u.fullName || '');
-      } catch (e) {}
+      } catch (e) { }
     }
 
     const storedCart = localStorage.getItem('cart');
     if (storedCart) {
       try {
         setCart(JSON.parse(storedCart));
-      } catch (e) {}
+      } catch (e) { }
     }
 
     fetchFeaturedReviews();
@@ -396,7 +398,7 @@ export default function LanhLandingPage() {
           setNewsArticles(data.articles);
         }
       })
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setLoadingNews(false));
 
     // Khởi tạo tải gợi ý cá nhân hóa CARS cho người dùng
@@ -440,7 +442,7 @@ export default function LanhLandingPage() {
           actionType: 'QUICK_VIEW',
           userId: currentUser?.id || currentUser?.userId || null
         })
-      }).catch(() => {});
+      }).catch(() => { });
 
       // Kiểm tra tồn kho lô hàng thực tế của món đang xem
       fetch(`http://localhost:5023/api/productbatches?productId=${quickViewProduct.id}`)
@@ -540,7 +542,7 @@ export default function LanhLandingPage() {
         recommendationType: 'FREQUENTLY_BOUGHT_TOGETHER',
         userId: currentUser?.id || currentUser?.userId || null
       })
-    }).catch(() => {});
+    }).catch(() => { });
 
     setRecToast(`Đã thêm "${item.productName}" vào giỏ hàng!`);
     setTimeout(() => setRecToast(''), 2500);
@@ -560,7 +562,7 @@ export default function LanhLandingPage() {
         recommendationType: 'FREQUENTLY_BOUGHT_TOGETHER',
         userId: currentUser?.id || currentUser?.userId || null
       })
-    }).catch(() => {});
+    }).catch(() => { });
 
     // Tìm trong danh sách products đã tải
     const found = products.find(p => p.id === item.productId);
@@ -594,7 +596,7 @@ export default function LanhLandingPage() {
         setQuickViewQty(1);
         return;
       }
-    } catch (e) {}
+    } catch (e) { }
 
     // Fallback
     const fallbackP: Product = {
@@ -676,11 +678,11 @@ export default function LanhLandingPage() {
           recommendationType: 'FREQUENTLY_BOUGHT_TOGETHER',
           userId: currentUser?.id || currentUser?.userId || null
         })
-      }).catch(() => {});
+      }).catch(() => { });
     });
 
-    setRecToast(hasDiscount 
-      ? `🎉 Đã thêm combo ${1 + selectedItems.length} món (Tiết kiệm 5%) vào giỏ hàng!` 
+    setRecToast(hasDiscount
+      ? `🎉 Đã thêm combo ${1 + selectedItems.length} món (Tiết kiệm 5%) vào giỏ hàng!`
       : `Đã thêm sản phẩm vào giỏ hàng!`
     );
     setTimeout(() => setRecToast(''), 3000);
@@ -931,8 +933,8 @@ export default function LanhLandingPage() {
   const totalReviewPages = Math.max(1, Math.ceil(filteredHomeReviews.length / reviewsPerPage));
 
   // Tính toán danh sách đánh giá hiển thị theo phân trang
-  const currentReviews = showAllReviews 
-    ? filteredHomeReviews 
+  const currentReviews = showAllReviews
+    ? filteredHomeReviews
     : filteredHomeReviews.slice((reviewPage - 1) * reviewsPerPage, reviewPage * reviewsPerPage);
 
   return (
@@ -949,9 +951,7 @@ export default function LanhLandingPage() {
               <span className="topbar-link">Hotline: <strong>1900 8899</strong> (7:00 - 21:00)</span>
             </div>
             <div className="topbar-right">
-              <a href="http://localhost:5174" target="_blank" rel="noreferrer" className="topbar-link">
-                Kênh Đối Tác / HTX
-              </a>
+
               <span style={{ opacity: 0.4 }}>|</span>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <button className="icon-btn" onClick={toggleTheme} style={{ width: '24px', height: '24px' }} title="Sáng / Tối">
@@ -970,9 +970,9 @@ export default function LanhLandingPage() {
         <div className="wrap nav-row">
           <Link href="/" className="logo">
             <svg className="mark" viewBox="0 0 40 40" fill="none">
-              <circle cx="20" cy="20" r="20" fill="var(--green-700)"/>
-              <path d="M20 30C20 30 12 26 12 18C12 13 16 10 20 10C24 10 28 13 28 18C28 26 20 30 20 30Z" fill="var(--green-500)"/>
-              <path d="M20 30V16" stroke="var(--green-900)" strokeWidth="1.4" strokeLinecap="round"/>
+              <circle cx="20" cy="20" r="20" fill="var(--green-700)" />
+              <path d="M20 30C20 30 12 26 12 18C12 13 16 10 20 10C24 10 28 13 28 18C28 26 20 30 20 30Z" fill="var(--green-500)" />
+              <path d="M20 30V16" stroke="var(--green-900)" strokeWidth="1.4" strokeLinecap="round" />
             </svg>
             <div>
               <span style={{ letterSpacing: '1px' }}>LÀNH</span>
@@ -987,17 +987,17 @@ export default function LanhLandingPage() {
           <div className="header-actions">
             {/* Mục Tài khoản */}
             <div style={{ position: 'relative' }} ref={dropdownRef}>
-              <button 
-                className="header-action-item" 
-                onClick={() => setShowUserDropdown(!showUserDropdown)} 
+              <button
+                className="header-action-item"
+                onClick={() => setShowUserDropdown(!showUserDropdown)}
                 style={{ border: 'none', background: 'none' }}
               >
                 <span className="header-action-icon">
                   {currentUser && currentUser.avatarUrl ? (
-                    <img 
-                      src={currentUser.avatarUrl} 
-                      alt="Avatar" 
-                      style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--green-700)' }} 
+                    <img
+                      src={currentUser.avatarUrl}
+                      alt="Avatar"
+                      style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--green-700)' }}
                     />
                   ) : ''}
                 </span>
@@ -1008,7 +1008,7 @@ export default function LanhLandingPage() {
                   </span>
                 </div>
               </button>
-              
+
               {showUserDropdown && (
                 <div style={{
                   position: 'absolute',
@@ -1029,7 +1029,7 @@ export default function LanhLandingPage() {
                         <div style={{ fontWeight: '700', color: 'var(--ink)', fontSize: '13.5px' }}>{currentUser.fullName}</div>
                         <div style={{ marginTop: '2px' }}>{currentUser.email}</div>
                       </div>
-                      <Link 
+                      <Link
                         href="/profile"
                         style={{
                           display: 'flex',
@@ -1045,7 +1045,7 @@ export default function LanhLandingPage() {
                       >
                         Hồ sơ & Sổ địa chỉ
                       </Link>
-                      <Link 
+                      <Link
                         href="/orders"
                         style={{
                           display: 'flex',
@@ -1061,7 +1061,7 @@ export default function LanhLandingPage() {
                       >
                         Lịch sử đơn hàng
                       </Link>
-                      <button 
+                      <button
                         onClick={handleCustomerLogout}
                         style={{
                           width: '100%',
@@ -1083,7 +1083,7 @@ export default function LanhLandingPage() {
                     </>
                   ) : (
                     <>
-                      <Link 
+                      <Link
                         href="/login"
                         style={{
                           display: 'block',
@@ -1096,7 +1096,7 @@ export default function LanhLandingPage() {
                       >
                         Đăng nhập
                       </Link>
-                      <Link 
+                      <Link
                         href="/register"
                         style={{
                           display: 'block',
@@ -1116,12 +1116,12 @@ export default function LanhLandingPage() {
             </div>
 
             {/* Nút Giỏ Hàng nổi bật */}
-            <div 
+            <div
               className={`header-cart-btn ${cartBounce ? 'bounce' : ''}`}
               onClick={() => setIsDrawerOpen(true)}
               title="Xem giỏ hàng"
             >
-              <div className="header-action-icon" style={{ display: 'flex', alignItems: 'center' }}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg><span className="badge">{cart.reduce((s, i) => s + i.qty, 0)}</span>
+              <div className="header-action-icon" style={{ display: 'flex', alignItems: 'center' }}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" /><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" /></svg><span className="badge">{cart.reduce((s, i) => s + i.qty, 0)}</span>
               </div>
               <div className="header-action-text">
                 <span className="header-action-label">Giỏ hàng</span>
@@ -1156,7 +1156,7 @@ export default function LanhLandingPage() {
 
       <main id="main">
         {/* ── 1. BANNER HERO AI SLIDER (Full width, Glassmorphic Card & Hài Hòa) ── */}
-        <section 
+        <section
           style={{
             position: 'relative',
             overflow: 'hidden',
@@ -1217,7 +1217,7 @@ export default function LanhLandingPage() {
 
           {/* Content Box: Khung Kính Mờ Frosted Glassmorphism sang trọng */}
           <div className="wrap" style={{ position: 'relative', zIndex: 2, padding: '48px 24px', width: '100%' }}>
-            <div 
+            <div
               style={{
                 maxWidth: '650px',
                 background: 'linear-gradient(135deg, rgba(10, 28, 14, 0.78) 0%, rgba(16, 42, 22, 0.62) 100%)',
@@ -1487,201 +1487,266 @@ export default function LanhLandingPage() {
           </div>
         </section>
 
-        {/* ── 1.5. FLASH SALE XẢ KHO NÔNG SẢN CẬN DATE (ÁP DỤNG THUẬT TOÁN FEFO TỰ ĐỘNG) ── */}
-        {products.some(p => p.discountPercent && p.discountPercent > 0) && (
-          <section className="section" style={{
-            paddingTop: '36px',
-            paddingBottom: '36px',
-            backgroundColor: '#FFF7ED',
-            borderBottom: '1px solid #FED7AA'
-          }}>
-            <div className="wrap">
-              <div style={{
-                background: 'linear-gradient(135deg, #FEF2F2 0%, #FFFBEB 50%, #F0FDF4 100%)',
-                borderRadius: '24px',
-                padding: '28px 32px',
-                border: '1.5px solid #FCA5A5',
-                boxShadow: '0 10px 30px rgba(239, 68, 68, 0.08)'
-              }}>
+        {/* ── 1.5. FLASH SALE NÔNG SẢN TƯƠI - THIẾT KẾ DỊU MẮT & PHÂN TRANG ── */}
+        {products.some(p => p.discountPercent && p.discountPercent > 0) && (() => {
+          const saleProducts = products.filter(p => p.discountPercent && p.discountPercent > 0);
+          const totalSalePages = Math.ceil(saleProducts.length / flashSalePageSize) || 1;
+          const currentSaleProducts = saleProducts.slice((flashSalePage - 1) * flashSalePageSize, flashSalePage * flashSalePageSize);
+
+          return (
+            <section className="section" style={{
+              paddingTop: '36px',
+              paddingBottom: '36px',
+              backgroundColor: 'var(--bg)',
+              borderBottom: '1px solid var(--line)'
+            }}>
+              <div className="wrap">
                 <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  marginBottom: '22px',
-                  flexWrap: 'wrap',
-                  gap: '14px'
+                  background: 'linear-gradient(135deg, #F0FDF4 0%, #FFFFFF 50%, #FEFCE8 100%)',
+                  borderRadius: '24px',
+                  padding: '28px 32px',
+                  border: '1.5px solid rgba(22, 101, 52, 0.2)',
+                  boxShadow: '0 10px 30px rgba(22, 101, 52, 0.06)'
                 }}>
-                  <div>
-                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', backgroundColor: '#DC2626', color: '#FFFFFF', padding: '4px 12px', borderRadius: '999px', fontSize: '12px', fontWeight: 800, letterSpacing: '0.5px' }}>
-                      <span>⚡ FLASH SALE GIỜ VÀNG</span>
-                      <span>•</span>
-                      <span>GIẢM ĐẾN 50%</span>
-                    </div>
-                    <h2 style={{ fontSize: '26px', fontWeight: 900, color: '#991B1B', margin: '8px 0 4px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      🔥 Giờ Vàng Nông Sản Tươi - Ưu Đãi Đến 50%
-                    </h2>
-                    <p style={{ margin: 0, fontSize: '13.5px', color: '#7F1D1D' }}>
-                      Nông sản tươi ngon kiểm định chuẩn VietGAP với mức giá ưu đãi đặc biệt trong ngày.
-                    </p>
-                  </div>
                   <div style={{
                     display: 'flex',
+                    justifyContent: 'space-between',
                     alignItems: 'center',
-                    gap: '8px',
-                    backgroundColor: '#FFFFFF',
-                    padding: '8px 16px',
-                    borderRadius: '12px',
-                    border: '1px solid #FECDD3',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+                    marginBottom: '22px',
+                    flexWrap: 'wrap',
+                    gap: '14px'
                   }}>
-                    <span style={{ fontSize: '12.5px', fontWeight: 700, color: '#B91C1C' }}>Kết thúc sau:</span>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <span style={{ backgroundColor: '#DC2626', color: '#fff', padding: '3px 6px', borderRadius: '4px', fontWeight: 800, fontSize: '13px' }}>05</span>
-                      <span style={{ fontWeight: 800, color: '#DC2626' }}>:</span>
-                      <span style={{ backgroundColor: '#DC2626', color: '#fff', padding: '3px 6px', borderRadius: '4px', fontWeight: 800, fontSize: '13px' }}>42</span>
-                      <span style={{ fontWeight: 800, color: '#DC2626' }}>:</span>
-                      <span style={{ backgroundColor: '#DC2626', color: '#fff', padding: '3px 6px', borderRadius: '4px', fontWeight: 800, fontSize: '13px' }}>19</span>
+                    <div>
+                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', backgroundColor: '#15803D', color: '#FFFFFF', padding: '4px 14px', borderRadius: '999px', fontSize: '12px', fontWeight: 800, letterSpacing: '0.5px' }}>
+                        <span>⚡ GIỜ VÀNG ƯU ĐÃI</span>
+                        <span>•</span>
+                        <span>TIẾT KIỆM TỐI ĐA</span>
+                      </div>
+                      <h2 style={{ fontSize: '24px', fontWeight: 800, color: 'var(--green-900)', margin: '8px 0 4px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        🌾 Nông Sản Tươi Trong Ngày - Giảm Đến 50%
+                      </h2>
+                      <p style={{ margin: 0, fontSize: '13.5px', color: 'var(--ink-soft)' }}>
+                        Tuyển chọn nông sản tươi thu hoạch trong ngày chuẩn VietGAP, hỗ trợ người tiêu dùng bữa ăn sạch lành.
+                      </p>
+                    </div>
+
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      backgroundColor: '#FFFFFF',
+                      padding: '8px 16px',
+                      borderRadius: '12px',
+                      border: '1px solid #BBF7D0',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+                    }}>
+                      <span style={{ fontSize: '12.5px', fontWeight: 700, color: '#15803D' }}>Ưu đãi kết thúc sau:</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <span style={{ backgroundColor: '#15803D', color: '#fff', padding: '3px 8px', borderRadius: '6px', fontWeight: 800, fontSize: '13px' }}>05</span>
+                        <span style={{ fontWeight: 800, color: '#15803D' }}>:</span>
+                        <span style={{ backgroundColor: '#15803D', color: '#fff', padding: '3px 8px', borderRadius: '6px', fontWeight: 800, fontSize: '13px' }}>42</span>
+                        <span style={{ fontWeight: 800, color: '#15803D' }}>:</span>
+                        <span style={{ backgroundColor: '#15803D', color: '#fff', padding: '3px 8px', borderRadius: '6px', fontWeight: 800, fontSize: '13px' }}>19</span>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Grid các sản phẩm Flash Sale Cận Date */}
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
-                  gap: '20px'
-                }}>
-                  {products.filter(p => p.discountPercent && p.discountPercent > 0).map(p => (
-                    <div
-                      key={p.id}
-                      onClick={() => openQuickView(p)}
-                      style={{
-                        backgroundColor: '#FFFFFF',
-                        borderRadius: '16px',
-                        overflow: 'hidden',
-                        border: '1.5px solid #F87171',
-                        boxShadow: '0 6px 16px rgba(220, 38, 38, 0.12)',
-                        cursor: 'pointer',
-                        transition: 'transform 0.2s, box-shadow 0.2s',
-                        display: 'flex',
-                        flexDirection: 'column'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = 'translateY(-4px)';
-                        e.currentTarget.style.boxShadow = '0 10px 24px rgba(220, 38, 38, 0.2)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = 'none';
-                        e.currentTarget.style.boxShadow = '0 6px 16px rgba(220, 38, 38, 0.12)';
-                      }}
-                    >
-                      {/* Ảnh và huy hiệu Flash Sale */}
-                      <div style={{ position: 'relative', height: '180px', backgroundColor: '#FEE2E2', overflow: 'hidden' }}>
-                        <div style={{
-                          position: 'absolute',
-                          top: '10px',
-                          left: '10px',
-                          zIndex: 3,
+                  {/* Grid các sản phẩm Flash Sale */}
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+                    gap: '20px'
+                  }}>
+                    {currentSaleProducts.map(p => (
+                      <div
+                        key={p.id}
+                        onClick={() => openQuickView(p)}
+                        style={{
+                          backgroundColor: '#FFFFFF',
+                          borderRadius: '16px',
+                          overflow: 'hidden',
+                          border: '1.5px solid var(--line)',
+                          boxShadow: 'var(--shadow)',
+                          cursor: 'pointer',
+                          transition: 'all 0.25s ease',
                           display: 'flex',
-                          flexDirection: 'column',
-                          gap: '4px'
-                        }}>
-                          <span style={{
-                            backgroundColor: '#DC2626',
-                            color: '#FFFFFF',
-                            fontSize: '12px',
-                            fontWeight: 900,
-                            padding: '4px 10px',
-                            borderRadius: '6px',
-                            boxShadow: '0 2px 8px rgba(220, 38, 38, 0.5)'
-                          }}>
-                            ⚡ GIẢM {p.discountPercent}%
-                          </span>
-                        </div>
-                        {p.imageUrl ? (
-                          <img
-                            src={p.imageUrl}
-                            alt={p.name}
-                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600&auto=format&fit=crop&q=80';
-                            }}
-                          />
-                        ) : (
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-                            {ICONS[p.icon] || ICONS['leaf']}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Thông tin sản phẩm */}
-                      <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'space-between' }}>
-                        <div>
-                          <div style={{ fontSize: '11px', color: '#991B1B', fontWeight: 700, textTransform: 'uppercase', marginBottom: '4px' }}>
-                            {p.category} • {p.region}
-                          </div>
-                          <h4 style={{ fontSize: '15px', fontWeight: 800, color: 'var(--ink)', margin: '0 0 8px 0', lineHeight: '1.3' }}>
-                            {p.name}
-                          </h4>
+                          flexDirection: 'column'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = 'translateY(-4px)';
+                          e.currentTarget.style.borderColor = 'var(--green-700)';
+                          e.currentTarget.style.boxShadow = 'var(--shadow-lift)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = 'none';
+                          e.currentTarget.style.borderColor = 'var(--line)';
+                          e.currentTarget.style.boxShadow = 'var(--shadow)';
+                        }}
+                      >
+                        {/* Ảnh và huy hiệu Flash Sale */}
+                        <div style={{ position: 'relative', height: '180px', backgroundColor: 'var(--bg)', overflow: 'hidden' }}>
                           <div style={{
-                            backgroundColor: '#FEF2F2',
-                            border: '1px dashed #FCA5A5',
-                            padding: '6px 8px',
-                            borderRadius: '6px',
-                            fontSize: '11.5px',
-                            color: '#991B1B',
-                            fontWeight: 600,
-                            marginBottom: '10px'
+                            position: 'absolute',
+                            top: '10px',
+                            left: '10px',
+                            zIndex: 3,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '4px'
                           }}>
-                            ✨ Tiết kiệm ngay {((p.originalPrice || 0) - (p.rawPrice || 0)).toLocaleString('vi-VN')}₫
+                            <span style={{
+                              backgroundColor: '#EAB308',
+                              color: '#713F12',
+                              fontSize: '11.5px',
+                              fontWeight: 800,
+                              padding: '3px 8px',
+                              borderRadius: '6px',
+                              boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
+                            }}>
+                              ⚡ GIẢM {p.discountPercent}%
+                            </span>
                           </div>
+                          {p.imageUrl ? (
+                            <img
+                              src={p.imageUrl}
+                              alt={p.name}
+                              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600&auto=format&fit=crop&q=80';
+                              }}
+                            />
+                          ) : (
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+                              {ICONS[p.icon] || ICONS['leaf']}
+                            </div>
+                          )}
                         </div>
 
-                        <div>
-                          <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '10px' }}>
-                            <span style={{ fontSize: '20px', fontWeight: 900, color: '#DC2626' }}>
-                              {p.price}
-                            </span>
-                            <span style={{ fontSize: '12px', color: 'var(--ink-soft)' }}>{p.unit}</span>
-                            {p.originalPrice && (
-                              <span style={{ fontSize: '13px', color: '#94A3B8', textDecoration: 'line-through' }}>
-                                {p.originalPrice.toLocaleString('vi-VN')}₫
-                              </span>
-                            )}
+                        {/* Thông tin sản phẩm */}
+                        <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'space-between' }}>
+                          <div>
+                            <div style={{ fontSize: '11px', color: 'var(--green-700)', fontWeight: 700, textTransform: 'uppercase', marginBottom: '4px' }}>
+                              {p.category} • {p.region}
+                            </div>
+                            <h4 style={{ fontSize: '15px', fontWeight: 700, color: 'var(--ink)', margin: '0 0 8px 0', lineHeight: '1.3' }}>
+                              {p.name}
+                            </h4>
+                            <div style={{
+                              backgroundColor: '#F0FDF4',
+                              border: '1px dashed #86EFAC',
+                              padding: '5px 8px',
+                              borderRadius: '6px',
+                              fontSize: '11.5px',
+                              color: '#15803D',
+                              fontWeight: 600,
+                              marginBottom: '10px'
+                            }}>
+                              ✨ Tiết kiệm {((p.originalPrice || 0) - (p.rawPrice || 0)).toLocaleString('vi-VN')}₫
+                            </div>
                           </div>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              addToCart(p, 1);
-                            }}
-                            style={{
-                              width: '100%',
-                              backgroundColor: '#DC2626',
-                              color: '#FFFFFF',
-                              border: 'none',
-                              padding: '10px',
-                              borderRadius: '8px',
-                              fontSize: '13px',
-                              fontWeight: 800,
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              gap: '6px',
-                              boxShadow: '0 3px 10px rgba(220, 38, 38, 0.3)'
-                            }}
-                          >
-                            <span>🛒 Thêm vào giỏ</span>
-                          </button>
+
+                          <div>
+                            <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '10px' }}>
+                              <span style={{ fontSize: '19px', fontWeight: 800, color: 'var(--green-700)' }}>
+                                {p.price}
+                              </span>
+                              <span style={{ fontSize: '12px', color: 'var(--ink-soft)' }}>{p.unit}</span>
+                              {p.originalPrice && (
+                                <span style={{ fontSize: '13px', color: '#94A3B8', textDecoration: 'line-through' }}>
+                                  {p.originalPrice.toLocaleString('vi-VN')}₫
+                                </span>
+                              )}
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                addToCart(p, 1);
+                              }}
+                              style={{
+                                width: '100%',
+                                padding: '9px 12px',
+                                backgroundColor: 'var(--green-700)',
+                                color: '#ffffff',
+                                border: 'none',
+                                borderRadius: '8px',
+                                fontWeight: 700,
+                                fontSize: '13px',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '6px',
+                                transition: 'background-color 0.2s ease',
+                                boxShadow: '0 2px 6px rgba(22, 101, 52, 0.2)'
+                              }}
+                              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#15803D'}
+                              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--green-700)'}
+                            >
+                              <span>🛒</span> Thêm vào giỏ
+                            </button>
+                          </div>
                         </div>
                       </div>
+                    ))}
+                  </div>
+
+                  {/* Thanh Phân Trang Flash Sale */}
+                  {totalSalePages > 1 && (
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      gap: '8px',
+                      marginTop: '24px',
+                      paddingTop: '16px',
+                      borderTop: '1px solid rgba(22, 101, 52, 0.1)'
+                    }}>
+                      <button
+                        type="button"
+                        onClick={() => setFlashSalePage(p => Math.max(1, p - 1))}
+                        disabled={flashSalePage <= 1}
+                        style={{
+                          padding: '6px 14px',
+                          borderRadius: '8px',
+                          border: '1px solid var(--line)',
+                          backgroundColor: flashSalePage <= 1 ? 'transparent' : '#FFFFFF',
+                          color: flashSalePage <= 1 ? 'var(--ink-soft)' : 'var(--ink)',
+                          cursor: flashSalePage <= 1 ? 'not-allowed' : 'pointer',
+                          fontSize: '12.5px',
+                          fontWeight: 600
+                        }}
+                      >
+                        ← Trang trước
+                      </button>
+                      <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--green-900)' }}>
+                        Trang {flashSalePage} / {totalSalePages}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setFlashSalePage(p => Math.min(totalSalePages, p + 1))}
+                        disabled={flashSalePage >= totalSalePages}
+                        style={{
+                          padding: '6px 14px',
+                          borderRadius: '8px',
+                          border: '1px solid var(--line)',
+                          backgroundColor: flashSalePage >= totalSalePages ? 'transparent' : '#FFFFFF',
+                          color: flashSalePage >= totalSalePages ? 'var(--ink-soft)' : 'var(--ink)',
+                          cursor: flashSalePage >= totalSalePages ? 'not-allowed' : 'pointer',
+                          fontSize: '12.5px',
+                          fontWeight: 600
+                        }}
+                      >
+                        Trang sau →
+                      </button>
                     </div>
-                  ))}
+                  )}
                 </div>
               </div>
-            </div>
-          </section>
-        )}
+            </section>
+          );
+        })()}
 
         {/* ── 2. SẢN PHẨM NỔI BẬT & THU HOẠCH TRONG NGÀY (Tích hợp thuật toán gợi ý ngữ cảnh CARS) ── */}
         <section className="section" style={{ paddingTop: '50px', paddingBottom: '50px' }}>
@@ -1719,14 +1784,14 @@ export default function LanhLandingPage() {
             {/* Grid 8 sản phẩm nổi bật - Đã được CARS tái xếp hạng theo sở thích, độ tươi và mùa vụ */}
             <div className="prod-grid">
               {products.slice(0, 8).map(p => (
-                <div 
-                  key={p.id} 
-                  className="prod-card" 
-                  style={{ 
+                <div
+                  key={p.id}
+                  className="prod-card"
+                  style={{
                     cursor: 'pointer',
                     border: p.isRecommended ? '1.5px solid #81C784' : undefined,
                     boxShadow: p.isRecommended ? '0 4px 14px rgba(46, 125, 50, 0.08)' : undefined
-                  }} 
+                  }}
                   onClick={() => {
                     if (p.isRecommended) {
                       trackBehavior({ productId: p.id, actionType: 'RECOMMENDATION_CLICK', recommendationType: 'FOR_YOU' });
@@ -1766,10 +1831,10 @@ export default function LanhLandingPage() {
                     )}
                     <div style={{ display: 'block', width: '100%', height: '100%' }}>
                       {p.imageUrl ? (
-                        <img 
-                          src={p.imageUrl} 
-                          alt={p.name} 
-                          style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                        <img
+                          src={p.imageUrl}
+                          alt={p.name}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                           onError={(e) => {
                             (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600&auto=format&fit=crop&q=80';
                           }}
@@ -1791,21 +1856,21 @@ export default function LanhLandingPage() {
                       )}
                       <span className="tag-cert">{p.cert}</span>
                       <button className="qr-btn" onClick={(e) => { e.stopPropagation(); setOpenQrFor(p.id); }} aria-label="Xem truy xuất nguồn gốc" title="Xem mã lô truy xuất">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" strokeWidth="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM20 14v3M14 20h3M20 20v.01"/></svg>
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" strokeWidth="2"><rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="3" y="14" width="7" height="7" /><path d="M14 14h3v3h-3zM20 14v3M14 20h3M20 20v.01" /></svg>
                       </button>
                     </div>
                     <div className={`qr-panel ${openQrFor === p.id ? 'show' : ''}`} onClick={(e) => e.stopPropagation()}>
                       <button className="qr-close" onClick={(e) => { e.stopPropagation(); setOpenQrFor(null); }} aria-label="Đóng">
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><path d="M6 6l12 12M18 6L6 18" /></svg>
                       </button>
-                      <svg width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" strokeWidth="1.6"><rect x="2" y="2" width="7" height="7"/><rect x="15" y="2" width="7" height="7"/><rect x="2" y="15" width="7" height="7"/><path d="M15 15h3v3h-3zM21 15v3M15 21h3M21 21v.01M5 5h1M18 5h1M5 18h1"/></svg>
+                      <svg width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" strokeWidth="1.6"><rect x="2" y="2" width="7" height="7" /><rect x="15" y="2" width="7" height="7" /><rect x="2" y="15" width="7" height="7" /><path d="M15 15h3v3h-3zM21 15v3M15 21h3M21 21v.01M5 5h1M18 5h1M5 18h1" /></svg>
                       <span className="lot">{p.lot}</span>
-                      <p>Thu hoạch tại {p.region} · Kiểm định {p.cert}<br/>Quét mã để xem nhật ký canh tác đầy đủ</p>
+                      <p>Thu hoạch tại {p.region} · Kiểm định {p.cert}<br />Quét mã để xem nhật ký canh tác đầy đủ</p>
                     </div>
                   </div>
                   <div className="prod-body">
                     <span className="prod-origin">
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"/></svg>
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3" /></svg>
                       Xuất xứ: {p.region}
                     </span>
                     {p.isRecommended && p.recommendationReason && (
@@ -1817,8 +1882,8 @@ export default function LanhLandingPage() {
                       {p.name}
                     </span>
 
-                    <div 
-                      className="stars" 
+                    <div
+                      className="stars"
                       onClick={(e) => {
                         e.stopPropagation();
                         const isCombo = p.category?.toLowerCase().includes('combo') || p.id >= 900;
@@ -1846,9 +1911,9 @@ export default function LanhLandingPage() {
                           </div>
                         )}
                       </div>
-                      <button 
+                      <button
                         disabled={p.isOutOfStock}
-                        className={`add-btn ${addedItem === p.id ? 'added' : ''} ${p.isOutOfStock ? 'disabled' : ''}`} 
+                        className={`add-btn ${addedItem === p.id ? 'added' : ''} ${p.isOutOfStock ? 'disabled' : ''}`}
                         style={p.isOutOfStock ? {
                           backgroundColor: '#E2E8F0',
                           color: '#94A3B8',
@@ -1859,11 +1924,12 @@ export default function LanhLandingPage() {
                         onClick={(e) => {
                           e.stopPropagation();
                           if (p.isOutOfStock) {
-                            alert(`Sản phẩm "${p.name}" hiện đang tạm hết hàng hoặc hết hạn sử dụng, không thể thêm vào giỏ.`);
+                            setRecToast(`⚠️ Sản phẩm "${p.name}" hiện đang tạm hết hàng.`);
+                            setTimeout(() => setRecToast(''), 3000);
                             return;
                           }
                           addToCart(p, 1);
-                        }} 
+                        }}
                         aria-label={p.isOutOfStock ? 'Tạm hết hàng' : 'Thêm vào giỏ'}
                         title={p.isOutOfStock ? 'Sản phẩm tạm hết hàng / hết hạn' : 'Thêm nhanh vào giỏ'}
                       >
@@ -1872,7 +1938,7 @@ export default function LanhLandingPage() {
                         ) : addedItem === p.id ? (
                           ICONS.check
                         ) : (
-                          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M12 5v14M5 12h14"/></svg>
+                          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M12 5v14M5 12h14" /></svg>
                         )}
                       </button>
                     </div>
@@ -2094,7 +2160,7 @@ export default function LanhLandingPage() {
                               }}
                             >
                               <span>Đọc bài báo gốc trên {item.tag.replace('Báo ', '')}</span>
-                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" /></svg>
                             </a>
                           ) : (
                             <span style={{ color: 'var(--green-700)', fontSize: '13px', fontWeight: '700', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
@@ -2146,7 +2212,7 @@ export default function LanhLandingPage() {
                     transition: 'all 0.2s'
                   }}
                 >
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" /></svg>
                   Gửi đánh giá của bạn
                 </button>
 
@@ -2270,13 +2336,13 @@ export default function LanhLandingPage() {
                         </span>
                       </div>
 
-                      <p 
+                      <p
                         className="review-content-text"
-                        style={{ 
-                          fontSize: '14.5px', 
-                          color: 'var(--ink)', 
-                          lineHeight: '1.68', 
-                          margin: '0 0 14px 0', 
+                        style={{
+                          fontSize: '14.5px',
+                          color: 'var(--ink)',
+                          lineHeight: '1.68',
+                          margin: '0 0 14px 0',
                           fontStyle: 'normal',
                           fontFamily: 'var(--font-review)',
                           fontWeight: 400,
@@ -2334,14 +2400,14 @@ export default function LanhLandingPage() {
                           {(review.name || 'K').charAt(0)}
                         </div>
                         <div>
-                          <div 
+                          <div
                             className="review-author-name"
-                            style={{ 
-                              fontSize: '14px', 
-                              fontWeight: '600', 
-                              color: 'var(--ink)', 
-                              display: 'flex', 
-                              alignItems: 'center', 
+                            style={{
+                              fontSize: '14px',
+                              fontWeight: '600',
+                              color: 'var(--ink)',
+                              display: 'flex',
+                              alignItems: 'center',
                               gap: '6px',
                               fontFamily: 'var(--font-review)'
                             }}
@@ -2361,15 +2427,15 @@ export default function LanhLandingPage() {
                             )}
                           </div>
                           {review.productId ? (
-                            <div 
+                            <div
                               onClick={() => {
                                 const isCombo = review.productName?.toLowerCase().includes('combo') || review.productId >= 900;
                                 router.push(isCombo ? `/combos/${review.productId}#reviews` : `/products/${review.productId}#reviews`);
                               }}
                               title={`Bấm để xem sản phẩm "${review.productName}" và tất cả đánh giá`}
-                              style={{ 
-                                fontSize: '12px', 
-                                color: 'var(--green-700)', 
+                              style={{
+                                fontSize: '12px',
+                                color: 'var(--green-700)',
                                 fontFamily: 'var(--font-review)',
                                 cursor: 'pointer',
                                 display: 'inline-flex',
@@ -2684,10 +2750,26 @@ export default function LanhLandingPage() {
             <div>
               <h5>Chính sách</h5>
               <ul>
-                <li>Vận chuyển &amp; giao nhận</li>
-                <li>Đổi trả trong 24h</li>
-                <li>Bảo mật thông tin</li>
-                <li>Điều khoản dịch vụ</li>
+                <li>
+                  <Link href="/shipping-policy" style={{ color: '#D9E6D9', textDecoration: 'none', transition: 'color 0.2s', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span>🚚</span> Vận chuyển &amp; giao nhận
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/return-policy" style={{ color: '#D9E6D9', textDecoration: 'none', transition: 'color 0.2s', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span>🔄</span> Đổi trả trong 24h
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/privacy-policy" style={{ color: '#D9E6D9', textDecoration: 'none', transition: 'color 0.2s', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span>🔒</span> Bảo mật thông tin
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/terms" style={{ color: '#D9E6D9', textDecoration: 'none', transition: 'color 0.2s', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span>📜</span> Điều khoản dịch vụ
+                  </Link>
+                </li>
               </ul>
             </div>
             <div>
@@ -2949,7 +3031,7 @@ export default function LanhLandingPage() {
 
       {/* ── QUICK VIEW MODAL (XEM NHANH SẢN PHẨM) ── */}
       {quickViewProduct && (
-        <div 
+        <div
           style={{
             position: 'fixed',
             top: 0,
@@ -2967,7 +3049,7 @@ export default function LanhLandingPage() {
           }}
           onClick={() => { setQuickViewProduct(null); setQuickViewHistory([]); }}
         >
-          <div 
+          <div
             style={{
               backgroundColor: 'var(--surface)',
               borderRadius: '24px',
@@ -3010,7 +3092,7 @@ export default function LanhLandingPage() {
                 }}
                 aria-label="Quay lại sản phẩm trước"
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
                 Quay lại ({quickViewHistory[quickViewHistory.length - 1].name.slice(0, 18)}...)
               </button>
             )}
@@ -3036,7 +3118,7 @@ export default function LanhLandingPage() {
               }}
               aria-label="Đóng xem nhanh"
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 6l12 12M18 6L6 18"/></svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 6l12 12M18 6L6 18" /></svg>
             </button>
 
             {/* ── TẦNG 1: THÔNG TIN SẢN PHẨM CHÍNH (2 CỘT RỘNG RÃI) ── */}
@@ -3098,7 +3180,7 @@ export default function LanhLandingPage() {
                     {quickViewProduct.name}
                   </h2>
 
-                  <div 
+                  <div
                     onClick={() => {
                       const pId = quickViewProduct.id;
                       setQuickViewProduct(null);
@@ -3244,7 +3326,7 @@ export default function LanhLandingPage() {
                         cursor: isQuickViewOutOfStock ? 'not-allowed' : 'pointer'
                       }}
                     >
-                      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+                      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" /><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" /></svg>
                       {isQuickViewOutOfStock ? 'Tạm Hết Hàng' : 'Thêm Vào Giỏ'}
                     </button>
                     <button
@@ -3275,25 +3357,23 @@ export default function LanhLandingPage() {
               </div>
             </div>
 
-            {/* ── TẦNG 2: SẢN PHẨM ĐI KÈM (THIẾT KẾ TỐI GIẢN & XEM CHI TIẾT KHI CLICK) ── */}
+            {/* ── TẦNG 2: GỢI Ý NÔNG SẢN LIÊN QUAN (CHUẨN GIAO DIỆN MOBILE-APP, KHÔNG CHECKBOX COMBO) ── */}
             {boughtTogether.length > 0 && (
               <div style={{
                 borderTop: '1px solid var(--line)',
                 backgroundColor: '#FAFAFA',
-                padding: '18px 24px',
+                padding: '16px 24px',
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '12px'
               }}>
-                {/* Tiêu đề ngắn gọn, thân thiện + Nút điều hướng Carousel */}
+                {/* Tiêu đề ngắn gọn + Nút điều hướng Carousel */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '18px' }}>🌿</span>
                     <h3 style={{ margin: 0, fontSize: '15px', fontWeight: '800', color: 'var(--ink)' }}>
-                      Thường mua kèm
+                      Gợi ý nông sản cùng loại & tươi ngon
                     </h3>
-                    <span style={{ fontSize: '12px', color: '#15803D', fontWeight: '600' }}>
-                      • Tiết kiệm thêm 5% khi mua trọn combo
-                    </span>
                   </div>
 
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -3367,273 +3447,149 @@ export default function LanhLandingPage() {
                   </div>
                 </div>
 
-                {/* Bố cục 2 phần: Dải trượt ngang (Left) & Hộp Tổng Tiền Cố Định (Right) */}
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'minmax(0, 1fr) 230px',
-                  gap: '14px',
-                  alignItems: 'center'
-                }}>
-                  {/* Cột Trái: Dải trượt ngang mượt mà (Carousel) */}
-                  <div 
-                    ref={quickViewCarouselRef}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '10px',
-                      overflowX: 'auto',
-                      paddingBottom: '4px',
-                      scrollBehavior: 'smooth'
-                    }}
-                  >
-                    {/* Card 1: Món chính (Luôn chọn) */}
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      padding: '8px 10px',
-                      borderRadius: '10px',
-                      backgroundColor: isQuickViewOutOfStock ? '#FEF2F2' : '#FFFFFF',
-                      border: isQuickViewOutOfStock ? '1px solid #FCA5A5' : '1px solid var(--line)',
-                      minWidth: '185px',
-                      flexShrink: 0
-                    }}>
-                      <div style={{
-                        width: '18px',
-                        height: '18px',
-                        borderRadius: '50%',
-                        backgroundColor: isQuickViewOutOfStock ? '#DC2626' : 'var(--green-700)',
-                        color: '#FFFFFF',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '10px',
-                        fontWeight: '900',
-                        flexShrink: 0
-                      }}>
-                        {isQuickViewOutOfStock ? '✕' : '✓'}
-                      </div>
-                      <img
-                        src={quickViewProduct.imageUrl || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=100'}
-                        alt={quickViewProduct.name}
-                        style={{ width: '42px', height: '42px', borderRadius: '6px', objectFit: 'cover', border: '1px solid #E2E8F0', flexShrink: 0 }}
-                      />
-                      <div style={{ minWidth: 0 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <span style={{ fontSize: '10px', color: '#64748B', fontWeight: '700' }}>
-                            Món đang xem
-                          </span>
-                          {isQuickViewOutOfStock && (
-                            <span style={{ fontSize: '9px', fontWeight: '800', color: '#DC2626', backgroundColor: '#FEE2E2', padding: '1px 4px', borderRadius: '3px' }}>
-                              Tạm hết
-                            </span>
-                          )}
-                        </div>
-                        <div style={{ fontSize: '12.5px', fontWeight: '700', color: 'var(--ink)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={quickViewProduct.name}>
-                          {quickViewProduct.name}
-                        </div>
-                        <div style={{ fontSize: '12px', fontWeight: '700', color: isQuickViewOutOfStock ? '#DC2626' : 'var(--green-700)' }}>
-                          {isQuickViewOutOfStock ? 'Hết hàng' : quickViewProduct.price}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Dấu cộng + */}
-                    <div style={{ color: '#94A3B8', fontSize: '15px', fontWeight: '700', flexShrink: 0 }}>
-                      +
-                    </div>
-
-                    {/* Danh sách các món gợi ý Top-6 */}
-                    {boughtTogether.map((item: any, idx: number) => {
-                      const isSelected = selectedTopKIds.includes(item.productId) && !item.isOutOfStock;
-                      return (
-                        <React.Fragment key={item.productId}>
-                          <div 
+                {/* Dải trượt ngang các thẻ gợi ý mượt mà */}
+                <div
+                  ref={quickViewCarouselRef}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'stretch',
+                    gap: '12px',
+                    overflowX: 'auto',
+                    paddingBottom: '6px',
+                    scrollBehavior: 'smooth'
+                  }}
+                >
+                  {boughtTogether.map((item) => {
+                    const isItemOutOfStock = !!item.isOutOfStock;
+                    return (
+                      <div
+                        key={item.productId}
+                        style={{
+                          width: '180px',
+                          flexShrink: 0,
+                          backgroundColor: '#FFFFFF',
+                          borderRadius: '12px',
+                          border: '1px solid var(--line)',
+                          padding: '10px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          justifyContent: 'space-between',
+                          boxShadow: '0 1px 4px rgba(0,0,0,0.03)',
+                          opacity: isItemOutOfStock ? 0.7 : 1
+                        }}
+                      >
+                        <div>
+                          {/* Ảnh sản phẩm */}
+                          <div
                             onClick={() => handleDrillDownProduct(item)}
-                            title={item.isOutOfStock ? `${item.productName} (Tạm hết hàng - Bấm để xem chi tiết)` : "Bấm để xem chi tiết sản phẩm này"}
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '8px',
-                              padding: '8px 10px',
-                              borderRadius: '10px',
-                              backgroundColor: item.isOutOfStock ? '#F8FAFC' : '#FFFFFF',
-                              border: isSelected ? '1.5px solid var(--green-700)' : '1px solid var(--line)',
-                              cursor: 'pointer',
-                              transition: 'all 0.15s',
-                              minWidth: '190px',
-                              flexShrink: 0,
-                              position: 'relative',
-                              opacity: item.isOutOfStock ? 0.6 : 1
-                            }}
+                            style={{ position: 'relative', width: '100%', height: '110px', borderRadius: '8px', overflow: 'hidden', cursor: 'pointer', marginBottom: '8px' }}
                           >
-                            {/* Checkbox chọn vào combo */}
-                            <div 
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                if (item.isOutOfStock) {
-                                  alert('Sản phẩm này hiện đang tạm hết hàng, không thể chọn vào combo.');
-                                  return;
-                                }
-                                toggleTopKSelection(item.productId);
-                              }}
-                              title={item.isOutOfStock ? 'Sản phẩm tạm hết hàng' : (isSelected ? 'Bỏ chọn khỏi combo' : 'Chọn vào combo')}
-                              style={{
-                                width: '18px',
-                                height: '18px',
-                                borderRadius: '4px',
-                                border: item.isOutOfStock ? '1.5px solid #E2E8F0' : (isSelected ? 'none' : '1.5px solid #CBD5E1'),
-                                backgroundColor: item.isOutOfStock ? '#F1F5F9' : (isSelected ? 'var(--green-700)' : '#FFFFFF'),
-                                color: '#FFFFFF',
+                            <img
+                              src={item.imageUrl || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=200'}
+                              alt={item.productName}
+                              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            />
+                            <span style={{
+                              position: 'absolute',
+                              top: '4px',
+                              left: '4px',
+                              backgroundColor: 'rgba(22, 163, 74, 0.9)',
+                              color: '#FFFFFF',
+                              fontSize: '9px',
+                              fontWeight: 700,
+                              padding: '1px 5px',
+                              borderRadius: '4px'
+                            }}>
+                              {item.categoryName || 'VietGAP'}
+                            </span>
+                            {isItemOutOfStock && (
+                              <div style={{
+                                position: 'absolute',
+                                inset: 0,
+                                backgroundColor: 'rgba(0,0,0,0.45)',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                fontSize: '10px',
-                                fontWeight: '900',
-                                flexShrink: 0,
-                                cursor: item.isOutOfStock ? 'not-allowed' : 'pointer'
-                              }}
-                            >
-                              {isSelected && '✓'}
-                            </div>
-
-                            <img
-                              src={item.imageUrl || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=100'}
-                              alt={item.productName}
-                              style={{ width: '42px', height: '42px', borderRadius: '6px', objectFit: 'cover', border: '1px solid #E2E8F0', flexShrink: 0 }}
-                            />
-
-                            <div style={{ minWidth: 0, flex: 1 }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                <span style={{ fontSize: '9.5px', color: '#15803D', fontWeight: '700' }}>
-                                  {item.recommendationReason || item.categoryName || 'Món bổ trợ'}
-                                </span>
-                                {item.isOutOfStock && (
-                                  <span style={{ fontSize: '8.5px', fontWeight: '800', color: '#DC2626', backgroundColor: '#FEE2E2', padding: '1px 3px', borderRadius: '3px' }}>
-                                    Hết hàng
-                                  </span>
-                                )}
+                                color: '#FFFFFF',
+                                fontWeight: 700,
+                                fontSize: '11px'
+                              }}>
+                                Tạm hết
                               </div>
-                              <div style={{ fontSize: '12px', fontWeight: '700', color: 'var(--ink)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={item.productName}>
-                                {item.productName}
-                              </div>
-                              <div style={{ fontSize: '11.5px', fontWeight: '700', color: item.isOutOfStock ? '#DC2626' : 'var(--green-700)' }}>
-                                {item.isOutOfStock ? 'Tạm hết' : item.formattedPrice}
-                              </div>
-                            </div>
-
-                            {/* Nút thêm lẻ */}
-                            <button
-                              type="button"
-                              disabled={item.isOutOfStock}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleAddRecommendedToCart(item);
-                              }}
-                              title={item.isOutOfStock ? 'Sản phẩm tạm hết hàng' : 'Thêm riêng món này vào giỏ hàng'}
-                              style={{
-                                padding: '3px 7px',
-                                borderRadius: '5px',
-                                backgroundColor: item.isOutOfStock ? '#F1F5F9' : '#F8FAFC',
-                                color: item.isOutOfStock ? '#94A3B8' : 'var(--green-700)',
-                                border: '1px solid #CBD5E1',
-                                fontSize: '10.5px',
-                                fontWeight: '700',
-                                cursor: item.isOutOfStock ? 'not-allowed' : 'pointer',
-                                flexShrink: 0
-                              }}
-                            >
-                              + Lẻ
-                            </button>
+                            )}
                           </div>
 
-                          {idx < boughtTogether.length - 1 && (
-                            <div style={{ color: '#94A3B8', fontSize: '14px', fontWeight: '700', flexShrink: 0 }}>
-                              +
-                            </div>
-                          )}
-                        </React.Fragment>
-                      );
-                    })}
-                  </div>
+                          {/* Tên sản phẩm */}
+                          <h4
+                            onClick={() => handleDrillDownProduct(item)}
+                            title={item.productName}
+                            style={{
+                              margin: '0 0 4px 0',
+                              fontSize: '12.5px',
+                              fontWeight: 700,
+                              color: 'var(--ink)',
+                              cursor: 'pointer',
+                              display: '-webkit-box',
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: 'vertical',
+                              overflow: 'hidden',
+                              lineHeight: 1.3,
+                              minHeight: '32px'
+                            }}
+                          >
+                            {item.productName}
+                          </h4>
 
-                  {/* Cột Phải: Hộp Cố Định Tổng Tiền Combo & Ưu Đãi 5% */}
-                  {(() => {
-                    const mainRawPrice = quickViewProduct.rawPrice || parseInt((quickViewProduct.price || '').replace(/[^\d]/g, ''), 10) || 0;
-                    const selectedRecItems = boughtTogether.filter((item: any) => selectedTopKIds.includes(item.productId) && !item.isOutOfStock);
-                    const rawTotal = (mainRawPrice * quickViewQty) + selectedRecItems.reduce((sum: number, item: any) => sum + (item.price || 0), 0);
-                    const selectedCount = (isQuickViewOutOfStock ? 0 : 1) + selectedRecItems.length;
-                    const hasDiscount = !isQuickViewOutOfStock && selectedCount >= 2;
-                    const discountAmount = hasDiscount ? Math.round(rawTotal * 0.05) : 0;
-                    const finalComboTotal = rawTotal - discountAmount;
-
-                    return (
-                      <div style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '6px',
-                        padding: '10px 14px',
-                        borderRadius: '12px',
-                        backgroundColor: '#FFFFFF',
-                        border: isQuickViewOutOfStock ? '1.5px dashed #FCA5A5' : '1.5px solid #86EFAC',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-                        flexShrink: 0
-                      }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontSize: '11px', color: '#64748B', fontWeight: '600' }}>
-                            Combo ({selectedCount} món):
-                          </span>
-                          {hasDiscount && (
-                            <span style={{ fontSize: '10px', fontWeight: '800', color: '#15803D', backgroundColor: '#DCFCE7', padding: '1px 5px', borderRadius: '4px' }}>
-                              -5% Giảm
-                            </span>
-                          )}
+                          {/* Giá bán */}
+                          <div style={{ fontSize: '13px', fontWeight: 800, color: 'var(--green-700)', marginBottom: '8px' }}>
+                            {item.formattedPrice || (item.price ? (item.price + '₫') : '25.000₫')}
+                          </div>
                         </div>
 
-                        {isQuickViewOutOfStock ? (
-                          <div style={{ fontSize: '11px', color: '#DC2626', fontWeight: '700', lineHeight: 1.3 }}>
-                            ⚠️ Món chính đang hết hàng, không thể mua combo
-                          </div>
-                        ) : (
-                          <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
-                            {hasDiscount && (
-                              <span style={{ fontSize: '12px', color: '#94A3B8', textDecoration: 'line-through' }}>
-                                {rawTotal.toLocaleString('vi-VN')}₫
-                              </span>
-                            )}
-                            <span style={{ fontSize: '16px', fontWeight: '900', color: 'var(--green-700)' }}>
-                              {finalComboTotal.toLocaleString('vi-VN')} ₫
-                            </span>
-                          </div>
-                        )}
-
-                        <button
-                          type="button"
-                          disabled={isQuickViewOutOfStock}
-                          onClick={handleAddAllComboToCart}
-                          style={{
-                            width: '100%',
-                            padding: '8px 10px',
-                            borderRadius: '6px',
-                            backgroundColor: isQuickViewOutOfStock ? '#CBD5E1' : 'var(--green-700)',
-                            color: isQuickViewOutOfStock ? '#64748B' : '#FFFFFF',
-                            border: 'none',
-                            fontSize: '12px',
-                            fontWeight: '800',
-                            cursor: isQuickViewOutOfStock ? 'not-allowed' : 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '5px',
-                            boxShadow: isQuickViewOutOfStock ? 'none' : '0 1px 3px rgba(0,0,0,0.1)'
-                          }}
-                        >
-                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
-                          {isQuickViewOutOfStock ? 'Combo tạm khóa' : 'Thêm cả combo'}
-                        </button>
+                        {/* Nút tác vụ trực tiếp */}
+                        <div style={{ display: 'flex', gap: '6px', marginTop: 'auto' }}>
+                          <button
+                            type="button"
+                            onClick={() => handleDrillDownProduct(item)}
+                            style={{
+                              flex: 1,
+                              padding: '5px 6px',
+                              borderRadius: '6px',
+                              backgroundColor: '#F1F5F9',
+                              color: '#334155',
+                              border: 'none',
+                              fontSize: '11px',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              textAlign: 'center'
+                            }}
+                          >
+                            Xem
+                          </button>
+                          <button
+                            type="button"
+                            disabled={isItemOutOfStock}
+                            onClick={() => handleAddRecommendedToCart(item)}
+                            title={isItemOutOfStock ? 'Sản phẩm tạm hết hàng' : 'Thêm vào giỏ hàng'}
+                            style={{
+                              flex: 1.2,
+                              padding: '5px 6px',
+                              borderRadius: '6px',
+                              backgroundColor: isItemOutOfStock ? '#E2E8F0' : 'var(--green-700)',
+                              color: isItemOutOfStock ? '#94A3B8' : '#FFFFFF',
+                              border: 'none',
+                              fontSize: '11px',
+                              fontWeight: 700,
+                              cursor: isItemOutOfStock ? 'not-allowed' : 'pointer',
+                              textAlign: 'center'
+                            }}
+                          >
+                            + Giỏ
+                          </button>
+                        </div>
                       </div>
                     );
-                  })()}
+                  })}
                 </div>
               </div>
             )}
@@ -3671,7 +3627,7 @@ export default function LanhLandingPage() {
         <div className="drawer-head">
           <h3>Giỏ hàng của bạn</h3>
           <button className="icon-btn" onClick={() => setIsDrawerOpen(false)} aria-label="Đóng giỏ hàng">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M6 6l12 12M18 6L6 18"/></svg>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M6 6l12 12M18 6L6 18" /></svg>
           </button>
         </div>
         <div className="drawer-body">
@@ -3734,7 +3690,7 @@ export default function LanhLandingPage() {
                   </div>
                 </div>
                 <button className="remove-btn" onClick={() => removeFromCart(item.product.id)} aria-label="Xóa">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6"/></svg>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6" /></svg>
                 </button>
               </div>
             ))
@@ -3742,9 +3698,9 @@ export default function LanhLandingPage() {
         </div>
         <div className="drawer-foot">
           <div className="row"><span>Tạm tính</span><span>{toVND(totalCart)}</span></div>
-          <button 
-            className="btn btn-accent" 
-            onClick={handleGoToCheckout} 
+          <button
+            className="btn btn-accent"
+            onClick={handleGoToCheckout}
           >
             Thanh toán ngay
           </button>

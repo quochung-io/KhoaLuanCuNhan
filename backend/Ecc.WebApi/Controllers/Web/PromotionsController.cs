@@ -11,6 +11,7 @@ namespace Ecc.WebApi.Controllers.Web;
 
 [ApiController]
 [Route("api/[controller]")]
+[Route("api/vouchers")]
 public class PromotionsController : ControllerBase
 {
     private readonly AppDbContext _context;

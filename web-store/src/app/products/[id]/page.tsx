@@ -422,6 +422,19 @@ export default function ProductDetailPage() {
   const [activeTab, setActiveTab] = useState<'intro' | 'nutrition' | 'origin' | 'storage' | 'reviews'>('intro');
   
   // Đánh giá sản phẩm từ khách hàng (kết nối CSDL thật)
+  interface ReviewReplyItem {
+    id?: number;
+    reviewId?: number;
+    name?: string;
+    customerName?: string;
+    userRole?: string;
+    roleLabel?: string;
+    comment?: string;
+    text?: string;
+    date?: string;
+    createdAt?: string;
+  }
+
   interface ReviewItem {
     reviewId: number;
     customerId: number;
@@ -436,9 +449,13 @@ export default function ProductDetailPage() {
     reportCount: number;
     isPurchased: boolean;
     images?: string[];
+    replies?: ReviewReplyItem[];
   }
 
   const [productReviews, setProductReviews] = useState<ReviewItem[]>([]);
+  const [replyingReviewId, setReplyingReviewId] = useState<number | null>(null);
+  const [replyContent, setReplyContent] = useState<string>('');
+  const [isSubmittingReply, setIsSubmittingReply] = useState<boolean>(false);
   const [avgRating, setAvgRating] = useState<number>(0.0);
   const [totalReviewsCount, setTotalReviewsCount] = useState<number>(0);
   const [hasImagesCount, setHasImagesCount] = useState<number>(0);
@@ -500,7 +517,14 @@ export default function ProductDetailPage() {
             isHelpfulByMe: r.isHelpfulByMe || false,
             reportCount: r.reportCount || 0,
             isPurchased: r.isPurchased || false,
-            images: r.images || []
+            images: r.images || [],
+            replies: (r.replies || []).map((rep: any) => ({
+              id: rep.id || rep.reviewId,
+              customerName: rep.customerName || rep.name || 'Thành viên LÀNH',
+              roleLabel: rep.roleLabel || (rep.userRole === 'Admin' ? '🛡️ Quản trị viên' : (rep.userRole === 'Supplier' ? '🏢 Nhà cung cấp' : '👤 Khách hàng')),
+              comment: rep.comment || rep.text || '',
+              date: rep.date || rep.createdAt || 'Vừa xong'
+            }))
           }));
           setProductReviews(mapped);
           setAvgRating(data.averageRating || 0.0);
@@ -522,6 +546,64 @@ export default function ProductDetailPage() {
   useEffect(() => {
     fetchReviewsFromDb(1, filterStar, filterHasImages, sortBy);
   }, [productId, filterStar, filterHasImages, sortBy, currentUser]);
+
+  // Xử lý mở/đóng form trả lời (Reply) đánh giá của người khác
+  const handleOpenReply = (rev: ReviewItem) => {
+    const currentUid = currentUser?.id || currentUser?.userId;
+    if (!currentUid) {
+      alert('Vui lòng đăng nhập tài khoản để trả lời bình luận!');
+      router.push('/login');
+      return;
+    }
+    if (replyingReviewId === rev.reviewId) {
+      setReplyingReviewId(null);
+      setReplyContent('');
+    } else {
+      setReplyingReviewId(rev.reviewId);
+      setReplyContent(`@${rev.author} `);
+    }
+  };
+
+  // Gửi câu trả lời bình luận lên Backend
+  const handleSendReply = async (reviewId: number) => {
+    const currentUid = currentUser?.id || currentUser?.userId;
+    if (!currentUid) {
+      alert('Vui lòng đăng nhập tài khoản để gửi phản hồi!');
+      router.push('/login');
+      return;
+    }
+    if (!replyContent.trim()) {
+      alert('Vui lòng nhập nội dung câu trả lời!');
+      return;
+    }
+
+    setIsSubmittingReply(true);
+    try {
+      const res = await fetch(`http://localhost:5023/api/reviews/${reviewId}/reply`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customerId: currentUid,
+          customerName: currentUser?.fullName || 'Khách hàng',
+          comment: replyContent.trim()
+        })
+      });
+      if (res.ok) {
+        setReplyingReviewId(null);
+        setReplyContent('');
+        await fetchReviewsFromDb(currentPage, filterStar, filterHasImages, sortBy);
+        alert('Đã gửi phản hồi thành công!');
+      } else {
+        const err = await res.json().catch(() => ({}));
+        alert('Lỗi: ' + (err.message || 'Không thể gửi phản hồi.'));
+      }
+    } catch (err) {
+      console.error('Lỗi khi gửi phản hồi:', err);
+      alert('Có lỗi xảy ra khi kết nối máy chủ!');
+    } finally {
+      setIsSubmittingReply(false);
+    }
+  };
 
   // Xử lý bấm Hữu ích (Like / Unlike thuộc về 1 tài khoản)
   const handleHelpful = async (reviewId: number) => {
@@ -1070,10 +1152,7 @@ export default function ProductDetailPage() {
               <span className="topbar-link">Hotline: <strong>1900 8899</strong> (7:00 - 21:00)</span>
             </div>
             <div className="topbar-right">
-              <a href="http://localhost:5174" target="_blank" rel="noreferrer" className="topbar-link">
-                Kênh Đối Tác / HTX
-              </a>
-              <span style={{ opacity: 0.4 }}>|</span>
+              
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <button className="icon-btn" onClick={toggleTheme} style={{ width: '24px', height: '24px' }} title="Sáng / Tối">
                   {theme === "light" ? "Tối" : "Sáng"}
@@ -1719,28 +1798,28 @@ export default function ProductDetailPage() {
           </div>
         </div>
 
-        {/* ── KHỐI 1: THƯỜNG MUA KÈM (CAROUSEL TOP-6 + HỘP COMBO -5%) ── */}
+        {/* ── KHỐI GỢI Ý NÔNG SẢN LIÊN QUAN (CHUẨN GIAO DIỆN MOBILE-APP, KHÔNG CHECKBOX COMBO) ── */}
         {boughtTogether.length > 0 && (
           <section style={{
             marginBottom: '36px',
             backgroundColor: 'var(--surface)',
             border: '1px solid var(--line)',
             borderRadius: '20px',
-            padding: '22px 24px',
+            padding: '24px',
             boxShadow: '0 4px 16px rgba(0,0,0,0.02)'
           }}>
-            {/* Header: Tiêu đề + Ưu đãi + Nút cuộn Carousel */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '16px' }}>
+            {/* Header: Tiêu đề + Nút cuộn Carousel */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '18px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '800', color: 'var(--ink)' }}>
-                  Thường mua kèm
-                </h3>
-                <span style={{ fontSize: '13px', color: '#15803D', fontWeight: '700', backgroundColor: '#DCFCE7', padding: '2px 8px', borderRadius: '6px' }}>
-                  Tiết kiệm thêm 5% khi mua trọn combo
-                </span>
-                <span style={{ fontSize: '12.5px', color: 'var(--ink-soft)' }}>
-                  • Bấm vào món để xem chi tiết
-                </span>
+                <span style={{ fontSize: '20px' }}>🌿</span>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '800', color: 'var(--ink)' }}>
+                    Gợi ý nông sản cùng loại &amp; tươi ngon
+                  </h3>
+                  <div style={{ fontSize: '12.5px', color: 'var(--ink-soft)', marginTop: '2px' }}>
+                    Nông sản sạch VietGAP được nhiều khách hàng yêu thích cùng giỏ hàng
+                  </div>
+                </div>
               </div>
 
               {/* Nút điều hướng Carousel < và > */}
@@ -1790,281 +1869,154 @@ export default function ProductDetailPage() {
               </div>
             </div>
 
-            {/* Bố cục 2 cột: Carousel danh sách sản phẩm (Trái) & Hộp Combo Cố Định (Phải) */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'minmax(0, 1fr) 260px',
-              gap: '18px',
-              alignItems: 'center'
-            }}>
-              {/* Cột Trái: Dải trượt ngang mượt mà */}
-              <div
-                ref={recCarouselRef}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
-                  overflowX: 'auto',
-                  paddingBottom: '6px',
-                  scrollBehavior: 'smooth'
-                }}
-              >
-                {/* Món 1: Món chính hiện tại */}
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px',
-                  padding: '10px 14px',
-                  borderRadius: '12px',
-                  backgroundColor: isOutOfStock ? '#FEF2F2' : '#FFFFFF',
-                  border: isOutOfStock ? '1.5px solid #F87171' : '1.5px solid var(--green-700)',
-                  opacity: isOutOfStock ? 0.8 : 1,
-                  minWidth: '220px',
-                  flexShrink: 0
-                }}>
-                  <div style={{
-                    width: '20px',
-                    height: '20px',
-                    borderRadius: '50%',
-                    backgroundColor: isOutOfStock ? '#EF4444' : 'var(--green-700)',
-                    color: '#FFFFFF',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '11px',
-                    fontWeight: '900',
-                    flexShrink: 0
-                  }}>
-                    {isOutOfStock ? '✕' : '✓'}
-                  </div>
-                  <img
-                    src={selectedImage || (product.productImages && product.productImages[0]?.imageUrl) || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=100'}
-                    alt={product.productName}
-                    style={{ width: '48px', height: '48px', borderRadius: '8px', objectFit: 'cover', border: '1px solid #E2E8F0', flexShrink: 0 }}
-                  />
-                  <div style={{ minWidth: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span style={{ fontSize: '10.5px', color: '#64748B', fontWeight: '700' }}>
-                        Món đang xem
-                      </span>
-                      {isOutOfStock && (
-                        <span style={{ fontSize: '10px', color: '#DC2626', backgroundColor: '#FEE2E2', padding: '1px 5px', borderRadius: '4px', fontWeight: '800' }}>
-                          Tạm hết hàng
-                        </span>
-                      )}
-                    </div>
-                    <div style={{ fontSize: '13.5px', fontWeight: '700', color: 'var(--ink)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={product.productName}>
-                      {product.productName}
-                    </div>
-                    <div style={{ fontSize: '13px', fontWeight: '800', color: isOutOfStock ? '#94A3B8' : 'var(--green-700)' }}>
-                      {product.price.toLocaleString('vi-VN')}₫
-                    </div>
-                  </div>
-                </div>
-
-                {/* Dấu cộng + */}
-                <div style={{ color: '#94A3B8', fontSize: '16px', fontWeight: '800', flexShrink: 0 }}>
-                  +
-                </div>
-
-                {/* Các món gợi ý Top-6 */}
-                {boughtTogether.map((item: any, idx: number) => {
-                  const isItemOutOfStock = !!item.isOutOfStock;
-                  const isSelected = selectedTopKIds.includes(item.productId);
-                  return (
-                    <React.Fragment key={item.productId}>
-                      <div
-                        onClick={() => {
-                          if (!isItemOutOfStock) router.push(`/products/${item.productId}`);
-                        }}
-                        title={isItemOutOfStock ? 'Sản phẩm tạm hết hàng' : 'Bấm để xem chi tiết sản phẩm này'}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '10px',
-                          padding: '10px 14px',
-                          borderRadius: '12px',
-                          backgroundColor: isItemOutOfStock ? '#F8FAFC' : '#FFFFFF',
-                          border: isItemOutOfStock ? '1px dashed #CBD5E1' : (isSelected ? '1.5px solid var(--green-700)' : '1px solid var(--line)'),
-                          cursor: isItemOutOfStock ? 'not-allowed' : 'pointer',
-                          opacity: isItemOutOfStock ? 0.6 : 1,
-                          transition: 'all 0.15s',
-                          minWidth: '220px',
-                          flexShrink: 0,
-                          position: 'relative'
-                        }}
+            {/* Dải trượt ngang các thẻ sản phẩm gợi ý mượt mà */}
+            <div
+              ref={recCarouselRef}
+              style={{
+                display: 'flex',
+                alignItems: 'stretch',
+                gap: '14px',
+                overflowX: 'auto',
+                paddingBottom: '8px',
+                scrollBehavior: 'smooth'
+              }}
+            >
+              {boughtTogether.map((item: any) => {
+                const isItemOutOfStock = !!item.isOutOfStock;
+                return (
+                  <div
+                    key={item.productId}
+                    style={{
+                      width: '210px',
+                      flexShrink: 0,
+                      backgroundColor: '#FFFFFF',
+                      borderRadius: '16px',
+                      border: '1px solid var(--line)',
+                      padding: '12px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      transition: 'all 0.2s ease',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+                      opacity: isItemOutOfStock ? 0.7 : 1
+                    }}
+                  >
+                    <div>
+                      {/* Ảnh sản phẩm + Tag */}
+                      <div 
+                        onClick={() => router.push(`/products/${item.productId}`)}
+                        style={{ position: 'relative', width: '100%', height: '140px', borderRadius: '12px', overflow: 'hidden', cursor: 'pointer', marginBottom: '10px' }}
                       >
-                        {/* Checkbox chọn vào combo */}
-                        <div
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (!isItemOutOfStock) toggleTopKSelection(item.productId);
-                          }}
-                          title={isItemOutOfStock ? 'Sản phẩm hết hàng, không thể chọn vào combo' : (isSelected ? 'Bỏ chọn khỏi combo' : 'Chọn vào combo')}
-                          style={{
-                            width: '20px',
-                            height: '20px',
-                            borderRadius: '4px',
-                            border: isItemOutOfStock ? '1px solid #CBD5E1' : (isSelected ? 'none' : '1.5px solid #CBD5E1'),
-                            backgroundColor: isItemOutOfStock ? '#E2E8F0' : (isSelected ? 'var(--green-700)' : '#FFFFFF'),
-                            color: isItemOutOfStock ? '#94A3B8' : '#FFFFFF',
+                        <img
+                          src={item.imageUrl || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=300'}
+                          alt={item.productName}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        />
+                        <span style={{
+                          position: 'absolute',
+                          top: '6px',
+                          left: '6px',
+                          backgroundColor: 'rgba(22, 163, 74, 0.9)',
+                          color: '#FFFFFF',
+                          fontSize: '10px',
+                          fontWeight: 700,
+                          padding: '2px 6px',
+                          borderRadius: '6px',
+                          backdropFilter: 'blur(2px)'
+                        }}>
+                          {item.categoryName || 'VietGAP'}
+                        </span>
+                        {isItemOutOfStock && (
+                          <div style={{
+                            position: 'absolute',
+                            inset: 0,
+                            backgroundColor: 'rgba(0,0,0,0.45)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            fontSize: '11px',
-                            fontWeight: '900',
-                            flexShrink: 0,
-                            cursor: isItemOutOfStock ? 'not-allowed' : 'pointer'
-                          }}
-                        >
-                          {isItemOutOfStock ? '✕' : (isSelected && '✓')}
-                        </div>
-
-                        <img
-                          src={item.imageUrl || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=100'}
-                          alt={item.productName}
-                          style={{ width: '48px', height: '48px', borderRadius: '8px', objectFit: 'cover', border: '1px solid #E2E8F0', flexShrink: 0 }}
-                        />
-
-                        <div style={{ minWidth: 0, flex: 1 }}>
-                          {isItemOutOfStock ? (
-                            <span style={{ fontSize: '9.5px', color: '#DC2626', fontWeight: '800', backgroundColor: '#FEE2E2', padding: '1px 5px', borderRadius: '4px' }}>
-                              Tạm hết hàng
-                            </span>
-                          ) : (
-                            <span style={{ fontSize: '10px', color: '#15803D', fontWeight: '700' }}>
-                              {item.recommendationReason || item.categoryName || 'Món bổ trợ'}
-                            </span>
-                          )}
-                          <div style={{ fontSize: '13px', fontWeight: '700', color: isItemOutOfStock ? '#94A3B8' : 'var(--ink)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={item.productName}>
-                            {item.productName}
+                            color: '#FFFFFF',
+                            fontWeight: 700,
+                            fontSize: '12px'
+                          }}>
+                            Tạm hết hàng
                           </div>
-                          <div style={{ fontSize: '12.5px', fontWeight: '800', color: isItemOutOfStock ? '#94A3B8' : 'var(--green-700)' }}>
-                            {item.formattedPrice}
-                          </div>
-                        </div>
-
-                        {/* Nút thêm lẻ */}
-                        <button
-                          type="button"
-                          disabled={isItemOutOfStock}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (!isItemOutOfStock) handleAddRecommendedToCart(item);
-                          }}
-                          title={isItemOutOfStock ? 'Sản phẩm tạm hết hàng' : 'Thêm riêng món này vào giỏ hàng'}
-                          style={{
-                            padding: '4px 8px',
-                            borderRadius: '6px',
-                            backgroundColor: isItemOutOfStock ? '#F1F5F9' : '#F8FAFC',
-                            color: isItemOutOfStock ? '#94A3B8' : 'var(--green-700)',
-                            border: isItemOutOfStock ? '1px solid #E2E8F0' : '1px solid #CBD5E1',
-                            fontSize: '11px',
-                            fontWeight: '700',
-                            cursor: isItemOutOfStock ? 'not-allowed' : 'pointer',
-                            flexShrink: 0
-                          }}
-                        >
-                          + Lẻ
-                        </button>
+                        )}
                       </div>
 
-                      {idx < boughtTogether.length - 1 && (
-                        <div style={{ color: '#94A3B8', fontSize: '16px', fontWeight: '800', flexShrink: 0 }}>
-                          +
-                        </div>
-                      )}
-                    </React.Fragment>
-                  );
-                })}
-              </div>
+                      {/* Tên sản phẩm */}
+                      <h4 
+                        onClick={() => router.push(`/products/${item.productId}`)}
+                        title={item.productName}
+                        style={{
+                          margin: '0 0 6px 0',
+                          fontSize: '13.5px',
+                          fontWeight: 700,
+                          color: 'var(--ink)',
+                          cursor: 'pointer',
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden',
+                          lineHeight: 1.35,
+                          minHeight: '36px'
+                        }}
+                      >
+                        {item.productName}
+                      </h4>
 
-              {/* Cột Phải: Hộp Cố Định Tổng Tiền Combo & Ưu Đãi 5% */}
-              {(() => {
-                const mainRawPrice = isOutOfStock ? 0 : (product.price || 0);
-                const selectedRecItems = boughtTogether.filter((item: any) => selectedTopKIds.includes(item.productId) && !item.isOutOfStock);
-                const rawTotal = (mainRawPrice * quantity) + selectedRecItems.reduce((sum: number, item: any) => sum + (item.price || 0), 0);
-                const selectedCount = (isOutOfStock ? 0 : 1) + selectedRecItems.length;
-                const hasDiscount = !isOutOfStock && selectedCount >= 2;
-                const discountAmount = hasDiscount ? Math.round(rawTotal * 0.05) : 0;
-                const finalComboTotal = rawTotal - discountAmount;
-
-                return (
-                  <div style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '8px',
-                    padding: '14px 18px',
-                    borderRadius: '14px',
-                    backgroundColor: isOutOfStock ? '#FEF2F2' : '#FFFFFF',
-                    border: isOutOfStock ? '1.5px solid #FCA5A5' : '1.5px solid #86EFAC',
-                    boxShadow: '0 2px 10px rgba(0,0,0,0.04)',
-                    flexShrink: 0
-                  }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: '12px', color: isOutOfStock ? '#DC2626' : '#64748B', fontWeight: '600' }}>
-                        {isOutOfStock ? 'Combo tạm khóa:' : `Combo (${selectedCount} món):`}
-                      </span>
-                      {hasDiscount ? (
-                        <span style={{ fontSize: '11px', fontWeight: '800', color: '#15803D', backgroundColor: '#DCFCE7', padding: '2px 6px', borderRadius: '4px' }}>
-                          -5% Giảm
-                        </span>
-                      ) : isOutOfStock && (
-                        <span style={{ fontSize: '10.5px', fontWeight: '800', color: '#DC2626', backgroundColor: '#FEE2E2', padding: '1px 6px', borderRadius: '4px' }}>
-                          Món chính hết hàng
-                        </span>
-                      )}
-                    </div>
-
-                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-                      {hasDiscount && (
-                        <span style={{ fontSize: '13px', color: '#94A3B8', textDecoration: 'line-through' }}>
-                          {rawTotal.toLocaleString('vi-VN')}₫
-                        </span>
-                      )}
-                      <span style={{ fontSize: '18px', fontWeight: '900', color: isOutOfStock ? '#DC2626' : 'var(--green-700)' }}>
-                        {isOutOfStock ? 'Không khả dụng' : `${finalComboTotal.toLocaleString('vi-VN')} ₫`}
-                      </span>
-                    </div>
-
-                    <button
-                      type="button"
-                      disabled={isOutOfStock}
-                      onClick={handleAddAllComboToCart}
-                      style={{
-                        width: '100%',
-                        padding: '10px 12px',
-                        borderRadius: '8px',
-                        backgroundColor: isOutOfStock ? '#CBD5E1' : 'var(--green-700)',
-                        color: isOutOfStock ? '#64748B' : '#FFFFFF',
-                        border: 'none',
-                        fontSize: '13px',
-                        fontWeight: '800',
-                        cursor: isOutOfStock ? 'not-allowed' : 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '6px',
-                        boxShadow: isOutOfStock ? 'none' : '0 2px 6px rgba(46,125,50,0.2)'
-                      }}
-                    >
-                      {isOutOfStock ? (
-                        <>⚠️ Món chính đang hết hàng</>
-                      ) : (
-                        <>
-                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
-                          Thêm cả combo vào giỏ
-                        </>
-                      )}
-                    </button>
-                    {isOutOfStock && (
-                      <div style={{ fontSize: '11px', color: '#DC2626', textAlign: 'center', lineHeight: '1.4', fontWeight: '600' }}>
-                        Không thể đặt trọn bộ combo khi món chính đã hết hàng. Bạn có thể bấm [+ Lẻ] ở các món kèm để mua riêng!
+                      {/* Giá bán */}
+                      <div style={{ fontSize: '14px', fontWeight: 800, color: 'var(--green-700)', marginBottom: '12px' }}>
+                        {item.formattedPrice || (item.price ? `${item.price.toLocaleString('vi-VN')}₫` : '25.000₫')}
                       </div>
-                    )}
+                    </div>
+
+                    {/* Nút hành động trực tiếp: Xem & Thêm giỏ hàng */}
+                    <div style={{ display: 'flex', gap: '6px', marginTop: 'auto' }}>
+                      <button
+                        type="button"
+                        onClick={() => router.push(`/products/${item.productId}`)}
+                        style={{
+                          flex: 1,
+                          padding: '7px 8px',
+                          borderRadius: '8px',
+                          backgroundColor: '#F1F5F9',
+                          color: '#334155',
+                          border: 'none',
+                          fontSize: '11.5px',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          textAlign: 'center'
+                        }}
+                      >
+                        Chi tiết
+                      </button>
+                      <button
+                        type="button"
+                        disabled={isItemOutOfStock}
+                        onClick={() => handleAddRecommendedToCart(item)}
+                        title={isItemOutOfStock ? 'Sản phẩm tạm hết hàng' : 'Thêm vào giỏ hàng'}
+                        style={{
+                          flex: 1.2,
+                          padding: '7px 8px',
+                          borderRadius: '8px',
+                          backgroundColor: isItemOutOfStock ? '#E2E8F0' : 'var(--green-700)',
+                          color: isItemOutOfStock ? '#94A3B8' : '#FFFFFF',
+                          border: 'none',
+                          fontSize: '11.5px',
+                          fontWeight: 700,
+                          cursor: isItemOutOfStock ? 'not-allowed' : 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '4px'
+                        }}
+                      >
+                        <span>+ Giỏ</span>
+                      </button>
+                    </div>
                   </div>
                 );
-              })()}
+              })}
             </div>
           </section>
         )}
@@ -3197,6 +3149,27 @@ export default function ProductDetailPage() {
 
                             <button
                               type="button"
+                              onClick={() => handleOpenReply(rev)}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                background: replyingReviewId === rev.reviewId ? 'var(--green-100)' : 'transparent',
+                                border: replyingReviewId === rev.reviewId ? '1px solid var(--green-700)' : '1px solid transparent',
+                                padding: '5px 12px',
+                                borderRadius: '8px',
+                                color: replyingReviewId === rev.reviewId ? 'var(--green-900)' : 'var(--ink-soft)',
+                                fontSize: '13px',
+                                cursor: 'pointer',
+                                fontWeight: replyingReviewId === rev.reviewId ? 700 : 500
+                              }}
+                            >
+                              <span>💬</span>
+                              <span>{rev.replies && rev.replies.length > 0 ? `Trả lời (${rev.replies.length})` : 'Trả lời'}</span>
+                            </button>
+
+                            <button
+                              type="button"
                               onClick={() => handleReport(rev.reviewId)}
                               style={{
                                 display: 'flex',
@@ -3215,6 +3188,116 @@ export default function ProductDetailPage() {
                               <span>{isReported ? 'Đã báo cáo' : 'Báo cáo'}</span>
                             </button>
                           </div>
+
+                          {/* Khối danh sách câu trả lời con (Replies) */}
+                          {rev.replies && rev.replies.length > 0 && (
+                            <div style={{
+                              marginTop: '14px',
+                              marginLeft: '16px',
+                              paddingLeft: '14px',
+                              borderLeft: '2px solid #86EFAC',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '8px'
+                            }}>
+                              {rev.replies.map((rep, repIdx) => (
+                                <div key={repIdx} style={{
+                                  backgroundColor: '#F8FAFC',
+                                  padding: '10px 14px',
+                                  borderRadius: '10px',
+                                  border: '1px solid #E2E8F0'
+                                }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                      <strong style={{ fontSize: '13px', color: 'var(--ink)' }}>{rep.customerName}</strong>
+                                      <span style={{
+                                        fontSize: '10.5px',
+                                        padding: '1px 6px',
+                                        borderRadius: '4px',
+                                        backgroundColor: '#DCFCE7',
+                                        color: '#15803D',
+                                        fontWeight: 700
+                                      }}>
+                                        {rep.roleLabel || '👤 Khách hàng'}
+                                      </span>
+                                    </div>
+                                    <span style={{ fontSize: '11px', color: '#94A3B8' }}>{rep.date}</span>
+                                  </div>
+                                  <p style={{ margin: 0, fontSize: '13px', color: '#334155', lineHeight: 1.5 }}>
+                                    {rep.comment}
+                                  </p>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          {/* Khối Form trả lời Inline */}
+                          {replyingReviewId === rev.reviewId && (
+                            <div style={{
+                              marginTop: '14px',
+                              marginLeft: '16px',
+                              padding: '12px 14px',
+                              backgroundColor: '#F0FDF4',
+                              borderRadius: '12px',
+                              border: '1px solid #86EFAC'
+                            }}>
+                              <div style={{ fontSize: '12.5px', fontWeight: 700, color: '#166534', marginBottom: '6px' }}>
+                                Phản hồi đánh giá của {rev.author}:
+                              </div>
+                              <textarea
+                                rows={2}
+                                value={replyContent}
+                                onChange={(e) => setReplyContent(e.target.value)}
+                                placeholder="Nhập câu trả lời của bạn..."
+                                style={{
+                                  width: '100%',
+                                  padding: '8px 12px',
+                                  borderRadius: '8px',
+                                  border: '1px solid #CBD5E1',
+                                  backgroundColor: '#FFFFFF',
+                                  fontSize: '13px',
+                                  color: '#0F172A',
+                                  resize: 'vertical',
+                                  marginBottom: '8px'
+                                }}
+                              />
+                              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                                <button
+                                  type="button"
+                                  onClick={() => { setReplyingReviewId(null); setReplyContent(''); }}
+                                  style={{
+                                    padding: '5px 12px',
+                                    borderRadius: '6px',
+                                    border: '1px solid #CBD5E1',
+                                    backgroundColor: '#FFFFFF',
+                                    color: '#475569',
+                                    fontSize: '12px',
+                                    fontWeight: 600,
+                                    cursor: 'pointer'
+                                  }}
+                                >
+                                  Hủy
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={isSubmittingReply}
+                                  onClick={() => handleSendReply(rev.reviewId)}
+                                  style={{
+                                    padding: '5px 14px',
+                                    borderRadius: '6px',
+                                    border: 'none',
+                                    backgroundColor: '#16A34A',
+                                    color: '#FFFFFF',
+                                    fontSize: '12px',
+                                    fontWeight: 700,
+                                    cursor: isSubmittingReply ? 'not-allowed' : 'pointer'
+                                  }}
+                                >
+                                  {isSubmittingReply ? 'Đang gửi...' : 'Gửi phản hồi'}
+                                </button>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       );
                     })

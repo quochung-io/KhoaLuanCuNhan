@@ -36,6 +36,7 @@ export const ProductQuickViewModal: React.FC<ProductQuickViewModalProps> = ({
   const [productDetails, setProductDetails] = useState<any>(null);
   const [batches, setBatches] = useState<any[]>([]);
   const [activeImage, setActiveImage] = useState<string>('');
+  const [relatedProducts, setRelatedProducts] = useState<any[]>([]);
 
   // Nạp dữ liệu sản phẩm từ API
   useEffect(() => {
@@ -71,6 +72,32 @@ export const ProductQuickViewModal: React.FC<ProductQuickViewModalProps> = ({
       })
       .finally(() => {
         setLoading(false);
+      });
+
+    // 3. Fetch nông sản gợi ý liên quan (chuẩn Mobile App)
+    fetch(`http://localhost:5023/api/ai/cars-recommendations?productId=${productId}&limit=4`)
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setRelatedProducts(data);
+        } else {
+          fetch('http://localhost:5023/api/products?pageSize=6')
+            .then(res => res.json())
+            .then(pData => {
+              const list = pData.items || (Array.isArray(pData) ? pData : []);
+              setRelatedProducts(list.filter((x: any) => (x.productId || x.id) !== productId).slice(0, 4));
+            })
+            .catch(() => {});
+        }
+      })
+      .catch(() => {
+        fetch('http://localhost:5023/api/products?pageSize=6')
+          .then(res => res.json())
+          .then(pData => {
+            const list = pData.items || (Array.isArray(pData) ? pData : []);
+            setRelatedProducts(list.filter((x: any) => (x.productId || x.id) !== productId).slice(0, 4));
+          })
+          .catch(() => {});
       });
 
     // 2. Fetch lô hàng
@@ -500,6 +527,93 @@ export const ProductQuickViewModal: React.FC<ProductQuickViewModalProps> = ({
             </div>
           </div>
         </div>
+
+        {/* ── KHỐI GỢI Ý NÔNG SẢN LIÊN QUAN (CHUẨN MOBILE APP) ── */}
+        {relatedProducts.length > 0 && (
+          <div style={{
+            padding: '14px 22px',
+            backgroundColor: '#F8FAFC',
+            borderTop: '1px solid #E2E8F0',
+            borderBottom: '1px solid #E2E8F0'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontSize: '15px' }}>🌿</span>
+                <span style={{ fontSize: '13px', fontWeight: 700, color: '#1E293B' }}>Gợi ý mua kèm tươi ngon</span>
+                <span style={{ fontSize: '11px', backgroundColor: '#DCFCE7', color: '#15803D', fontWeight: 700, padding: '2px 7px', borderRadius: '999px' }}>VietGAP</span>
+              </div>
+              <span style={{ fontSize: '11.5px', color: '#64748B' }}>Vuốt xem nhanh</span>
+            </div>
+
+            <div style={{
+              display: 'flex',
+              gap: '10px',
+              overflowX: 'auto',
+              paddingBottom: '4px',
+              scrollbarWidth: 'thin'
+            }}>
+              {relatedProducts.map((item: any) => {
+                const pId = item.productId || item.id;
+                const pName = item.productName || item.name;
+                const pPrice = item.price || 0;
+                const pImg = item.imageUrl || item.image || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=300';
+                return (
+                  <div
+                    key={pId}
+                    style={{
+                      width: '150px',
+                      flexShrink: 0,
+                      backgroundColor: '#FFFFFF',
+                      borderRadius: '10px',
+                      border: '1px solid #E2E8F0',
+                      padding: '8px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
+                    }}
+                  >
+                    <div>
+                      <div style={{ position: 'relative', width: '100%', height: '80px', borderRadius: '6px', overflow: 'hidden', marginBottom: '6px' }}>
+                        <img src={pImg} alt={pName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      </div>
+                      <div style={{ fontSize: '11.5px', fontWeight: 600, color: '#1E293B', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: 1.3, minHeight: '30px' }}>
+                        {pName}
+                      </div>
+                      <div style={{ fontSize: '12px', fontWeight: 800, color: '#15803D', margin: '4px 0 6px 0' }}>
+                        {toVND(pPrice)}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => onAddToCart && onAddToCart({
+                        productId: pId,
+                        productName: pName,
+                        price: pPrice,
+                        imageUrl: pImg,
+                        quantity: 1
+                      })}
+                      style={{
+                        width: '100%',
+                        padding: '5px 0',
+                        borderRadius: '6px',
+                        border: '1px solid #16A34A',
+                        backgroundColor: '#F0FDF4',
+                        color: '#16A34A',
+                        fontSize: '11px',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        transition: 'all 0.15s'
+                      }}
+                    >
+                      + Thêm vào giỏ
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Footer Modal: Các nút tác vụ */}
         <div style={{

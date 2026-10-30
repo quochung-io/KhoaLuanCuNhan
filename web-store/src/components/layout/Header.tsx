@@ -1,7 +1,8 @@
 'use client';
+
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import SearchBar from './SearchBar';
 
 type SuggestionItem = {
@@ -13,13 +14,14 @@ type SuggestionItem = {
 };
 
 type HeaderProps = {
-  theme: string;
-  toggleTheme: () => void;
-  lang: string;
-  setLang: (l: 'vi' | 'en') => void;
-  cartCount: number;
-  setIsDrawerOpen: (o: boolean) => void;
-  cartBounce: boolean;
+  theme?: string;
+  toggleTheme?: () => void;
+  lang?: string;
+  setLang?: (l: 'vi' | 'en') => void;
+  cartCount?: number;
+  totalCart?: number;
+  setIsDrawerOpen?: (o: boolean) => void;
+  cartBounce?: boolean;
   currentUser?: any;
   onOpenAuthModal?: (tab?: 'login' | 'register') => void;
   onLogout?: () => void;
@@ -31,30 +33,99 @@ type HeaderProps = {
   setShowSuggestions?: (show: boolean) => void;
 };
 
+const formatVND = (amount: number): string => {
+  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+};
+
 export const Header: React.FC<HeaderProps> = ({
   theme,
   toggleTheme,
-  lang,
+  lang = 'vi',
   setLang,
   cartCount,
+  totalCart,
   setIsDrawerOpen,
-  cartBounce,
+  cartBounce = false,
   currentUser,
-  onOpenAuthModal,
   onLogout,
-  searchQuery = '',
-  onSearchChange,
-  onSearchSubmit,
-  suggestions = [],
-  showSuggestions = false,
-  setShowSuggestions,
 }) => {
   const router = useRouter();
+  const pathname = usePathname() || '';
   const [showUserDropdown, setShowUserDropdown] = useState(false);
-  const [showMobileMenu, setShowMobileMenu] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Click outside to close dropdown
+  const [localUser, setLocalUser] = useState<any>(null);
+  const [localCartCount, setLocalCartCount] = useState<number>(0);
+  const [localTotalCart, setLocalTotalCart] = useState<number>(0);
+  const [localTheme, setLocalTheme] = useState<string>('light');
+  const [localLang, setLocalLang] = useState<'vi' | 'en'>('vi');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const u = localStorage.getItem('customer_user');
+        if (u) setLocalUser(JSON.parse(u));
+
+        const c = localStorage.getItem('cart');
+        if (c) {
+          const parsed = JSON.parse(c);
+          if (Array.isArray(parsed)) {
+            setLocalCartCount(parsed.reduce((s: number, i: any) => s + (i.qty || 1), 0));
+            setLocalTotalCart(parsed.reduce((s: number, i: any) => {
+              const p = i.product?.rawPrice || i.product?.price || i.price || 0;
+              const numP = typeof p === 'string' ? parseInt(p.replace(/\D/g, ''), 10) || 0 : Number(p);
+              return s + (numP * (i.qty || 1));
+            }, 0));
+          }
+        }
+
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        setLocalTheme(savedTheme);
+      } catch (e) {}
+    }
+  }, []);
+
+  const activeUser = currentUser !== undefined ? currentUser : localUser;
+  const activeCartCount = cartCount !== undefined ? cartCount : localCartCount;
+  const activeTotalCart = totalCart !== undefined ? totalCart : localTotalCart;
+  const activeTheme = theme || localTheme;
+  const activeLang = lang || localLang;
+
+  const handleToggleTheme = toggleTheme || (() => {
+    const next = activeTheme === 'light' ? 'dark' : 'light';
+    setLocalTheme(next);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('theme', next);
+      document.body.setAttribute('data-theme', next);
+    }
+  });
+
+  const handleSetLang = (l: 'vi' | 'en') => {
+    if (setLang) {
+      setLang(l);
+    } else {
+      setLocalLang(l);
+    }
+  };
+
+  const handleLogout = onLogout || (() => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('customer_user');
+      localStorage.removeItem('auth_token');
+      setLocalUser(null);
+      window.location.reload();
+    }
+  });
+
+  const handleCartClick = () => {
+    if (setIsDrawerOpen) {
+      setIsDrawerOpen(true);
+    } else {
+      router.push('/checkout');
+    }
+  };
+
+  // Click ngoài đóng dropdown
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -66,397 +137,294 @@ export const Header: React.FC<HeaderProps> = ({
   }, []);
 
   return (
-    <header style={{
-      position: 'sticky',
-      top: 0,
-      zIndex: 100,
-      backgroundColor: 'color-mix(in srgb, var(--bg, #F9FBF8) 92%, transparent)',
-      backdropFilter: 'blur(16px)',
-      borderBottom: '1px solid var(--line, #E1EAE0)',
-      boxShadow: '0 2px 10px rgba(0,0,0,0.03)'
-    }}>
-      {/* Top micro bar for quick promo / contacts */}
-      <div style={{
-        backgroundColor: 'var(--green-900, #1B3A20)',
-        color: '#EAF4E9',
-        fontSize: '11.5px',
-        padding: '5px 0',
-        fontWeight: '500'
-      }}>
-        <div className="wrap" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <span>🌱 100% Nông sản hữu cơ kiểm định VietGAP & GlobalGAP</span>
-            <span style={{ opacity: 0.6 }}>|</span>
-            <span>🚚 Giao nhanh 2H nội thành</span>
+    <header style={{ position: 'sticky', top: 0, zIndex: 100 }}>
+      {/* ── TẦNG 1: TOP BAR TIỆN ÍCH ── */}
+      <div className="header-topbar">
+        <div className="wrap topbar-row">
+          <div className="topbar-left">
+            <span><strong>LÀNH Farm</strong> - Nông sản sạch chuẩn VietGAP &amp; Hữu cơ</span>
+            <span style={{ opacity: 0.4 }}>|</span>
+            <span className="topbar-link">Hotline: <strong>1900 8899</strong> (7:00 - 21:00)</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <a 
-              href="http://localhost:5174/register" 
-              target="_blank" 
-              rel="noopener noreferrer" 
-              style={{ color: '#A3E635', fontWeight: '600', textDecoration: 'none' }}
-            >
-              🏪 Đăng ký bán hàng
-            </a>
-            <span style={{ opacity: 0.6 }}>|</span>
-            <a href="tel:19006868" style={{ color: '#EAF4E9', textDecoration: 'none' }}>📞 Hotline: 1900 6868</a>
-            <span style={{ opacity: 0.6 }}>|</span>
-            <a href="#trace" style={{ color: 'var(--accent, #FF9800)', fontWeight: 'bold' }}>🔍 Tra cứu nguồn gốc lô hàng</a>
+          <div className="topbar-right">
+            <span style={{ opacity: 0.4 }}>|</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <button className="icon-btn" onClick={handleToggleTheme} style={{ width: '24px', height: '24px' }} title="Sáng / Tối">
+                {activeTheme === 'light' ? 'Tối' : 'Sáng'}
+              </button>
+              <div className="lang-switch">
+                <button className={activeLang === 'vi' ? 'active' : ''} onClick={() => handleSetLang('vi')}>VI</button>
+                <button className={activeLang === 'en' ? 'active' : ''} onClick={() => handleSetLang('en')}>EN</button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Main Nav Row */}
-      <div className="wrap nav-row" style={{ display: 'flex', alignItems: 'center', gap: '20px', padding: '12px 0' }}>
-        
-        {/* Logo */}
-        <Link href="/" className="logo" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', flexShrink: 0 }}>
-          <svg style={{ width: '36px', height: '36px' }} viewBox="0 0 40 40" fill="none">
-            <circle cx="20" cy="20" r="20" fill="var(--green-700, #2E7D32)"/>
-            <path d="M20 30C20 30 12 26 12 18C12 13 16 10 20 10C24 10 28 13 28 18C28 26 20 30 20 30Z" fill="var(--green-500, #4CAF50)"/>
-            <path d="M20 30V16" stroke="var(--green-900, #1B3A20)" strokeWidth="1.4" strokeLinecap="round"/>
+      {/* ── TẦNG 2: MAIN HEADER ── */}
+      <div className="wrap nav-row">
+        <Link href="/" className="logo">
+          <svg className="mark" viewBox="0 0 40 40" fill="none">
+            <circle cx="20" cy="20" r="20" fill="var(--green-700)" />
+            <path d="M20 30C20 30 12 26 12 18C12 13 16 10 20 10C24 10 28 13 28 18C28 26 20 30 20 30Z" fill="var(--green-500)" />
+            <path d="M20 30V16" stroke="var(--green-900)" strokeWidth="1.4" strokeLinecap="round" />
           </svg>
           <div>
-            <div style={{ fontFamily: 'var(--font-display, serif)', fontWeight: '800', fontSize: '24px', color: 'var(--green-900, #1B3A20)', lineHeight: '1' }}>
-              LÀNH
-            </div>
-            <div style={{ fontSize: '9.5px', color: 'var(--ink-soft, #4B5D50)', letterSpacing: '0.08em', textTransform: 'uppercase', marginTop: '2px' }}>
-              Nông sản sạch
-            </div>
+            <span style={{ letterSpacing: '1px' }}>LÀNH</span>
+            <div style={{ fontSize: '10.5px', fontWeight: '500', color: 'var(--green-700)', marginTop: '-4px' }}>NÔNG SẢN TƯƠI SẠCH</div>
           </div>
         </Link>
 
-        {/* Main Navigation Links */}
-        <nav className="main-nav" style={{ display: 'flex', alignItems: 'center', gap: '20px', fontSize: '14px', fontWeight: '600' }}>
-          <Link href="/#products" style={{ color: 'var(--ink, #16241A)', textDecoration: 'none', transition: 'color 0.2s' }}>
-            🌾 Cửa hàng
-          </Link>
-          <Link href="/#trace" style={{ color: 'var(--ink, #16241A)', textDecoration: 'none', transition: 'color 0.2s' }}>
-            🏷️ Truy xuất
-          </Link>
-          <Link href="/#subToggle" style={{ color: 'var(--ink, #16241A)', textDecoration: 'none', transition: 'color 0.2s' }}>
-            📦 Combo Tuần
-          </Link>
-          <Link href="/orders" style={{ color: 'var(--ink, #16241A)', textDecoration: 'none', transition: 'color 0.2s' }}>
-            📋 Đơn hàng
-          </Link>
-          <a 
-            href="http://localhost:5174" 
-            target="_blank" 
-            rel="noopener noreferrer" 
-            style={{ 
-              color: '#2E7D32', 
-              textDecoration: 'none', 
-              backgroundColor: '#EAF4E9',
-              padding: '4px 10px',
-              borderRadius: '6px',
-              fontSize: '13px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px'
-            }}
-          >
-            🏪 Kênh Người Bán
-          </a>
-        </nav>
+        {/* Thanh tìm kiếm trung tâm */}
+        <SearchBar />
 
-        {/* Search Bar with Autocomplete Suggestions */}
-        <SearchBar style={{ maxWidth: '520px', flex: 1 }} />
-
-        {/* Right Action Icons & User Auth Controls */}
-        <div className="nav-icons" style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
-          
-          {/* Theme Switch */}
-          <button 
-            className="icon-btn" 
-            onClick={toggleTheme} 
-            aria-label="Chuyển giao diện sáng/tối" 
-            title={theme === 'light' ? "Chuyển chế độ Tối" : "Chuyển chế độ Sáng"}
-            style={{
-              width: '38px',
-              height: '38px',
-              borderRadius: '50%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: 'var(--surface, #fff)',
-              border: '1px solid var(--line, #E1EAE0)',
-              cursor: 'pointer'
-            }}
-          >
-            {theme === "light" ? (
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 3v1M12 20v1M4.2 4.2l.7.7M18.4 18.4l.7.7M3 12h1M20 12h1M4.2 19.8l.7-.7M18.4 5.6l.7-.7"/><circle cx="12" cy="12" r="4.4"/></svg>
-            ) : (
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z" fill="currentColor" stroke="none"/></svg>
-            )}
-          </button>
-
-          {/* User Auth Section */}
-          <div ref={dropdownRef} style={{ position: 'relative' }}>
-            {currentUser ? (
-              // Trạng thái: ĐÃ ĐĂNG NHẬP
-              <button
-                onClick={() => setShowUserDropdown(!showUserDropdown)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: '6px 14px',
-                  borderRadius: '999px',
-                  backgroundColor: 'var(--green-100, #E3F1E3)',
-                  border: '1.5px solid var(--green-700, #2E7D32)',
-                  color: 'var(--green-900, #1B3A20)',
-                  cursor: 'pointer',
-                  fontSize: '13px',
-                  fontWeight: '700'
-                }}
-              >
-                <div style={{
-                  width: '24px',
-                  height: '24px',
-                  borderRadius: '50%',
-                  backgroundColor: 'var(--green-700, #2E7D32)',
-                  color: '#fff',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '12px'
-                }}>
-                  {currentUser.fullName ? currentUser.fullName.charAt(0).toUpperCase() : 'U'}
-                </div>
-                <span style={{ maxWidth: '90px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {currentUser.fullName || currentUser.email}
+        {/* Nhóm nút tác vụ Header */}
+        <div className="header-actions">
+          {/* Mục Tài khoản */}
+          <div style={{ position: 'relative' }} ref={dropdownRef}>
+            <button
+              className="header-action-item"
+              onClick={() => setShowUserDropdown(!showUserDropdown)}
+              style={{ border: 'none', background: 'none' }}
+              type="button"
+            >
+              <span className="header-action-icon">
+                {activeUser && activeUser.avatarUrl ? (
+                  <img
+                    src={activeUser.avatarUrl}
+                    alt="Avatar"
+                    style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--green-700)' }}
+                  />
+                ) : activeUser ? (
+                  <div style={{
+                    width: '28px',
+                    height: '28px',
+                    borderRadius: '50%',
+                    backgroundColor: 'var(--green-700)',
+                    color: '#fff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '12px',
+                    fontWeight: 700
+                  }}>
+                    {(activeUser?.fullName || activeUser?.email || 'U').charAt(0).toUpperCase()}
+                  </div>
+                ) : (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="12" cy="8" r="4" />
+                    <path d="M4 21c1.5-4 5-6 8-6s6.5 2 8 6" />
+                  </svg>
+                )}
+              </span>
+              <div className="header-action-text">
+                <span className="header-action-label">{activeUser ? 'Xin chào,' : 'Tài khoản'}</span>
+                <span className="header-action-value" style={{ maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {activeUser ? (activeUser.fullName || activeUser.email) : 'Đăng nhập'}
                 </span>
-                <span style={{ fontSize: '10px' }}>▼</span>
-              </button>
-            ) : (
-              // Trạng thái: CHƯA ĐĂNG NHẬP (Nút Đăng nhập / Đăng ký hiện trực tiếp trên Header)
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <button
-                  type="button"
-                  onClick={() => onOpenAuthModal ? onOpenAuthModal('login') : router.push('/login')}
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    padding: '8px 14px',
-                    borderRadius: '999px',
-                    backgroundColor: 'var(--surface, #FFFFFF)',
-                    border: '1.5px solid var(--green-700, #2E7D32)',
-                    color: 'var(--green-700, #2E7D32)',
-                    fontSize: '13px',
-                    fontWeight: '700',
-                    cursor: 'pointer',
-                    transition: 'all 0.15s ease'
-                  }}
-                >
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 5-6 8-6s6.5 2 8 6"/></svg>
-                  Đăng nhập
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onOpenAuthModal ? onOpenAuthModal('register') : router.push('/register')}
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    padding: '8px 14px',
-                    borderRadius: '999px',
-                    backgroundColor: 'var(--green-700, #2E7D32)',
-                    color: '#ffffff',
-                    fontSize: '13px',
-                    fontWeight: '700',
-                    border: 'none',
-                    cursor: 'pointer',
-                    boxShadow: '0 2px 8px rgba(46, 125, 50, 0.3)',
-                    transition: 'all 0.15s ease'
-                  }}
-                >
-                  Đăng ký
-                </button>
               </div>
-            )}
+            </button>
 
-            {/* User Dropdown Menu */}
-            {showUserDropdown && currentUser && (
+            {showUserDropdown && (
               <div style={{
                 position: 'absolute',
                 top: 'calc(100% + 8px)',
                 right: 0,
-                backgroundColor: 'var(--surface, #FFFFFF)',
-                border: '1px solid var(--line, #E1EAE0)',
-                borderRadius: '16px',
-                boxShadow: '0 10px 30px rgba(0,0,0,0.12)',
-                zIndex: 9999,
-                width: '210px',
-                padding: '8px 0',
-                display: 'flex',
-                flexDirection: 'column'
+                backgroundColor: 'var(--surface)',
+                border: '1px solid var(--line)',
+                borderRadius: '10px',
+                boxShadow: '0 10px 25px rgba(0,0,0,0.12)',
+                zIndex: 1000,
+                width: '200px',
+                padding: '6px 0',
+                textAlign: 'left'
               }}>
-                <div style={{ padding: '10px 16px', borderBottom: '1px solid var(--line, #E1EAE0)' }}>
-                  <div style={{ fontSize: '13.5px', fontWeight: 'bold', color: 'var(--ink, #16241A)' }}>{currentUser.fullName}</div>
-                  <div style={{ fontSize: '11.5px', color: 'var(--ink-soft, #888)' }}>{currentUser.email}</div>
-                  <span style={{
-                    display: 'inline-block',
-                    marginTop: '4px',
-                    padding: '2px 8px',
-                    borderRadius: '6px',
-                    fontSize: '10px',
-                    fontWeight: 'bold',
-                    backgroundColor: currentUser.roleId === 1 ? '#FEE2E2' : currentUser.roleId === 2 ? '#FEF3C7' : 'var(--green-100, #E3F1E3)',
-                    color: currentUser.roleId === 1 ? '#991B1B' : currentUser.roleId === 2 ? '#92400E' : 'var(--green-900, #1B3A20)'
-                  }}>
-                    {currentUser.roleId === 1 ? '🛡️ Quản trị viên' : currentUser.roleId === 2 ? '🏢 Nhà cung cấp' : '👤 Khách hàng'}
-                  </span>
-                </div>
-
-                <Link
-                  href="/profile"
-                  onClick={() => setShowUserDropdown(false)}
-                  style={{
-                    padding: '10px 16px',
-                    fontSize: '13px',
-                    color: 'var(--ink, #16241A)',
-                    textDecoration: 'none',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    transition: 'background 0.15s'
-                  }}
-                >
-                  👤 Trang cá nhân
-                </Link>
-
-                <Link
-                  href="/orders"
-                  onClick={() => setShowUserDropdown(false)}
-                  style={{
-                    padding: '10px 16px',
-                    fontSize: '13px',
-                    color: 'var(--ink, #16241A)',
-                    textDecoration: 'none',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    transition: 'background 0.15s'
-                  }}
-                >
-                  📦 Đơn hàng của tôi
-                </Link>
-
-                {currentUser.roleId === 1 && (
-                  <a
-                    href="http://localhost:5173/dashboard"
-                    style={{
-                      padding: '10px 16px',
-                      fontSize: '13px',
-                      color: '#B91C1C',
-                      textDecoration: 'none',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      fontWeight: '600'
-                    }}
-                  >
-                    ⚙️ Bảng Quản trị (Admin)
-                  </a>
+                {activeUser ? (
+                  <>
+                    <div style={{ padding: '10px 14px', borderBottom: '1px solid var(--line)', fontSize: '12px', color: 'var(--ink-soft)' }}>
+                      <div style={{ fontWeight: '700', color: 'var(--ink)', fontSize: '13.5px' }}>{activeUser?.fullName || activeUser?.email}</div>
+                      <div style={{ marginTop: '2px', wordBreak: 'break-all' }}>{activeUser?.email}</div>
+                      {activeUser.roleId === 1 && (
+                        <span style={{ display: 'inline-block', marginTop: '4px', padding: '2px 8px', borderRadius: '6px', fontSize: '10px', fontWeight: 'bold', backgroundColor: '#FEE2E2', color: '#991B1B' }}>
+                          🛡️ Quản trị viên
+                        </span>
+                      )}
+                    </div>
+                    <Link
+                      href="/profile"
+                      onClick={() => setShowUserDropdown(false)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '10px 14px',
+                        textDecoration: 'none',
+                        color: 'var(--ink)',
+                        fontSize: '13px',
+                        fontWeight: '500',
+                        borderBottom: '1px solid var(--line)'
+                      }}
+                    >
+                      👤 Hồ sơ &amp; Sổ địa chỉ
+                    </Link>
+                    <Link
+                      href="/orders"
+                      onClick={() => setShowUserDropdown(false)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '10px 14px',
+                        textDecoration: 'none',
+                        color: 'var(--ink)',
+                        fontSize: '13px',
+                        fontWeight: '500',
+                        borderBottom: '1px solid var(--line)'
+                      }}
+                    >
+                      📦 Lịch sử đơn hàng
+                    </Link>
+                    {activeUser.roleId === 1 && (
+                      <a
+                        href="http://localhost:5173/dashboard"
+                        target="_blank"
+                        rel="noreferrer"
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          padding: '10px 14px',
+                          textDecoration: 'none',
+                          color: '#B91C1C',
+                          fontSize: '13px',
+                          fontWeight: '600',
+                          borderBottom: '1px solid var(--line)'
+                        }}
+                      >
+                        ⚙️ Bảng Quản trị (Admin)
+                      </a>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowUserDropdown(false);
+                        handleLogout();
+                      }}
+                      style={{
+                        width: '100%',
+                        padding: '10px 14px',
+                        border: 'none',
+                        background: 'none',
+                        textAlign: 'left',
+                        cursor: 'pointer',
+                        color: '#e53e3e',
+                        fontSize: '13px',
+                        fontWeight: '700',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px'
+                      }}
+                    >
+                      🚪 Đăng xuất
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <Link
+                      href="/login"
+                      onClick={() => setShowUserDropdown(false)}
+                      style={{
+                        display: 'block',
+                        padding: '10px 14px',
+                        textDecoration: 'none',
+                        color: 'var(--ink)',
+                        fontSize: '13px',
+                        fontWeight: '600'
+                      }}
+                    >
+                      Đăng nhập
+                    </Link>
+                    <Link
+                      href="/register"
+                      onClick={() => setShowUserDropdown(false)}
+                      style={{
+                        display: 'block',
+                        padding: '10px 14px',
+                        textDecoration: 'none',
+                        color: 'var(--green-700)',
+                        fontSize: '13px',
+                        fontWeight: '600'
+                      }}
+                    >
+                      Đăng ký thành viên
+                    </Link>
+                  </>
                 )}
-
-                {currentUser.roleId === 2 && (
-                  <a
-                    href="http://localhost:5174/dashboard"
-                    style={{
-                      padding: '10px 16px',
-                      fontSize: '13px',
-                      color: '#D97706',
-                      textDecoration: 'none',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      fontWeight: '600'
-                    }}
-                  >
-                    🏪 Cổng Nhà Cung Cấp
-                  </a>
-                )}
-
-                <div style={{ height: '1px', backgroundColor: 'var(--line, #E1EAE0)', margin: '4px 0' }} />
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowUserDropdown(false);
-                    if (onLogout) onLogout();
-                  }}
-                  style={{
-                    padding: '10px 16px',
-                    fontSize: '13px',
-                    color: '#DC2626',
-                    textAlign: 'left',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    border: 'none',
-                    background: 'none',
-                    fontWeight: '600'
-                  }}
-                >
-                  🚪 Đăng xuất
-                </button>
               </div>
             )}
           </div>
 
-          {/* Cart Icon Button */}
-          <button 
-            className={`icon-btn ${cartBounce ? "bounce" : ""}`} 
-            onClick={() => setIsDrawerOpen(true)} 
-            aria-label="Giỏ hàng"
+          {/* Nút Giỏ Hàng nổi bật */}
+          <div
+            className={`header-cart-btn ${cartBounce ? 'bounce' : ''}`}
+            onClick={handleCartClick}
             title="Xem giỏ hàng"
-            style={{
-              width: '42px',
-              height: '42px',
-              borderRadius: '50%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: 'var(--green-700, #2E7D32)',
-              color: '#ffffff',
-              position: 'relative',
-              cursor: 'pointer',
-              boxShadow: '0 2px 8px rgba(46, 125, 50, 0.3)'
-            }}
           >
-            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-              <path d="M3 4h2l2.4 12.2a2 2 0 002 1.8h7.7a2 2 0 002-1.6L21 8H6"/>
-              <circle cx="9.5" cy="21" r="1.3" fill="currentColor" stroke="none"/>
-              <circle cx="17.5" cy="21" r="1.3" fill="currentColor" stroke="none"/>
-            </svg>
-            {cartCount > 0 && (
-              <span className="badge" style={{
-                position: 'absolute',
-                top: '-4px',
-                right: '-4px',
-                backgroundColor: 'var(--accent, #FF9800)',
-                color: '#3A2200',
-                fontSize: '11px',
-                fontWeight: '800',
-                width: '20px',
-                height: '20px',
-                borderRadius: '50%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                border: '2px solid #fff'
-              }}>
-                {cartCount}
+            <div className="header-action-icon" style={{ display: 'flex', alignItems: 'center' }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="9" cy="21" r="1" />
+                <circle cx="20" cy="21" r="1" />
+                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+              </svg>
+              <span className="badge">{activeCartCount}</span>
+            </div>
+            <div className="header-action-text">
+              <span className="header-action-label">Giỏ hàng</span>
+              <span className="header-action-value" style={{ color: 'var(--green-900)' }}>
+                {formatVND(activeTotalCart)}
               </span>
-            )}
-          </button>
+            </div>
+          </div>
+        </div>
+      </div>
 
+      {/* ── TẦNG 3: SUB-NAVBAR 4 MỤC CHÍNH ── */}
+      <div className="header-subnav">
+        <div className="wrap subnav-row">
+          <div className="subnav-links">
+            <Link
+              href="/"
+              className={`subnav-link ${pathname === '/' ? 'active' : ''}`}
+              style={pathname === '/' ? { color: 'var(--green-700)', fontWeight: '700' } : {}}
+            >
+              Trang chủ
+            </Link>
+            <Link
+              href="/products"
+              className={`subnav-link ${pathname.startsWith('/products') ? 'active' : ''}`}
+              style={pathname.startsWith('/products') ? { color: 'var(--green-700)', fontWeight: '700' } : {}}
+            >
+              Tất cả nông sản
+            </Link>
+            <Link
+              href="/combos"
+              className={`subnav-link ${pathname.startsWith('/combos') ? 'active' : ''}`}
+              style={pathname.startsWith('/combos') ? { color: 'var(--green-700)', fontWeight: '700' } : {}}
+            >
+              Combo định kỳ
+            </Link>
+            <Link
+              href="/traceability"
+              className={`subnav-link ${pathname.startsWith('/traceability') ? 'active' : ''}`}
+              style={pathname.startsWith('/traceability') ? { color: 'var(--green-700)', fontWeight: '700' } : {}}
+            >
+              Truy xuất nguồn gốc
+            </Link>
+          </div>
         </div>
       </div>
     </header>
   );
 };
+
+export default Header;
