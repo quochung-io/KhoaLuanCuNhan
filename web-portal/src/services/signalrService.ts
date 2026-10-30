@@ -1,4 +1,4 @@
-import { HubConnection, HubConnectionBuilder, LogLevel, HubConnectionState } from '@microsoft/signalr';
+import { type HubConnection, HubConnectionBuilder, LogLevel, HubConnectionState } from '@microsoft/signalr';
 
 const getHubUrl = () => {
   const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5023/api';
@@ -21,15 +21,15 @@ class SignalRService {
         .configureLogging(LogLevel.Warning)
         .build();
 
-      this.connection.onreconnecting((error) => {
+      this.connection.onreconnecting((error?: Error) => {
         console.warn('[SignalR] Đang thử kết nối lại...', error);
       });
 
-      this.connection.onreconnected((connectionId) => {
+      this.connection.onreconnected((connectionId?: string) => {
         console.log('[SignalR] Đã kết nối lại thành công. ConnectionId:', connectionId);
       });
 
-      this.connection.onclose((error) => {
+      this.connection.onclose((error?: Error) => {
         console.warn('[SignalR] Kết nối đã đóng:', error);
       });
     }
