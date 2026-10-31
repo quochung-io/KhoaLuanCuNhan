@@ -47,6 +47,22 @@ var appDataDir = Path.Combine(builder.Environment.ContentRootPath, "App_Data");
 Directory.CreateDirectory(appDataDir);
 var sqliteDbPath = Path.Combine(appDataDir, "QL_WebMuaBanNongSan.db");
 
+if (!useSqlite && File.Exists(sqliteDbPath))
+{
+    try
+    {
+        var connStr = builder.Configuration.GetConnectionString("DefaultConnection") ?? "";
+        var csb = new Microsoft.Data.SqlClient.SqlConnectionStringBuilder(connStr) { ConnectTimeout = 2 };
+        using var testConn = new Microsoft.Data.SqlClient.SqlConnection(csb.ConnectionString);
+        testConn.Open();
+    }
+    catch
+    {
+        useSqlite = true;
+        Console.WriteLine("[DB AUTO-FALLBACK] SQL Server đang tắt -> Tự động sử dụng CSDL nhúng App_Data/QL_WebMuaBanNongSan.db");
+    }
+}
+
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
     if (useSqlite)
