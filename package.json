@@ -3,12 +3,10 @@
   "version": "1.0.0",
   "private": true,
   "workspaces": [
-    "shared",
     "web-portal",
     "web-store"
   ],
   "scripts": {
-    "generate:contracts": "node generate_contracts.js",
     "dev": "npm run dev:all",
     "dev:all": "concurrently -n \"portal,store\" -c \"blue,magenta\" \"npm run web-portal:dev\" \"npm run web-store:dev\"",
     "web-portal:dev": "npm run dev --workspace=web-portal",
