@@ -85,3 +85,7 @@ backend/Ecc.WebApi/wwwroot/uploads/*
 .vercel/
 !.env.example
 !.env.production
+
+# SQLite temporary files
+*.db-shm
+*.db-wal
