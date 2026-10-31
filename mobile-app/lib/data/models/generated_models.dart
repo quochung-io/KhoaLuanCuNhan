@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: mobile-app/lib/data/models/generated_models.dart
+// MÔ TẢ: Tầng dữ liệu & kết nối API (generated_models.dart) thuộc ứng dụng Flutter LÀNH Farm Mobile App.
+// ============================================================================
 // TU DONG SINH TU BACKEND OPENAPI SCHEMA - KHONG CHINH SUA BANG TAY
 // Generated at: 2026-09-12T19:14:04.389Z
 

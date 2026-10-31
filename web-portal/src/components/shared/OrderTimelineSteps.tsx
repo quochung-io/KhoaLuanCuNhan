@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: web-portal/src/components/shared/OrderTimelineSteps.tsx
+// MÔ TẢ: Thành phần/Cấu hình OrderTimelineSteps.tsx thuộc phân hệ Quản trị Web Portal (Admin & Nhà cung cấp).
+// ============================================================================
 import React from 'react';
 import { Steps, Tag } from 'antd';
 import { 

@@ -1,4 +1,8 @@
 'use client';
+// ============================================================================
+// TỆP MÃ NGUỒN: web-store/src/app/traceability/page.tsx
+// MÔ TẢ: Trang giao diện khách hàng (traceability/page.tsx) thuộc phân hệ Cửa hàng Trực tuyến LÀNH Farm (Next.js).
+// ============================================================================
 import React, { useState, useEffect, useRef, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -61,6 +65,7 @@ interface CropProfile {
   harvestIot: (batch: DbBatch) => Array<{ label: string; val: string }>;
 }
 
+// Tải và truy xuất dữ liệu (getCropProfile)
 function getCropProfile(productName: string): CropProfile {
   const n = (productName || '').toLowerCase();
 
@@ -408,6 +413,7 @@ function generateBatchTimeline(batch: DbBatch) {
   ];
 }
 
+// Thực thi nghiệp vụ hàm TraceabilityInner
 function TraceabilityInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -437,6 +443,7 @@ function TraceabilityInner() {
     document.body.setAttribute('data-theme', theme);
   }, [theme]);
 
+  // Điều khiển đóng/mở giao diện hoặc hộp thoại (toggleTheme)
   const toggleTheme = () => setTheme(prev => (prev === 'light' ? 'dark' : 'light'));
 
   // Đọc user & cart từ localStorage
@@ -451,6 +458,7 @@ function TraceabilityInner() {
     }
   }, []);
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleCustomerLogout)
   const handleCustomerLogout = () => {
     localStorage.removeItem('customer_user');
     setCurrentUser(null);
@@ -1198,6 +1206,7 @@ function TraceabilityInner() {
   );
 }
 
+// Thực thi nghiệp vụ hàm TraceabilityPage
 export default function TraceabilityPage() {
   return (
     <Suspense fallback={

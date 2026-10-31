@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: web-portal/src/pages/Register.tsx
+// MÔ TẢ: Trang Đăng ký Tài khoản Đối tác Hợp tác xã / Nhà cung cấp nông sản.
+// ============================================================================
 import React, { useState } from 'react';
 import { Form, Input, Button, Card, Modal, Radio, message } from 'antd';
 import { UserOutlined, LockOutlined, MailOutlined, PhoneOutlined, SafetyCertificateOutlined } from '@ant-design/icons';
@@ -36,6 +40,7 @@ export const Register: React.FC = () => {
     }
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleRequestOtp)
   const handleRequestOtp = async () => {
     if (!formValues) return;
     setIsSendingOtp(true);
@@ -60,6 +65,7 @@ export const Register: React.FC = () => {
     }
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleConfirmRegister)
   const handleConfirmRegister = async () => {
     if (otpCode.trim().length !== 6) {
       message.error('Vui lòng nhập đủ 6 chữ số mã OTP!');

@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: mobile-app/lib/presentation/screens/product_detail/review_screen.dart
+// MÔ TẢ: Màn hình giao diện di động (review_screen.dart) thuộc ứng dụng Flutter LÀNH Farm Mobile App.
+// ============================================================================
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -5,6 +9,7 @@ import '../../../data/api_service.dart';
 import '../../../data/models/product_model.dart';
 import '../../../core/localization_service.dart';
 
+/// Lớp giao diện / trạng thái ReviewScreen
 class ReviewScreen extends StatefulWidget {
   final Product product;
   final int currentUserId;
@@ -21,6 +26,7 @@ class ReviewScreen extends StatefulWidget {
   State<ReviewScreen> createState() => _ReviewScreenState();
 }
 
+/// Lớp giao diện / trạng thái _ReviewScreenState
 class _ReviewScreenState extends State<ReviewScreen> {
   final _commentController = TextEditingController();
   double _productRating = 5.0;
@@ -47,6 +53,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
     super.dispose();
   }
 
+  // Thực thi nghiệp vụ hàm _pickAndUploadMedia
   Future<void> _pickAndUploadMedia(ImageSource source) async {
     try {
       final XFile? pickedFile = await _picker.pickImage(
@@ -103,6 +110,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
     }
   }
 
+  // Thực thi nghiệp vụ hàm _showMediaPickerOptions
   void _showMediaPickerOptions() {
     showModalBottomSheet(
       context: context,
@@ -134,12 +142,14 @@ class _ReviewScreenState extends State<ReviewScreen> {
     );
   }
 
+  // Thực thi nghiệp vụ hàm _removeMedia
   void _removeMedia(int index) {
     setState(() {
       _mediaList.removeAt(index);
     });
   }
 
+  // Thực thi nghiệp vụ hàm _submitReview
   Future<void> _submitReview() async {
     final commentText = _commentController.text.trim();
     if (commentText.isEmpty && _selectedTags.isEmpty) {

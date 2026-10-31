@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: backend/Ecc.WebApi/Controllers/Web/OrdersController.cs
+// MÔ TẢ: Controller quản lý Đơn hàng, xuất kho theo lô FEFO, cập nhật trạng thái vận chuyển và Thống kê Dashboard tổng quan.
+// ============================================================================
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Ecc.Infrastructure.Data;
@@ -1398,6 +1402,7 @@ public class OrdersController : ControllerBase
         }
     }
 
+    /// <summary>Cập nhật và đồng bộ dữ liệu (UpdateOrder)</summary>
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateOrder(long id, [FromBody] Order updated)
     {
@@ -1418,6 +1423,7 @@ public class OrdersController : ControllerBase
         return Ok(existing);
     }
 
+    /// <summary>Xóa hoặc làm mới dữ liệu (DeleteOrder)</summary>
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteOrder(long id)
     {

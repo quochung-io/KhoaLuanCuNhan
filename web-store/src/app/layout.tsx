@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: web-store/src/app/layout.tsx
+// MÔ TẢ: Trang giao diện khách hàng (layout.tsx) thuộc phân hệ Cửa hàng Trực tuyến LÀNH Farm (Next.js).
+// ============================================================================
 import type { Metadata } from "next";
 import "./globals.css";
 import ChatBox from "@/components/ChatBox";
@@ -8,6 +12,7 @@ export const metadata: Metadata = {
   description: "Nông sản hữu cơ minh bạch",
 };
 
+// Thực thi nghiệp vụ hàm RootLayout
 export default function RootLayout({
   children,
 }: {

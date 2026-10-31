@@ -1,7 +1,12 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: mobile-app/lib/presentation/screens/profile/help_center_screen.dart
+// MÔ TẢ: Màn hình giao diện di động (help_center_screen.dart) thuộc ứng dụng Flutter LÀNH Farm Mobile App.
+// ============================================================================
 import 'package:flutter/material.dart';
 import '../chat/admin_chat_screen.dart';
 import '../../../core/localization_service.dart';
 
+/// Lớp giao diện / trạng thái HelpCenterScreen
 class HelpCenterScreen extends StatelessWidget {
   const HelpCenterScreen({super.key});
 

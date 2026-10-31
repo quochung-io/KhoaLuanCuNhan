@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: backend/Ecc.WebApi/Services/OrderExpirationBackgroundService.cs
+// MÔ TẢ: Dịch vụ chạy ngầm tự động kiểm tra và hủy các đơn hàng thanh toán trực tuyến (QR/MoMo) quá hạn 15 phút chưa thanh toán.
+// ============================================================================
 using Microsoft.EntityFrameworkCore;
 using Ecc.Infrastructure.Data;
 using Ecc.Infrastructure.Entities;
@@ -53,6 +57,7 @@ public class OrderExpirationBackgroundService : BackgroundService
         }
     }
 
+    /// <summary>Từ chối hoặc hủy bỏ yêu cầu/đơn hàng (CancelExpiredOrdersAsync)</summary>
     public async Task<int> CancelExpiredOrdersAsync()
     {
         using var scope = _scopeFactory.CreateScope();

@@ -1,4 +1,8 @@
 'use client';
+// ============================================================================
+// TỆP MÃ NGUỒN: web-store/src/components/product/ProductCard.tsx
+// MÔ TẢ: Component giao diện dùng chung (ProductCard.tsx) thuộc phân hệ Cửa hàng Trực tuyến LÀNH Farm (Web Store).
+// ============================================================================
 import React from 'react';
 import { Product } from '@/types/product';
 import { ICONS } from '../icons';

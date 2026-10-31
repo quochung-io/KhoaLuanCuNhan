@@ -1,6 +1,11 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: mobile-app/lib/presentation/screens/profile/farming_standards_screen.dart
+// MÔ TẢ: Màn hình giao diện di động (farming_standards_screen.dart) thuộc ứng dụng Flutter LÀNH Farm Mobile App.
+// ============================================================================
 import 'package:flutter/material.dart';
 import '../../../core/localization_service.dart';
 
+/// Lớp giao diện / trạng thái FarmingStandardsScreen
 class FarmingStandardsScreen extends StatelessWidget {
   const FarmingStandardsScreen({super.key});
 

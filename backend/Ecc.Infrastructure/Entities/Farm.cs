@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: backend/Ecc.Infrastructure/Entities/Farm.cs
+// MÔ TẢ: Thực thể dữ liệu (Entity) Farm - Biểu diễn cấu trúc bảng và mối quan hệ của Farm trong cơ sở dữ liệu.
+// ============================================================================
 namespace Ecc.Infrastructure.Entities;
 
 public class Farm

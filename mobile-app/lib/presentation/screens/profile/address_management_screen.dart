@@ -1,8 +1,13 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: mobile-app/lib/presentation/screens/profile/address_management_screen.dart
+// MÔ TẢ: Màn hình giao diện di động (address_management_screen.dart) thuộc ứng dụng Flutter LÀNH Farm Mobile App.
+// ============================================================================
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../../data/api_service.dart';
 
+/// Lớp giao diện / trạng thái AddressManagementScreen
 class AddressManagementScreen extends StatefulWidget {
   final int userId;
   final bool
@@ -21,6 +26,7 @@ class AddressManagementScreen extends StatefulWidget {
       _AddressManagementScreenState();
 }
 
+/// Lớp giao diện / trạng thái _AddressManagementScreenState
 class _AddressManagementScreenState extends State<AddressManagementScreen> {
   List<dynamic> _addresses = [];
   bool _isLoading = true;
@@ -31,6 +37,7 @@ class _AddressManagementScreenState extends State<AddressManagementScreen> {
     _fetchAddresses();
   }
 
+  // Thực thi nghiệp vụ hàm _fetchAddresses
   Future<void> _fetchAddresses() async {
     setState(() => _isLoading = true);
     try {
@@ -47,6 +54,7 @@ class _AddressManagementScreenState extends State<AddressManagementScreen> {
     }
   }
 
+  // Thực thi nghiệp vụ hàm _navigateToAddAddress
   void _navigateToAddAddress() async {
     final result = await Navigator.push(
       context,
@@ -62,6 +70,7 @@ class _AddressManagementScreenState extends State<AddressManagementScreen> {
     }
   }
 
+  // Thực thi nghiệp vụ hàm _onAddressTap
   void _onAddressTap(Map<String, dynamic> address) {
     if (widget.isSelecting) {
       Navigator.pop(context, address);
@@ -120,6 +129,7 @@ class _AddressManagementScreenState extends State<AddressManagementScreen> {
     );
   }
 
+  // Thực thi nghiệp vụ hàm _buildAddressList
   Widget _buildAddressList() {
     Map<String, dynamic>? defaultAddress;
     List<dynamic> alternativeAddresses = [];
@@ -177,6 +187,7 @@ class _AddressManagementScreenState extends State<AddressManagementScreen> {
     );
   }
 
+  // Thực thi nghiệp vụ hàm _buildAddressItem
   Widget _buildAddressItem(
     Map<String, dynamic> addr, {
     required bool isDefault,
@@ -283,6 +294,7 @@ class _AddressManagementScreenState extends State<AddressManagementScreen> {
   }
 }
 
+/// Lớp giao diện / trạng thái AddAddressScreen
 class AddAddressScreen extends StatefulWidget {
   final int userId;
   final bool isFirstAddress;
@@ -296,6 +308,7 @@ class AddAddressScreen extends StatefulWidget {
   State<AddAddressScreen> createState() => _AddAddressScreenState();
 }
 
+/// Lớp giao diện / trạng thái _AddAddressScreenState
 class _AddAddressScreenState extends State<AddAddressScreen> {
   final _formKey = GlobalKey<FormState>();
   final _fullNameCtrl = TextEditingController();
@@ -317,6 +330,7 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
     _fetchProvinces();
   }
 
+  // Thực thi nghiệp vụ hàm _fetchProvinces
   Future<void> _fetchProvinces() async {
     try {
       final res = await http.get(
@@ -332,6 +346,7 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
     }
   }
 
+  // Thực thi nghiệp vụ hàm _fetchDistricts
   Future<void> _fetchDistricts(int provinceCode) async {
     setState(() {
       _districts = [];
@@ -352,6 +367,7 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
     } catch (e) {}
   }
 
+  // Thực thi nghiệp vụ hàm _fetchWards
   Future<void> _fetchWards(int districtCode) async {
     setState(() {
       _wards = [];
@@ -370,6 +386,7 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
     } catch (e) {}
   }
 
+  // Thực thi nghiệp vụ hàm _submit
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isSubmitting = true);

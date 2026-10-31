@@ -1,9 +1,14 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: mobile-app/lib/presentation/screens/profile/edit_profile_screen.dart
+// MÔ TẢ: Màn hình giao diện di động (edit_profile_screen.dart) thuộc ứng dụng Flutter LÀNH Farm Mobile App.
+// ============================================================================
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import '../../../data/api_service.dart';
 import '../../../core/localization_service.dart';
 
+/// Lớp giao diện / trạng thái EditProfileScreen
 class EditProfileScreen extends StatefulWidget {
   final Map<String, dynamic> initialProfile;
   final Function(Map<String, dynamic>) onProfileUpdated;
@@ -18,6 +23,7 @@ class EditProfileScreen extends StatefulWidget {
   State<EditProfileScreen> createState() => _EditProfileScreenState();
 }
 
+/// Lớp giao diện / trạng thái _EditProfileScreenState
 class _EditProfileScreenState extends State<EditProfileScreen> {
   final _formKey = GlobalKey<FormState>();
 
@@ -60,6 +66,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     super.dispose();
   }
 
+  // Thực thi nghiệp vụ hàm _showAvatarPicker
   void _showAvatarPicker() {
     showModalBottomSheet(
       context: context,
@@ -116,6 +123,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 
+  // Thực thi nghiệp vụ hàm _handleSave
   Future<void> _handleSave() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -476,6 +484,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 
+  // Thực thi nghiệp vụ hàm _buildInfoRow
   Widget _buildInfoRow(String label, String value, {bool isGreen = false}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,

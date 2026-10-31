@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: web-store/src/components/icons.tsx
+// MÔ TẢ: Component giao diện dùng chung (icons.tsx) thuộc phân hệ Cửa hàng Trực tuyến LÀNH Farm (Web Store).
+// ============================================================================
 import React from 'react';
 
 export const ICONS: Record<string, React.ReactNode> = {

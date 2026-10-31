@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: web-portal/src/components/shared/OrderDeliverySlipModal.tsx
+// MÔ TẢ: Thành phần/Cấu hình OrderDeliverySlipModal.tsx thuộc phân hệ Quản trị Web Portal (Admin & Nhà cung cấp).
+// ============================================================================
 import React, { useRef } from 'react';
 import { Modal, Button, Table, Tag, Row, Col } from 'antd';
 import { 
@@ -27,6 +31,7 @@ export const OrderDeliverySlipModal: React.FC<OrderDeliverySlipModalProps> = ({
 
   if (!order) return null;
 
+  // Hàm xử lý sự kiện tương tác người dùng (handlePrint)
   const handlePrint = () => {
     window.print();
   };

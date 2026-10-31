@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: backend/Ecc.WebApi/Program.cs
+// MÔ TẢ: Điểm khởi chạy chính (Entry Point) của Backend .NET 9 Web API: Cấu hình DbContext (SQL Server / SQLite), JWT Auth, CORS, Swagger, SignalR và Background Services.
+// ============================================================================
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;

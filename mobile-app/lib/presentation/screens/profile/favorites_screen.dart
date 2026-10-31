@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: mobile-app/lib/presentation/screens/profile/favorites_screen.dart
+// MÔ TẢ: Màn hình giao diện di động (favorites_screen.dart) thuộc ứng dụng Flutter LÀNH Farm Mobile App.
+// ============================================================================
 import 'package:flutter/material.dart';
 import '../../../data/models/product_model.dart';
 import '../../../data/models/combo_model.dart';
@@ -6,6 +10,7 @@ import '../../../core/utils/favorites_service.dart';
 import '../product_detail/product_detail_screen.dart';
 import '../combos/combo_customize_screen.dart';
 
+/// Lớp giao diện / trạng thái FavoritesScreen
 class FavoritesScreen extends StatefulWidget {
   final void Function(Product, {int qty})? onAddToCart;
   const FavoritesScreen({super.key, this.onAddToCart});
@@ -14,6 +19,7 @@ class FavoritesScreen extends StatefulWidget {
   State<FavoritesScreen> createState() => _FavoritesScreenState();
 }
 
+/// Lớp giao diện / trạng thái _FavoritesScreenState
 class _FavoritesScreenState extends State<FavoritesScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
@@ -34,6 +40,7 @@ class _FavoritesScreenState extends State<FavoritesScreen>
     super.dispose();
   }
 
+  // Thực thi nghiệp vụ hàm _loadFavorites
   Future<void> _loadFavorites() async {
     final prods = await FavoritesService.getFavoriteProducts();
     final combos = await FavoritesService.getFavoriteCombos();
@@ -47,6 +54,7 @@ class _FavoritesScreenState extends State<FavoritesScreen>
     }
   }
 
+  // Thực thi nghiệp vụ hàm _removeFavoriteProduct
   Future<void> _removeFavoriteProduct(int id) async {
     await FavoritesService.removeFavoriteProduct(id);
     setState(() {
@@ -62,6 +70,7 @@ class _FavoritesScreenState extends State<FavoritesScreen>
     }
   }
 
+  // Thực thi nghiệp vụ hàm _removeFavoriteCombo
   Future<void> _removeFavoriteCombo(int id) async {
     await FavoritesService.removeFavoriteCombo(id);
     setState(() {
@@ -118,6 +127,7 @@ class _FavoritesScreenState extends State<FavoritesScreen>
     );
   }
 
+  // Thực thi nghiệp vụ hàm _buildProductsTab
   Widget _buildProductsTab() {
     if (_favoriteProducts.isEmpty) {
       return Center(
@@ -296,6 +306,7 @@ class _FavoritesScreenState extends State<FavoritesScreen>
     );
   }
 
+  // Thực thi nghiệp vụ hàm _buildCombosTab
   Widget _buildCombosTab() {
     if (_favoriteCombos.isEmpty) {
       return Center(

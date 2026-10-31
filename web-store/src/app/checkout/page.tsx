@@ -1,4 +1,8 @@
 'use client';
+// ============================================================================
+// TỆP MÃ NGUỒN: web-store/src/app/checkout/page.tsx
+// MÔ TẢ: Trang giao diện khách hàng (checkout/page.tsx) thuộc phân hệ Cửa hàng Trực tuyến LÀNH Farm (Next.js).
+// ============================================================================
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -89,6 +93,7 @@ const SYSTEM_VOUCHERS: Voucher[] = [
   }
 ];
 
+// Kiểm tra, xác thực hoặc phê duyệt nghiệp vụ (CheckoutPage)
 export default function CheckoutPage() {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -184,6 +189,7 @@ export default function CheckoutPage() {
     return () => clearInterval(interval);
   }, [showQrModal, qrExpiryTime]);
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleRefreshQr)
   const handleRefreshQr = () => {
     const newExpiry = Date.now() + 10 * 60 * 1000;
     setQrExpiryTime(newExpiry);
@@ -191,6 +197,7 @@ export default function CheckoutPage() {
     setIsQrExpired(false);
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleCopy)
   const handleCopy = (text: string, fieldName: string) => {
     if (navigator.clipboard) {
       navigator.clipboard.writeText(text);
@@ -203,8 +210,10 @@ export default function CheckoutPage() {
     document.body.setAttribute('data-theme', theme);
   }, [theme]);
 
+  // Điều khiển đóng/mở giao diện hoặc hộp thoại (toggleTheme)
   const toggleTheme = () => setTheme(prev => (prev === 'light' ? 'dark' : 'light'));
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleCustomerLogout)
   const handleCustomerLogout = () => {
     localStorage.removeItem('customer_user');
     setCurrentUser(null);
@@ -214,6 +223,7 @@ export default function CheckoutPage() {
 
   // Click outside to close user dropdown
   useEffect(() => {
+    // Hàm xử lý sự kiện tương tác người dùng (handleClickOutside)
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setShowUserDropdown(false);
@@ -287,6 +297,7 @@ export default function CheckoutPage() {
     });
   }, [router]);
 
+  // Tải và truy xuất dữ liệu (fetchUserVouchers)
   const fetchUserVouchers = async (userId: number): Promise<Voucher[]> => {
     setLoadingVouchers(true);
     try {
@@ -337,6 +348,7 @@ export default function CheckoutPage() {
     return [];
   };
 
+  // Tải và truy xuất dữ liệu (fetchAddresses)
   const fetchAddresses = async (userId: number) => {
     setIsLoadingAddresses(true);
     try {
@@ -358,6 +370,7 @@ export default function CheckoutPage() {
     }
   };
 
+  // Cập nhật và đồng bộ dữ liệu (updateCartQty)
   const updateCartQty = (id: number, delta: number) => {
     const updated = cart.map(item => {
       if (item.product.id === id) {
@@ -419,6 +432,7 @@ export default function CheckoutPage() {
   const discountAmount = calculateDiscount();
   const totalAmount = Math.max(0, subtotal + shippingFee - discountAmount);
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleApplyVoucher)
   const handleApplyVoucher = (voucher: Voucher) => {
     setVoucherError('');
     if (subtotal < voucher.minOrder) {
@@ -431,6 +445,7 @@ export default function CheckoutPage() {
     setTimeout(() => setVoucherSuccessMsg(''), 3000);
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleApplyCustomCode)
   const handleApplyCustomCode = () => {
     setVoucherError('');
     if (!customVoucherCode.trim()) {
@@ -447,6 +462,7 @@ export default function CheckoutPage() {
     handleApplyVoucher(found);
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleRemoveVoucher)
   const handleRemoveVoucher = () => {
     setSelectedVoucher(null);
     setVoucherSuccessMsg('');
@@ -455,6 +471,7 @@ export default function CheckoutPage() {
 
   // Tải danh sách Tỉnh/Thành từ Open API Quốc Gia (Kèm Fallback an toàn)
   useEffect(() => {
+    // Tải và truy xuất dữ liệu (fetchProvinces)
     const fetchProvinces = async () => {
       setLoadingProvinces(true);
       try {
@@ -528,6 +545,7 @@ export default function CheckoutPage() {
     }
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleOpenAddModal)
   const handleOpenAddModal = () => {
     setNewReceiverName(currentUser?.fullName || '');
     setNewPhone(currentUser?.phone || '');
@@ -543,6 +561,7 @@ export default function CheckoutPage() {
     setShowAddAddressModal(true);
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleSaveNewAddress)
   const handleSaveNewAddress = async (e: React.FormEvent) => {
     e.preventDefault();
     setAddressModalError('');
@@ -605,6 +624,7 @@ export default function CheckoutPage() {
     }
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handlePlaceOrder)
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');

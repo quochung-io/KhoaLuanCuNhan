@@ -1,4 +1,8 @@
 'use client';
+// ============================================================================
+// TỆP MÃ NGUỒN: web-store/src/components/cart/CartDrawer.tsx
+// MÔ TẢ: Component giao diện dùng chung (CartDrawer.tsx) thuộc phân hệ Cửa hàng Trực tuyến LÀNH Farm (Web Store).
+// ============================================================================
 import React from 'react';
 import { CartItem } from '@/types/product';
 import { ICONS } from '../icons';
@@ -24,6 +28,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   totalCart,
   toVND,
 }) => {
+  // Hàm xử lý sự kiện tương tác người dùng (handleDirectQtyChange)
   const handleDirectQtyChange = (id: number, newQty: number) => {
     if (setCartItemQty) {
       setCartItemQty(id, newQty);

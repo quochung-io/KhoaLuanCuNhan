@@ -1,4 +1,8 @@
 'use client';
+// ============================================================================
+// TỆP MÃ NGUỒN: web-store/src/components/sections/TraceabilityTimeline.tsx
+// MÔ TẢ: Component giao diện dùng chung (TraceabilityTimeline.tsx) thuộc phân hệ Cửa hàng Trực tuyến LÀNH Farm (Web Store).
+// ============================================================================
 import React from 'react';
 import { ICONS } from '../icons';
 

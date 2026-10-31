@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: mobile-app/lib/data/models/combo_model.dart
+// MÔ TẢ: Tầng dữ liệu & kết nối API (combo_model.dart) thuộc ứng dụng Flutter LÀNH Farm Mobile App.
+// ============================================================================
 class SelectableProduceItem {
   final int id;
   final String name;

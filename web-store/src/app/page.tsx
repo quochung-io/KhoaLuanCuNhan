@@ -1,4 +1,8 @@
 'use client';
+// ============================================================================
+// TỆP MÃ NGUỒN: web-store/src/app/page.tsx
+// MÔ TẢ: Trang giao diện khách hàng (page.tsx) thuộc phân hệ Cửa hàng Trực tuyến LÀNH Farm (Next.js).
+// ============================================================================
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -141,6 +145,7 @@ const heroSlides = [
   }
 ];
 
+// Thực thi nghiệp vụ hàm LanhLandingPage
 export default function LanhLandingPage() {
   const router = useRouter();
   const [products, setProducts] = useState<Product[]>(initialProducts);
@@ -215,6 +220,7 @@ export default function LanhLandingPage() {
   const [forYouRecommendations, setForYouRecommendations] = useState<any[]>([]);
   const [loadingForYou, setLoadingForYou] = useState(false);
 
+  // Tải và truy xuất dữ liệu (fetchForYouRecommendations)
   const fetchForYouRecommendations = () => {
     const sid = getSessionId();
     const uid = getCurrentUserId();
@@ -275,6 +281,7 @@ export default function LanhLandingPage() {
     document.body.setAttribute('data-theme', theme);
   }, [theme]);
 
+  // Điều khiển đóng/mở giao diện hoặc hộp thoại (toggleTheme)
   const toggleTheme = () => setTheme(prev => (prev === 'light' ? 'dark' : 'light'));
 
   // Tự động chuyển Slide Hero Banner
@@ -404,6 +411,7 @@ export default function LanhLandingPage() {
     // Khởi tạo tải gợi ý cá nhân hóa CARS cho người dùng
     fetchForYouRecommendations();
 
+    // Hàm xử lý sự kiện tương tác người dùng (handleWindowFocus)
     const handleWindowFocus = () => {
       fetchForYouRecommendations();
     };
@@ -412,6 +420,7 @@ export default function LanhLandingPage() {
   }, []);
 
   useEffect(() => {
+    // Hàm xử lý sự kiện tương tác người dùng (handleClickOutside)
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setShowUserDropdown(false);
@@ -499,6 +508,7 @@ export default function LanhLandingPage() {
     }
   }, [quickViewProduct, currentUser]);
 
+  // Điều khiển đóng/mở giao diện hoặc hộp thoại (toggleTopKSelection)
   const toggleTopKSelection = (id: number) => {
     const item = boughtTogether.find(x => x.productId === id);
     if (item?.isOutOfStock) {
@@ -510,6 +520,7 @@ export default function LanhLandingPage() {
     );
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleAddRecommendedToCart)
   const handleAddRecommendedToCart = (item: any) => {
     if (item.isOutOfStock) {
       alert(`Sản phẩm "${item.productName}" hiện đang tạm hết hàng, không thể thêm vào giỏ.`);
@@ -548,6 +559,7 @@ export default function LanhLandingPage() {
     setTimeout(() => setRecToast(''), 2500);
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleDrillDownProduct)
   const handleDrillDownProduct = async (item: any) => {
     if (!quickViewProduct) return;
     setQuickViewHistory(prev => [...prev, quickViewProduct]);
@@ -618,6 +630,7 @@ export default function LanhLandingPage() {
     setQuickViewQty(1);
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleBackQuickView)
   const handleBackQuickView = () => {
     if (quickViewHistory.length === 0) return;
     const previous = quickViewHistory[quickViewHistory.length - 1];
@@ -626,6 +639,7 @@ export default function LanhLandingPage() {
     setQuickViewQty(1);
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleAddAllComboToCart)
   const handleAddAllComboToCart = () => {
     if (!quickViewProduct) return;
     if (isQuickViewOutOfStock) {
@@ -782,6 +796,7 @@ export default function LanhLandingPage() {
       .catch(err => console.error('Lỗi khi gọi API sản phẩm:', err));
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleSearchChange)
   const handleSearchChange = (val: string) => {
     setSearchQuery(val);
     if (val.trim().length > 0) {
@@ -802,6 +817,7 @@ export default function LanhLandingPage() {
     fetchProducts();
   }, []);
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleCustomerLogout)
   const handleCustomerLogout = () => {
     localStorage.removeItem('customer_user');
     setCurrentUser(null);
@@ -827,6 +843,7 @@ export default function LanhLandingPage() {
     setTimeout(() => setAddedItem(null), 900);
   };
 
+  // Cập nhật và đồng bộ dữ liệu (updateCartQty)
   const updateCartQty = (id: number, delta: number) => {
     setCart(prev =>
       prev.map(x => {
@@ -855,6 +872,7 @@ export default function LanhLandingPage() {
   const totalCart = cart.reduce((s, i) => s + parseInt(i.product.price.replace(/[^\d]/g, ''), 10) * i.qty, 0);
   const toVND = (n: number) => n.toLocaleString('vi-VN') + '₫';
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleGoToCheckout)
   const handleGoToCheckout = () => {
     if (!currentUser) {
       alert('Vui lòng đăng nhập trước khi thực hiện thanh toán!');
@@ -869,6 +887,7 @@ export default function LanhLandingPage() {
     router.push('/checkout');
   };
 
+  // Điều khiển đóng/mở giao diện hoặc hộp thoại (openQuickView)
   const openQuickView = (p: Product) => {
     setQuickViewProduct(p);
     setQuickViewQty(1);

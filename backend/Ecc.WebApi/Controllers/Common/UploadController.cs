@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: backend/Ecc.WebApi/Controllers/Common/UploadController.cs
+// MÔ TẢ: Controller xử lý tải lên (Upload) hình ảnh sản phẩm, chứng nhận và đánh giá lên máy chủ.
+// ============================================================================
 using Microsoft.AspNetCore.Mvc;
 
 namespace Ecc.WebApi.Controllers.Common;

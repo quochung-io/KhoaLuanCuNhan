@@ -1,3 +1,7 @@
+# ============================================================================
+# TỆP MÃ NGUỒN: ai-service/app/main.py
+# MÔ TẢ: Dịch vụ AI Gợi ý Nông sản (FastAPI Python) - Cung cấp API gợi ý sản phẩm thông minh theo ngữ cảnh và hành vi mua sắm.
+# ============================================================================
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import List, Optional

@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: mobile-app/lib/presentation/screens/combos/combo_customize_screen.dart
+// MÔ TẢ: Màn hình giao diện di động (combo_customize_screen.dart) thuộc ứng dụng Flutter LÀNH Farm Mobile App.
+// ============================================================================
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -8,6 +12,7 @@ import '../../../core/utils/favorites_service.dart';
 import '../auth/login_screen.dart';
 import '../product_detail/review_screen.dart';
 
+/// Lớp giao diện / trạng thái ComboCustomizeScreen
 class ComboCustomizeScreen extends StatefulWidget {
   final ComboPlan combo;
   final void Function(Product, {int qty}) onAddToCart;
@@ -22,6 +27,7 @@ class ComboCustomizeScreen extends StatefulWidget {
   State<ComboCustomizeScreen> createState() => _ComboCustomizeScreenState();
 }
 
+/// Lớp giao diện / trạng thái _ComboCustomizeScreenState
 class _ComboCustomizeScreenState extends State<ComboCustomizeScreen> {
   late int _selectedSupplierId;
   late List<SelectableProduceItem> _currentProducePool;
@@ -51,11 +57,13 @@ class _ComboCustomizeScreenState extends State<ComboCustomizeScreen> {
     super.dispose();
   }
 
+  // Thực thi nghiệp vụ hàm _checkFavorite
   Future<void> _checkFavorite() async {
     final isFav = await FavoritesService.isFavoriteCombo(widget.combo.id);
     if (mounted) setState(() => _isFavorite = isFav);
   }
 
+  // Thực thi nghiệp vụ hàm _toggleFavorite
   Future<void> _toggleFavorite() async {
     final isFav = await FavoritesService.toggleFavoriteCombo(widget.combo);
     if (mounted) {
@@ -76,6 +84,7 @@ class _ComboCustomizeScreenState extends State<ComboCustomizeScreen> {
 
   // Dữ liệu đánh giá từ CSDL thật
 
+  // Thực thi nghiệp vụ hàm _loadCurrentUserAndReviews
   Future<void> _loadCurrentUserAndReviews() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -154,6 +163,7 @@ class _ComboCustomizeScreenState extends State<ComboCustomizeScreen> {
     return true;
   }
 
+  // Thực thi nghiệp vụ hàm _fetchRealReviews
   Future<void> _fetchRealReviews() async {
     setState(() => _isLoadingReviews = true);
     try {
@@ -190,6 +200,7 @@ class _ComboCustomizeScreenState extends State<ComboCustomizeScreen> {
     }
   }
 
+  // Thực thi nghiệp vụ hàm _handleToggleHelpful
   Future<void> _handleToggleHelpful(Map<String, dynamic> review) async {
     if (!_checkLoginRequired('thích đánh giá này')) return;
     final int reviewId = (review['reviewId'] ?? review['id'] ?? 0) as int;
@@ -210,6 +221,7 @@ class _ComboCustomizeScreenState extends State<ComboCustomizeScreen> {
     }
   }
 
+  // Thực thi nghiệp vụ hàm _toggleReplyInline
   void _toggleReplyInline(Map<String, dynamic> parentReview, int index) {
     if (!_checkLoginRequired('trả lời bình luận này')) return;
     final revId =
@@ -226,6 +238,7 @@ class _ComboCustomizeScreenState extends State<ComboCustomizeScreen> {
     });
   }
 
+  // Thực thi nghiệp vụ hàm _submitReplyInline
   Future<void> _submitReplyInline(Map<String, dynamic> parentReview) async {
     if (!_checkLoginRequired('trả lời bình luận này')) return;
     final text = _inlineReplyCtrl.text.trim();
@@ -306,6 +319,7 @@ class _ComboCustomizeScreenState extends State<ComboCustomizeScreen> {
     _checkFavorite();
   }
 
+  // Thực thi nghiệp vụ hàm _updateProducePool
   void _updateProducePool() {
     _currentProducePool = ComboPlan.getProducePoolBySupplier(
       _selectedSupplierId,
@@ -425,6 +439,7 @@ class _ComboCustomizeScreenState extends State<ComboCustomizeScreen> {
     };
   }
 
+  // Thực thi nghiệp vụ hàm _toggleItem
   void _toggleItem(SelectableProduceItem item) {
     setState(() {
       if (_selectedItemIds.contains(item.id)) {
@@ -456,6 +471,7 @@ class _ComboCustomizeScreenState extends State<ComboCustomizeScreen> {
     });
   }
 
+  // Thực thi nghiệp vụ hàm _confirmAndAddToCart
   void _confirmAndAddToCart() {
     if (_selectedItemIds.length < widget.combo.maxSelectableItems) {
       ScaffoldMessenger.of(context).showSnackBar(

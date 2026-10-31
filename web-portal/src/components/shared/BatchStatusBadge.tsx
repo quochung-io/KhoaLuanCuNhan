@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: web-portal/src/components/shared/BatchStatusBadge.tsx
+// MÔ TẢ: Thành phần/Cấu hình BatchStatusBadge.tsx thuộc phân hệ Quản trị Web Portal (Admin & Nhà cung cấp).
+// ============================================================================
 import React from 'react';
 import { Tag, Tooltip } from 'antd';
 import { 

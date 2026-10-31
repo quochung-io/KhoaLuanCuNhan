@@ -1,5 +1,10 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: mobile-app/lib/presentation/screens/chat/chat_screen.dart
+// MÔ TẢ: Màn hình giao diện di động (chat_screen.dart) thuộc ứng dụng Flutter LÀNH Farm Mobile App.
+// ============================================================================
 import 'package:flutter/material.dart';
 
+/// Lớp giao diện / trạng thái ChatScreen
 class ChatScreen extends StatefulWidget {
   final String title;
   const ChatScreen({super.key, this.title = 'Tư vấn Nông Sản LÀNH'});
@@ -8,6 +13,7 @@ class ChatScreen extends StatefulWidget {
   State<ChatScreen> createState() => _ChatScreenState();
 }
 
+/// Lớp giao diện / trạng thái _ChatScreenState
 class _ChatScreenState extends State<ChatScreen> {
   final List<Map<String, dynamic>> _messages = [
     {
@@ -26,6 +32,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   final TextEditingController _msgCtrl = TextEditingController();
 
+  // Thực thi nghiệp vụ hàm _sendMessage
   void _sendMessage() {
     final text = _msgCtrl.text.trim();
     if (text.isEmpty) return;

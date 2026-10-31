@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: backend/Ecc.WebApi/Services/FefoClearanceBackgroundService.cs
+// MÔ TẢ: Dịch vụ chạy ngầm (Background Service) tự động quét lô hàng cận hạn theo nguyên tắc FEFO và áp dụng mức giảm giá xả kho tự động.
+// ============================================================================
 using Microsoft.EntityFrameworkCore;
 using Ecc.Infrastructure.Data;
 
@@ -43,6 +47,7 @@ public class FefoClearanceBackgroundService : BackgroundService
         }
     }
 
+    /// <summary>Thực thi nghiệp vụ hàm RunAutoMarkdownAsync</summary>
     public async Task<int> RunAutoMarkdownAsync()
     {
         using var scope = _scopeFactory.CreateScope();

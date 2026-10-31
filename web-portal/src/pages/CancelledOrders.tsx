@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: web-portal/src/pages/CancelledOrders.tsx
+// MÔ TẢ: Trang Quản lý Đơn hủy & Khiếu nại Đổi trả: Thẩm định yêu cầu hoàn tiền và xử lý khiếu nại chất lượng nông sản.
+// ============================================================================
 import React, { useEffect, useState } from 'react';
 import { 
   Table, 

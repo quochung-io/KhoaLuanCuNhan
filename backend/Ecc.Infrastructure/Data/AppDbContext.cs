@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: backend/Ecc.Infrastructure/Data/AppDbContext.cs
+// MÔ TẢ: Lớp ngữ cảnh cơ sở dữ liệu chính (Entity Framework Core DbContext) ánh xạ toàn bộ các bảng trong CSDL QL_WebMuaBanNongSan.
+// ============================================================================
 using Microsoft.EntityFrameworkCore;
 using Ecc.Infrastructure.Entities;
 

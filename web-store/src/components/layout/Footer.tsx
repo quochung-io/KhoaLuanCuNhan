@@ -1,4 +1,8 @@
 'use client';
+// ============================================================================
+// TỆP MÃ NGUỒN: web-store/src/components/layout/Footer.tsx
+// MÔ TẢ: Component giao diện dùng chung (Footer.tsx) thuộc phân hệ Cửa hàng Trực tuyến LÀNH Farm (Web Store).
+// ============================================================================
 
 import React from 'react';
 import Link from 'next/link';

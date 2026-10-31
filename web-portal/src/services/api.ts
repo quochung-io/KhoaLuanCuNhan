@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: web-portal/src/services/api.ts
+// MÔ TẢ: Thành phần/Cấu hình api.ts thuộc phân hệ Quản trị Web Portal (Admin & Nhà cung cấp).
+// ============================================================================
 import axiosClient from '../config/axiosClient';
 
 const api = axiosClient;

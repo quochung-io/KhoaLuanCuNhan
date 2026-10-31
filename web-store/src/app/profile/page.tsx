@@ -1,4 +1,8 @@
 'use client';
+// ============================================================================
+// TỆP MÃ NGUỒN: web-store/src/app/profile/page.tsx
+// MÔ TẢ: Trang giao diện khách hàng (profile/page.tsx) thuộc phân hệ Cửa hàng Trực tuyến LÀNH Farm (Next.js).
+// ============================================================================
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -46,6 +50,7 @@ type CartItem = {
   qty: number;
 };
 
+// Thực thi nghiệp vụ hàm ProfilePage
 export default function ProfilePage() {
   const [user, setUser] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<'profile' | 'addresses' | 'loyalty' | 'vouchers' | 'orders'>('profile');
@@ -75,6 +80,7 @@ export default function ProfilePage() {
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [quickViewProduct, setQuickViewProduct] = useState<{ id: number; data?: QuickViewProductData } | null>(null);
 
+  // Điều khiển đóng/mở giao diện hoặc hộp thoại (openProductQuickView)
   const openProductQuickView = (productId: number, item?: any) => {
     if (!productId) return;
     setQuickViewProduct({
@@ -187,6 +193,7 @@ export default function ProfilePage() {
     document.body.setAttribute('data-theme', theme);
   }, [theme]);
 
+  // Điều khiển đóng/mở giao diện hoặc hộp thoại (toggleTheme)
   const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
 
   useEffect(() => {
@@ -217,6 +224,7 @@ export default function ProfilePage() {
     }
   }, [router]);
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleCustomerLogout)
   const handleCustomerLogout = () => {
     localStorage.removeItem('customer_user');
     setCurrentUser(null);
@@ -225,6 +233,7 @@ export default function ProfilePage() {
     router.push('/login');
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleSearchChange)
   const handleSearchChange = (val: string) => {
     setSearchQuery(val);
     if (val.trim().length > 0) {
@@ -241,12 +250,14 @@ export default function ProfilePage() {
     }
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleSearchSubmit)
   const handleSearchSubmit = () => {
     if (searchQuery.trim()) {
       router.push(`/?search=${encodeURIComponent(searchQuery.trim())}`);
     }
   };
 
+  // Cập nhật và đồng bộ dữ liệu (updateCartQty)
   const updateCartQty = (id: number, delta: number) => {
     setCart(prev => {
       const updated = prev.map(x => {
@@ -275,6 +286,7 @@ export default function ProfilePage() {
   const totalCart = cart.reduce((s, i) => s + (parseInt(i.product.price.replace(/[^\d]/g, ''), 10) || 0) * i.qty, 0);
   const toVND = (n: number) => n.toLocaleString('vi-VN') + '₫';
 
+  // Tải và truy xuất dữ liệu (fetchAddresses)
   const fetchAddresses = async (userId: number) => {
     setAddressLoading(true);
     try {
@@ -290,6 +302,7 @@ export default function ProfilePage() {
     }
   };
 
+  // Tải và truy xuất dữ liệu (fetchOrders)
   const fetchOrders = async (userId: number) => {
     setOrdersLoading(true);
     try {
@@ -483,6 +496,7 @@ export default function ProfilePage() {
     }
   };
 
+  // Tải và truy xuất dữ liệu (fetchLoyalty)
   const fetchLoyalty = async (userId: number) => {
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/loyalty/${userId}`);
@@ -513,6 +527,7 @@ export default function ProfilePage() {
     }
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleRedeemGift)
   const handleRedeemGift = async (pointsRequired: number, title: string, isVoucher: boolean, voucherType?: string, discountValue: number = 0, minOrderAmount: number = 0) => {
     setRedeemSuccess('');
     setRedeemError('');
@@ -554,6 +569,7 @@ export default function ProfilePage() {
     }
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleUseVoucherNow)
   const handleUseVoucherNow = (voucher: any) => {
     if (voucher.isUsed) return;
     localStorage.setItem('pending_voucher_code', voucher.code);
@@ -574,6 +590,7 @@ export default function ProfilePage() {
     }
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleCopyVoucherCode)
   const handleCopyVoucherCode = (code: string) => {
     if (navigator.clipboard) {
       navigator.clipboard.writeText(code);
@@ -734,6 +751,7 @@ export default function ProfilePage() {
     setCurrentUser(updatedUser);
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleUpdateProfile)
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setProfileError('');
@@ -791,6 +809,7 @@ export default function ProfilePage() {
 
   // Tải danh sách Tỉnh/Thành từ Open API Quốc Gia (Kèm Fallback an toàn)
   useEffect(() => {
+    // Tải và truy xuất dữ liệu (fetchProvinces)
     const fetchProvinces = async () => {
       setLoadingProvinces(true);
       try {

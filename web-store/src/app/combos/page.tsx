@@ -1,4 +1,8 @@
 'use client';
+// ============================================================================
+// TỆP MÃ NGUỒN: web-store/src/app/combos/page.tsx
+// MÔ TẢ: Trang giao diện khách hàng (combos/page.tsx) thuộc phân hệ Cửa hàng Trực tuyến LÀNH Farm (Next.js).
+// ============================================================================
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
@@ -149,6 +153,7 @@ function getProduceEmoji(item: string): string {
   return '🌱';
 }
 
+// Thực thi nghiệp vụ hàm CombosPage
 export default function CombosPage() {
   const router = useRouter();
   const [subFreq, setSubFreq] = useState<'combotuan' | 'combothang' | 'combokhac'>('combotuan');
@@ -211,6 +216,7 @@ export default function CombosPage() {
     }
   }, [cart]);
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleAddComboToCart)
   const handleAddComboToCart = (plan: ComboPlan) => {
     const comboProduct = {
       id: plan.id,
@@ -240,6 +246,7 @@ export default function CombosPage() {
     setIsDrawerOpen(true);
   };
 
+  // Cập nhật và đồng bộ dữ liệu (updateCartQty)
   const updateCartQty = (id: number, delta: number) => {
     setCart(prev =>
       prev.map(x => {
@@ -256,6 +263,7 @@ export default function CombosPage() {
   const totalCart = cart.reduce((s, i) => s + parseInt(i.product.price.replace(/[^\d]/g, ''), 10) * i.qty, 0);
   const toVND = (n: number) => n.toLocaleString('vi-VN') + '₫';
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleGoToCheckout)
   const handleGoToCheckout = () => {
     const storedUser = localStorage.getItem('customer_user');
     if (!storedUser) {

@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: backend/Ecc.WebApi/Services/MoMoPaymentService.cs
+// MÔ TẢ: Dịch vụ tích hợp cổng thanh toán điện tử MoMo (Tạo chữ ký điện tử HMAC-SHA256 và khởi tạo giao dịch thanh toán).
+// ============================================================================
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -65,6 +69,7 @@ public class MoMoPaymentService : IMoMoPaymentService
         _logger = logger;
     }
 
+    /// <summary>Tạo mới hoặc thêm dữ liệu (CreatePaymentAsync)</summary>
     public async Task<MoMoCreatePaymentResponse> CreatePaymentAsync(long orderId, string orderCode, decimal amount, string? orderInfo = null)
     {
         string requestId = $"{orderCode}_{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}";
@@ -132,6 +137,7 @@ public class MoMoPaymentService : IMoMoPaymentService
         };
     }
 
+    /// <summary>Kiểm tra, xác thực hoặc phê duyệt nghiệp vụ (VerifySignature)</summary>
     public bool VerifySignature(MoMoIpnRequest ipn)
     {
         // Chuỗi ký xác thực IPN từ MoMo

@@ -1,6 +1,11 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: mobile-app/lib/presentation/screens/supplier/supplier_dashboard_screen.dart
+// MÔ TẢ: Màn hình giao diện di động (supplier_dashboard_screen.dart) thuộc ứng dụng Flutter LÀNH Farm Mobile App.
+// ============================================================================
 import 'package:flutter/material.dart';
 import '../auth/login_screen.dart';
 
+/// Lớp giao diện / trạng thái SupplierDashboardScreen
 class SupplierDashboardScreen extends StatelessWidget {
   final Map<String, dynamic> user;
   const SupplierDashboardScreen({super.key, required this.user});
@@ -181,6 +186,7 @@ class SupplierDashboardScreen extends StatelessWidget {
     );
   }
 
+  // Thực thi nghiệp vụ hàm _buildStatCard
   Widget _buildStatCard(
     String title,
     String value,
@@ -222,6 +228,7 @@ class SupplierDashboardScreen extends StatelessWidget {
     );
   }
 
+  // Thực thi nghiệp vụ hàm _buildSupplierMenu
   Widget _buildSupplierMenu({
     required IconData icon,
     required String title,

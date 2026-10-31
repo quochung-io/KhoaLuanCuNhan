@@ -1,6 +1,11 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: mobile-app/lib/presentation/screens/profile/review_order_screen.dart
+// MÔ TẢ: Màn hình giao diện di động (review_order_screen.dart) thuộc ứng dụng Flutter LÀNH Farm Mobile App.
+// ============================================================================
 import 'package:flutter/material.dart';
 import '../../../data/api_service.dart';
 
+/// Lớp giao diện / trạng thái ReviewOrderScreen
 class ReviewOrderScreen extends StatefulWidget {
   final Map<String, dynamic> order;
   final int? userId;
@@ -11,6 +16,7 @@ class ReviewOrderScreen extends StatefulWidget {
   State<ReviewOrderScreen> createState() => _ReviewOrderScreenState();
 }
 
+/// Lớp giao diện / trạng thái _ReviewOrderScreenState
 class _ReviewOrderScreenState extends State<ReviewOrderScreen> {
   bool _isLoading = false;
   List<dynamic> _orderItems = [];
@@ -41,6 +47,7 @@ class _ReviewOrderScreenState extends State<ReviewOrderScreen> {
     super.dispose();
   }
 
+  // Thực thi nghiệp vụ hàm _submitReview
   Future<void> _submitReview() async {
     setState(() => _isLoading = true);
 
@@ -115,6 +122,7 @@ class _ReviewOrderScreenState extends State<ReviewOrderScreen> {
     }
   }
 
+  // Thực thi nghiệp vụ hàm _buildStarRating
   Widget _buildStarRating(
     int currentRating,
     Function(int) onRatingChanged, {
@@ -371,6 +379,7 @@ class _ReviewOrderScreenState extends State<ReviewOrderScreen> {
     );
   }
 
+  // Thực thi nghiệp vụ hàm _buildFallbackImg
   Widget _buildFallbackImg([double size = 60]) {
     return Container(
       width: size,

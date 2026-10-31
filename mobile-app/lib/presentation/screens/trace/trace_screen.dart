@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: mobile-app/lib/presentation/screens/trace/trace_screen.dart
+// MÔ TẢ: Màn hình giao diện di động (trace_screen.dart) thuộc ứng dụng Flutter LÀNH Farm Mobile App.
+// ============================================================================
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../../data/models/product_model.dart';
@@ -5,6 +9,7 @@ import '../../../data/api_service.dart';
 import '../../../core/utils/traceability_utils.dart';
 import 'farming_diary_screen.dart';
 
+/// Lớp giao diện / trạng thái TraceScreen
 class TraceScreen extends StatefulWidget {
   final String? initialLotCode;
   final VoidCallback? onClearCode;
@@ -15,6 +20,7 @@ class TraceScreen extends StatefulWidget {
   State<TraceScreen> createState() => _TraceScreenState();
 }
 
+/// Lớp giao diện / trạng thái _TraceScreenState
 class _TraceScreenState extends State<TraceScreen> {
   final TextEditingController _controller = TextEditingController();
   final MobileScannerController _scannerController = MobileScannerController(
@@ -58,6 +64,7 @@ class _TraceScreenState extends State<TraceScreen> {
     super.dispose();
   }
 
+  // Thực thi nghiệp vụ hàm _performTrace
   Future<void> _performTrace(String lotCode) async {
     final query = lotCode.trim();
     if (query.isEmpty) return;
@@ -132,6 +139,7 @@ class _TraceScreenState extends State<TraceScreen> {
     }
   }
 
+  // Thực thi nghiệp vụ hàm _onBarcodeDetected
   void _onBarcodeDetected(BarcodeCapture capture) {
     if (!_isScanning) return;
     final barcode = capture.barcodes.firstOrNull;
@@ -155,6 +163,7 @@ class _TraceScreenState extends State<TraceScreen> {
     }
   }
 
+  // Thực thi nghiệp vụ hàm _toggleTorch
   void _toggleTorch() {
     _scannerController.toggleTorch();
     setState(() {
@@ -667,6 +676,7 @@ class _TraceScreenState extends State<TraceScreen> {
     );
   }
 
+  // Thực thi nghiệp vụ hàm _buildInfoRow
   Widget _buildInfoRow(String label, String value, {bool isBold = false, Color? highlightColor}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 3.0),

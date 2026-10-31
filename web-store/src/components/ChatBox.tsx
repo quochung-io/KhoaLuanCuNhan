@@ -1,4 +1,8 @@
 'use client';
+// ============================================================================
+// TỆP MÃ NGUỒN: web-store/src/components/ChatBox.tsx
+// MÔ TẢ: Component giao diện dùng chung (ChatBox.tsx) thuộc phân hệ Cửa hàng Trực tuyến LÀNH Farm (Web Store).
+// ============================================================================
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 
@@ -33,6 +37,7 @@ const INITIAL_MESSAGES: Message[] = [
   }
 ];
 
+// Tải và truy xuất dữ liệu (getBotReply)
 function getBotReply(input: string): string {
   const lower = input.toLowerCase().trim();
 
@@ -75,6 +80,7 @@ function getBotReply(input: string): string {
   return 'Cảm ơn câu hỏi của bạn! Chuyên viên tư vấn dinh dưỡng của LÀNH Farm đã ghi nhận thông tin và sẽ phản hồi chi tiết cho bạn ngay. Bạn cũng có thể gọi nhanh Hotline 1900 8899 để được giải đáp tức thì nhé!';
 }
 
+// Thực thi nghiệp vụ hàm ChatBox
 export default function ChatBox() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES);
@@ -121,6 +127,7 @@ export default function ChatBox() {
     } catch (e) {}
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleSendMessage)
   const handleSendMessage = (textToSend?: string) => {
     const text = (textToSend || inputText).trim();
     if (!text) return;
@@ -154,6 +161,7 @@ export default function ChatBox() {
     }, 650);
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleOptionClick)
   const handleOptionClick = (opt: { label: string; action: string }) => {
     handleSendMessage(opt.label.replace(/^[^\s]+\s/, ''));
   };

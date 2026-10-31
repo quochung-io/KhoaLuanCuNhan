@@ -1,4 +1,8 @@
 'use client';
+// ============================================================================
+// TỆP MÃ NGUỒN: web-store/src/components/orders/SmartClaimModal.tsx
+// MÔ TẢ: Component giao diện dùng chung (SmartClaimModal.tsx) thuộc phân hệ Cửa hàng Trực tuyến LÀNH Farm (Web Store).
+// ============================================================================
 import React, { useState } from 'react';
 
 export interface SmartClaimModalProps {
@@ -21,6 +25,7 @@ export interface SmartClaimModalProps {
   onSuccess: (newTicket: any) => void;
 }
 
+// Thực thi nghiệp vụ hàm SmartClaimModal
 export default function SmartClaimModal({
   order,
   product,
@@ -47,6 +52,7 @@ export default function SmartClaimModal({
 
   const totalRefundAmount = (product.unitPrice || 0) * (product.quantity || 1);
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleAddCustomUrl)
   const handleAddCustomUrl = () => {
     if (!customFileUrl.trim()) return;
     const isVid = customFileUrl.includes('video') || customFileUrl.endsWith('.mp4');
@@ -61,6 +67,7 @@ export default function SmartClaimModal({
     setCustomFileUrl('');
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleFileUpload)
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const files = Array.from(e.target.files);
@@ -73,10 +80,12 @@ export default function SmartClaimModal({
     }
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleRemoveFile)
   const handleRemoveFile = (index: number) => {
     setUploadedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleSubmit)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isEvidenceValid) {

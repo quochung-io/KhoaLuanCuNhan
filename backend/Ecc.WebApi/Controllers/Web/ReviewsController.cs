@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: backend/Ecc.WebApi/Controllers/Web/ReviewsController.cs
+// MÔ TẢ: Controller quản lý Đánh giá (Review 5 sao), bình luận kèm hình ảnh thực tế và kiểm duyệt phản hồi khách hàng.
+// ============================================================================
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Ecc.Infrastructure.Data;

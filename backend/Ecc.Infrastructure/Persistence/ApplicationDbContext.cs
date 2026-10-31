@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: backend/Ecc.Infrastructure/Persistence/ApplicationDbContext.cs
+// MÔ TẢ: Lớp ngữ cảnh cơ sở dữ liệu tầng Persistence hỗ trợ kiến trúc Clean Architecture.
+// ============================================================================
 using Microsoft.EntityFrameworkCore;
 using Ecc.Domain.Entities;
 

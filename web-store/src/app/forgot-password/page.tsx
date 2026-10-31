@@ -1,4 +1,8 @@
 'use client';
+// ============================================================================
+// TỆP MÃ NGUỒN: web-store/src/app/forgot-password/page.tsx
+// MÔ TẢ: Trang giao diện khách hàng (forgot-password/page.tsx) thuộc phân hệ Cửa hàng Trực tuyến LÀNH Farm (Next.js).
+// ============================================================================
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -18,6 +22,7 @@ type CartItem = {
   qty: number;
 };
 
+// Thực thi nghiệp vụ hàm ForgotPasswordPage
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
   const [otpCode, setOtpCode] = useState('');
@@ -49,6 +54,7 @@ export default function ForgotPasswordPage() {
     document.body.setAttribute('data-theme', theme);
   }, [theme]);
 
+  // Điều khiển đóng/mở giao diện hoặc hộp thoại (toggleTheme)
   const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
 
   useEffect(() => {
@@ -77,6 +83,7 @@ export default function ForgotPasswordPage() {
 
   // Đóng dropdown tài khoản khi click ra ngoài
   useEffect(() => {
+    // Hàm xử lý sự kiện tương tác người dùng (handleClickOutside)
     const handleClickOutside = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setShowUserDropdown(false);
@@ -86,12 +93,14 @@ export default function ForgotPasswordPage() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleCustomerLogout)
   const handleCustomerLogout = () => {
     localStorage.removeItem('customer_user');
     setCurrentUser(null);
     setShowUserDropdown(false);
   };
 
+  // Cập nhật và đồng bộ dữ liệu (updateCartQty)
   const updateCartQty = (id: number, delta: number) => {
     setCart(prev => {
       const updated = prev.map(x => {

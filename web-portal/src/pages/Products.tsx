@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: web-portal/src/pages/Products.tsx
+// MÔ TẢ: Trang Quản lý Sản phẩm, Danh mục & Gói Combo: Thêm/sửa/xóa nông sản, quản lý bộ 4 ảnh, phê duyệt sản phẩm từ Nhà cung cấp.
+// ============================================================================
 import React, { useEffect, useState } from 'react';
 import { 
   Table, 
@@ -181,6 +185,7 @@ export const Products: React.FC = () => {
   const [comboForm] = Form.useForm();
   const [catForm] = Form.useForm();
 
+  // Tải và truy xuất dữ liệu (loadData)
   const loadData = async () => {
     setLoading(true);
     try {
@@ -259,6 +264,7 @@ export const Products: React.FC = () => {
     singleStatusFilter !== 'all'
   );
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleResetSingleFilter)
   const handleResetSingleFilter = () => {
     setSingleIdFilter('');
     setSingleNameFilter('');
@@ -292,6 +298,7 @@ export const Products: React.FC = () => {
     comboStatusFilter !== 'all'
   );
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleResetComboFilter)
   const handleResetComboFilter = () => {
     setComboIdFilter('');
     setComboNameFilter('');
@@ -320,6 +327,7 @@ export const Products: React.FC = () => {
     catStatusFilter !== 'all'
   );
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleResetCatFilter)
   const handleResetCatFilter = () => {
     setCatIdFilter('');
     setCatNameFilter('');
@@ -374,6 +382,7 @@ export const Products: React.FC = () => {
     }
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleSetSubAsPrimary)
   const handleSetSubAsPrimary = (index: number) => {
     const selectedSub = subUrls[index];
     if (!selectedSub || !selectedSub.trim()) {
@@ -388,12 +397,14 @@ export const Products: React.FC = () => {
     message.success(`Đã đổi ảnh phụ #${index + 1} thành ảnh chính!`);
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleSubUrlChange)
   const handleSubUrlChange = (index: number, val: string) => {
     const newSubs = [...subUrls];
     newSubs[index] = val;
     setSubUrls(newSubs);
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleFillSampleImages)
   const handleFillSampleImages = () => {
     if (!selectedProduct) return;
     const catName = selectedProduct.categoryId === 5 ? 'Combo' : (selectedProduct.category?.categoryName || 'Rau củ');
@@ -402,6 +413,7 @@ export const Products: React.FC = () => {
     message.info(`Đã tự động gợi ý 3 ảnh phụ mẫu cho "${selectedProduct.productName}".`);
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleSaveAllImages)
   const handleSaveAllImages = async () => {
     if (!selectedProduct) return;
     try {
@@ -451,6 +463,7 @@ export const Products: React.FC = () => {
     setIsProdModalOpen(true);
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleOpenEditProd)
   const handleOpenEditProd = (prod: Product) => {
     setEditingProd(prod);
     prodForm.setFieldsValue({
@@ -465,6 +478,7 @@ export const Products: React.FC = () => {
     setIsProdModalOpen(true);
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleSaveProd)
   const handleSaveProd = async () => {
     try {
       const values = await prodForm.validateFields();
@@ -544,6 +558,7 @@ export const Products: React.FC = () => {
     setIsTraceModalOpen(true);
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleSaveTrace)
   const handleSaveTrace = async () => {
     if (!traceProduct) return;
     try {
@@ -602,6 +617,7 @@ export const Products: React.FC = () => {
     return vegCat ? vegCat.categoryId : (categories[0]?.categoryId || 1);
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleOpenApproveModal)
   const handleOpenApproveModal = (prod: Product) => {
     setApprovingProd(prod);
     const batch = prod.productBatches?.[0] || null;
@@ -614,6 +630,7 @@ export const Products: React.FC = () => {
     setIsApproveModalOpen(true);
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleSaveApprove)
   const handleSaveApprove = async () => {
     if (!approvingProd) return;
     try {
@@ -659,6 +676,7 @@ export const Products: React.FC = () => {
     setIsComboModalOpen(true);
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleOpenEditCombo)
   const handleOpenEditCombo = (combo: Product) => {
     setEditingCombo(combo);
     const slots = getComboSlots(combo);
@@ -684,6 +702,7 @@ export const Products: React.FC = () => {
     setIsComboModalOpen(true);
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleSaveCombo)
   const handleSaveCombo = async () => {
     try {
       const values = await comboForm.validateFields();
@@ -747,6 +766,7 @@ export const Products: React.FC = () => {
     }
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleDeleteProductOrCombo)
   const handleDeleteProductOrCombo = async (id: number, isCombo: boolean = false) => {
     Modal.confirm({
       title: isCombo ? 'Xác nhận xóa gói combo' : 'Xác nhận xóa nông sản',
@@ -776,6 +796,7 @@ export const Products: React.FC = () => {
     setIsCatModalOpen(true);
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleOpenEditCat)
   const handleOpenEditCat = (cat: Category) => {
     setEditingCat(cat);
     catForm.setFieldsValue({
@@ -786,6 +807,7 @@ export const Products: React.FC = () => {
     setIsCatModalOpen(true);
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleDeleteCat)
   const handleDeleteCat = async (id: number) => {
     Modal.confirm({
       title: 'Xác nhận xóa danh mục',
@@ -805,6 +827,7 @@ export const Products: React.FC = () => {
     });
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleSaveCat)
   const handleSaveCat = async () => {
     try {
       const values = await catForm.validateFields();

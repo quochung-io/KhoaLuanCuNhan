@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: web-portal/src/pages/RecommendationAnalytics.tsx
+// MÔ TẢ: Trang Phân tích Hiệu quả Hệ thống Gợi ý AI: Theo dõi lượt hiển thị, tỷ lệ nhấp (CTR), tỷ lệ chuyển đổi mua kèm.
+// ============================================================================
 import React, { useEffect, useState } from 'react';
 import {
   Card,
@@ -126,6 +130,7 @@ export const RecommendationAnalytics: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [testingTracking, setTestingTracking] = useState(false);
 
+  // Tải và truy xuất dữ liệu (fetchAnalytics)
   const fetchAnalytics = async () => {
     setLoading(true);
     try {

@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: backend/Ecc.WebApi/Controllers/Web/RecommendationsController.cs
+// MÔ TẢ: Controller Hệ thống Gợi ý Nông sản Thông minh (AI/Rule-based): Thường mua cùng nhau, Gợi ý cá nhân hóa, Mùa vụ và Phân tích CTR.
+// ============================================================================
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Ecc.Infrastructure.Data;

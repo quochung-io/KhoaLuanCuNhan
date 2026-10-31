@@ -1,7 +1,12 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: mobile-app/lib/presentation/screens/profile/points_screen.dart
+// MÔ TẢ: Màn hình giao diện di động (points_screen.dart) thuộc ứng dụng Flutter LÀNH Farm Mobile App.
+// ============================================================================
 import 'package:flutter/material.dart';
 import '../../../data/api_service.dart';
 import '../../../core/localization_service.dart';
 
+/// Lớp giao diện / trạng thái PointsScreen
 class PointsScreen extends StatefulWidget {
   final int userId;
   const PointsScreen({super.key, required this.userId});
@@ -10,6 +15,7 @@ class PointsScreen extends StatefulWidget {
   State<PointsScreen> createState() => _PointsScreenState();
 }
 
+/// Lớp giao diện / trạng thái _PointsScreenState
 class _PointsScreenState extends State<PointsScreen> {
   int _currentPoints = 0;
   String _tierName = 'Mới';
@@ -24,6 +30,7 @@ class _PointsScreenState extends State<PointsScreen> {
     _loadLoyalty();
   }
 
+  // Thực thi nghiệp vụ hàm _loadLoyalty
   Future<void> _loadLoyalty() async {
     try {
       final data = await ApiService.getUserLoyalty(widget.userId);
@@ -371,6 +378,7 @@ class _PointsScreenState extends State<PointsScreen> {
     );
   }
 
+  // Thực thi nghiệp vụ hàm _buildTierBenefitCard
   Widget _buildTierBenefitCard(String title, String condition, String desc) {
     return Container(
       width: 170,

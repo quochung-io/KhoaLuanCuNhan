@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: backend/Ecc.Infrastructure/Entities/Certificate.cs
+// MÔ TẢ: Thực thể dữ liệu (Entity) Certificate - Biểu diễn cấu trúc bảng và mối quan hệ của Certificate trong cơ sở dữ liệu.
+// ============================================================================
 using System;
 using System.Text.Json.Serialization;
 

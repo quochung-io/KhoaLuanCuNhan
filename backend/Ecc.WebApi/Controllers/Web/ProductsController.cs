@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: backend/Ecc.WebApi/Controllers/Web/ProductsController.cs
+// MÔ TẢ: Controller quản lý Sản phẩm nông sản lẻ và Gói Combo định kỳ (Tìm kiếm, lọc giá, gợi ý tự động Autocomplete, CRUD).
+// ============================================================================
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Ecc.Infrastructure.Data;

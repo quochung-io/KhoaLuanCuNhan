@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: web-portal/src/config/axiosClient.ts
+// MÔ TẢ: Thành phần/Cấu hình axiosClient.ts thuộc phân hệ Quản trị Web Portal (Admin & Nhà cung cấp).
+// ============================================================================
 import axios, { type InternalAxiosRequestConfig, type AxiosResponse, type AxiosError } from 'axios';
 
 const CLOUD_API_URL = 'https://ecc-backend-api.onrender.com/api';

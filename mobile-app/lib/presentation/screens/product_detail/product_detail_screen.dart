@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: mobile-app/lib/presentation/screens/product_detail/product_detail_screen.dart
+// MÔ TẢ: Màn hình giao diện di động (product_detail_screen.dart) thuộc ứng dụng Flutter LÀNH Farm Mobile App.
+// ============================================================================
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -10,6 +14,7 @@ import '../auth/login_screen.dart';
 import 'review_screen.dart';
 import '../../../core/utils/favorites_service.dart';
 
+/// Lớp giao diện / trạng thái ProductDetailScreen
 class ProductDetailScreen extends StatefulWidget {
   final Product product;
   final void Function(Product, {int qty}) onAddToCart;
@@ -20,6 +25,7 @@ class ProductDetailScreen extends StatefulWidget {
   State<ProductDetailScreen> createState() => _ProductDetailScreenState();
 }
 
+/// Lớp giao diện / trạng thái _ProductDetailScreenState
 class _ProductDetailScreenState extends State<ProductDetailScreen> {
   final _commentController = TextEditingController();
   final _replyController = TextEditingController();
@@ -55,11 +61,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     _fetchProductDetails();
   }
 
+  // Thực thi nghiệp vụ hàm _checkFavorite
   Future<void> _checkFavorite() async {
     final isFav = await FavoritesService.isFavoriteProduct(widget.product.id);
     if (mounted) setState(() => _isFavorite = isFav);
   }
 
+  // Thực thi nghiệp vụ hàm _toggleFavorite
   Future<void> _toggleFavorite() async {
     final product = _fetchedProduct ?? widget.product;
     final nowFav = await FavoritesService.toggleFavoriteProduct(product);
@@ -75,6 +83,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     }
   }
 
+  // Thực thi nghiệp vụ hàm _loadCurrentUser
   Future<void> _loadCurrentUser() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -147,6 +156,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     super.dispose();
   }
 
+  // Thực thi nghiệp vụ hàm _fetchProductDetails
   Future<void> _fetchProductDetails() async {
     setState(() => _isLoadingDetails = true);
     try {
@@ -181,6 +191,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     }
   }
 
+  // Thực thi nghiệp vụ hàm _fetchRealReviews
   Future<void> _fetchRealReviews() async {
     setState(() => _isLoadingReviews = true);
     try {
@@ -247,6 +258,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     });
   }
 
+  // Thực thi nghiệp vụ hàm _submitReplyInline
   Future<void> _submitReplyInline(Map<String, dynamic> parentReview) async {
     if (!_checkLoginRequired('trả lời bình luận này')) return;
     final text = _replyController.text.trim();
@@ -341,6 +353,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     });
   }
 
+  // Thực thi nghiệp vụ hàm _cancelInlineEdit
   void _cancelInlineEdit() {
     setState(() {
       _editingReviewId = null;

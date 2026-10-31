@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: web-portal/src/components/shared/MetricsCard.tsx
+// MÔ TẢ: Thành phần/Cấu hình MetricsCard.tsx thuộc phân hệ Quản trị Web Portal (Admin & Nhà cung cấp).
+// ============================================================================
 import React from 'react';
 import { Card, Tag, Typography } from 'antd';
 import { ArrowUpOutlined, ArrowDownOutlined } from '@ant-design/icons';

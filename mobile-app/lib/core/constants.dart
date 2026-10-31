@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: mobile-app/lib/core/constants.dart
+// MÔ TẢ: Tiện ích cốt lõi, cấu hình hằng số & giao diện (constants.dart) thuộc ứng dụng Flutter LÀNH Farm Mobile App.
+// ============================================================================
 import 'package:flutter/foundation.dart';
 
 class AppConstants {

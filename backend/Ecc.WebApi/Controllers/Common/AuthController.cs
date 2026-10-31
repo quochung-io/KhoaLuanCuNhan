@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: backend/Ecc.WebApi/Controllers/Common/AuthController.cs
+// MÔ TẢ: Controller xử lý Xác thực & Tài khoản: Đăng nhập, Đăng ký, Gửi/Xác thực OTP, Quên mật khẩu, Làm mới JWT Token.
+// ============================================================================
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Ecc.Infrastructure.Data;
@@ -22,6 +26,7 @@ public class AuthController : ControllerBase
         _jwtService = jwtService;
     }
 
+    /// <summary>Xử lý phiên đăng nhập / đăng ký tài khoản (Login)</summary>
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
@@ -150,6 +155,7 @@ public class AuthController : ControllerBase
         }
     }
 
+    /// <summary>Thực thi nghiệp vụ hàm SendRegisterOtp</summary>
     [HttpPost("send-register-otp")]
     public async Task<IActionResult> SendRegisterOtp([FromBody] SendOtpRequest request)
     {
@@ -192,6 +198,7 @@ public class AuthController : ControllerBase
         }
     }
 
+    /// <summary>Kiểm tra, xác thực hoặc phê duyệt nghiệp vụ (CheckUnique)</summary>
     [HttpPost("check-unique")]
     public async Task<IActionResult> CheckUnique([FromBody] CheckUniqueRequest request)
     {
@@ -242,6 +249,7 @@ public class AuthController : ControllerBase
         return Ok(new { message = "Thông tin hợp lệ, chưa tồn tại trên hệ thống." });
     }
 
+    /// <summary>Xử lý phiên đăng nhập / đăng ký tài khoản (Register)</summary>
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request)
     {
@@ -346,6 +354,7 @@ public class AuthController : ControllerBase
         }
     }
 
+    /// <summary>Thực thi nghiệp vụ hàm ForgotPassword</summary>
     [HttpPost("forgot-password")]
     public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
     {
@@ -375,6 +384,7 @@ public class AuthController : ControllerBase
         }
     }
 
+    /// <summary>Thực thi nghiệp vụ hàm ResetPassword</summary>
     [HttpPost("reset-password")]
     public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
     {
@@ -409,6 +419,7 @@ public class AuthController : ControllerBase
         }
     }
 
+    /// <summary>Thực thi nghiệp vụ hàm RefreshToken</summary>
     [HttpPost("refresh-token")]
     public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest request)
     {
@@ -469,6 +480,7 @@ public class AuthController : ControllerBase
         }
     }
 
+    /// <summary>Xử lý phiên đăng nhập / đăng ký tài khoản (Logout)</summary>
     [HttpPost("logout")]
     public async Task<IActionResult> Logout([FromBody] LogoutRequest request)
     {

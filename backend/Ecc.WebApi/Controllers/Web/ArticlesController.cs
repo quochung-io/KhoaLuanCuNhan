@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: backend/Ecc.WebApi/Controllers/Web/ArticlesController.cs
+// MÔ TẢ: Controller quản lý bài viết tin tức nông nghiệp sạch và cẩm nang mùa vụ.
+// ============================================================================
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -80,6 +84,7 @@ public class ArticlesController : ControllerBase
         }
     };
 
+    /// <summary>Tải và truy xuất dữ liệu (GetAll)</summary>
     [HttpGet]
     public IActionResult GetAll([FromQuery] string? category, [FromQuery] string? search)
     {
@@ -99,6 +104,7 @@ public class ArticlesController : ControllerBase
         return Ok(query.ToList());
     }
 
+    /// <summary>Tải và truy xuất dữ liệu (GetById)</summary>
     [HttpGet("{id}")]
     public IActionResult GetById(int id)
     {

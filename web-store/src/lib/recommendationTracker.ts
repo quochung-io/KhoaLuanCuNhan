@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: web-store/src/lib/recommendationTracker.ts
+// MÔ TẢ: Tệp cấu hình/dữ liệu (recommendationTracker.ts) thuộc phân hệ Cửa hàng Trực tuyến LÀNH Farm (Web Store).
+// ============================================================================
 // Utility quản lý định danh người dùng / Session và gửi nhật ký hành vi về API CARS
 export function getSessionId(): string {
   if (typeof window === 'undefined') return '';
@@ -9,6 +13,7 @@ export function getSessionId(): string {
   return sid;
 }
 
+// Tải và truy xuất dữ liệu (getCurrentUserId)
 export function getCurrentUserId(): number | null {
   if (typeof window === 'undefined') return null;
   const stored = localStorage.getItem('customer_user');
@@ -21,6 +26,7 @@ export function getCurrentUserId(): number | null {
   }
 }
 
+// Thực thi nghiệp vụ hàm trackBehavior
 export function trackBehavior(params: {
   productId: number;
   actionType: 'VIEW' | 'QUICK_VIEW' | 'SEARCH' | 'CART' | 'PURCHASE' | 'RECOMMENDATION_CLICK';

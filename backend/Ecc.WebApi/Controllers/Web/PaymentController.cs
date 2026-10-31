@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: backend/Ecc.WebApi/Controllers/Web/PaymentController.cs
+// MÔ TẢ: Controller khởi tạo giao dịch thanh toán trực tuyến (Ví MoMo, VietQR ngân hàng) và kiểm tra trạng thái thanh toán.
+// ============================================================================
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Ecc.Infrastructure.Data;

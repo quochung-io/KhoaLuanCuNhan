@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: backend/Ecc.Infrastructure/Entities/LoyaltyEntities.cs
+// MÔ TẢ: Thực thể dữ liệu (Entity) LoyaltyEntities - Biểu diễn cấu trúc bảng và mối quan hệ của LoyaltyEntities trong cơ sở dữ liệu.
+// ============================================================================
 ﻿using System;
 using System.Collections.Generic;
 

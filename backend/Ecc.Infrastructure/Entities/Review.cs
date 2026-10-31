@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: backend/Ecc.Infrastructure/Entities/Review.cs
+// MÔ TẢ: Thực thể dữ liệu (Entity) Review - Biểu diễn cấu trúc bảng và mối quan hệ của Review trong cơ sở dữ liệu.
+// ============================================================================
 using System.Text.Json.Serialization;
 
 namespace Ecc.Infrastructure.Entities;

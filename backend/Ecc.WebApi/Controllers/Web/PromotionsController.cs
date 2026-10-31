@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: backend/Ecc.WebApi/Controllers/Web/PromotionsController.cs
+// MÔ TẢ: Controller quản lý Chương trình Khuyến mãi và Mã giảm giá (Voucher) toàn sàn.
+// ============================================================================
 using System;
 using System.Collections.Generic;
 using System.Linq;

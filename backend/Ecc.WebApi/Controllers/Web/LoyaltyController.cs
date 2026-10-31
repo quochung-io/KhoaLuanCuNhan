@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: backend/Ecc.WebApi/Controllers/Web/LoyaltyController.cs
+// MÔ TẢ: Controller quản lý Chương trình Khách hàng thân thiết (Tích điểm thưởng, Hạng thành viên, Đổi điểm lấy Voucher).
+// ============================================================================
 using System;
 using System.Collections.Generic;
 using System.Linq;

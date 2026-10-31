@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: backend/Ecc.WebApi/Controllers/Web/NotificationsController.cs
+// MÔ TẢ: Controller quản lý Thông báo hệ thống gửi tới Khách hàng và Nhà cung cấp.
+// ============================================================================
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Ecc.Infrastructure.Data;

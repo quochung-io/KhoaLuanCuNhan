@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: backend/Ecc.WebApi/Controllers/Web/ProductReportsController.cs
+// MÔ TẢ: Controller tổng hợp Báo cáo phân tích chuyên sâu: Doanh thu, sản lượng bán, tồn kho FEFO, tỷ lệ hao hụt và xuất báo cáo CSV.
+// ============================================================================
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Ecc.Infrastructure.Data;

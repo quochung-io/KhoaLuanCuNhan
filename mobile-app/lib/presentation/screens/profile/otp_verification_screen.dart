@@ -1,8 +1,13 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: mobile-app/lib/presentation/screens/profile/otp_verification_screen.dart
+// MÔ TẢ: Màn hình giao diện di động (otp_verification_screen.dart) thuộc ứng dụng Flutter LÀNH Farm Mobile App.
+// ============================================================================
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
 import '../../../data/api_service.dart';
 
+/// Lớp giao diện / trạng thái OtpVerificationScreen
 class OtpVerificationScreen extends StatefulWidget {
   final String email;
   final String newPassword;
@@ -17,6 +22,7 @@ class OtpVerificationScreen extends StatefulWidget {
   State<OtpVerificationScreen> createState() => _OtpVerificationScreenState();
 }
 
+/// Lớp giao diện / trạng thái _OtpVerificationScreenState
 class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   final TextEditingController _otpCtrl = TextEditingController();
   bool _isSubmitting = false;
@@ -37,6 +43,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     super.dispose();
   }
 
+  // Thực thi nghiệp vụ hàm _startCountdown
   void _startCountdown() {
     setState(() => _countdown = 60);
     _timer?.cancel();
@@ -49,6 +56,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     });
   }
 
+  // Thực thi nghiệp vụ hàm _resendOtp
   Future<void> _resendOtp() async {
     if (_countdown > 0 || _isResending) return;
     setState(() => _isResending = true);
@@ -78,6 +86,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     }
   }
 
+  // Thực thi nghiệp vụ hàm _handleConfirm
   Future<void> _handleConfirm() async {
     final otp = _otpCtrl.text.trim();
     if (otp.isEmpty || otp.length < 6) {

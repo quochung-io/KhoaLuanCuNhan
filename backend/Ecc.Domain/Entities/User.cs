@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: backend/Ecc.Domain/Entities/User.cs
+// MÔ TẢ: Thực thể dữ liệu (Entity) User - Biểu diễn cấu trúc bảng và mối quan hệ của User trong cơ sở dữ liệu.
+// ============================================================================
 using System;
 
 namespace Ecc.Domain.Entities;

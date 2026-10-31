@@ -1,6 +1,11 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: mobile-app/lib/presentation/screens/admin/admin_dashboard_screen.dart
+// MÔ TẢ: Màn hình giao diện di động (admin_dashboard_screen.dart) thuộc ứng dụng Flutter LÀNH Farm Mobile App.
+// ============================================================================
 import 'package:flutter/material.dart';
 import '../auth/login_screen.dart';
 
+/// Lớp giao diện / trạng thái AdminDashboardScreen
 class AdminDashboardScreen extends StatelessWidget {
   final Map<String, dynamic> user;
   const AdminDashboardScreen({super.key, required this.user});
@@ -186,6 +191,7 @@ class AdminDashboardScreen extends StatelessWidget {
     );
   }
 
+  // Thực thi nghiệp vụ hàm _buildStatCard
   Widget _buildStatCard(
     String title,
     String value,
@@ -227,6 +233,7 @@ class AdminDashboardScreen extends StatelessWidget {
     );
   }
 
+  // Thực thi nghiệp vụ hàm _buildAdminMenu
   Widget _buildAdminMenu({
     required IconData icon,
     required String title,

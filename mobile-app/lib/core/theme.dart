@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: mobile-app/lib/core/theme.dart
+// MÔ TẢ: Tiện ích cốt lõi, cấu hình hằng số & giao diện (theme.dart) thuộc ứng dụng Flutter LÀNH Farm Mobile App.
+// ============================================================================
 import 'package:flutter/material.dart';
 
 class LanhTheme {

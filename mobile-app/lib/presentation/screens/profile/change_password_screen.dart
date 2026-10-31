@@ -1,9 +1,14 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: mobile-app/lib/presentation/screens/profile/change_password_screen.dart
+// MÔ TẢ: Màn hình giao diện di động (change_password_screen.dart) thuộc ứng dụng Flutter LÀNH Farm Mobile App.
+// ============================================================================
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import '../../../data/api_service.dart';
 import 'otp_verification_screen.dart';
 
+/// Lớp giao diện / trạng thái ChangePasswordScreen
 class ChangePasswordScreen extends StatefulWidget {
   final String? userEmail;
   const ChangePasswordScreen({super.key, this.userEmail});
@@ -12,6 +17,7 @@ class ChangePasswordScreen extends StatefulWidget {
   State<ChangePasswordScreen> createState() => _ChangePasswordScreenState();
 }
 
+/// Lớp giao diện / trạng thái _ChangePasswordScreenState
 class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   final _emailCtrl = TextEditingController();
   final _newPassCtrl = TextEditingController();
@@ -30,6 +36,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     }
   }
 
+  // Thực thi nghiệp vụ hàm _loadEmailFromPrefs
   Future<void> _loadEmailFromPrefs() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -52,6 +59,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     super.dispose();
   }
 
+  // Thực thi nghiệp vụ hàm _handleProceed
   Future<void> _handleProceed() async {
     final email = _emailCtrl.text.trim();
     final newPass = _newPassCtrl.text;

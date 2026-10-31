@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: backend/Ecc.Infrastructure/Services/OtpService.cs
+// MÔ TẢ: Dịch vụ tạo mã xác thực OTP 6 số và gửi email thực tế qua giao thức SMTP Gmail cho chức năng Đăng ký & Quên mật khẩu.
+// ============================================================================
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Net;
@@ -26,6 +30,7 @@ public class OtpService : IOtpService
         _logger = logger;
     }
 
+    /// <summary>Thực thi nghiệp vụ hàm GenerateAndSendOtpAsync</summary>
     public async Task<string> GenerateAndSendOtpAsync(string recipient, string type)
     {
         // 1. Tạo ngẫu nhiên mã OTP 6 chữ số (100000 -> 999999)
@@ -50,6 +55,7 @@ public class OtpService : IOtpService
         return otp;
     }
 
+    /// <summary>Kiểm tra, xác thực hoặc phê duyệt nghiệp vụ (VerifyOtp)</summary>
     public bool VerifyOtp(string recipient, string otp)
     {
         var key = recipient.ToLower();

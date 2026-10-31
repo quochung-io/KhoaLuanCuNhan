@@ -1,6 +1,11 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: mobile-app/lib/presentation/screens/profile/linked_bank_accounts_screen.dart
+// MÔ TẢ: Màn hình giao diện di động (linked_bank_accounts_screen.dart) thuộc ứng dụng Flutter LÀNH Farm Mobile App.
+// ============================================================================
 import 'package:flutter/material.dart';
 import '../../../core/utils/bank_service.dart';
 
+/// Lớp giao diện / trạng thái LinkedBankAccountsScreen
 class LinkedBankAccountsScreen extends StatefulWidget {
   final bool
   selectMode; // Nếu true, bấm vào thẻ sẽ pop về và trả về thẻ được chọn
@@ -11,6 +16,7 @@ class LinkedBankAccountsScreen extends StatefulWidget {
       _LinkedBankAccountsScreenState();
 }
 
+/// Lớp giao diện / trạng thái _LinkedBankAccountsScreenState
 class _LinkedBankAccountsScreenState extends State<LinkedBankAccountsScreen> {
   List<LinkedBankAccount> _accounts = [];
   List<BankInfo> _allBanks = [];
@@ -23,6 +29,7 @@ class _LinkedBankAccountsScreenState extends State<LinkedBankAccountsScreen> {
     _loadAllBanks();
   }
 
+  // Thực thi nghiệp vụ hàm _loadAccounts
   Future<void> _loadAccounts() async {
     final list = await BankService.getLinkedAccounts();
     if (mounted) {
@@ -33,6 +40,7 @@ class _LinkedBankAccountsScreenState extends State<LinkedBankAccountsScreen> {
     }
   }
 
+  // Thực thi nghiệp vụ hàm _loadAllBanks
   Future<void> _loadAllBanks() async {
     final banks = await BankService.fetchAllBanks();
     if (mounted) {
@@ -68,6 +76,7 @@ class _LinkedBankAccountsScreenState extends State<LinkedBankAccountsScreen> {
     }
   }
 
+  // Thực thi nghiệp vụ hàm _openBankSelector
   void _openBankSelector(BuildContext context, Function(BankInfo) onSelect) {
     final bankList = _allBanks.isNotEmpty
         ? _allBanks
@@ -283,6 +292,7 @@ class _LinkedBankAccountsScreenState extends State<LinkedBankAccountsScreen> {
     );
   }
 
+  // Thực thi nghiệp vụ hàm _showAddAccountSheet
   void _showAddAccountSheet() {
     BankInfo selectedBank = _allBanks.isNotEmpty
         ? _allBanks.first
@@ -620,6 +630,7 @@ class _LinkedBankAccountsScreenState extends State<LinkedBankAccountsScreen> {
     );
   }
 
+  // Thực thi nghiệp vụ hàm _confirmDelete
   void _confirmDelete(LinkedBankAccount acc) {
     showDialog(
       context: context,
@@ -777,6 +788,7 @@ class _LinkedBankAccountsScreenState extends State<LinkedBankAccountsScreen> {
     );
   }
 
+  // Thực thi nghiệp vụ hàm _buildCardTile
   Widget _buildCardTile(LinkedBankAccount acc) {
     final cardColor = _getBankColor(acc.bankCode);
 

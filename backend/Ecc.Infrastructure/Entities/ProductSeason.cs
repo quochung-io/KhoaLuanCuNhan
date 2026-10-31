@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: backend/Ecc.Infrastructure/Entities/ProductSeason.cs
+// MÔ TẢ: Thực thể dữ liệu (Entity) ProductSeason - Biểu diễn cấu trúc bảng và mối quan hệ của ProductSeason trong cơ sở dữ liệu.
+// ============================================================================
 using System.Text.Json.Serialization;
 
 namespace Ecc.Infrastructure.Entities;

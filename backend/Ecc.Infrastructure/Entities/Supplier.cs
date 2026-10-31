@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: backend/Ecc.Infrastructure/Entities/Supplier.cs
+// MÔ TẢ: Thực thể dữ liệu (Entity) Supplier - Biểu diễn cấu trúc bảng và mối quan hệ của Supplier trong cơ sở dữ liệu.
+// ============================================================================
 namespace Ecc.Infrastructure.Entities;
 
 public class Supplier

@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: mobile-app/lib/presentation/screens/checkout/payment_qr_screen.dart
+// MÔ TẢ: Màn hình giao diện di động (payment_qr_screen.dart) thuộc ứng dụng Flutter LÀNH Farm Mobile App.
+// ============================================================================
 import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
@@ -12,6 +16,7 @@ import '../main_container.dart';
 import '../profile/orders_management_screen.dart';
 import 'payment_success_screen.dart';
 
+/// Lớp giao diện / trạng thái PaymentQRScreen
 class PaymentQRScreen extends StatefulWidget {
   final int orderId;
   final String orderCode;
@@ -38,6 +43,7 @@ class PaymentQRScreen extends StatefulWidget {
   State<PaymentQRScreen> createState() => _PaymentQRScreenState();
 }
 
+/// Lớp giao diện / trạng thái _PaymentQRScreenState
 class _PaymentQRScreenState extends State<PaymentQRScreen>
     with WidgetsBindingObserver {
   // Thông tin tài khoản thụ hưởng TPBank của cửa hàng LÀNH Farm
@@ -96,6 +102,7 @@ class _PaymentQRScreenState extends State<PaymentQRScreen>
     }
   }
 
+  // Thực thi nghiệp vụ hàm _startCountdown
   void _startCountdown() {
     _countdownTimer?.cancel();
     if (_countdownSeconds <= 0) {
@@ -112,6 +119,7 @@ class _PaymentQRScreenState extends State<PaymentQRScreen>
     });
   }
 
+  // Thực thi nghiệp vụ hàm _handleExpiration
   void _handleExpiration() {
     if (_isExpiredHandled || _isNavigatingSuccess) return;
     _isExpiredHandled = true;
@@ -183,6 +191,7 @@ class _PaymentQRScreenState extends State<PaymentQRScreen>
     });
   }
 
+  // Thực thi nghiệp vụ hàm _checkPaymentStatusNow
   Future<void> _checkPaymentStatusNow() async {
     if (_isCheckingStatus ||
         _isNavigatingSuccess ||
@@ -254,6 +263,7 @@ class _PaymentQRScreenState extends State<PaymentQRScreen>
     return 'https://img.vietqr.io/image/$receiverBankCode-$receiverAccountNumber-compact2.png?amount=${widget.totalAmount}&addInfo=$encodedCode&accountName=$encodedHolder';
   }
 
+  // Thực thi nghiệp vụ hàm _copyToClipboard
   void _copyToClipboard(String text, String label) {
     Clipboard.setData(ClipboardData(text: text));
     ScaffoldMessenger.of(context).showSnackBar(
@@ -402,6 +412,7 @@ class _PaymentQRScreenState extends State<PaymentQRScreen>
     }
   }
 
+  // Thực thi nghiệp vụ hàm _handlePayLater
   void _handlePayLater() {
     showDialog(
       context: context,
@@ -947,6 +958,7 @@ class _PaymentQRScreenState extends State<PaymentQRScreen>
     );
   }
 
+  // Thực thi nghiệp vụ hàm _buildInfoRow
   Widget _buildInfoRow(
     String title,
     String value,
@@ -1009,6 +1021,7 @@ class _PaymentQRScreenState extends State<PaymentQRScreen>
   }
 }
 
+/// Lớp giao diện / trạng thái _PayLaterConfirmDialog
 class _PayLaterConfirmDialog extends StatefulWidget {
   final String orderCode;
   final int userId;
@@ -1024,6 +1037,7 @@ class _PayLaterConfirmDialog extends StatefulWidget {
   State<_PayLaterConfirmDialog> createState() => _PayLaterConfirmDialogState();
 }
 
+/// Lớp giao diện / trạng thái _PayLaterConfirmDialogState
 class _PayLaterConfirmDialogState extends State<_PayLaterConfirmDialog> {
   late int _remainingSeconds;
   Timer? _timer;
@@ -1313,6 +1327,7 @@ class _PayLaterConfirmDialogState extends State<_PayLaterConfirmDialog> {
     );
   }
 
+  // Thực thi nghiệp vụ hàm _buildBullet
   Widget _buildBullet({
     required IconData icon,
     required Color color,

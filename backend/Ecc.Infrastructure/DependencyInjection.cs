@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: backend/Ecc.Infrastructure/DependencyInjection.cs
+// MÔ TẢ: Cấu hình đăng ký Dependency Injection (DI) cho các dịch vụ thuộc tầng Infrastructure.
+// ============================================================================
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

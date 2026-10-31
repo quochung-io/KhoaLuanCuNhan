@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: web-portal/src/App.tsx
+// MÔ TẢ: Thành phần/Cấu hình App.tsx thuộc phân hệ Quản trị Web Portal (Admin & Nhà cung cấp).
+// ============================================================================
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
 import { Layout, Menu, Dropdown, Space, Tag, Avatar, Button, Tooltip, ConfigProvider, notification } from 'antd';
@@ -147,6 +151,7 @@ const AppContent: React.FC = () => {
     }
   }, [user, navigate]);
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleLogout)
   const handleLogout = () => {
     localStorage.removeItem('user');
     localStorage.removeItem('auth_token');
@@ -579,6 +584,7 @@ const AppContent: React.FC = () => {
   );
 };
 
+// Thực thi nghiệp vụ hàm App
 function App() {
   return (
     <ConfigProvider

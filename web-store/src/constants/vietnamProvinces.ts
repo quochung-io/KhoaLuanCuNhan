@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: web-store/src/constants/vietnamProvinces.ts
+// MÔ TẢ: Tệp cấu hình/dữ liệu (vietnamProvinces.ts) thuộc phân hệ Cửa hàng Trực tuyến LÀNH Farm (Web Store).
+// ============================================================================
 // Danh sách chuẩn 63 Tỉnh/Thành phố Việt Nam dự phòng (Fallback)
 // Đảm bảo hệ thống không bị crash khi API bên ngoài gặp sự cố hoặc timeout
 export interface ProvinceItem {

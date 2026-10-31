@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: web-portal/src/pages/Dashboard.tsx
+// MÔ TẢ: Trang Tổng quan Quản trị (Dashboard): Biểu đồ doanh thu, KPI đơn hàng, phễu chuyển đổi, Top nông sản bán chạy và cảnh báo lô hàng cận hạn FEFO.
+// ============================================================================
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -122,6 +126,7 @@ export const Dashboard: React.FC = () => {
   const [nearExpiry, setNearExpiry] = useState<NearExpiryBatch[]>([]);
   const [loading, setLoading] = useState(false);
 
+  // Tải và truy xuất dữ liệu (loadDashboardData)
   const loadDashboardData = async (selectedRange = timeRange) => {
     setLoading(true);
     try {

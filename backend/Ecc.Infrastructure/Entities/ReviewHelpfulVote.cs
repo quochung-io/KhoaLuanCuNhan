@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: backend/Ecc.Infrastructure/Entities/ReviewHelpfulVote.cs
+// MÔ TẢ: Thực thể dữ liệu (Entity) ReviewHelpfulVote - Biểu diễn cấu trúc bảng và mối quan hệ của ReviewHelpfulVote trong cơ sở dữ liệu.
+// ============================================================================
 ﻿using System.Text.Json.Serialization;
 
 namespace Ecc.Infrastructure.Entities;

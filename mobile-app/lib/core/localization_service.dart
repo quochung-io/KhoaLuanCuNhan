@@ -1,6 +1,11 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: mobile-app/lib/core/localization_service.dart
+// MÔ TẢ: Tiện ích cốt lõi, cấu hình hằng số & giao diện (localization_service.dart) thuộc ứng dụng Flutter LÀNH Farm Mobile App.
+// ============================================================================
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+/// Lớp giao diện / trạng thái LocalizationService
 class LocalizationService extends ChangeNotifier {
   static final LocalizationService instance = LocalizationService._();
   LocalizationService._();
@@ -9,12 +14,14 @@ class LocalizationService extends ChangeNotifier {
   String get currentLanguage => _currentLanguage;
   bool get isEnglish => _currentLanguage == 'en';
 
+  // Thực thi nghiệp vụ hàm init
   Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
     _currentLanguage = prefs.getString('app_language') ?? 'vi';
     notifyListeners();
   }
 
+  // Thực thi nghiệp vụ hàm setLanguage
   Future<void> setLanguage(String langCode) async {
     if (_currentLanguage == langCode) return;
     _currentLanguage = langCode;

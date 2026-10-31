@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: mobile-app/lib/presentation/screens/profile/order_detail_screen.dart
+// MÔ TẢ: Màn hình giao diện di động (order_detail_screen.dart) thuộc ứng dụng Flutter LÀNH Farm Mobile App.
+// ============================================================================
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
@@ -6,6 +10,7 @@ import 'review_order_screen.dart';
 import '../../../data/models/product_model.dart';
 import '../checkout/payment_qr_screen.dart';
 
+/// Lớp giao diện / trạng thái OrderDetailScreen
 class OrderDetailScreen extends StatefulWidget {
   final Map<String, dynamic> order;
   final int? userId;
@@ -26,6 +31,7 @@ class OrderDetailScreen extends StatefulWidget {
   State<OrderDetailScreen> createState() => _OrderDetailScreenState();
 }
 
+/// Lớp giao diện / trạng thái _OrderDetailScreenState
 class _OrderDetailScreenState extends State<OrderDetailScreen> {
   late Map<String, dynamic> _currentOrder;
   bool _isLoading = false;
@@ -45,6 +51,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     super.dispose();
   }
 
+  // Thực thi nghiệp vụ hàm _initCountdown
   void _initCountdown() {
     final createdStr = _currentOrder['createdAt']?.toString();
     if (createdStr != null && createdStr.isNotEmpty) {
@@ -81,6 +88,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     return 1; // pending (đã xác nhận/chờ duyệt)
   }
 
+  // Thực thi nghiệp vụ hàm _refreshOrderDetail
   Future<void> _refreshOrderDetail() async {
     final rawId = _currentOrder['orderId'] ?? _currentOrder['id'];
     final int? oId = rawId is num
@@ -98,6 +106,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     } catch (_) {}
   }
 
+  // Thực thi nghiệp vụ hàm _handleReorder
   Future<void> _handleReorder() async {
     final items = (_currentOrder['orderItems'] as List<dynamic>?) ?? [];
     if (items.isEmpty) {
@@ -242,6 +251,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     }
   }
 
+  // Thực thi nghiệp vụ hàm _showOutOfStockNotice
   void _showOutOfStockNotice(
     BuildContext context,
     List<String> outOfStockNames,
@@ -386,6 +396,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     );
   }
 
+  // Thực thi nghiệp vụ hàm _showCancelReasonSheet
   void _showCancelReasonSheet() {
     final reasons = [
       'Tôi muốn cập nhật hoặc đổi địa chỉ nhận hàng',
@@ -1390,6 +1401,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     );
   }
 
+  // Thực thi nghiệp vụ hàm _buildFallbackImg
   Widget _buildFallbackImg() {
     return Container(
       width: 50,
@@ -1413,6 +1425,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     return parts.join(', ');
   }
 
+  // Thực thi nghiệp vụ hàm _buildStatusBadge
   Widget _buildStatusBadge(String status) {
     Color bg;
     Color text;
@@ -1463,6 +1476,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     );
   }
 
+  // Thực thi nghiệp vụ hàm _buildStepper
   Widget _buildStepper(int currentStep) {
     final steps = [
       'Đã đặt hàng',
@@ -1529,6 +1543,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     );
   }
 
+  // Thực thi nghiệp vụ hàm _buildPaymentStatusBadge
   Widget _buildPaymentStatusBadge(bool isPaid) {
     if (isPaid) {
       return Container(

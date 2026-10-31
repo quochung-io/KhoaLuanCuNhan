@@ -1,7 +1,12 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: mobile-app/lib/presentation/screens/checkout/payment_success_screen.dart
+// MÔ TẢ: Màn hình giao diện di động (payment_success_screen.dart) thuộc ứng dụng Flutter LÀNH Farm Mobile App.
+// ============================================================================
 import 'package:flutter/material.dart';
 import '../profile/orders_management_screen.dart';
 import '../main_container.dart';
 
+/// Lớp giao diện / trạng thái PaymentSuccessScreen
 class PaymentSuccessScreen extends StatefulWidget {
   final String orderCode;
   final dynamic orderId;
@@ -22,6 +27,7 @@ class PaymentSuccessScreen extends StatefulWidget {
   State<PaymentSuccessScreen> createState() => _PaymentSuccessScreenState();
 }
 
+/// Lớp giao diện / trạng thái _PaymentSuccessScreenState
 class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _animController;
@@ -358,6 +364,7 @@ class _PaymentSuccessScreenState extends State<PaymentSuccessScreen>
     );
   }
 
+  // Thực thi nghiệp vụ hàm _buildInfoRow
   Widget _buildInfoRow(String label, String value, {bool isBold = false}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,

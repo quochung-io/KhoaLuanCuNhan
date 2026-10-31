@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: mobile-app/lib/presentation/screens/profile/orders_management_screen.dart
+// MÔ TẢ: Màn hình giao diện di động (orders_management_screen.dart) thuộc ứng dụng Flutter LÀNH Farm Mobile App.
+// ============================================================================
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../../data/api_service.dart';
@@ -7,6 +11,7 @@ import '../main_container.dart';
 import 'order_detail_screen.dart';
 import 'review_order_screen.dart';
 
+/// Lớp giao diện / trạng thái OrdersManagementScreen
 class OrdersManagementScreen extends StatefulWidget {
   final int initialTabIndex;
   final int userId;
@@ -25,6 +30,7 @@ class OrdersManagementScreen extends StatefulWidget {
   State<OrdersManagementScreen> createState() => _OrdersManagementScreenState();
 }
 
+/// Lớp giao diện / trạng thái _OrdersManagementScreenState
 class _OrdersManagementScreenState extends State<OrdersManagementScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
@@ -49,6 +55,7 @@ class _OrdersManagementScreenState extends State<OrdersManagementScreen>
     super.dispose();
   }
 
+  // Thực thi nghiệp vụ hàm _fetchOrders
   Future<void> _fetchOrders() async {
     setState(() => _isLoading = true);
     try {
@@ -66,6 +73,7 @@ class _OrdersManagementScreenState extends State<OrdersManagementScreen>
     }
   }
 
+  // Thực thi nghiệp vụ hàm _handleReorder
   Future<void> _handleReorder(Map<String, dynamic> order) async {
     final items = (order['orderItems'] as List<dynamic>?) ?? [];
     if (items.isEmpty) {
@@ -213,6 +221,7 @@ class _OrdersManagementScreenState extends State<OrdersManagementScreen>
     }
   }
 
+  // Thực thi nghiệp vụ hàm _showOutOfStockNotice
   void _showOutOfStockNotice(
     BuildContext context,
     List<String> outOfStockNames,
@@ -438,6 +447,7 @@ class _OrdersManagementScreenState extends State<OrdersManagementScreen>
     }
   }
 
+  // Thực thi nghiệp vụ hàm _buildEmptyState
   Widget _buildEmptyState(String message) {
     return Center(
       child: Padding(
@@ -501,6 +511,7 @@ class _OrdersManagementScreenState extends State<OrdersManagementScreen>
     );
   }
 
+  // Thực thi nghiệp vụ hàm _openOrderDetail
   void _openOrderDetail(dynamic order) {
     Navigator.push(
       context,
@@ -515,6 +526,7 @@ class _OrdersManagementScreenState extends State<OrdersManagementScreen>
     ).then((_) => _fetchOrders());
   }
 
+  // Thực thi nghiệp vụ hàm _buildOrderCard
   Widget _buildOrderCard(dynamic order) {
     final status = (order['orderStatus'] ?? 'pending').toString();
     final paymentStatus = (order['paymentStatus'] ?? '')
@@ -1145,6 +1157,7 @@ class _OrdersManagementScreenState extends State<OrdersManagementScreen>
     );
   }
 
+  // Thực thi nghiệp vụ hàm _handleBack
   void _handleBack() {
     if (Navigator.canPop(context)) {
       Navigator.pop(context);
@@ -1292,6 +1305,7 @@ class _OrdersManagementScreenState extends State<OrdersManagementScreen>
     );
   }
 
+  // Thực thi nghiệp vụ hàm _buildFallbackImg
   Widget _buildFallbackImg([double size = 48]) {
     return Container(
       width: size,

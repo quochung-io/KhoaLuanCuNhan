@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: web-store/src/app/api/news/route.ts
+// MÔ TẢ: Trang giao diện khách hàng (api/news/route.ts) thuộc phân hệ Cửa hàng Trực tuyến LÀNH Farm (Next.js).
+// ============================================================================
 import { NextResponse } from 'next/server';
 
 export interface NewsArticle {

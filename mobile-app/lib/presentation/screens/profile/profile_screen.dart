@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: mobile-app/lib/presentation/screens/profile/profile_screen.dart
+// MÔ TẢ: Màn hình giao diện di động (profile_screen.dart) thuộc ứng dụng Flutter LÀNH Farm Mobile App.
+// ============================================================================
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
@@ -19,6 +23,7 @@ import 'help_center_screen.dart';
 import 'farming_standards_screen.dart';
 import 'privacy_policy_screen.dart';
 
+/// Lớp giao diện / trạng thái ProfileScreen
 class ProfileScreen extends StatefulWidget {
   final Map<String, dynamic>? user;
   final List<CartItem>? cartItems;
@@ -41,6 +46,7 @@ class ProfileScreen extends StatefulWidget {
   State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
+/// Lớp giao diện / trạng thái _ProfileScreenState
 class _ProfileScreenState extends State<ProfileScreen> {
   int _userId = 3;
   String _fullName = 'Khách hàng';
@@ -62,6 +68,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _initUserData();
   }
 
+  // Thực thi nghiệp vụ hàm _initUserData
   Future<void> _initUserData() async {
     Map<String, dynamic>? userData = widget.user;
 
@@ -95,6 +102,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  // Thực thi nghiệp vụ hàm _fetchLoyalty
   Future<void> _fetchLoyalty() async {
     try {
       final loyaltyData = await ApiService.getUserLoyalty(_userId);
@@ -120,6 +128,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     } catch (_) {}
   }
 
+  // Thực thi nghiệp vụ hàm _fetchOrders
   Future<void> _fetchOrders() async {
     try {
       final role = widget.user?['role']?.toString().toLowerCase();
@@ -153,6 +162,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return widget.cartItems!.fold<int>(0, (sum, item) => sum + item.qty);
   }
 
+  // Thực thi nghiệp vụ hàm _navigateToEditProfile
   void _navigateToEditProfile() async {
     final result = await Navigator.push(
       context,
@@ -196,6 +206,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  // Thực thi nghiệp vụ hàm _navigateToOrders
   void _navigateToOrders(int tabIndex) {
     Navigator.push(
       context,
@@ -210,6 +221,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     ).then((_) => _fetchOrders());
   }
 
+  // Thực thi nghiệp vụ hàm _openCart
   void _openCart() {
     if (widget.onOpenCart != null) {
       widget.onOpenCart!();
@@ -227,6 +239,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  // Thực thi nghiệp vụ hàm _openChat
   void _openChat() {
     Navigator.push(
       context,
@@ -234,6 +247,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  // Thực thi nghiệp vụ hàm _navigateToSettings
   void _navigateToSettings() {
     Navigator.push(
       context,

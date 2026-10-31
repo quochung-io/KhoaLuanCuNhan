@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: backend/Ecc.WebApi/Controllers/Mobile/AddressesController.cs
+// MÔ TẢ: Controller quản lý Sổ địa chỉ nhận hàng của khách hàng (Thêm, sửa, xóa, đặt địa chỉ mặc định).
+// ============================================================================
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Ecc.Infrastructure.Data;

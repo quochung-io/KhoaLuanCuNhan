@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: mobile-app/lib/presentation/screens/main_container.dart
+// MÔ TẢ: Màn hình giao diện di động (main_container.dart) thuộc ứng dụng Flutter LÀNH Farm Mobile App.
+// ============================================================================
 import 'package:flutter/material.dart';
 import '../../data/models/product_model.dart';
 import '../../data/models/cart_item_model.dart';
@@ -8,6 +12,7 @@ import 'notifications/notifications_screen.dart';
 import 'profile/profile_screen.dart';
 import 'cart/cart_screen.dart';
 
+/// Lớp giao diện / trạng thái MainContainer
 class MainContainer extends StatefulWidget {
   final Map<String, dynamic>? user;
   const MainContainer({super.key, this.user});
@@ -16,12 +21,14 @@ class MainContainer extends StatefulWidget {
   State<MainContainer> createState() => MainContainerState();
 }
 
+/// Lớp giao diện / trạng thái MainContainerState
 class MainContainerState extends State<MainContainer> {
   int _currentIndex = 0;
   final List<CartItem> _cart = [];
 
   int get _cartCount => _cart.fold<int>(0, (sum, item) => sum + item.qty);
 
+  // Thực thi nghiệp vụ hàm _addToCart
   void _addToCart(Product product, {int qty = 1}) {
     if (product.isOutOfStock ||
         (product.stockQuantity != null && product.stockQuantity! <= 0)) {
@@ -56,6 +63,7 @@ class MainContainerState extends State<MainContainer> {
     );
   }
 
+  // Thực thi nghiệp vụ hàm _updateQty
   void _updateQty(int productId, int delta) {
     setState(() {
       final index = _cart.indexWhere((item) => item.product.id == productId);
@@ -68,12 +76,14 @@ class MainContainerState extends State<MainContainer> {
     });
   }
 
+  // Thực thi nghiệp vụ hàm _clearCart
   void _clearCart() {
     setState(() {
       _cart.clear();
     });
   }
 
+  // Thực thi nghiệp vụ hàm _openCart
   void _openCart() {
     Navigator.push(
       context,
@@ -88,6 +98,7 @@ class MainContainerState extends State<MainContainer> {
   }
 
   String? _scannedLotCode;
+  // Thực thi nghiệp vụ hàm navigateToTrace
   void navigateToTrace(String lotCode) {
     setState(() {
       _scannedLotCode = lotCode;

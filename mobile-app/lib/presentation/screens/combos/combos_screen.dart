@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: mobile-app/lib/presentation/screens/combos/combos_screen.dart
+// MÔ TẢ: Màn hình giao diện di động (combos_screen.dart) thuộc ứng dụng Flutter LÀNH Farm Mobile App.
+// ============================================================================
 import 'package:flutter/material.dart';
 import '../../../data/models/combo_model.dart';
 import '../../../data/models/product_model.dart';
@@ -6,6 +10,7 @@ import '../../../core/utils/favorites_service.dart';
 import 'combo_customize_screen.dart';
 import '../chat/chat_screen.dart';
 
+/// Lớp giao diện / trạng thái CombosScreen
 class CombosScreen extends StatefulWidget {
   final void Function(Product, {int qty})? onAddToCart;
   final VoidCallback? onOpenCart;
@@ -22,6 +27,7 @@ class CombosScreen extends StatefulWidget {
   State<CombosScreen> createState() => _CombosScreenState();
 }
 
+/// Lớp giao diện / trạng thái _CombosScreenState
 class _CombosScreenState extends State<CombosScreen> {
   String _selectedType =
       'combotuan'; // 'combotuan' | 'combothang' | 'combokhac'
@@ -35,6 +41,7 @@ class _CombosScreenState extends State<CombosScreen> {
     _loadFavorites();
   }
 
+  // Thực thi nghiệp vụ hàm _loadFavorites
   Future<void> _loadFavorites() async {
     final list = await FavoritesService.getFavoriteCombos();
     if (mounted) {
@@ -46,6 +53,7 @@ class _CombosScreenState extends State<CombosScreen> {
     }
   }
 
+  // Thực thi nghiệp vụ hàm _toggleFavorite
   Future<void> _toggleFavorite(ComboPlan combo) async {
     final isFav = await FavoritesService.toggleFavoriteCombo(combo);
     if (mounted) {
@@ -88,6 +96,7 @@ class _CombosScreenState extends State<CombosScreen> {
     }).toList();
   }
 
+  // Thực thi nghiệp vụ hàm _openCustomizeScreen
   void _openCustomizeScreen(ComboPlan combo) {
     if (widget.onAddToCart == null) return;
     Navigator.push(
@@ -359,6 +368,7 @@ class _CombosScreenState extends State<CombosScreen> {
     );
   }
 
+  // Thực thi nghiệp vụ hàm _buildTypeTab
   Widget _buildTypeTab(String key, String label) {
     final isSelected = _selectedType == key;
     return Expanded(
@@ -389,6 +399,7 @@ class _CombosScreenState extends State<CombosScreen> {
     );
   }
 
+  // Thực thi nghiệp vụ hàm _buildComboCard
   Widget _buildComboCard(ComboPlan combo) {
     return GestureDetector(
       onTap: () => _openCustomizeScreen(combo),

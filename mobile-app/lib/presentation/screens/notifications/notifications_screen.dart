@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: mobile-app/lib/presentation/screens/notifications/notifications_screen.dart
+// MÔ TẢ: Màn hình giao diện di động (notifications_screen.dart) thuộc ứng dụng Flutter LÀNH Farm Mobile App.
+// ============================================================================
 import 'package:flutter/material.dart';
 
 import '../../../data/api_service.dart';
@@ -45,6 +49,7 @@ class NotificationItem {
   }
 }
 
+/// Lớp giao diện / trạng thái NotificationsScreen
 class NotificationsScreen extends StatefulWidget {
   final Map<String, dynamic>? user;
   const NotificationsScreen({super.key, this.user});
@@ -53,6 +58,7 @@ class NotificationsScreen extends StatefulWidget {
   State<NotificationsScreen> createState() => _NotificationsScreenState();
 }
 
+/// Lớp giao diện / trạng thái _NotificationsScreenState
 class _NotificationsScreenState extends State<NotificationsScreen> {
   String _selectedCategory = 'all';
   List<NotificationItem> _notifications = [];
@@ -64,6 +70,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     _loadNotifications();
   }
 
+  // Thực thi nghiệp vụ hàm _loadNotifications
   Future<void> _loadNotifications() async {
     if (widget.user == null) {
       setState(() => _isLoading = false);
@@ -101,6 +108,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         .toList();
   }
 
+  // Thực thi nghiệp vụ hàm _markAllAsRead
   Future<void> _markAllAsRead() async {
     if (widget.user != null) {
       await ApiService.markAllNotificationsAsRead(widget.user!['userId']);
@@ -244,6 +252,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     );
   }
 
+  // Thực thi nghiệp vụ hàm _buildTab
   Widget _buildTab(String key, String label) {
     final isSelected = _selectedCategory == key;
     return GestureDetector(
@@ -266,6 +275,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     );
   }
 
+  // Thực thi nghiệp vụ hàm _buildNotificationCard
   Widget _buildNotificationCard(NotificationItem item) {
     IconData icon;
     Color iconColor;

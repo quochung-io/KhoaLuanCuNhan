@@ -1,4 +1,8 @@
 'use client';
+// ============================================================================
+// TỆP MÃ NGUỒN: web-store/src/app/products/page.tsx
+// MÔ TẢ: Trang giao diện khách hàng (products/page.tsx) thuộc phân hệ Cửa hàng Trực tuyến LÀNH Farm (Next.js).
+// ============================================================================
 import React, { useState, useEffect, useRef, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -58,6 +62,7 @@ type SuggestionItem = {
   imageUrl?: string;
 };
 
+// Thực thi nghiệp vụ hàm AllProductsInner
 function AllProductsInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -109,6 +114,7 @@ function AllProductsInner() {
     document.body.setAttribute('data-theme', theme);
   }, [theme]);
 
+  // Điều khiển đóng/mở giao diện hoặc hộp thoại (toggleTheme)
   const toggleTheme = () => setTheme(prev => (prev === 'light' ? 'dark' : 'light'));
 
   // Load User & Cart từ localStorage
@@ -130,6 +136,7 @@ function AllProductsInner() {
 
   // Click outside to close user dropdown
   useEffect(() => {
+    // Hàm xử lý sự kiện tương tác người dùng (handleClickOutside)
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setShowUserDropdown(false);
@@ -218,6 +225,7 @@ function AllProductsInner() {
     }
   }, [quickViewProduct, currentUser]);
 
+  // Điều khiển đóng/mở giao diện hoặc hộp thoại (toggleTopKSelection)
   const toggleTopKSelection = (id: number) => {
     const item = boughtTogether.find(x => x.productId === id);
     if (item?.isOutOfStock) {
@@ -229,6 +237,7 @@ function AllProductsInner() {
     );
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleAddRecommendedToCart)
   const handleAddRecommendedToCart = (item: any) => {
     if (item.isOutOfStock) {
       alert(`Sản phẩm "${item.productName}" hiện đang tạm hết hàng, không thể thêm vào giỏ.`);
@@ -267,6 +276,7 @@ function AllProductsInner() {
     setTimeout(() => setRecToast(''), 2500);
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleDrillDownProduct)
   const handleDrillDownProduct = async (item: any) => {
     if (!quickViewProduct) return;
     setQuickViewHistory(prev => [...prev, quickViewProduct]);
@@ -337,6 +347,7 @@ function AllProductsInner() {
     setQuickViewQty(1);
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleBackQuickView)
   const handleBackQuickView = () => {
     if (quickViewHistory.length === 0) return;
     const previous = quickViewHistory[quickViewHistory.length - 1];
@@ -345,6 +356,7 @@ function AllProductsInner() {
     setQuickViewQty(1);
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleAddAllComboToCart)
   const handleAddAllComboToCart = () => {
     if (!quickViewProduct) return;
     if (isQuickViewOutOfStock) {
@@ -480,6 +492,7 @@ function AllProductsInner() {
       .finally(() => setLoading(false));
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleSearchChange)
   const handleSearchChange = (val: string) => {
     setSearchQuery(val);
     if (val.trim().length > 0) {
@@ -502,6 +515,7 @@ function AllProductsInner() {
     fetchProducts(s);
   }, [searchParams]);
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleCustomerLogout)
   const handleCustomerLogout = () => {
     localStorage.removeItem('customer_user');
     setCurrentUser(null);
@@ -527,6 +541,7 @@ function AllProductsInner() {
     setTimeout(() => setAddedItem(null), 900);
   };
 
+  // Cập nhật và đồng bộ dữ liệu (updateCartQty)
   const updateCartQty = (id: number, delta: number) => {
     setCart(prev =>
       prev.map(x => {
@@ -555,6 +570,7 @@ function AllProductsInner() {
   const totalCart = cart.reduce((s, i) => s + (i.product.rawPrice || parseInt(i.product.price.replace(/[^\d]/g, ''), 10)) * i.qty, 0);
   const toVND = (n: number) => n.toLocaleString('vi-VN') + '₫';
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleGoToCheckout)
   const handleGoToCheckout = () => {
     if (!currentUser) {
       alert('Vui lòng đăng nhập trước khi thực hiện thanh toán!');
@@ -569,6 +585,7 @@ function AllProductsInner() {
     router.push('/checkout');
   };
 
+  // Điều khiển đóng/mở giao diện hoặc hộp thoại (openQuickView)
   const openQuickView = (p: Product) => {
     setQuickViewProduct(p);
     setQuickViewQty(1);
@@ -1994,6 +2011,7 @@ function AllProductsInner() {
   );
 }
 
+// Thực thi nghiệp vụ hàm AllProductsPage
 export default function AllProductsPage() {
   return (
     <Suspense fallback={

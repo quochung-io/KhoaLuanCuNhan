@@ -1,4 +1,8 @@
 'use client';
+// ============================================================================
+// TỆP MÃ NGUỒN: web-store/src/app/combos/[id]/page.tsx
+// MÔ TẢ: Trang giao diện khách hàng (combos/[id]/page.tsx) thuộc phân hệ Cửa hàng Trực tuyến LÀNH Farm (Next.js).
+// ============================================================================
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
@@ -204,6 +208,7 @@ export const SUPPLIERS_PROFILES: SupplierProfile[] = [
   }
 ];
 
+// Tải và truy xuất dữ liệu (getComboSlotCount)
 function getComboSlotCount(id: number): number {
   if (id === 902 || id === 905) return 5; // Gia Đình Lớn: 5 món
   if (id === 903 || id === 906 || id === 908 || id === 909) return 4; // Thuần Chay / Trái Cây / Lẩu: 4 món
@@ -564,6 +569,7 @@ function getComboData(id: number): ComboDetail {
   return combosDatabase[901];
 }
 
+// Thực thi nghiệp vụ hàm ComboDetailPage
 export default function ComboDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -612,6 +618,7 @@ export default function ComboDetailPage() {
     showNotification(`Đã chuyển sang ${newSup.name}. Danh mục nông sản đã được cập nhật!`);
   };
 
+  // Điều khiển đóng/mở giao diện hoặc hộp thoại (toggleSelectProduce)
   const toggleSelectProduce = (item: SelectableProduceItem) => {
     const isSelected = selectedProduce.some(x => x.id === item.id);
     if (isSelected) {
@@ -673,6 +680,7 @@ export default function ComboDetailPage() {
   const [cartBounce, setCartBounce] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
+  // Tải và truy xuất dữ liệu (fetchComboReviews)
   const fetchComboReviews = async () => {
     setLoadingReviews(true);
     try {
@@ -717,6 +725,7 @@ export default function ComboDetailPage() {
     }
   }, []);
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleLikeReview)
   const handleLikeReview = async (reviewId: number) => {
     const uId = currentUser?.id || currentUser?.userId;
     if (!uId) {
@@ -741,6 +750,7 @@ export default function ComboDetailPage() {
     }
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleSendReply)
   const handleSendReply = async (parentReviewId: number) => {
     const uId = currentUser?.id || currentUser?.userId;
     if (!uId) {
@@ -780,6 +790,7 @@ export default function ComboDetailPage() {
     }
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleCreateReview)
   const handleCreateReview = async (e: React.FormEvent) => {
     e.preventDefault();
     const uId = currentUser?.id || currentUser?.userId;
@@ -826,6 +837,7 @@ export default function ComboDetailPage() {
     document.body.setAttribute('data-theme', theme);
   }, [theme]);
 
+  // Điều khiển đóng/mở giao diện hoặc hộp thoại (toggleTheme)
   const toggleTheme = () => setTheme(prev => (prev === 'light' ? 'dark' : 'light'));
 
   useEffect(() => {
@@ -871,6 +883,7 @@ export default function ComboDetailPage() {
   }
   const currentPriceFormatted = currentPrice.toLocaleString('vi-VN') + '₫';
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleAddToCart)
   const handleAddToCart = () => {
     if (selectedProduce.length < maxSlots) {
       showNotification(`Vui lòng chọn đủ ${maxSlots} món nông sản tươi ngon cho gói combo này (Hiện tại bạn mới chọn ${selectedProduce.length}/${maxSlots} món)!`);
@@ -916,6 +929,7 @@ export default function ComboDetailPage() {
     showNotification(`Đã thêm ${quantity} giỏ ${combo.name} [${selectedSummary}] vào giỏ hàng!`);
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleBuyNow)
   const handleBuyNow = () => {
     handleAddToCart();
     setTimeout(() => {
@@ -923,6 +937,7 @@ export default function ComboDetailPage() {
     }, 300);
   };
 
+  // Cập nhật và đồng bộ dữ liệu (updateCartQty)
   const updateCartQty = (id: number, delta: number) => {
     setCart(prev =>
       prev.map(x => {

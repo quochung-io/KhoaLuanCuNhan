@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: mobile-app/lib/core/utils/favorites_service.dart
+// MÔ TẢ: Tiện ích cốt lõi, cấu hình hằng số & giao diện (favorites_service.dart) thuộc ứng dụng Flutter LÀNH Farm Mobile App.
+// ============================================================================
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../data/models/product_model.dart';

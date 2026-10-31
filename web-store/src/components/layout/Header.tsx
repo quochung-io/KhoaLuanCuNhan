@@ -1,4 +1,8 @@
 'use client';
+// ============================================================================
+// TỆP MÃ NGUỒN: web-store/src/components/layout/Header.tsx
+// MÔ TẢ: Component giao diện dùng chung (Header.tsx) thuộc phân hệ Cửa hàng Trực tuyến LÀNH Farm (Web Store).
+// ============================================================================
 
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
@@ -100,6 +104,7 @@ export const Header: React.FC<HeaderProps> = ({
     }
   });
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleSetLang)
   const handleSetLang = (l: 'vi' | 'en') => {
     if (setLang) {
       setLang(l);
@@ -117,6 +122,7 @@ export const Header: React.FC<HeaderProps> = ({
     }
   });
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleCartClick)
   const handleCartClick = () => {
     if (setIsDrawerOpen) {
       setIsDrawerOpen(true);
@@ -127,6 +133,7 @@ export const Header: React.FC<HeaderProps> = ({
 
   // Click ngoài đóng dropdown
   useEffect(() => {
+    // Hàm xử lý sự kiện tương tác người dùng (handleClickOutside)
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setShowUserDropdown(false);

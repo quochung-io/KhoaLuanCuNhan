@@ -1,14 +1,20 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: backend/Ecc.WebApi/Hubs/OrderNotificationHub.cs
+// MÔ TẢ: SignalR Hub xử lý thông báo thời gian thực (Real-time WebSockets) khi có đơn hàng mới hoặc thay đổi trạng thái đơn hàng.
+// ============================================================================
 using Microsoft.AspNetCore.SignalR;
 
 namespace Ecc.WebApi.Hubs;
 
 public class OrderNotificationHub : Hub
 {
+    /// <summary>Thực thi nghiệp vụ hàm JoinAdminGroup</summary>
     public async Task JoinAdminGroup()
     {
         await Groups.AddToGroupAsync(Context.ConnectionId, "AdminGroup");
     }
 
+    /// <summary>Thực thi nghiệp vụ hàm JoinSupplierGroup</summary>
     public async Task JoinSupplierGroup(string supplierId)
     {
         if (!string.IsNullOrWhiteSpace(supplierId))
@@ -17,6 +23,7 @@ public class OrderNotificationHub : Hub
         }
     }
 
+    /// <summary>Thực thi nghiệp vụ hàm JoinCustomerGroup</summary>
     public async Task JoinCustomerGroup(string customerId)
     {
         if (!string.IsNullOrWhiteSpace(customerId))
@@ -25,6 +32,7 @@ public class OrderNotificationHub : Hub
         }
     }
 
+    /// <summary>Thực thi nghiệp vụ hàm JoinOrderGroup</summary>
     public async Task JoinOrderGroup(string orderId)
     {
         if (!string.IsNullOrWhiteSpace(orderId))

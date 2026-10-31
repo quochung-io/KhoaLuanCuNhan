@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: backend/Ecc.Infrastructure/Entities/Category.cs
+// MÔ TẢ: Thực thể dữ liệu (Entity) Category - Biểu diễn cấu trúc bảng và mối quan hệ của Category trong cơ sở dữ liệu.
+// ============================================================================
 using System.Text.Json.Serialization;
 
 namespace Ecc.Infrastructure.Entities;

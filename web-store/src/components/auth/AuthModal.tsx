@@ -1,4 +1,8 @@
 'use client';
+// ============================================================================
+// TỆP MÃ NGUỒN: web-store/src/components/auth/AuthModal.tsx
+// MÔ TẢ: Component giao diện dùng chung (AuthModal.tsx) thuộc phân hệ Cửa hàng Trực tuyến LÀNH Farm (Web Store).
+// ============================================================================
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
@@ -278,6 +282,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     }
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleResetPasswordSubmit)
   const handleResetPasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');

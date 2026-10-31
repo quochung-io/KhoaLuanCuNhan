@@ -1,4 +1,8 @@
 'use client';
+// ============================================================================
+// TỆP MÃ NGUỒN: web-store/src/app/products/[id]/page.tsx
+// MÔ TẢ: Trang giao diện khách hàng (products/[id]/page.tsx) thuộc phân hệ Cửa hàng Trực tuyến LÀNH Farm (Next.js).
+// ============================================================================
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
@@ -339,6 +343,7 @@ interface SecondaryImage {
   label: string;
 }
 
+// Tải và truy xuất dữ liệu (getSecondaryImages)
 function getSecondaryImages(category: string, productName: string, dbImages?: ProductImage[]): SecondaryImage[] {
   const n = productName.toLowerCase();
   
@@ -407,6 +412,7 @@ function getSecondaryImages(category: string, productName: string, dbImages?: Pr
   return result.slice(0, 3);
 }
 
+// Thực thi nghiệp vụ hàm ProductDetailPage
 export default function ProductDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -698,8 +704,10 @@ export default function ProductDetailPage() {
     document.body.setAttribute('data-theme', theme);
   }, [theme]);
 
+  // Điều khiển đóng/mở giao diện hoặc hộp thoại (toggleTheme)
   const toggleTheme = () => setTheme(prev => (prev === 'light' ? 'dark' : 'light'));
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleCustomerLogout)
   const handleCustomerLogout = () => {
     localStorage.removeItem('customer_user');
     setCurrentUser(null);
@@ -709,6 +717,7 @@ export default function ProductDetailPage() {
 
   // Click outside to close user dropdown
   useEffect(() => {
+    // Hàm xử lý sự kiện tương tác người dùng (handleClickOutside)
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setShowUserDropdown(false);
@@ -1039,6 +1048,7 @@ export default function ProductDetailPage() {
     setTimeout(() => setAddedToast(false), 2500);
   };
 
+  // Cập nhật và đồng bộ dữ liệu (updateCartQty)
   const updateCartQty = (id: number, delta: number) => {
     const updated = cart.map(item => {
       if (item.product.id === id) {

@@ -1,4 +1,8 @@
 'use client';
+// ============================================================================
+// TỆP MÃ NGUỒN: web-store/src/app/orders/page.tsx
+// MÔ TẢ: Trang giao diện khách hàng (orders/page.tsx) thuộc phân hệ Cửa hàng Trực tuyến LÀNH Farm (Next.js).
+// ============================================================================
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -54,6 +58,7 @@ interface CartItem {
   qty: number;
 }
 
+// Thực thi nghiệp vụ hàm CustomerOrdersPage
 export default function CustomerOrdersPage() {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
@@ -137,6 +142,7 @@ export default function CustomerOrdersPage() {
     };
   };
 
+  // Điều khiển đóng/mở giao diện hoặc hộp thoại (openProductQuickView)
   const openProductQuickView = (productId: number, item?: any) => {
     if (!productId) return;
     setQuickViewProduct({
@@ -688,8 +694,10 @@ export default function CustomerOrdersPage() {
     document.body.setAttribute('data-theme', theme);
   }, [theme]);
 
+  // Điều khiển đóng/mở giao diện hoặc hộp thoại (toggleTheme)
   const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
 
+  // Tải và truy xuất dữ liệu (loadOrders)
   const loadOrders = async (userId: number) => {
     setLoading(true);
     try {
@@ -758,6 +766,7 @@ export default function CustomerOrdersPage() {
     setOrderToCancel(order);
   };
 
+  // Thực thi nghiệp vụ hàm confirmAndCancelOrder
   const confirmAndCancelOrder = async () => {
     if (!orderToCancel) return;
     const targetOrder = orderToCancel;
@@ -929,6 +938,7 @@ export default function CustomerOrdersPage() {
     return () => clearInterval(syncInterval);
   }, [router]);
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleCustomerLogout)
   const handleCustomerLogout = () => {
     localStorage.removeItem('customer_user');
     setCurrentUser(null);
@@ -936,6 +946,7 @@ export default function CustomerOrdersPage() {
     router.push('/');
   };
 
+  // Cập nhật và đồng bộ dữ liệu (updateCartQty)
   const updateCartQty = (id: number, delta: number) => {
     const updated = cart.map(item => {
       if (item.product.id === id) {

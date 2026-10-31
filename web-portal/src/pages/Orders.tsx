@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: web-portal/src/pages/Orders.tsx
+// MÔ TẢ: Trang Quản lý Đơn hàng & Vận hành: Tiếp nhận đơn, duyệt đóng gói, giao hàng, in phiếu giao nhận và xác nhận hoàn tất.
+// ============================================================================
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Table, Button, Space, Modal, Form, Select, Tag, message, Card, Tooltip, Input, DatePicker, Row, Col } from 'antd';
@@ -76,6 +80,7 @@ export const Orders: React.FC = () => {
     (orderDateRange && orderDateRange.length === 2 && orderDateRange[0] && orderDateRange[1])
   );
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleResetFilters)
   const handleResetFilters = () => {
     setSearchOrderId('');
     setSearchCustomer('');
@@ -140,6 +145,7 @@ export const Orders: React.FC = () => {
     return true;
   });
 
+  // Tải và truy xuất dữ liệu (fetchOrders)
   const fetchOrders = async () => {
     setLoading(true);
     try {
@@ -192,6 +198,7 @@ export const Orders: React.FC = () => {
     }
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleOpenEdit)
   const handleOpenEdit = (order: Order) => {
     const isTerminal = ['cancelled', 'returned'].includes(order.orderStatus?.toLowerCase());
     if (isTerminal) {
@@ -203,16 +210,19 @@ export const Orders: React.FC = () => {
     setIsEditModalOpen(true);
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleOpenView)
   const handleOpenView = (order: Order) => {
     setSelectedOrder(order);
     setIsViewModalOpen(true);
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleOpenDeliverySlip)
   const handleOpenDeliverySlip = (order: Order) => {
     setDeliverySlipOrder(order);
     setIsDeliverySlipOpen(true);
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleConfirmHandover)
   const handleConfirmHandover = async (orderId: number) => {
     try {
       if (isSupplier) {
@@ -240,6 +250,7 @@ export const Orders: React.FC = () => {
     }
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleSaveStatus)
   const handleSaveStatus = async () => {
     if (!selectedOrder) return;
     try {

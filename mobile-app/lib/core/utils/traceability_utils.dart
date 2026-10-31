@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: mobile-app/lib/core/utils/traceability_utils.dart
+// MÔ TẢ: Tiện ích cốt lõi, cấu hình hằng số & giao diện (traceability_utils.dart) thuộc ứng dụng Flutter LÀNH Farm Mobile App.
+// ============================================================================
 import 'package:flutter/material.dart';
 
 enum CropType { fruitTree, fruitingVine, leafyGreen, mushroom }

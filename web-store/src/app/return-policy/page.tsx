@@ -1,10 +1,15 @@
 'use client';
+// ============================================================================
+// TỆP MÃ NGUỒN: web-store/src/app/return-policy/page.tsx
+// MÔ TẢ: Trang giao diện khách hàng (return-policy/page.tsx) thuộc phân hệ Cửa hàng Trực tuyến LÀNH Farm (Next.js).
+// ============================================================================
 
 import React from 'react';
 import Link from 'next/link';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 
+// Thực thi nghiệp vụ hàm ReturnPolicyPage
 export default function ReturnPolicyPage() {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--bg, #F8FAF7)' }}>

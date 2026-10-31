@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: backend/Ecc.WebApi/Controllers/Web/ReturnTicketsController.cs
+// MÔ TẢ: Controller quản lý Yêu cầu Khiếu nại, Đổi trả & Hoàn tiền nông sản tươi sống (Smart Claim).
+// ============================================================================
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Ecc.Infrastructure.Data;

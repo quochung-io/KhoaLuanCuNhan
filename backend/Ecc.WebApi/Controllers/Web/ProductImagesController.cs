@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: backend/Ecc.WebApi/Controllers/Web/ProductImagesController.cs
+// MÔ TẢ: Controller quản lý thư viện hình ảnh chính và ảnh phụ của từng sản phẩm nông sản.
+// ============================================================================
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Ecc.Infrastructure.Data;
@@ -74,6 +78,7 @@ public class ProductImagesController : ControllerBase
         return Ok(result);
     }
 
+    /// <summary>Xóa hoặc làm mới dữ liệu (DeleteProductImage)</summary>
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteProductImage(long id)
     {
@@ -90,6 +95,7 @@ public class ProductImagesController : ControllerBase
         Timeout = TimeSpan.FromSeconds(10)
     };
 
+    /// <summary>Thực thi nghiệp vụ hàm ProxyImage</summary>
     [HttpGet("proxy")]
     public async Task<IActionResult> ProxyImage([FromQuery] string url)
     {

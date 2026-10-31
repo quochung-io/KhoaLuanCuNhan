@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: backend/Ecc.WebApi/Services/JwtService.cs
+// MÔ TẢ: Dịch vụ khởi tạo và xác thực mã thông báo bảo mật JWT (Access Token & Refresh Token) cho người dùng.
+// ============================================================================
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
@@ -23,6 +27,7 @@ public class JwtService : IJwtService
         _config = config;
     }
 
+    /// <summary>Thực thi nghiệp vụ hàm GenerateAccessToken</summary>
     public string GenerateAccessToken(User user, long? supplierId = null, long? farmId = null)
     {
         var secretKey = _config["JwtSettings:SecretKey"] ?? "ECC_NongSanLanh_Secret_Key_Super_Secure_2026_JWT_Token_Key!#$";
@@ -74,6 +79,7 @@ public class JwtService : IJwtService
         return tokenHandler.WriteToken(token);
     }
 
+    /// <summary>Thực thi nghiệp vụ hàm GenerateRefreshToken</summary>
     public string GenerateRefreshToken()
     {
         var randomNumber = new byte[64];

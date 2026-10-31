@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: web-portal/src/pages/Batches.tsx
+// MÔ TẢ: Trang Quản lý Lô hàng & Truy xuất nguồn gốc (FEFO): Theo dõi ngày thu hoạch, hạn sử dụng, xuất hủy lô quá hạn và giảm giá xả kho.
+// ============================================================================
 import React, { useEffect, useState, useMemo } from 'react';
 import { 
   Table, 
@@ -160,6 +164,7 @@ export const Batches: React.FC = () => {
     (harvestDateRange && harvestDateRange.length === 2 && harvestDateRange[0] && harvestDateRange[1])
   );
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleResetFilters)
   const handleResetFilters = () => {
     setSearchCodeOrId('');
     setSearchProductName('');
@@ -223,6 +228,7 @@ export const Batches: React.FC = () => {
     return true;
   });
 
+  // Tải và truy xuất dữ liệu (loadData)
   const loadData = async () => {
     setLoading(true);
     try {
@@ -380,6 +386,7 @@ export const Batches: React.FC = () => {
     }
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleOpenAdd)
   const handleOpenAdd = () => {
     setEditingBatch(null);
     form.resetFields();
@@ -396,6 +403,7 @@ export const Batches: React.FC = () => {
     setIsModalOpen(true);
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleOpenEdit)
   const handleOpenEdit = (batch: ProductBatch) => {
     setEditingBatch(batch);
     form.setFieldsValue({
@@ -411,6 +419,7 @@ export const Batches: React.FC = () => {
     setIsModalOpen(true);
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleDelete)
   const handleDelete = async (id: number) => {
     Modal.confirm({
       title: 'Xác nhận xóa lô hàng',
@@ -430,6 +439,7 @@ export const Batches: React.FC = () => {
     });
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleSave)
   const handleSave = async () => {
     try {
       const values = await form.validateFields();

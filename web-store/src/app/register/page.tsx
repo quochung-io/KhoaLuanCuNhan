@@ -1,4 +1,8 @@
 'use client';
+// ============================================================================
+// TỆP MÃ NGUỒN: web-store/src/app/register/page.tsx
+// MÔ TẢ: Trang giao diện khách hàng (register/page.tsx) thuộc phân hệ Cửa hàng Trực tuyến LÀNH Farm (Next.js).
+// ============================================================================
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -25,6 +29,7 @@ type CartItem = {
   qty: number;
 };
 
+// Xử lý phiên đăng nhập / đăng ký tài khoản (RegisterPage)
 export default function RegisterPage() {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -85,6 +90,7 @@ export default function RegisterPage() {
     document.body.setAttribute('data-theme', theme);
   }, [theme]);
 
+  // Điều khiển đóng/mở giao diện hoặc hộp thoại (toggleTheme)
   const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
 
   useEffect(() => {
@@ -113,6 +119,7 @@ export default function RegisterPage() {
 
   // Đóng dropdown tài khoản khi click ra ngoài
   useEffect(() => {
+    // Hàm xử lý sự kiện tương tác người dùng (handleClickOutside)
     const handleClickOutside = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setShowUserDropdown(false);
@@ -122,6 +129,7 @@ export default function RegisterPage() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleCustomerLogout)
   const handleCustomerLogout = () => {
     localStorage.removeItem('customer_user');
     localStorage.removeItem('auth_token');
@@ -129,6 +137,7 @@ export default function RegisterPage() {
     setShowUserDropdown(false);
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleSearchChange)
   const handleSearchChange = (val: string) => {
     setSearchQuery(val);
     if (val.trim().length > 0) {
@@ -145,12 +154,14 @@ export default function RegisterPage() {
     }
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleSearchSubmit)
   const handleSearchSubmit = () => {
     if (searchQuery.trim()) {
       router.push(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
     }
   };
 
+  // Cập nhật và đồng bộ dữ liệu (updateCartQty)
   const updateCartQty = (id: number, delta: number) => {
     setCart(prev => {
       const updated = prev.map(x => {
@@ -260,6 +271,7 @@ export default function RegisterPage() {
     }
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleOpenOtpModal)
   const handleOpenOtpModal = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -326,6 +338,7 @@ export default function RegisterPage() {
     }
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleRequestOtp)
   const handleRequestOtp = async () => {
     setIsSendingOtp(true);
     setOtpModalMsg(null);
@@ -364,6 +377,7 @@ export default function RegisterPage() {
     }
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleConfirmRegister)
   const handleConfirmRegister = async () => {
     if (otpCode.trim().length !== 6) {
       setOtpModalMsg({

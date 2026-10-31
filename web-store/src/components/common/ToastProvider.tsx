@@ -1,4 +1,8 @@
 "use client";
+// ============================================================================
+// TỆP MÃ NGUỒN: web-store/src/components/common/ToastProvider.tsx
+// MÔ TẢ: Component giao diện dùng chung (ToastProvider.tsx) thuộc phân hệ Cửa hàng Trực tuyến LÀNH Farm (Web Store).
+// ============================================================================
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
 
@@ -33,6 +37,7 @@ interface ToastContextType {
 
 const ToastContext = createContext<ToastContextType | null>(null);
 
+// Thực thi nghiệp vụ hàm ToastProvider
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const [dialog, setDialog] = useState<DialogOptions | null>(null);
@@ -540,6 +545,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   );
 }
 
+// Thực thi nghiệp vụ hàm useToast
 export function useToast() {
   const context = useContext(ToastContext);
   if (!context) {

@@ -1,4 +1,8 @@
 'use client';
+// ============================================================================
+// TỆP MÃ NGUỒN: web-store/src/app/vouchers/page.tsx
+// MÔ TẢ: Trang giao diện khách hàng (vouchers/page.tsx) thuộc phân hệ Cửa hàng Trực tuyến LÀNH Farm (Next.js).
+// ============================================================================
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -23,6 +27,7 @@ interface VoucherItem {
   status?: string;
 }
 
+// Thực thi nghiệp vụ hàm VouchersPage
 export default function VouchersPage() {
   const [vouchers, setVouchers] = useState<VoucherItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -34,6 +39,7 @@ export default function VouchersPage() {
     fetchVouchers();
   }, []);
 
+  // Tải và truy xuất dữ liệu (fetchVouchers)
   const fetchVouchers = async () => {
     setLoading(true);
     try {
@@ -58,6 +64,7 @@ export default function VouchersPage() {
     }
   };
 
+  // Tải và truy xuất dữ liệu (fetchFallbackVouchers)
   const fetchFallbackVouchers = () => {
     setVouchers([
       {
@@ -108,6 +115,7 @@ export default function VouchersPage() {
     ]);
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleCopy)
   const handleCopy = (code: string) => {
     navigator.clipboard.writeText(code);
     setCopiedCode(code);

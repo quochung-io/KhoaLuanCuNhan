@@ -1,6 +1,11 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: mobile-app/lib/presentation/screens/chat/admin_chat_screen.dart
+// MÔ TẢ: Màn hình giao diện di động (admin_chat_screen.dart) thuộc ứng dụng Flutter LÀNH Farm Mobile App.
+// ============================================================================
 import 'package:flutter/material.dart';
 import '../../../core/localization_service.dart';
 
+/// Lớp giao diện / trạng thái AdminChatScreen
 class AdminChatScreen extends StatefulWidget {
   final int? currentUserId;
   final String? currentUserName;
@@ -11,6 +16,7 @@ class AdminChatScreen extends StatefulWidget {
   State<AdminChatScreen> createState() => _AdminChatScreenState();
 }
 
+/// Lớp giao diện / trạng thái _AdminChatScreenState
 class _AdminChatScreenState extends State<AdminChatScreen> {
   final TextEditingController _msgCtrl = TextEditingController();
   final ScrollController _scrollController = ScrollController();
@@ -46,6 +52,7 @@ class _AdminChatScreenState extends State<AdminChatScreen> {
     super.dispose();
   }
 
+  // Thực thi nghiệp vụ hàm _sendMessage
   void _sendMessage() {
     final text = _msgCtrl.text.trim();
     if (text.isEmpty) return;
@@ -77,6 +84,7 @@ class _AdminChatScreenState extends State<AdminChatScreen> {
     });
   }
 
+  // Thực thi nghiệp vụ hàm _scrollToBottom
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {

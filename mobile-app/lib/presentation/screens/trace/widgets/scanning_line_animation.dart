@@ -1,5 +1,10 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: mobile-app/lib/presentation/screens/trace/widgets/scanning_line_animation.dart
+// MÔ TẢ: Màn hình giao diện di động (scanning_line_animation.dart) thuộc ứng dụng Flutter LÀNH Farm Mobile App.
+// ============================================================================
 import 'package:flutter/material.dart';
 
+/// Lớp giao diện / trạng thái ScanningLineAnimation
 class ScanningLineAnimation extends StatefulWidget {
   const ScanningLineAnimation({super.key});
 
@@ -7,6 +12,7 @@ class ScanningLineAnimation extends StatefulWidget {
   State<ScanningLineAnimation> createState() => _ScanningLineAnimationState();
 }
 
+/// Lớp giao diện / trạng thái _ScanningLineAnimationState
 class _ScanningLineAnimationState extends State<ScanningLineAnimation>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;

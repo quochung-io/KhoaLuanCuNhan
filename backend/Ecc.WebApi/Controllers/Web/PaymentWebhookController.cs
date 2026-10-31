@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: backend/Ecc.WebApi/Controllers/Web/PaymentWebhookController.cs
+// MÔ TẢ: Controller tiếp nhận Webhook IPN tự động từ cổng thanh toán MoMo và VietQR/Casso/SePay để xác nhận đơn hàng đã thanh toán.
+// ============================================================================
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Ecc.Infrastructure.Data;

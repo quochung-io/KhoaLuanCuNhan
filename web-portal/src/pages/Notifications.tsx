@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: web-portal/src/pages/Notifications.tsx
+// MÔ TẢ: Trang Phát sóng Thông báo Hệ thống tới ứng dụng của Khách hàng và Nhà cung cấp.
+// ============================================================================
 import React, { useState, useEffect } from 'react';
 import { Card, Form, Input, Button, Select, message, Row, Col, Tag, Space, Divider } from 'antd';
 import { SendOutlined, BellOutlined, CheckCircleOutlined, EyeOutlined } from '@ant-design/icons';
@@ -21,6 +25,7 @@ export const Notifications: React.FC = () => {
     fetchUsers();
   }, []);
 
+  // Tải và truy xuất dữ liệu (fetchUsers)
   const fetchUsers = async () => {
     setFetchingUsers(true);
     try {

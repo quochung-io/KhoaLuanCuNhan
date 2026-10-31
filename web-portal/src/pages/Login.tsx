@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: web-portal/src/pages/Login.tsx
+// MÔ TẢ: Trang Đăng nhập Hệ thống Quản trị dành cho Admin và Nhà cung cấp (Hỗ trợ tự động đánh thức server & Retry).
+// ============================================================================
 import React, { useState } from 'react';
 import { Form, Input, Button, Card, message, Tag } from 'antd';
 import { UserOutlined, LockOutlined, SafetyCertificateOutlined, ArrowRightOutlined } from '@ant-design/icons';

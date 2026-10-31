@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: mobile-app/lib/presentation/screens/auth/login_screen.dart
+// MÔ TẢ: Màn hình giao diện di động (login_screen.dart) thuộc ứng dụng Flutter LÀNH Farm Mobile App.
+// ============================================================================
 import 'package:flutter/material.dart';
 import 'register_screen.dart';
 import 'forgot_password_screen.dart';
@@ -9,6 +13,7 @@ import '../../../data/api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
+/// Lớp giao diện / trạng thái LoginScreen
 class LoginScreen extends StatefulWidget {
   final String? initialEmail;
   const LoginScreen({super.key, this.initialEmail});
@@ -17,6 +22,7 @@ class LoginScreen extends StatefulWidget {
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
+/// Lớp giao diện / trạng thái _LoginScreenState
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _emailController;
@@ -37,6 +43,7 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  // Thực thi nghiệp vụ hàm _handleLogin
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
 

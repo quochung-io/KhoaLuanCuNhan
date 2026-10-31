@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: mobile-app/lib/presentation/screens/checkout/checkout_screen.dart
+// MÔ TẢ: Màn hình giao diện di động (checkout_screen.dart) thuộc ứng dụng Flutter LÀNH Farm Mobile App.
+// ============================================================================
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
@@ -8,6 +12,7 @@ import '../profile/address_management_screen.dart';
 import '../main_container.dart';
 import 'payment_qr_screen.dart';
 
+/// Lớp giao diện / trạng thái CheckoutScreen
 class CheckoutScreen extends StatefulWidget {
   final List<CartItem> cartItems;
   final VoidCallback onCheckoutSuccess;
@@ -22,6 +27,7 @@ class CheckoutScreen extends StatefulWidget {
   State<CheckoutScreen> createState() => _CheckoutScreenState();
 }
 
+/// Lớp giao diện / trạng thái _CheckoutScreenState
 class _CheckoutScreenState extends State<CheckoutScreen> {
   Map<String, dynamic>? _selectedAddress;
   bool _isLoading = true;
@@ -54,6 +60,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     return '${amount.toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}đ';
   }
 
+  // Thực thi nghiệp vụ hàm _loadUserAndAddresses
   Future<void> _loadUserAndAddresses() async {
     final prefs = await SharedPreferences.getInstance();
     final userStr = prefs.getString('customer_user');
@@ -64,6 +71,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     await _fetchCheckoutVouchers();
   }
 
+  // Thực thi nghiệp vụ hàm _fetchAddresses
   Future<void> _fetchAddresses() async {
     try {
       final addresses = await ApiService.getAddresses(_userId);
@@ -81,6 +89,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     }
   }
 
+  // Thực thi nghiệp vụ hàm _fetchCheckoutVouchers
   Future<void> _fetchCheckoutVouchers() async {
     setState(() => _isLoadingVouchers = true);
     try {
@@ -128,6 +137,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     }
   }
 
+  // Thực thi nghiệp vụ hàm _navigateToSelectAddress
   void _navigateToSelectAddress() async {
     final result = await Navigator.push(
       context,
@@ -182,6 +192,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     }
   }
 
+  // Thực thi nghiệp vụ hàm _submitOrder
   Future<void> _submitOrder() async {
     if (_selectedAddress == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -548,6 +559,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
+  // Thực thi nghiệp vụ hàm _buildVoucherList
   Widget _buildVoucherList({
     required List<dynamic> vouchers,
     required Map<String, dynamic>? selectedVoucher,
@@ -760,6 +772,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
+  // Thực thi nghiệp vụ hàm _buildFrame
   Widget _buildFrame({
     required String title,
     required Widget child,

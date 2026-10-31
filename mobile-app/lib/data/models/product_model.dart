@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: mobile-app/lib/data/models/product_model.dart
+// MÔ TẢ: Tầng dữ liệu & kết nối API (product_model.dart) thuộc ứng dụng Flutter LÀNH Farm Mobile App.
+// ============================================================================
 import 'package:flutter/material.dart';
 
 class Product {

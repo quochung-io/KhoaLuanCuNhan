@@ -1,8 +1,13 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: mobile-app/lib/presentation/screens/cart/cart_screen.dart
+// MÔ TẢ: Màn hình giao diện di động (cart_screen.dart) thuộc ứng dụng Flutter LÀNH Farm Mobile App.
+// ============================================================================
 import 'package:flutter/material.dart';
 import '../../../data/api_service.dart';
 import '../../../data/models/cart_item_model.dart';
 import '../checkout/checkout_screen.dart';
 
+/// Lớp giao diện / trạng thái CartScreen
 class CartScreen extends StatefulWidget {
   final List<CartItem> cartItems;
   final Function(int, int) onUpdateQty;
@@ -19,6 +24,7 @@ class CartScreen extends StatefulWidget {
   State<CartScreen> createState() => _CartScreenState();
 }
 
+/// Lớp giao diện / trạng thái _CartScreenState
 class _CartScreenState extends State<CartScreen> {
   @override
   Widget build(BuildContext context) {
@@ -72,6 +78,7 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
+  // Thực thi nghiệp vụ hàm _buildCartItemTile
   Widget _buildCartItemTile(BuildContext context, CartItem item) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -205,6 +212,7 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
+  // Thực thi nghiệp vụ hàm _buildOrderSummaryPanel
   Widget _buildOrderSummaryPanel(BuildContext context, int totalAmount) {
     return Container(
       padding: const EdgeInsets.all(20),

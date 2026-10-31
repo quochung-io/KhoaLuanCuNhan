@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: mobile-app/lib/presentation/screens/profile/settings_screen.dart
+// MÔ TẢ: Màn hình giao diện di động (settings_screen.dart) thuộc ứng dụng Flutter LÀNH Farm Mobile App.
+// ============================================================================
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -7,6 +11,7 @@ import 'privacy_policy_screen.dart';
 import 'help_center_screen.dart';
 import '../auth/login_screen.dart';
 
+/// Lớp giao diện / trạng thái SettingsScreen
 class SettingsScreen extends StatefulWidget {
   final VoidCallback onEditProfile;
 
@@ -16,6 +21,7 @@ class SettingsScreen extends StatefulWidget {
   State<SettingsScreen> createState() => _SettingsScreenState();
 }
 
+/// Lớp giao diện / trạng thái _SettingsScreenState
 class _SettingsScreenState extends State<SettingsScreen> {
   bool _notificationsEnabled = true;
   String _userEmail = '';
@@ -26,6 +32,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _loadSettings();
   }
 
+  // Thực thi nghiệp vụ hàm _loadSettings
   Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
     final notif = prefs.getBool('notifications_enabled') ?? true;
@@ -45,6 +52,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
+  // Thực thi nghiệp vụ hàm _toggleNotification
   Future<void> _toggleNotification(bool val) async {
     setState(() => _notificationsEnabled = val);
     final prefs = await SharedPreferences.getInstance();
@@ -64,6 +72,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
+  // Thực thi nghiệp vụ hàm _showLogoutDialog
   void _showLogoutDialog() {
     showDialog(
       context: context,
@@ -324,6 +333,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  // Thực thi nghiệp vụ hàm _buildSectionHeader
   Widget _buildSectionHeader(String title) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -338,6 +348,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  // Thực thi nghiệp vụ hàm _buildListTile
   Widget _buildListTile({
     required IconData icon,
     required String title,

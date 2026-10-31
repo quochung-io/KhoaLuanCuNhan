@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: mobile-app/test/widget_test.dart
+// MÔ TẢ: Tệp mã nguồn widget_test.dart thuộc hệ thống Thương mại điện tử Nông sản sạch LÀNH Farm.
+// ============================================================================
 // This is a basic Flutter widget test.
 //
 // To perform an interaction with a widget in your test, use the WidgetTester
@@ -10,6 +14,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:mobile_app/main.dart';
 
+// Thực thi nghiệp vụ hàm main
 void main() {
   testWidgets('Counter increments smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.

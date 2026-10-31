@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: web-portal/src/pages/Certificates.tsx
+// MÔ TẢ: Trang Quản lý Pháp lý & Giấy chứng nhận An toàn Nông sản (VietGAP, GlobalG.A.P, Hữu cơ).
+// ============================================================================
 import React, { useEffect, useState, useCallback } from 'react';
 import { 
   Table, 
@@ -162,6 +166,7 @@ export const Certificates: React.FC = () => {
     fetchCertificates();
   }, [fetchCertificates]);
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleOpenCreateModal)
   const handleOpenCreateModal = () => {
     setEditingCertId(null);
     setFileUrl('');
@@ -175,6 +180,7 @@ export const Certificates: React.FC = () => {
     setIsModalOpen(true);
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleOpenEditModal)
   const handleOpenEditModal = (record: CertificateItem) => {
     setEditingCertId(record.certificateId);
     setFileUrl(record.certificateUrl || '');
@@ -192,6 +198,7 @@ export const Certificates: React.FC = () => {
     setIsModalOpen(true);
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleSaveCertificate)
   const handleSaveCertificate = async () => {
     try {
       const values = await form.validateFields();
@@ -228,6 +235,7 @@ export const Certificates: React.FC = () => {
     }
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleApprove)
   const handleApprove = async (id: number) => {
     try {
       await certificateService.approve(id, currentUser?.userId || 1);
@@ -238,12 +246,14 @@ export const Certificates: React.FC = () => {
     }
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleOpenRejectModal)
   const handleOpenRejectModal = (record: CertificateItem) => {
     setSelectedCert(record);
     setRejectReason('');
     setIsRejectModalOpen(true);
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleConfirmReject)
   const handleConfirmReject = async () => {
     if (!selectedCert) return;
     try {
@@ -256,6 +266,7 @@ export const Certificates: React.FC = () => {
     }
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleDelete)
   const handleDelete = async (id: number) => {
     try {
       await certificateService.delete(id);
@@ -266,6 +277,7 @@ export const Certificates: React.FC = () => {
     }
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleUploadFile)
   const handleUploadFile = async (options: any) => {
     const { file, onSuccess, onError } = options;
     setUploading(true);

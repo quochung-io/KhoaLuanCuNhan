@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: backend/Ecc.WebApi/Controllers/Web/CategoriesController.cs
+// MÔ TẢ: Controller quản lý Danh mục nông sản (Rau củ, Trái cây, Rau thơm, Các loại hạt, Gói Combo).
+// ============================================================================
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Ecc.Infrastructure.Data;
@@ -38,6 +42,7 @@ public class CategoriesController : ControllerBase
         return CreatedAtAction(nameof(GetCategory), new { id = category.CategoryId }, category);
     }
 
+    /// <summary>Cập nhật và đồng bộ dữ liệu (UpdateCategory)</summary>
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateCategory(int id, Category category)
     {
@@ -57,6 +62,7 @@ public class CategoriesController : ControllerBase
         return NoContent();
     }
 
+    /// <summary>Xóa hoặc làm mới dữ liệu (DeleteCategory)</summary>
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteCategory(int id)
     {

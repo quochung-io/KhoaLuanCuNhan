@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: web-portal/src/pages/ProductReports.tsx
+// MÔ TẢ: Trang Báo cáo & Phân tích Tồn kho Nông sản: Thống kê doanh thu, sản lượng bán, tồn kho FEFO, hàng hủy và xuất file Excel/CSV.
+// ============================================================================
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {

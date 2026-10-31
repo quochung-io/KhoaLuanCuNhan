@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: backend/Ecc.WebApi/Controllers/Web/CertificatesController.cs
+// MÔ TẢ: Controller quản lý Hồ sơ pháp lý & Giấy chứng nhận chất lượng nông sản (VietGAP, GlobalG.A.P, Hữu cơ USDA).
+// ============================================================================
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Ecc.Infrastructure.Data;

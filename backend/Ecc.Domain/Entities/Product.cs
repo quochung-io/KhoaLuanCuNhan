@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: backend/Ecc.Domain/Entities/Product.cs
+// MÔ TẢ: Thực thể dữ liệu (Entity) Product - Biểu diễn cấu trúc bảng và mối quan hệ của Product trong cơ sở dữ liệu.
+// ============================================================================
 using System;
 
 namespace Ecc.Domain.Entities;

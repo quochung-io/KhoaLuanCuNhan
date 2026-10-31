@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: backend/Ecc.WebApi/Controllers/Web/ProductBatchesController.cs
+// MÔ TẢ: Controller quản lý Lô hàng nông sản (FEFO - First Expired First Out), truy xuất nguồn gốc nông trại và xả hàng cận date.
+// ============================================================================
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Ecc.Infrastructure.Data;
@@ -31,6 +35,7 @@ public class ProductBatchesController : ControllerBase
         return await query.ToListAsync();
     }
 
+    /// <summary>Tải và truy xuất dữ liệu (GetProductBatch)</summary>
     [HttpGet("{id}")]
     public async Task<IActionResult> GetProductBatch(long id)
     {
@@ -131,6 +136,7 @@ public class ProductBatchesController : ControllerBase
         return CreatedAtAction(nameof(GetProductBatch), new { id = batch.BatchId }, batch);
     }
 
+    /// <summary>Cập nhật và đồng bộ dữ liệu (UpdateProductBatch)</summary>
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateProductBatch(long id, ProductBatch batch)
     {
@@ -157,6 +163,7 @@ public class ProductBatchesController : ControllerBase
         return Ok(existing);
     }
 
+    /// <summary>Xóa hoặc làm mới dữ liệu (DeleteProductBatch)</summary>
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteProductBatch(long id)
     {

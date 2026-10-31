@@ -1,6 +1,11 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: mobile-app/lib/presentation/screens/trace/farming_diary_screen.dart
+// MÔ TẢ: Màn hình giao diện di động (farming_diary_screen.dart) thuộc ứng dụng Flutter LÀNH Farm Mobile App.
+// ============================================================================
 import 'package:flutter/material.dart';
 import '../../../../core/utils/traceability_utils.dart';
 
+/// Lớp giao diện / trạng thái FarmingDiaryScreen
 class FarmingDiaryScreen extends StatelessWidget {
   final String lotCode;
   final String productName;

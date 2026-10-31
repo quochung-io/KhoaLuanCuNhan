@@ -1,4 +1,8 @@
 'use client';
+// ============================================================================
+// TỆP MÃ NGUỒN: web-store/src/components/product/ProductQuickViewModal.tsx
+// MÔ TẢ: Component giao diện dùng chung (ProductQuickViewModal.tsx) thuộc phân hệ Cửa hàng Trực tuyến LÀNH Farm (Web Store).
+// ============================================================================
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 
@@ -136,6 +140,7 @@ export const ProductQuickViewModal: React.FC<ProductQuickViewModalProps> = ({
     images.push(activeImage || initialData?.imageUrl || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600');
   }
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleAdd)
   const handleAdd = () => {
     if (onAddToCart) {
       onAddToCart({

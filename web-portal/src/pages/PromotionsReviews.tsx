@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: web-portal/src/pages/PromotionsReviews.tsx
+// MÔ TẢ: Trang Quản lý Khuyến mãi (Voucher) & Kiểm duyệt Đánh giá của khách hàng.
+// ============================================================================
 import React, { useEffect, useState } from 'react';
 import { 
   Table, 
@@ -190,6 +194,7 @@ export const PromotionsReviews: React.FC = () => {
     setPromoModalVisible(true);
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleSavePromo)
   const handleSavePromo = async () => {
     try {
       const values = await promoForm.validateFields();
@@ -226,6 +231,7 @@ export const PromotionsReviews: React.FC = () => {
     }
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleTogglePromoStatus)
   const handleTogglePromoStatus = async (id: number) => {
     try {
       const res = await promotionService.toggleStatus(id);
@@ -236,6 +242,7 @@ export const PromotionsReviews: React.FC = () => {
     }
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleDeletePromo)
   const handleDeletePromo = async (id: number) => {
     try {
       await promotionService.delete(id);
@@ -258,6 +265,7 @@ export const PromotionsReviews: React.FC = () => {
     }
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleDeleteReview)
   const handleDeleteReview = async (id: number) => {
     try {
       await reviewAdminService.delete(id);

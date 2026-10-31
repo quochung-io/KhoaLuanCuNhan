@@ -1,6 +1,11 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: mobile-app/lib/presentation/screens/profile/privacy_policy_screen.dart
+// MÔ TẢ: Màn hình giao diện di động (privacy_policy_screen.dart) thuộc ứng dụng Flutter LÀNH Farm Mobile App.
+// ============================================================================
 import 'package:flutter/material.dart';
 import '../../../core/localization_service.dart';
 
+/// Lớp giao diện / trạng thái PrivacyPolicyScreen
 class PrivacyPolicyScreen extends StatelessWidget {
   const PrivacyPolicyScreen({super.key});
 
@@ -75,6 +80,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
     );
   }
 
+  // Thực thi nghiệp vụ hàm _buildSection
   Widget _buildSection(String title, String content) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),

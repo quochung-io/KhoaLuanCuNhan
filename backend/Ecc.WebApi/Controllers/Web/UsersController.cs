@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: backend/Ecc.WebApi/Controllers/Web/UsersController.cs
+// MÔ TẢ: Controller quản lý Người dùng, Khách hàng và xét duyệt hồ sơ đối tác Hợp tác xã / Nhà cung cấp.
+// ============================================================================
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Ecc.Infrastructure.Data;
@@ -142,6 +146,7 @@ public class UsersController : ControllerBase
         return user;
     }
 
+    /// <summary>Cập nhật và đồng bộ dữ liệu (UpdateUser)</summary>
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateUser(long id, [FromBody] UpdateUserDto dto)
     {

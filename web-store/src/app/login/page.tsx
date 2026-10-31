@@ -1,4 +1,8 @@
 'use client';
+// ============================================================================
+// TỆP MÃ NGUỒN: web-store/src/app/login/page.tsx
+// MÔ TẢ: Trang giao diện khách hàng (login/page.tsx) thuộc phân hệ Cửa hàng Trực tuyến LÀNH Farm (Next.js).
+// ============================================================================
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -25,6 +29,7 @@ type CartItem = {
   qty: number;
 };
 
+// Xử lý phiên đăng nhập / đăng ký tài khoản (LoginPage)
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -53,6 +58,7 @@ export default function LoginPage() {
     document.body.setAttribute('data-theme', theme);
   }, [theme]);
 
+  // Điều khiển đóng/mở giao diện hoặc hộp thoại (toggleTheme)
   const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
 
   useEffect(() => {
@@ -73,6 +79,7 @@ export default function LoginPage() {
 
   // Đóng dropdown khi click ra ngoài
   useEffect(() => {
+    // Hàm xử lý sự kiện tương tác người dùng (handleClickOutside)
     const handleClickOutside = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setShowUserDropdown(false);
@@ -82,6 +89,7 @@ export default function LoginPage() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleCustomerLogout)
   const handleCustomerLogout = () => {
     localStorage.removeItem('customer_user');
     localStorage.removeItem('auth_token');
@@ -89,6 +97,7 @@ export default function LoginPage() {
     setShowUserDropdown(false);
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleSearchChange)
   const handleSearchChange = (val: string) => {
     setSearchQuery(val);
     if (val.trim().length > 0) {
@@ -105,12 +114,14 @@ export default function LoginPage() {
     }
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleSearchSubmit)
   const handleSearchSubmit = () => {
     if (searchQuery.trim()) {
       router.push(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
     }
   };
 
+  // Cập nhật và đồng bộ dữ liệu (updateCartQty)
   const updateCartQty = (id: number, delta: number) => {
     setCart(prev => {
       const updated = prev.map(x => {
@@ -141,6 +152,7 @@ export default function LoginPage() {
   const toVND = (n: number) => n.toLocaleString('vi-VN') + '₫';
 
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleLogin)
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');

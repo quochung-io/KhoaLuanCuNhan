@@ -1,8 +1,13 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: mobile-app/lib/presentation/screens/profile/voucher_wallet_screen.dart
+// MÔ TẢ: Màn hình giao diện di động (voucher_wallet_screen.dart) thuộc ứng dụng Flutter LÀNH Farm Mobile App.
+// ============================================================================
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../data/api_service.dart';
 import '../../../core/localization_service.dart';
 
+/// Lớp giao diện / trạng thái VoucherWalletScreen
 class VoucherWalletScreen extends StatefulWidget {
   final int userId;
   const VoucherWalletScreen({super.key, required this.userId});
@@ -11,6 +16,7 @@ class VoucherWalletScreen extends StatefulWidget {
   State<VoucherWalletScreen> createState() => _VoucherWalletScreenState();
 }
 
+/// Lớp giao diện / trạng thái _VoucherWalletScreenState
 class _VoucherWalletScreenState extends State<VoucherWalletScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
@@ -30,6 +36,7 @@ class _VoucherWalletScreenState extends State<VoucherWalletScreen>
     super.dispose();
   }
 
+  // Thực thi nghiệp vụ hàm _loadVouchers
   Future<void> _loadVouchers() async {
     try {
       final loyaltyData = await ApiService.getUserLoyalty(widget.userId);
@@ -49,6 +56,7 @@ class _VoucherWalletScreenState extends State<VoucherWalletScreen>
   List<dynamic> get _usedVouchers =>
       _vouchers.where((v) => v['isUsed'] == true).toList();
 
+  // Thực thi nghiệp vụ hàm _copyVoucherCode
   void _copyVoucherCode(String code) {
     Clipboard.setData(ClipboardData(text: code));
     ScaffoldMessenger.of(context).showSnackBar(
@@ -110,6 +118,7 @@ class _VoucherWalletScreenState extends State<VoucherWalletScreen>
     );
   }
 
+  // Thực thi nghiệp vụ hàm _buildVoucherList
   Widget _buildVoucherList(List<dynamic> list, {required bool isActive}) {
     if (list.isEmpty) {
       return Center(

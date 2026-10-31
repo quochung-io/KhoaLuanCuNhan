@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: backend/Ecc.Infrastructure/Entities/Promotion.cs
+// MÔ TẢ: Thực thể dữ liệu (Entity) Promotion - Biểu diễn cấu trúc bảng và mối quan hệ của Promotion trong cơ sở dữ liệu.
+// ============================================================================
 using System;
 
 namespace Ecc.Infrastructure.Entities;

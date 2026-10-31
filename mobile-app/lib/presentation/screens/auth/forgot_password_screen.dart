@@ -1,7 +1,12 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: mobile-app/lib/presentation/screens/auth/forgot_password_screen.dart
+// MÔ TẢ: Màn hình giao diện di động (forgot_password_screen.dart) thuộc ứng dụng Flutter LÀNH Farm Mobile App.
+// ============================================================================
 import 'package:flutter/material.dart';
 import '../../../core/theme.dart';
 import '../../../data/api_service.dart';
 
+/// Lớp giao diện / trạng thái ForgotPasswordScreen
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
 
@@ -9,6 +14,7 @@ class ForgotPasswordScreen extends StatefulWidget {
   State<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
 }
 
+/// Lớp giao diện / trạng thái _ForgotPasswordScreenState
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
@@ -26,6 +32,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     super.dispose();
   }
 
+  // Thực thi nghiệp vụ hàm _handleSendOTP
   Future<void> _handleSendOTP() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -67,6 +74,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     }
   }
 
+  // Thực thi nghiệp vụ hàm _handleResetPassword
   Future<void> _handleResetPassword() async {
     if (_otpController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(

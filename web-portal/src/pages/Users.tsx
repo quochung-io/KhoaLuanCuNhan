@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: web-portal/src/pages/Users.tsx
+// MÔ TẢ: Trang Quản lý Thành viên & Đối tác: Quản lý tài khoản khách hàng, phê duyệt đăng ký Hợp tác xã / Nhà cung cấp.
+// ============================================================================
 import React, { useEffect, useState } from 'react';
 import { 
   Table, 
@@ -89,6 +93,7 @@ export const Users: React.FC = () => {
   const [rejectReason, setRejectReason] = useState('');
   const [supplierFilter, setSupplierFilter] = useState<string>('all');
 
+  // Tải và truy xuất dữ liệu (fetchUsers)
   const fetchUsers = async () => {
     setLoading(true);
     try {
@@ -102,6 +107,7 @@ export const Users: React.FC = () => {
     }
   };
 
+  // Tải và truy xuất dữ liệu (fetchSuppliers)
   const fetchSuppliers = async () => {
     setSupplierLoading(true);
     try {
@@ -119,12 +125,14 @@ export const Users: React.FC = () => {
     fetchSuppliers();
   }, []);
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleOpenAdd)
   const handleOpenAdd = () => {
     setEditingUser(null);
     form.resetFields();
     setIsModalOpen(true);
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleOpenEdit)
   const handleOpenEdit = (user: User) => {
     setEditingUser(user);
     form.setFieldsValue({
@@ -137,6 +145,7 @@ export const Users: React.FC = () => {
     setIsModalOpen(true);
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleApproveSupplier)
   const handleApproveSupplier = (userOrSupplier: { userId: number; fullName: string }) => {
     Modal.confirm({
       title: 'Phê duyệt Nhà cung cấp / Hợp tác xã',
@@ -158,12 +167,14 @@ export const Users: React.FC = () => {
     });
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleOpenReject)
   const handleOpenReject = (supplier: SupplierItem) => {
     setRejectingSupplier(supplier);
     setRejectReason('Ảnh giấy chứng nhận chưa rõ ràng hoặc thiếu thông tin giấy phép an toàn thực phẩm.');
     setIsRejectModalOpen(true);
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleConfirmReject)
   const handleConfirmReject = async () => {
     if (!rejectingSupplier) return;
     if (!rejectReason.trim()) {
@@ -183,6 +194,7 @@ export const Users: React.FC = () => {
     }
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleToggleStatus)
   const handleToggleStatus = (user: User) => {
     const isActive = user.status?.toLowerCase() === 'active' || user.status?.toLowerCase() === 'hoạt động';
     Modal.confirm({
@@ -204,6 +216,7 @@ export const Users: React.FC = () => {
     });
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleDelete)
   const handleDelete = async (id: number) => {
     Modal.confirm({
       title: 'Xác nhận xóa tài khoản',
@@ -228,6 +241,7 @@ export const Users: React.FC = () => {
     });
   };
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleSave)
   const handleSave = async () => {
     try {
       const values = await form.validateFields();

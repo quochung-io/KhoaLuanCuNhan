@@ -1,4 +1,8 @@
 'use client';
+// ============================================================================
+// TỆP MÃ NGUỒN: web-store/src/components/layout/SearchBar.tsx
+// MÔ TẢ: Component giao diện dùng chung (SearchBar.tsx) thuộc phân hệ Cửa hàng Trực tuyến LÀNH Farm (Web Store).
+// ============================================================================
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 
@@ -18,6 +22,7 @@ interface SearchBarProps {
   style?: React.CSSProperties;
 }
 
+// Thực thi nghiệp vụ hàm SearchBar
 export function SearchBar({
   placeholder = "Bạn muốn tìm nông sản gì hôm nay? (Rau cải, bơ sáp, dâu tây...)",
   initialValue = "",
@@ -36,6 +41,7 @@ export function SearchBar({
     setSearchQuery(initialValue || "");
   }, [initialValue]);
 
+  // Hàm xử lý sự kiện tương tác người dùng (handleSearchChange)
   const handleSearchChange = (val: string) => {
     setSearchQuery(val);
     if (val.trim().length > 0) {

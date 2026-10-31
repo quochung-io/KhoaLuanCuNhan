@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: backend/Ecc.Infrastructure/Entities/Notification.cs
+// MÔ TẢ: Thực thể dữ liệu (Entity) Notification - Biểu diễn cấu trúc bảng và mối quan hệ của Notification trong cơ sở dữ liệu.
+// ============================================================================
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 

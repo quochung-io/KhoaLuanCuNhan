@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: backend/Ecc.Infrastructure/Entities/RefreshToken.cs
+// MÔ TẢ: Thực thể dữ liệu (Entity) RefreshToken - Biểu diễn cấu trúc bảng và mối quan hệ của RefreshToken trong cơ sở dữ liệu.
+// ============================================================================
 namespace Ecc.Infrastructure.Entities;
 
 public class RefreshToken

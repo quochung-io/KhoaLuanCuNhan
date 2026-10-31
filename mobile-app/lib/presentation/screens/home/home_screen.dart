@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: mobile-app/lib/presentation/screens/home/home_screen.dart
+// MÔ TẢ: Màn hình giao diện di động (home_screen.dart) thuộc ứng dụng Flutter LÀNH Farm Mobile App.
+// ============================================================================
 import 'package:flutter/material.dart';
 import '../../../data/models/product_model.dart';
 import '../../../data/api_service.dart';
@@ -6,6 +10,7 @@ import '../product_detail/product_detail_screen.dart';
 
 import '../chat/chat_screen.dart';
 
+/// Lớp giao diện / trạng thái HomeScreen
 class HomeScreen extends StatefulWidget {
   final void Function(Product, {int qty}) onAddToCart;
   final VoidCallback? onOpenCart;
@@ -22,6 +27,7 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
+/// Lớp giao diện / trạng thái _HomeScreenState
 class _HomeScreenState extends State<HomeScreen> {
   String _selectedCategory = 'Tất cả';
   String _selectedSort = 'Mặc định';
@@ -44,6 +50,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _fetchCarsRecommendations();
   }
 
+  // Thực thi nghiệp vụ hàm _loadFavorites
   Future<void> _loadFavorites() async {
     final favs = await FavoritesService.getFavoriteProducts();
     if (mounted) {
@@ -53,6 +60,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  // Thực thi nghiệp vụ hàm _toggleFavorite
   Future<void> _toggleFavorite(Product p) async {
     final nowFav = await FavoritesService.toggleFavoriteProduct(p);
     if (mounted) {
@@ -79,6 +87,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  // Thực thi nghiệp vụ hàm _fetchCategories
   Future<void> _fetchCategories() async {
     try {
       final data = await ApiService.getCategories();
@@ -99,6 +108,7 @@ class _HomeScreenState extends State<HomeScreen> {
     } catch (_) {}
   }
 
+  // Thực thi nghiệp vụ hàm _fetchRealProducts
   Future<void> _fetchRealProducts() async {
     setState(() => _isLoadingProducts = true);
     try {
@@ -125,6 +135,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  // Thực thi nghiệp vụ hàm _fetchCarsRecommendations
   Future<void> _fetchCarsRecommendations() async {
     setState(() => _isLoadingCars = true);
     try {
@@ -851,6 +862,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // Thực thi nghiệp vụ hàm _buildCategoryChip
   Widget _buildCategoryChip(String cat) {
     final isSelected = _selectedCategory == cat;
     return GestureDetector(
@@ -878,6 +890,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // Thực thi nghiệp vụ hàm _buildProductCard
   Widget _buildProductCard(Product product) {
     return GestureDetector(
       onTap: () {
@@ -1097,6 +1110,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // Thực thi nghiệp vụ hàm _buildFallbackImg
   Widget _buildFallbackImg(double height) {
     return Container(
       height: height,

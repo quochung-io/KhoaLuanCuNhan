@@ -1,3 +1,7 @@
+// ============================================================================
+// TỆP MÃ NGUỒN: web-store/src/constants/mockData.ts
+// MÔ TẢ: Tệp cấu hình/dữ liệu (mockData.ts) thuộc phân hệ Cửa hàng Trực tuyến LÀNH Farm (Web Store).
+// ============================================================================
 import { Product } from '../types/product';
 
 export const productsData: Product[] = [];
