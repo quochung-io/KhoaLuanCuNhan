@@ -1,0 +1,107 @@
+services:
+  # 1. Cơ sở dữ liệu SQL Server 2022 chạy trong Docker (lưu trữ bền vững qua volume sqldata)
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: ecc-sqlserver
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:-Ecc@StrongPass123}
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqldata:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -Q 'SELECT 1' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+    restart: unless-stopped
+
+  # 2. Tự động khởi tạo Database & nạp toàn bộ dữ liệu mẫu (132 sản phẩm, lô hàng, đơn hàng, user) ở lần chạy đầu tiên
+  db-init:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: ecc-db-init
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    volumes:
+      - ./database/QL_WebMuaBanNongSan_Full.sql:/init/full.sql:ro
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+      - |
+        P="${MSSQL_SA_PASSWORD:-Ecc@StrongPass123}"
+        EXISTS=$$(/opt/mssql-tools18/bin/sqlcmd -C -S sqlserver -U sa -P "$$P" -h -1 -W -Q "SET NOCOUNT ON; SELECT COUNT(*) FROM sys.databases WHERE name='QL_WebMuaBanNongSan'")
+        if [ "$$EXISTS" = "0" ]; then
+          echo "[DB-INIT] Đang nạp cơ sở dữ liệu QL_WebMuaBanNongSan vào Docker SQL Server..."
+          /opt/mssql-tools18/bin/sqlcmd -C -S sqlserver -U sa -P "$$P" -i /init/full.sql
+          echo "[DB-INIT] Đã nạp hoàn tất cơ sở dữ liệu!"
+        else
+          echo "[DB-INIT] Database QL_WebMuaBanNongSan đã tồn tại trong Docker Volume, bỏ qua bước nạp lại."
+        fi
+    restart: "no"
+
+  # 3. Backend API (.NET 9) - Hỗ trợ cả SQL Server container và SQLite dự phòng trong App_Data
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ecc-backend
+    depends_on:
+      db-init:
+        condition: service_completed_successfully
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:5023
+      USE_SQLITE: ${USE_SQLITE:-false}
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=QL_WebMuaBanNongSan;User Id=sa;Password=${MSSQL_SA_PASSWORD:-Ecc@StrongPass123};TrustServerCertificate=True;Encrypt=False"
+      Smtp__SenderEmail: ${SMTP_SENDER_EMAIL:-buiquochung0942@gmail.com}
+      Smtp__SenderPassword: ${SMTP_SENDER_PASSWORD:-zsff xovn aoxk uyaj}
+    ports:
+      - "5023:5023"
+    volumes:
+      - ./backend/Ecc.WebApi/App_Data:/app/App_Data
+      - uploads:/app/wwwroot/uploads
+    restart: unless-stopped
+
+  # 4. Dịch vụ AI Gợi ý Sản phẩm (FastAPI Python)
+  ai-service:
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile
+    container_name: ecc-ai-service
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+  # 5. Giao diện Cửa hàng Khách hàng (Next.js - cổng 3000)
+  web-store:
+    build:
+      context: ./web-store
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:5023
+    container_name: ecc-web-store
+    depends_on:
+      - backend
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+
+  # 6. Giao diện Quản trị Admin & Nhà cung cấp (React Vite + Nginx - cổng 5173)
+  web-portal:
+    build:
+      context: ./web-portal
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: http://localhost:5023/api
+    container_name: ecc-web-portal
+    depends_on:
+      - backend
+    ports:
+      - "5173:80"
+    restart: unless-stopped
+
+volumes:
+  sqldata:
+  uploads:

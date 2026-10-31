@@ -12,6 +12,7 @@ RUN dotnet publish Ecc.WebApi/Ecc.WebApi.csproj -c Release -o /app/publish --no-
 FROM mcr.microsoft.com/dotnet/aspnet:9.0
 WORKDIR /app
 COPY --from=build /app/publish .
+COPY --from=build /src/Ecc.WebApi/App_Data ./App_Data
 ENV ASPNETCORE_URLS=http://+:5023
 ENV USE_SQLITE=true
 EXPOSE 5023

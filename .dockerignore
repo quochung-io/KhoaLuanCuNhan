@@ -1,0 +1,9 @@
+**/node_modules
+**/.next
+**/dist
+**/bin
+**/obj
+.git
+mobile-app
+docs
+.playwright-mcp
