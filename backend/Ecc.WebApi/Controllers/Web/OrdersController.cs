@@ -270,7 +270,8 @@ public class OrdersController : ControllerBase
 
         // Tổng toàn sàn từ trước đến nay (All-time fallback nếu kỳ chọn ít đơn)
         var allTimeOrders = await _context.Orders.CountAsync();
-        var allTimeRevenue = await _context.Orders.SumAsync(o => o.TotalAmount);
+        var allOrdersList = await _context.Orders.Select(o => o.TotalAmount).ToListAsync();
+        var allTimeRevenue = allOrdersList.Sum();
 
         // Tính AOV (Average Order Value)
         var aov = totalOrders > 0 
@@ -475,8 +476,12 @@ public class OrdersController : ControllerBase
     [HttpGet("stats/top-products")]
     public async Task<IActionResult> GetTopProducts([FromQuery] string? timeRange = "7days")
     {
-        var topProducts = await _context.OrderItems
+        var rawOrderItems = await _context.OrderItems
             .Include(i => i.Product)
+            .ToListAsync();
+
+        var topProducts = rawOrderItems
+            .Where(i => i.Product != null)
             .GroupBy(i => new { i.ProductId, i.Product!.ProductName })
             .Select(g => new
             {
@@ -485,7 +490,7 @@ public class OrdersController : ControllerBase
             })
             .OrderByDescending(x => x.sales)
             .Take(5)
-            .ToListAsync();
+            .ToList();
 
         if (topProducts.Count == 0)
         {

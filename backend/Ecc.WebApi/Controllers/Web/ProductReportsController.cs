@@ -802,13 +802,14 @@ public class ProductReportsController : ControllerBase
             var (cStart, cEnd, _, _, label) = ResolveDateRanges(timeRange, startDate, endDate);
 
             var today = DateTime.Today;
-            var batches = await _context.ProductBatches
+            var rawBatches = await _context.ProductBatches
                 .Where(b => b.ExpiryDate >= today && (b.Status == "Active" || string.IsNullOrEmpty(b.Status)))
+                .ToListAsync();
+            var batches = rawBatches
                 .GroupBy(b => b.ProductId)
-                .Select(g => new { ProductId = g.Key, Stock = g.Sum(b => b.InitialQuantity) })
-                .ToDictionaryAsync(b => b.ProductId, b => b.Stock);
+                .ToDictionary(g => g.Key, g => g.Sum(b => b.InitialQuantity));
 
-            var soldItems = await _context.OrderItems
+            var rawSoldItems = await _context.OrderItems
                 .Include(oi => oi.Order)
                 .Include(oi => oi.Product)
                     .ThenInclude(p => p.Category)
@@ -817,6 +818,10 @@ public class ProductReportsController : ControllerBase
                           && oi.Order.CreatedAt <= cEnd 
                           && oi.Order.OrderStatus != "Cancelled" 
                           && oi.Order.OrderStatus != "Returned")
+                .ToListAsync();
+
+            var soldItems = rawSoldItems
+                .Where(oi => oi.Product != null)
                 .GroupBy(oi => new { oi.ProductId, oi.Product!.ProductName, oi.Product.Unit, oi.Product.Price, CategoryName = oi.Product.Category != null ? oi.Product.Category.CategoryName : "Chưa phân loại" })
                 .Select(g => new
                 {
@@ -832,7 +837,7 @@ public class ProductReportsController : ControllerBase
                     currentStock = batches.ContainsKey(g.Key.ProductId) ? batches[g.Key.ProductId] : 0
                 })
                 .OrderByDescending(x => x.soldQuantity)
-                .ToListAsync();
+                .ToList();
 
             decimal totalSold = soldItems.Sum(x => x.soldQuantity);
             decimal totalRev = soldItems.Sum(x => x.totalRevenue);
