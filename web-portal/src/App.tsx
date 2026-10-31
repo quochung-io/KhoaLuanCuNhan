@@ -60,8 +60,21 @@ const AppContent: React.FC = () => {
 
   const [user, setUser] = useState<any>(null);
 
-  // Check login state
+  // Check login state & SSO handoff from Web Store
   useEffect(() => {
+    const apiOrigin = (import.meta.env.VITE_API_URL || 'http://localhost:5023/api').replace(/\/api\/?$/, '');
+    fetch(`${apiOrigin}/api/health`).catch(() => {});
+
+    const params = new URLSearchParams(window.location.search);
+    const ssoToken = params.get('sso_token');
+    const ssoUser = params.get('sso_user');
+    if (ssoToken && ssoUser) {
+      localStorage.setItem('auth_token', ssoToken);
+      localStorage.setItem('token', ssoToken);
+      localStorage.setItem('user', ssoUser);
+      window.history.replaceState({}, '', window.location.pathname === '/dashboard' ? '/' : window.location.pathname);
+    }
+
     const storedUser = localStorage.getItem('user');
     const token = localStorage.getItem('auth_token') || localStorage.getItem('token');
     if (storedUser && token) {
@@ -72,6 +85,9 @@ const AppContent: React.FC = () => {
         // Cho phép cả ADMIN và SUPPLIER truy cập Web Portal
         if (role === 'ADMIN' || role === 'SUPPLIER' || roleId === 1 || roleId === 2) {
           setUser(parsed);
+          if (location.pathname === '/dashboard') {
+            navigate('/');
+          }
         } else {
           handleLogout();
         }
@@ -437,7 +453,12 @@ const AppContent: React.FC = () => {
                 type="dashed"
                 size="middle"
                 icon={<ExportOutlined />}
-                onClick={() => window.open('http://localhost:3000', '_blank')}
+                onClick={() => {
+                  const storeUrl = window.location.hostname.includes('vercel.app')
+                    ? 'https://web-store-topaz.vercel.app'
+                    : 'http://localhost:3000';
+                  window.open(storeUrl, '_blank');
+                }}
                 style={{
                   borderColor: '#cbd5e1',
                   color: '#334155',

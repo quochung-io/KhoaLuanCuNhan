@@ -286,7 +286,19 @@ export const Header: React.FC<HeaderProps> = ({
                     </Link>
                     {activeUser.roleId === 1 && (
                       <a
-                        href="http://localhost:5173/dashboard"
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          const portalBase = typeof window !== 'undefined' && window.location.hostname.includes('vercel.app')
+                            ? 'https://web-portal-rho-tawny.vercel.app'
+                            : 'http://localhost:5173';
+                          const token = localStorage.getItem('auth_token') || '';
+                          const userStr = localStorage.getItem('customer_user') || '';
+                          const url = token && userStr
+                            ? `${portalBase}/?sso_token=${encodeURIComponent(token)}&sso_user=${encodeURIComponent(userStr)}`
+                            : portalBase;
+                          window.open(url, '_blank');
+                        }}
                         target="_blank"
                         rel="noreferrer"
                         style={{

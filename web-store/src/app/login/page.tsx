@@ -152,11 +152,22 @@ export default function LoginPage() {
 
     setLoading(true);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim(), password })
-      });
+      const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023';
+      let res: Response | null = null;
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          res = await fetch(`${apiBase}/api/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: email.trim(), password })
+          });
+          break;
+        } catch (fetchErr) {
+          if (attempt === 3) throw fetchErr;
+          await new Promise((r) => setTimeout(r, 2500));
+        }
+      }
+      if (!res) throw new Error('Không thể kết nối máy chủ.');
 
       const data = await res.json();
 
@@ -168,8 +179,11 @@ export default function LoginPage() {
       localStorage.setItem('auth_token', data.token);
 
       const role = (data.user.role || '').toUpperCase();
-      if (role === 'ADMIN') {
-        window.location.href = 'http://localhost:5173/dashboard';
+      if (role === 'ADMIN' || role === 'SUPPLIER') {
+        const portalBase = window.location.hostname.includes('vercel.app')
+          ? 'https://web-portal-rho-tawny.vercel.app'
+          : 'http://localhost:5173';
+        window.location.href = `${portalBase}/?sso_token=${encodeURIComponent(data.token)}&sso_user=${encodeURIComponent(JSON.stringify(data.user))}`;
       } else {
         router.push('/');
         router.refresh();

@@ -8,13 +8,27 @@ export const Login: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  React.useEffect(() => {
+    const apiOrigin = (import.meta.env.VITE_API_URL || 'http://localhost:5023/api').replace(/\/api\/?$/, '');
+    fetch(`${apiOrigin}/api/health`).catch(() => {});
+  }, []);
+
   const onFinish = async (values: any) => {
     setLoading(true);
     try {
-      const res = await authService.login({
-        email: values.username,
-        password: values.password,
-      });
+      let res: any;
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          res = await authService.login({
+            email: values.username,
+            password: values.password,
+          });
+          break;
+        } catch (err: any) {
+          if (err.response || attempt === 3) throw err;
+          await new Promise((r) => setTimeout(r, 2500));
+        }
+      }
 
       const user = res.data.user;
       const role = (user.role || '').toUpperCase();
