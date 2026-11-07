@@ -39,80 +39,24 @@ export default function VouchersPage() {
     fetchVouchers();
   }, []);
 
-  // Tải và truy xuất dữ liệu (fetchVouchers)
+  // Tải và truy xuất dữ liệu từ API vouchers/promotions của Database
   const fetchVouchers = async () => {
     setLoading(true);
     try {
-      // Ưu tiên gọi API vouchers/promotions từ backend
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/vouchers`);
       if (res.ok) {
         const data = await res.json();
         const list = Array.isArray(data) ? data : (data.items || []);
-        if (list.length > 0) {
-          setVouchers(list);
-          setLoading(false);
-          return;
-        }
+        setVouchers(list);
+      } else {
+        setVouchers([]);
       }
-      // Fallback fallback mẫu nếu DB trống
-      fetchFallbackVouchers();
     } catch (err) {
-      console.warn('Lỗi kết nối API vouchers, dùng danh sách fallback:', err);
-      fetchFallbackVouchers();
+      console.error('Lỗi khi tải mã giảm giá từ database:', err);
+      setVouchers([]);
     } finally {
       setLoading(false);
     }
-  };
-
-  // Tải và truy xuất dữ liệu (fetchFallbackVouchers)
-  const fetchFallbackVouchers = () => {
-    setVouchers([
-      {
-        id: 1,
-        code: 'FREESHIP',
-        name: 'Miễn phí vận chuyển nội thành TP.HCM',
-        discountType: 'Ship',
-        discountValue: 30000,
-        discountFormatted: 'Freeship 30k',
-        minOrderAmount: 150000,
-        endDate: '2026-12-31',
-        status: 'active'
-      },
-      {
-        id: 2,
-        code: 'LANHNEW',
-        name: 'Ưu đãi chào bạn mới mừng nông sản sạch',
-        discountType: 'Fixed',
-        discountValue: 30000,
-        discountFormatted: 'Giảm 30.000₫',
-        minOrderAmount: 200000,
-        endDate: '2026-12-31',
-        status: 'active'
-      },
-      {
-        id: 3,
-        code: 'VIETGAP10',
-        name: 'Giảm 10% các loại rau ăn lá VietGAP',
-        discountType: 'Percent',
-        discountValue: 10,
-        discountFormatted: 'Giảm 10%',
-        minOrderAmount: 100000,
-        maxDiscount: 40000,
-        endDate: '2026-11-30',
-        status: 'active'
-      },
-      {
-        id: 4,
-        code: 'COMBOYEU',
-        name: 'Giảm thêm khi đặt Combo Dinh Dưỡng Tuần',
-        discountType: 'Fixed',
-        discountValue: 50000,
-        discountFormatted: 'Giảm 50.000₫',
-        minOrderAmount: 350000,
-        endDate: '2026-12-15',
-        status: 'active'
-      }
-    ]);
   };
 
   // Hàm xử lý sự kiện tương tác người dùng (handleCopy)

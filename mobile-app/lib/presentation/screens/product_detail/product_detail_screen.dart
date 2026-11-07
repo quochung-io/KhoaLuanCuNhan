@@ -29,6 +29,8 @@ class ProductDetailScreen extends StatefulWidget {
 class _ProductDetailScreenState extends State<ProductDetailScreen> {
   final _commentController = TextEditingController();
   final _replyController = TextEditingController();
+  final PageController _imagePageController = PageController();
+  int _currentImageIndex = 0;
 
   bool _isLoadingReviews = false;
   List<Map<String, dynamic>> _realReviews = [];
@@ -150,6 +152,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
   @override
   void dispose() {
+    _imagePageController.dispose();
     _commentController.dispose();
     _replyController.dispose();
     _inlineEditController.dispose();
@@ -757,7 +760,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         if (success) {
                           setState(() {
                             if (isReply) {
-                              final repliesList = parentRev?['replies'] as List<dynamic>?;
+                              final repliesList = parentRev['replies'] as List<dynamic>?;
                               repliesList?.removeWhere(
                                 (r) => ((r['reviewId'] ?? r['id']) as num?)?.toInt() == reviewId,
                               );
@@ -846,31 +849,23 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Ảnh minh họa sản phẩm
-                  Container(
-                    width: double.infinity,
-                    height: 240,
-                    decoration: BoxDecoration(
-                      color: product.color.withValues(alpha: 0.08),
-                    ),
-                    child: (product.imageUrl != null && product.imageUrl!.isNotEmpty)
-                        ? Image.network(
-                            ApiService.fixImageUrl(product.imageUrl),
-                            width: double.infinity,
-                            height: 240,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) => Center(
-                              child: Hero(
-                                tag: 'product-icon-${product.id}',
-                                child: Icon(
-                                  product.icon,
-                                  size: 100,
-                                  color: product.color,
-                                ),
-                              ),
-                            ),
-                          )
-                        : Center(
+                  // Khối Trình chiếu Nhiều Hình ảnh Nông sản (Đồng bộ trải nghiệm như Web Store)
+                  Builder(
+                    builder: (context) {
+                      final displayImages = product.images.isNotEmpty
+                          ? product.images
+                          : ((product.imageUrl != null && product.imageUrl!.isNotEmpty)
+                              ? [product.imageUrl!]
+                              : <String>[]);
+
+                      if (displayImages.isEmpty) {
+                        return Container(
+                          width: double.infinity,
+                          height: 250,
+                          decoration: BoxDecoration(
+                            color: product.color.withValues(alpha: 0.08),
+                          ),
+                          child: Center(
                             child: Hero(
                               tag: 'product-icon-${product.id}',
                               child: Icon(
@@ -880,6 +875,203 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                               ),
                             ),
                           ),
+                        );
+                      }
+
+                      return Column(
+                        children: [
+                          // Ảnh lớn dạng Slider vuốt ngang
+                          SizedBox(
+                            width: double.infinity,
+                            height: 270,
+                            child: Stack(
+                              children: [
+                                PageView.builder(
+                                  controller: _imagePageController,
+                                  itemCount: displayImages.length,
+                                  onPageChanged: (index) {
+                                    setState(() => _currentImageIndex = index);
+                                  },
+                                  itemBuilder: (ctx, idx) {
+                                    final imgUrl = ApiService.fixImageUrl(displayImages[idx]);
+                                    return GestureDetector(
+                                      onTap: () {
+                                        // Mở hộp thoại xem ảnh phóng to toàn màn hình
+                                        showDialog(
+                                          context: context,
+                                          builder: (dialogCtx) => Dialog(
+                                            backgroundColor: Colors.transparent,
+                                            insetPadding: const EdgeInsets.all(12),
+                                            child: Stack(
+                                              alignment: Alignment.topRight,
+                                              children: [
+                                                InteractiveViewer(
+                                                  child: ClipRRect(
+                                                    borderRadius: BorderRadius.circular(16),
+                                                    child: Image.network(
+                                                      imgUrl,
+                                                      fit: BoxFit.contain,
+                                                      errorBuilder: (_, __, ___) => Container(
+                                                        color: Colors.black54,
+                                                        height: 300,
+                                                        child: const Icon(Icons.broken_image, color: Colors.white, size: 60),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                                IconButton(
+                                                  icon: const Icon(Icons.close, color: Colors.white, size: 28),
+                                                  onPressed: () => Navigator.of(dialogCtx).pop(),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                      child: Image.network(
+                                        imgUrl,
+                                        width: double.infinity,
+                                        height: 270,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (context, error, stackTrace) => Container(
+                                          color: product.color.withValues(alpha: 0.08),
+                                          child: Center(
+                                            child: Icon(product.icon, size: 80, color: product.color),
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+
+                                // Badge chỉ số ảnh (ví dụ: 1/4)
+                                if (displayImages.length > 1)
+                                  Positioned(
+                                    bottom: 12,
+                                    right: 16,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: Colors.black.withOpacity(0.65),
+                                        borderRadius: BorderRadius.circular(14),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          const Icon(Icons.photo_library_outlined, size: 13, color: Colors.white),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            '${_currentImageIndex + 1}/${displayImages.length}',
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                              letterSpacing: 0.5,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+
+                                // Badge chỉ thị tiêu chuẩn nông sản sạch ở góc trái
+                                Positioned(
+                                  top: 12,
+                                  left: 16,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF2E7D32).withOpacity(0.9),
+                                      borderRadius: BorderRadius.circular(8),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.15),
+                                          blurRadius: 4,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(Icons.verified, size: 14, color: Colors.white),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          product.cert.isNotEmpty ? product.cert : 'VietGAP',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 11.5,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          // Dải Thumbnail ảnh nhỏ dạng cuộn ngang (Chạm để xem ảnh tương ứng như Web)
+                          if (displayImages.length > 1)
+                            Container(
+                              height: 64,
+                              margin: const EdgeInsets.only(top: 10, bottom: 2),
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              child: ListView.separated(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: displayImages.length,
+                                separatorBuilder: (_, __) => const SizedBox(width: 8),
+                                itemBuilder: (ctx, i) {
+                                  final isSelected = i == _currentImageIndex;
+                                  return GestureDetector(
+                                    onTap: () {
+                                      setState(() => _currentImageIndex = i);
+                                      _imagePageController.animateToPage(
+                                        i,
+                                        duration: const Duration(milliseconds: 280),
+                                        curve: Curves.easeInOut,
+                                      );
+                                    },
+                                    child: AnimatedContainer(
+                                      duration: const Duration(milliseconds: 200),
+                                      width: 58,
+                                      height: 58,
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(10),
+                                        border: Border.all(
+                                          color: isSelected ? const Color(0xFF2E7D32) : Colors.grey.shade300,
+                                          width: isSelected ? 2.5 : 1,
+                                        ),
+                                        boxShadow: isSelected
+                                            ? [
+                                                BoxShadow(
+                                                  color: const Color(0xFF2E7D32).withOpacity(0.25),
+                                                  blurRadius: 6,
+                                                  offset: const Offset(0, 2),
+                                                ),
+                                              ]
+                                            : null,
+                                      ),
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(8),
+                                        child: Image.network(
+                                          ApiService.fixImageUrl(displayImages[i]),
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (_, __, ___) => Container(
+                                            color: Colors.grey.shade200,
+                                            child: Icon(product.icon, size: 24, color: Colors.grey),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                        ],
+                      );
+                    },
                   ),
 
             // Nội dung chi tiết

@@ -387,6 +387,7 @@ public class UsersController : ControllerBase
 
             // Nâng cấp / Gán thêm quyền Nhà cung cấp (RoleId = 2) cho tài khoản này
             existingUser.RoleId = 2;
+            existingUser.Status = "Pending"; // Chờ Admin kiểm duyệt hồ sơ HTX trước khi cho phép đăng nhập portal
             if (string.IsNullOrWhiteSpace(existingUser.Phone) && !string.IsNullOrWhiteSpace(cleanPhone))
             {
                 existingUser.Phone = cleanPhone;

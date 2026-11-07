@@ -4,6 +4,8 @@
 // ============================================================================
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Text;
+using System.Globalization;
 using Ecc.Infrastructure.Data;
 using Ecc.Infrastructure.Entities;
 
@@ -20,7 +22,7 @@ public class ProductsController : ControllerBase
         _context = context;
     }
 
-    // GET: api/products?search=...&minPrice=...&maxPrice=...&comboType=...
+    // GET: api/products?search=...&minPrice=...&maxPrice=...&comboType=...&region=...
     [HttpGet]
     public async Task<IActionResult> GetAll(
         [FromQuery] string? search, 
@@ -28,14 +30,18 @@ public class ProductsController : ControllerBase
         [FromQuery] decimal? maxPrice,
         [FromQuery] int? supplierId,
         [FromQuery] int? categoryId,
-        [FromQuery] string? comboType)
+        [FromQuery] string? comboType,
+        [FromQuery] string? region)
     {
         try
         {
             var query = _context.Products
                 .Include(p => p.Category)
                 .Include(p => p.ProductImages)
+                .Include(p => p.Supplier)
                 .Include(p => p.ProductBatches)
+                    .ThenInclude(b => b.Farm)
+                .Where(p => p.Status == null || p.Status != "Pending")
                 .AsQueryable();
 
             if (supplierId.HasValue)
@@ -62,12 +68,6 @@ public class ProductsController : ControllerBase
             {
                 string ct = comboType.Trim().ToLower();
                 query = query.Where(p => p.ComboType != null && p.ComboType.ToLower() == ct);
-            }
-
-            if (!string.IsNullOrWhiteSpace(search))
-            {
-                string s = search.Trim().ToLower();
-                query = query.Where(p => p.ProductName.ToLower().Contains(s) || (p.Description != null && p.Description.ToLower().Contains(s)));
             }
 
             if (minPrice.HasValue)
@@ -103,7 +103,44 @@ public class ProductsController : ControllerBase
                 decimal availableStock = validBatches.Sum(b => b.InitialQuantity);
                 prod.AvailableStock = availableStock;
                 prod.IsOutOfStock = prod.ProductBatches.Any() && availableStock <= 0;
-                prod.LotCode = prod.ProductBatches.OrderByDescending(b => b.BatchId).FirstOrDefault()?.BatchCode ?? $"LOT-DL-{prod.ProductId:D3}";
+
+                var latestBatch = prod.ProductBatches.OrderByDescending(b => b.BatchId).FirstOrDefault();
+                var farm = latestBatch?.Farm;
+                var province = farm?.Province ?? prod.Supplier?.Province ?? "";
+                prod.Origin = province;
+                prod.Region = province;
+                prod.FarmName = farm?.FarmName ?? prod.Supplier?.SupplierName ?? "";
+                prod.LotCode = latestBatch?.BatchCode ?? "";
+            }
+
+            // Lọc tìm kiếm hỗ trợ cả tiếng Việt có dấu và không dấu (Case-insensitive, Diacritics-insensitive)
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var rawSearch = search.Trim();
+                var sLower = rawSearch.ToLower();
+                var sNorm = NormalizeSearchText(rawSearch);
+
+                products = products.Where(p =>
+                    (p.ProductName != null && (p.ProductName.ToLower().Contains(sLower) || NormalizeSearchText(p.ProductName).Contains(sNorm))) ||
+                    (p.Description != null && (p.Description.ToLower().Contains(sLower) || NormalizeSearchText(p.Description).Contains(sNorm))) ||
+                    (p.Category != null && p.Category.CategoryName != null && (p.Category.CategoryName.ToLower().Contains(sLower) || NormalizeSearchText(p.Category.CategoryName).Contains(sNorm))) ||
+                    (p.Supplier != null && p.Supplier.SupplierName != null && (p.Supplier.SupplierName.ToLower().Contains(sLower) || NormalizeSearchText(p.Supplier.SupplierName).Contains(sNorm))) ||
+                    (!string.IsNullOrEmpty(p.Origin) && (p.Origin.ToLower().Contains(sLower) || NormalizeSearchText(p.Origin).Contains(sNorm)))
+                ).ToList();
+            }
+
+            // Lọc theo vùng miền / tỉnh thành sản xuất
+            if (!string.IsNullOrWhiteSpace(region) && region != "all")
+            {
+                var regLower = region.Trim().ToLower();
+                var regNorm = NormalizeSearchText(regLower);
+
+                products = products.Where(p =>
+                    (!string.IsNullOrEmpty(p.Region) && (p.Region.ToLower().Contains(regLower) || NormalizeSearchText(p.Region).Contains(regNorm))) ||
+                    (!string.IsNullOrEmpty(p.Origin) && (p.Origin.ToLower().Contains(regLower) || NormalizeSearchText(p.Origin).Contains(regNorm))) ||
+                    p.ProductBatches.Any(b => b.Farm != null && !string.IsNullOrEmpty(b.Farm.Province) && (b.Farm.Province.ToLower().Contains(regLower) || NormalizeSearchText(b.Farm.Province).Contains(regNorm))) ||
+                    (p.Supplier != null && !string.IsNullOrEmpty(p.Supplier.Province) && (p.Supplier.Province.ToLower().Contains(regLower) || NormalizeSearchText(p.Supplier.Province).Contains(regNorm)))
+                ).ToList();
             }
 
             return Ok(products);
@@ -111,6 +148,37 @@ public class ProductsController : ControllerBase
         catch (Exception ex)
         {
             return StatusCode(500, new { message = $"Lỗi khi tải danh sách sản phẩm: {ex.Message}" });
+        }
+    }
+
+    // GET: api/products/regions
+    [HttpGet("regions")]
+    public async Task<IActionResult> GetRegions()
+    {
+        try
+        {
+            var farmProvinces = await _context.Farms
+                .Where(f => !string.IsNullOrEmpty(f.Province))
+                .Select(f => f.Province!)
+                .Distinct()
+                .ToListAsync();
+
+            var supplierProvinces = await _context.Suppliers
+                .Where(s => !string.IsNullOrEmpty(s.Province))
+                .Select(s => s.Province!)
+                .Distinct()
+                .ToListAsync();
+
+            var allRegions = farmProvinces
+                .Union(supplierProvinces)
+                .OrderBy(r => r)
+                .ToList();
+
+            return Ok(allRegions);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = $"Lỗi khi tải danh mục vùng miền: {ex.Message}" });
         }
     }
 
@@ -125,10 +193,18 @@ public class ProductsController : ControllerBase
                 return Ok(new List<object>());
             }
 
-            string p = prefix.Trim().ToLower();
-            var matches = await _context.Products
+            string rawP = prefix.Trim();
+            string pLower = rawP.ToLower();
+            string pNorm = NormalizeSearchText(rawP);
+
+            var prods = await _context.Products
                 .Include(prod => prod.ProductImages)
-                .Where(prod => prod.ProductName.ToLower().Contains(p))
+                .Where(prod => prod.Status == null || prod.Status != "Pending")
+                .ToListAsync();
+
+            var matches = prods
+                .Where(prod => 
+                    (prod.ProductName != null && (prod.ProductName.ToLower().Contains(pLower) || NormalizeSearchText(prod.ProductName).Contains(pNorm))))
                 .Take(6)
                 .Select(prod => new
                 {
@@ -140,7 +216,7 @@ public class ProductsController : ControllerBase
                                 ?? prod.ProductImages.Select(img => img.ImageUrl).FirstOrDefault() 
                                 ?? ""
                 })
-                .ToListAsync();
+                .ToList();
 
             return Ok(matches);
         }
@@ -148,6 +224,23 @@ public class ProductsController : ControllerBase
         {
             return StatusCode(500, new { message = $"Lỗi autocomplete: {ex.Message}" });
         }
+    }
+
+    // Helper: Chuẩn hóa tiếng Việt bỏ dấu và chuyển chữ thường để tìm kiếm không phân biệt HOA/thường và dấu
+    public static string NormalizeSearchText(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return string.Empty;
+        var normalized = text.Normalize(NormalizationForm.FormD);
+        var sb = new StringBuilder();
+        foreach (var ch in normalized)
+        {
+            var uc = CharUnicodeInfo.GetUnicodeCategory(ch);
+            if (uc != UnicodeCategory.NonSpacingMark)
+            {
+                sb.Append(ch);
+            }
+        }
+        return sb.ToString().Normalize(NormalizationForm.FormC).ToLower().Replace("đ", "d");
     }
 
     // GET: api/products/5
@@ -159,7 +252,9 @@ public class ProductsController : ControllerBase
             var product = await _context.Products
                 .Include(p => p.Category)
                 .Include(p => p.ProductImages)
+                .Include(p => p.Supplier)
                 .Include(p => p.ProductBatches)
+                    .ThenInclude(b => b.Farm)
                 .Include(p => p.Reviews)
                 .FirstOrDefaultAsync(p => p.ProductId == id);
 
@@ -184,7 +279,14 @@ public class ProductsController : ControllerBase
             decimal availableStock = validBatches.Sum(b => b.InitialQuantity);
             product.AvailableStock = availableStock;
             product.IsOutOfStock = product.ProductBatches.Any() && availableStock <= 0;
-            product.LotCode = product.ProductBatches.OrderByDescending(b => b.BatchId).FirstOrDefault()?.BatchCode ?? $"LOT-DL-{product.ProductId:D3}";
+
+            var latestBatch = product.ProductBatches.OrderByDescending(b => b.BatchId).FirstOrDefault();
+            var farm = latestBatch?.Farm;
+            var province = farm?.Province ?? product.Supplier?.Province ?? "";
+            product.Origin = province;
+            product.Region = province;
+            product.FarmName = farm?.FarmName ?? product.Supplier?.SupplierName ?? "";
+            product.LotCode = latestBatch?.BatchCode ?? "";
 
             return Ok(product);
         }

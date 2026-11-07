@@ -6,6 +6,7 @@ export type Product = {
   id: number;
   name: string;
   price: string;
+  rawPrice?: number;
   unit: string;
   cert: string;
   region: string;
@@ -13,6 +14,11 @@ export type Product = {
   reviews: number;
   icon: string;
   lot: string;
+  imageUrl?: string;
+  isOutOfStock?: boolean;
+  availableStock?: number;
+  discountPercent?: number;
+  originalPrice?: number;
 };
 
 export type CartItem = {

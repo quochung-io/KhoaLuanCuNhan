@@ -35,6 +35,19 @@ interface ProductDetail {
   productImages?: ProductImage[];
   originalPrice?: number;
   discountPercent?: number;
+  origin?: string;
+  region?: string;
+  farmName?: string;
+  cert?: string;
+  lotCode?: string;
+  averageRating?: number;
+  reviewsCount?: number;
+  supplier?: {
+    supplierId: number;
+    supplierName: string;
+    province?: string;
+    address?: string;
+  };
 }
 
 interface BatchInfo {
@@ -864,10 +877,10 @@ export default function ProductDetailPage() {
       ? (product.productImages.find(i => i.isPrimary)?.imageUrl || product.productImages[0].imageUrl)
       : undefined;
 
-    const region = getRegionByName(product.productName);
-    const categoryName = product.category?.categoryName || 'Rau củ';
-    const cert = (product.status === 'Active' || !product.status) ? 'VietGAP' : product.status;
-    const lotCode = batches.length > 0 ? batches[0].batchCode : `LOT#VN-${productId.padStart(4, '0')}`;
+    const region = product.region || product.origin || product.farmName || product.supplier?.province || product.supplier?.supplierName || getRegionByName(product.productName);
+    const categoryName = product.category?.categoryName || 'Nông sản';
+    const cert = product.cert || ((product.status === 'Active' || !product.status) ? 'VietGAP' : product.status);
+    const lotCode = batches.length > 0 ? batches[0].batchCode : (product.lotCode || `LOT#VN-${productId.padStart(4, '0')}`);
 
     const itemToAdd = {
       id: product.productId,
@@ -877,8 +890,8 @@ export default function ProductDetailPage() {
       category: categoryName,
       cert: cert,
       region: region,
-      rating: 4.9,
-      reviews: 168,
+      rating: product.averageRating || 5.0,
+      reviews: product.reviewsCount || 0,
       icon: 'leaf',
       lot: lotCode,
       imageUrl: img
@@ -933,12 +946,12 @@ export default function ProductDetailPage() {
       price: (item.price || 0).toLocaleString('vi-VN') + '₫',
       unit: item.unit ? ` / ${item.unit}` : ' / kg',
       category: item.categoryName || 'Nông sản sạch',
-      cert: 'VietGAP',
-      region: getRegionByName(item.productName),
-      rating: 5.0,
-      reviews: 45,
+      cert: item.cert || 'VietGAP',
+      region: item.origin || item.region || item.farmName || getRegionByName(item.productName),
+      rating: item.averageRating || 5.0,
+      reviews: item.reviewsCount || 0,
       icon: 'leaf',
-      lot: `LOT#VN-${String(item.productId).padStart(4, '0')}`,
+      lot: item.lotCode || `LOT#VN-${String(item.productId).padStart(4, '0')}`,
       imageUrl: item.imageUrl
     };
 
@@ -985,12 +998,12 @@ export default function ProductDetailPage() {
       price: discountedMainPrice.toLocaleString('vi-VN') + '₫',
       unit: ' / ' + product.unit,
       category: product.category?.categoryName || 'Nông sản',
-      cert: 'VietGAP',
-      region: getRegionByName(product.productName),
-      rating: 5.0,
-      reviews: 120,
+      cert: product.cert || ((product.status === 'Active' || !product.status) ? 'VietGAP' : product.status),
+      region: product.region || product.origin || product.farmName || product.supplier?.province || getRegionByName(product.productName),
+      rating: product.averageRating || 5.0,
+      reviews: product.reviewsCount || 0,
       icon: 'leaf',
-      lot: batches.length > 0 ? batches[0].batchCode : `LOT#VN-${String(product.productId).padStart(4, '0')}`,
+      lot: batches.length > 0 ? batches[0].batchCode : (product.lotCode || `LOT#VN-${String(product.productId).padStart(4, '0')}`),
       imageUrl: mainImg
     };
 
@@ -1020,12 +1033,12 @@ export default function ProductDetailPage() {
         price: discountedItemPrice.toLocaleString('vi-VN') + '₫',
         unit: item.unit ? ` / ${item.unit}` : ' / kg',
         category: item.categoryName || 'Nông sản sạch',
-        cert: 'VietGAP',
-        region: getRegionByName(item.productName),
-        rating: 5.0,
-        reviews: 45,
+        cert: item.cert || 'VietGAP',
+        region: item.origin || item.region || item.farmName || getRegionByName(item.productName),
+        rating: item.averageRating || 5.0,
+        reviews: item.reviewsCount || 0,
         icon: 'leaf',
-        lot: `LOT#VN-${String(item.productId).padStart(4, '0')}`,
+        lot: item.lotCode || `LOT#VN-${String(item.productId).padStart(4, '0')}`,
         imageUrl: item.imageUrl
       };
 

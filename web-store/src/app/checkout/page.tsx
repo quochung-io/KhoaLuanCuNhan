@@ -49,50 +49,6 @@ type Voucher = {
   isFromWallet?: boolean;
 };
 
-const SYSTEM_VOUCHERS: Voucher[] = [
-  {
-    code: 'LANHNEW',
-    title: 'Giảm 15% Đơn Đầu Tiên',
-    description: 'Ưu đãi thành viên mới của nông sản LÀNH',
-    discountType: 'percent',
-    discountValue: 15,
-    minOrder: 100000,
-    maxDiscount: 40000,
-    expiryDate: '31/12/2026',
-    tag: 'TÂN THỦ'
-  },
-  {
-    code: 'FREESHIP30K',
-    title: 'Miễn Phí Vận Chuyển 30.000₫',
-    description: 'Trừ trực tiếp 30.000₫ phí giao hàng',
-    discountType: 'ship',
-    discountValue: 30000,
-    minOrder: 150000,
-    expiryDate: '30/11/2026',
-    tag: 'FREESHIP'
-  },
-  {
-    code: 'ORGANIC50K',
-    title: 'Giảm 50.000₫ Đơn Từ 300K',
-    description: 'Áp dụng cho mọi đơn hàng từ 300.000₫',
-    discountType: 'fixed',
-    discountValue: 50000,
-    minOrder: 300000,
-    expiryDate: '15/12/2026',
-    tag: 'TIẾT KIỆM'
-  },
-  {
-    code: 'DALATFARM',
-    title: 'Giảm 20.000₫ Nông Sản Đà Lạt',
-    description: 'Ưu đãi cho đơn hàng rau củ quả Đà Lạt',
-    discountType: 'fixed',
-    discountValue: 20000,
-    minOrder: 120000,
-    expiryDate: '25/10/2026',
-    tag: 'ĐÀ LẠT'
-  }
-];
-
 // Kiểm tra, xác thực hoặc phê duyệt nghiệp vụ (CheckoutPage)
 export default function CheckoutPage() {
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -130,7 +86,7 @@ export default function CheckoutPage() {
   const [customVoucherCode, setCustomVoucherCode] = useState('');
   const [voucherError, setVoucherError] = useState('');
   const [voucherSuccessMsg, setVoucherSuccessMsg] = useState('');
-  const [systemVouchers, setSystemVouchers] = useState<Voucher[]>(SYSTEM_VOUCHERS);
+  const [systemVouchers, setSystemVouchers] = useState<Voucher[]>([]);
   const [walletVouchers, setWalletVouchers] = useState<Voucher[]>([]);
   const [loadingVouchers, setLoadingVouchers] = useState(false);
   const [voucherModalTab, setVoucherModalTab] = useState<'wallet' | 'all'>('wallet');
@@ -277,6 +233,28 @@ export default function CheckoutPage() {
     }
 
     fetchAddresses(parsedUser.userId);
+
+    // Đồng bộ danh sách mã khuyến mãi toàn sàn từ Database
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/promotions?status=active`)
+      .then(res => res.ok ? res.json() : [])
+      .then((data: any[]) => {
+        if (Array.isArray(data)) {
+          const mapped: Voucher[] = data.map(p => ({
+            code: p.code || '',
+            title: p.name || p.code || 'Mã giảm giá',
+            description: p.minOrderAmount ? `Áp dụng cho đơn từ ${Number(p.minOrderAmount).toLocaleString('vi-VN')}₫` : 'Áp dụng cho mọi đơn hàng',
+            discountType: (p.discountType || '').toLowerCase() === 'percent' ? 'percent' : ((p.discountType || '').toLowerCase() === 'ship' ? 'ship' : 'fixed'),
+            discountValue: Number(p.discountValue) || 0,
+            minOrder: Number(p.minOrderAmount) || 0,
+            maxDiscount: p.maxDiscount ? Number(p.maxDiscount) : undefined,
+            expiryDate: p.endDate || '',
+            tag: (p.discountType || '').toLowerCase() === 'ship' ? 'FREESHIP' : 'KHUYẾN MÃI'
+          }));
+          setSystemVouchers(mapped);
+        }
+      })
+      .catch(() => {});
+
     fetchUserVouchers(parsedUser.userId).then((loadedWallet: Voucher[]) => {
       // Tự động nhận diện mã Voucher được chuyển từ trang Profile (/profile)
       if (typeof window !== 'undefined') {
@@ -284,7 +262,7 @@ export default function CheckoutPage() {
         const urlCode = searchParams.get('voucher') || localStorage.getItem('pending_voucher_code');
         if (urlCode) {
           const cleanCode = urlCode.trim().toUpperCase();
-          const pool = [...(loadedWallet || []), ...SYSTEM_VOUCHERS];
+          const pool = [...(loadedWallet || []), ...systemVouchers];
           const match = pool.find(v => v.code.toUpperCase() === cleanCode);
           if (match) {
             setSelectedVoucher(match);
@@ -413,7 +391,9 @@ export default function CheckoutPage() {
   };
 
   const subtotal = calculateSubtotal();
-  const shippingFee = 30000;
+  // Áp dụng đúng chính sách Freeship đơn từ 150.000đ (ID 14)
+  const isFreeShipping = subtotal >= 150000;
+  const shippingFee = isFreeShipping ? 0 : 30000;
 
   const calculateDiscount = () => {
     if (!selectedVoucher) return 0;
@@ -453,7 +433,7 @@ export default function CheckoutPage() {
       return;
     }
     const code = customVoucherCode.trim().toUpperCase();
-    const allPool = [...walletVouchers, ...SYSTEM_VOUCHERS];
+    const allPool = [...walletVouchers, ...systemVouchers];
     const found = allPool.find(v => v.code.toUpperCase() === code);
     if (!found) {
       setVoucherError(`Mã "${code}" không hợp lệ hoặc không có trong kho lưu trữ.`);
@@ -1428,8 +1408,17 @@ export default function CheckoutPage() {
                   <span style={{ color: '#0f172a', fontWeight: '500' }}>{toVND(subtotal)}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13.5px', color: '#64748b' }}>
-                  <span>Phí vận chuyển tiêu chuẩn</span>
-                  <span style={{ color: '#0f172a', fontWeight: '500' }}>{toVND(shippingFee)}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span>Phí vận chuyển tiêu chuẩn</span>
+                    {isFreeShipping && (
+                      <span style={{ fontSize: '11px', backgroundColor: '#DCFCE7', color: '#15803D', fontWeight: '700', padding: '1px 6px', borderRadius: '4px' }}>
+                        Freeship
+                      </span>
+                    )}
+                  </div>
+                  <span style={{ color: isFreeShipping ? '#15803d' : '#0f172a', fontWeight: isFreeShipping ? '700' : '500' }}>
+                    {isFreeShipping ? 'Miễn phí (0₫)' : toVND(shippingFee)}
+                  </span>
                 </div>
                 {discountAmount > 0 && (
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13.5px', color: '#15803d', fontWeight: '600' }}>
@@ -1886,7 +1875,7 @@ export default function CheckoutPage() {
                   padding: '1px 6px',
                   borderRadius: '999px'
                 }}>
-                  {SYSTEM_VOUCHERS.length}
+                  {systemVouchers.length}
                 </span>
               </button>
             </div>

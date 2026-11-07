@@ -494,30 +494,9 @@ function TraceabilityInner() {
         setLoading(false);
       })
       .catch(err => {
-        console.error('Lỗi tải danh sách lô hàng:', err);
-        // Dữ liệu dự phòng nếu backend tạm dừng
-        const fallbackBatch: DbBatch = {
-          batchId: 1,
-          productId: 1,
-          farmId: 1,
-          batchCode: 'CT-260820-001',
-          harvestDate: '2026-08-20T06:00:00',
-          receivedDate: '2026-08-20T12:00:00',
-          expiryDate: '2026-08-28T23:59:59',
-          initialQuantity: 120,
-          unit: 'kg',
-          status: 'Active',
-          product: {
-            productId: 1,
-            productName: 'Cà chua bi Đà Lạt',
-            description: 'Cà chua bi đỏ vị ngọt thanh mát, canh tác chuẩn VietGAP.',
-            price: 68000,
-            unit: 'kg'
-          }
-        };
-        setBatches([fallbackBatch]);
-        setSelectedBatch(fallbackBatch);
-        setSearchInput(fallbackBatch.batchCode);
+        console.error('Lỗi khi tải danh sách lô hàng từ cơ sở dữ liệu:', err);
+        setBatches([]);
+        setSelectedBatch(null);
         setLoading(false);
       });
   }, [batchQueryParam]);

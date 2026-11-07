@@ -26,117 +26,6 @@ export interface SelectableProduceItem {
   imageUrl: string;
 }
 
-export const DALAT_PRODUCE_POOL: SelectableProduceItem[] = [
-  {
-    id: 1,
-    name: 'Cải bó xôi hữu cơ (Spinach)',
-    weight: '350g',
-    region: 'HTX Đà Lạt (Lâm Đồng)',
-    category: 'Rau ăn lá',
-    benefit: 'Giàu sắt, acid folic và chất chống oxy hóa tự nhiên',
-    imageUrl: 'https://images.unsplash.com/photo-1576045057995-568f588f82fb?w=300&auto=format&fit=crop&q=80'
-  },
-  {
-    id: 2,
-    name: 'Cà rốt baby giòn ngọt',
-    weight: '500g',
-    region: 'HTX Đà Lạt (Lâm Đồng)',
-    category: 'Củ quả',
-    benefit: 'Hàm lượng Beta-carotene dồi dào, tốt cho thị lực',
-    imageUrl: 'https://images.unsplash.com/photo-1598170845058-32b9d6a5c317?w=300&auto=format&fit=crop&q=80'
-  },
-  {
-    id: 3,
-    name: 'Xà lách xoăn thủy canh Frisee',
-    weight: '300g',
-    region: 'HTX Đà Lạt (Lâm Đồng)',
-    category: 'Rau ăn lá',
-    benefit: 'Tươi giòn mọng nước, lý tưởng cho món salad trộn',
-    imageUrl: 'https://images.unsplash.com/photo-1622206151226-18ca2c9ab4a1?w=300&auto=format&fit=crop&q=80'
-  },
-  {
-    id: 4,
-    name: 'Bí đỏ hồ lô hạt dẻ',
-    weight: '1 quả (~800g)',
-    region: 'HTX Đà Lạt (Lâm Đồng)',
-    category: 'Củ quả',
-    benefit: 'Vị ngọt bùi béo tự nhiên, bổ não và tăng đề kháng',
-    imageUrl: 'https://images.unsplash.com/photo-1570586435880-8031c5107297?w=300&auto=format&fit=crop&q=80'
-  },
-  {
-    id: 5,
-    name: 'Súp lơ xanh bông lớn (Broccoli)',
-    weight: '1 búp (~600g)',
-    region: 'HTX Đà Lạt (Lâm Đồng)',
-    category: 'Rau ăn hoa',
-    benefit: 'Chứa Sulforaphane kháng viêm và thanh lọc tế bào',
-    imageUrl: 'https://images.unsplash.com/photo-1459411621453-7b03977f4bfc?w=300&auto=format&fit=crop&q=80'
-  },
-  {
-    id: 6,
-    name: 'Cà chua bi Cherry đỏ mọng',
-    weight: '400g',
-    region: 'HTX Đà Lạt (Lâm Đồng)',
-    category: 'Trái cây củ quả',
-    benefit: 'Hàm lượng Lycopene cực cao, dưỡng da chống lão hóa',
-    imageUrl: 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=300&auto=format&fit=crop&q=80'
-  },
-  {
-    id: 7,
-    name: 'Bắp non (Ngô bao tử) giòn ngọt',
-    weight: '500g',
-    region: 'HTX Đà Lạt (Lâm Đồng)',
-    category: 'Củ quả',
-    benefit: 'Ngọt bùi giòn xốp, nấu súp hoặc xào thịt thanh mát',
-    imageUrl: 'https://images.unsplash.com/photo-1551754655-cd27e38d2076?w=300&auto=format&fit=crop&q=80'
-  },
-  {
-    id: 8,
-    name: 'Bơ sáp 034 dẻo béo',
-    weight: '1.0 kg',
-    region: 'HTX Đà Lạt (Lâm Đồng)',
-    category: 'Trái cây đặc sản',
-    benefit: 'Chứa acid béo Omega-3 không bão hòa tốt cho tim mạch',
-    imageUrl: 'https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?w=300&auto=format&fit=crop&q=80'
-  },
-  {
-    id: 9,
-    name: 'Cải ngọt hữu cơ cọng giòn',
-    weight: '500g',
-    region: 'HTX Đà Lạt (Lâm Đồng)',
-    category: 'Rau ăn lá',
-    benefit: 'Thanh nhiệt giải độc, nấu canh ngọt dịu tự nhiên',
-    imageUrl: 'https://images.unsplash.com/photo-1576045057995-568f588f82fb?w=300&auto=format&fit=crop&q=80'
-  },
-  {
-    id: 10,
-    name: 'Nấm đùi gà tươi hữu cơ',
-    weight: '300g',
-    region: 'HTX Đà Lạt (Lâm Đồng)',
-    category: 'Nấm sạch',
-    benefit: 'Giòn ngọt thơm lừng, bổ sung protein thực vật lành tính',
-    imageUrl: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=300&auto=format&fit=crop&q=80'
-  },
-  {
-    id: 11,
-    name: 'Dưa leo baby giòn mát',
-    weight: '800g',
-    region: 'HTX Đà Lạt (Lâm Đồng)',
-    category: 'Củ quả',
-    benefit: 'Cung cấp nước và khoáng chất, ăn sống giòn ngọt',
-    imageUrl: 'https://images.unsplash.com/photo-1604977042946-1eecc30f269e?w=300&auto=format&fit=crop&q=80'
-  },
-  {
-    id: 12,
-    name: 'Cải xoăn Kale hữu cơ',
-    weight: '350g',
-    region: 'HTX Đà Lạt (Lâm Đồng)',
-    category: 'Rau ăn lá',
-    benefit: 'Nữ hoàng rau xanh giàu Vitamin K, Canxi và Lutein',
-    imageUrl: 'https://images.unsplash.com/photo-1524179091875-bf99a9a6fa57?w=300&auto=format&fit=crop&q=80'
-  }
-];
-
 export interface SupplierProfile {
   id: number;
   name: string;
@@ -146,73 +35,11 @@ export interface SupplierProfile {
   producePool: SelectableProduceItem[];
 }
 
-export const SUPPLIERS_PROFILES: SupplierProfile[] = [
-  {
-    id: 1,
-    name: 'Hợp tác xã Nông Sản Đà Lạt (Lâm Đồng)',
-    shortName: 'HTX Đà Lạt',
-    region: 'Đà Lạt & Lạc Dương (Lâm Đồng)',
-    badge: 'Rau củ ôn đới & quả ngọt mát',
-    producePool: DALAT_PRODUCE_POOL
-  },
-  {
-    id: 2,
-    name: 'Hợp tác xã Rau Sạch Miền Tây (Đồng Tháp)',
-    shortName: 'HTX Rau Miền Tây',
-    region: 'Đồng Tháp & Cần Thơ (ĐBSCL)',
-    badge: 'Rau ruộng phù sa & thủy sinh',
-    producePool: [
-      { id: 201, name: 'Bầu sao non Miền Tây', weight: '1 quả (~700g)', region: 'HTX Rau Miền Tây (Đồng Tháp)', category: 'Củ quả', benefit: 'Thanh nhiệt giải độc, nấu canh tôm ngọt mát', imageUrl: 'https://images.unsplash.com/photo-1598170845058-32b9d6a5c317?w=300&auto=format&fit=crop&q=80' },
-      { id: 202, name: 'Rau dền đỏ hữu cơ phù sa', weight: '500g', region: 'HTX Rau Miền Tây (Đồng Tháp)', category: 'Rau ăn lá', benefit: 'Giàu sắt và vitamin A, nấu canh bổ huyết', imageUrl: 'https://images.unsplash.com/photo-1576045057995-568f588f82fb?w=300&auto=format&fit=crop&q=80' },
-      { id: 203, name: 'Mướp hương quê ngọt lịm', weight: '2 quả (~600g)', region: 'HTX Rau Miền Tây (Đồng Tháp)', category: 'Củ quả', benefit: 'Hương thơm tự nhiên, thanh nhiệt mát gan', imageUrl: 'https://images.unsplash.com/photo-1570586435880-8031c5107297?w=300&auto=format&fit=crop&q=80' },
-      { id: 204, name: 'Đậu bắp baby xanh giòn', weight: '500g', region: 'HTX Rau Miền Tây (Cần Thơ)', category: 'Củ quả', benefit: 'Chất nhầy tự nhiên bảo vệ niêm mạc dạ dày', imageUrl: 'https://images.unsplash.com/photo-1551754655-cd27e38d2076?w=300&auto=format&fit=crop&q=80' },
-      { id: 205, name: 'Dưa leo Nam Bộ cọng giòn', weight: '800g', region: 'HTX Rau Miền Tây (Đồng Tháp)', category: 'Củ quả', benefit: 'Nhiều nước, giải khát và làm đẹp da', imageUrl: 'https://images.unsplash.com/photo-1604977042946-1eecc30f269e?w=300&auto=format&fit=crop&q=80' },
-      { id: 206, name: 'Khổ qua rừng trái nhỏ', weight: '400g', region: 'HTX Rau Miền Tây (An Giang)', category: 'Củ quả', benefit: 'Hạ đường huyết, tăng cường tiêu hóa', imageUrl: 'https://images.unsplash.com/photo-1524179091875-bf99a9a6fa57?w=300&auto=format&fit=crop&q=80' },
-      { id: 207, name: 'Rau mồng tơi vườn nhà', weight: '500g', region: 'HTX Rau Miền Tây (Đồng Tháp)', category: 'Rau ăn lá', benefit: 'Nhuận tràng, giải nhiệt mùa hè rất tốt', imageUrl: 'https://images.unsplash.com/photo-1622206151226-18ca2c9ab4a1?w=300&auto=format&fit=crop&q=80' },
-      { id: 208, name: 'Cải thìa trắng xào tỏi', weight: '500g', region: 'HTX Rau Miền Tây (Cần Thơ)', category: 'Rau ăn lá', benefit: 'Giòn ngọt cọng dày, giàu vitamin C và chất xơ', imageUrl: 'https://images.unsplash.com/photo-1576045057995-568f588f82fb?w=300&auto=format&fit=crop&q=80' },
-      { id: 209, name: 'Bông bí tươi hái sớm', weight: '300g', region: 'HTX Rau Miền Tây (Đồng Tháp)', category: 'Rau ăn hoa', benefit: 'Đặc sản đồng quê xào tỏi giòn bùi bổ dưỡng', imageUrl: 'https://images.unsplash.com/photo-1459411621453-7b03977f4bfc?w=300&auto=format&fit=crop&q=80' }
-    ]
-  },
-  {
-    id: 3,
-    name: 'Hợp tác xã Trái Cây Việt (Đồng Nai & Bến Tre)',
-    shortName: 'HTX Trái Cây Việt',
-    region: 'Đồng Nai & Bến Tre',
-    badge: 'Trái cây đặc sản chín cây',
-    producePool: [
-      { id: 301, name: 'Xoài cát Hòa Lộc chín cây', weight: '1.2 kg', region: 'HTX Trái Cây Việt (Tiền Giang)', category: 'Trái cây đặc sản', benefit: 'Thơm lừng, thịt dẻo ngọt đậm đà trứ danh', imageUrl: 'https://images.unsplash.com/photo-1553279768-865429fa0078?w=300&auto=format&fit=crop&q=80' },
-      { id: 302, name: 'Bưởi da xanh ruột hồng', weight: '1 quả (~1.4kg)', region: 'HTX Trái Cây Việt (Bến Tre)', category: 'Trái cây đặc sản', benefit: 'Tép đỏ giòn mọng, ráo nước không hạt', imageUrl: 'https://images.unsplash.com/photo-1582979512210-99b6a53386f9?w=300&auto=format&fit=crop&q=80' },
-      { id: 303, name: 'Cam sành Bến Tre mọng nước', weight: '1.5 kg', region: 'HTX Trái Cây Việt (Bến Tre)', category: 'Trái cây đặc sản', benefit: 'Giàu vitamin C tự nhiên, vỏ mỏng tép vàng', imageUrl: 'https://images.unsplash.com/photo-1547514701-42782101795e?w=300&auto=format&fit=crop&q=80' },
-      { id: 304, name: 'Chôm chôm nhãn giòn ngọt', weight: '1.0 kg', region: 'HTX Trái Cây Việt (Đồng Nai)', category: 'Trái cây đặc sản', benefit: 'Tróc vỏ, cơm giòn ngọt lịm thơm mát', imageUrl: 'https://images.unsplash.com/photo-1528825871115-3581a5387919?w=300&auto=format&fit=crop&q=80' },
-      { id: 305, name: 'Chuối Laba dẻo thơm', weight: '1 nải (~1.2kg)', region: 'HTX Trái Cây Việt (Lâm Đồng)', category: 'Trái cây đặc sản', benefit: 'Giàu kali, dẻo ngọt tự nhiên tốt tiêu hóa', imageUrl: 'https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?w=300&auto=format&fit=crop&q=80' },
-      { id: 306, name: 'Thanh long ruột đỏ VietGAP', weight: '1.2 kg', region: 'HTX Trái Cây Việt (Bình Thuận)', category: 'Trái cây đặc sản', benefit: 'Chống oxy hóa, màu đỏ tự nhiên ngọt thanh', imageUrl: 'https://images.unsplash.com/photo-1527325678964-54921661f888?w=300&auto=format&fit=crop&q=80' },
-      { id: 307, name: 'Mít Thái giòn bóc múi sẵn', weight: '500g', region: 'HTX Trái Cây Việt (Tiền Giang)', category: 'Trái cây đặc sản', benefit: 'Múi dày vàng óng, giòn rụm ngọt ngào', imageUrl: 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=300&auto=format&fit=crop&q=80' }
-    ]
-  },
-  {
-    id: 4,
-    name: 'HTX Nông Nghiệp An Phú (Đơn Dương - Lâm Đồng)',
-    shortName: 'HTX An Phú',
-    region: 'Đơn Dương (Lâm Đồng)',
-    badge: 'Nông nghiệp công nghệ cao GlobalGAP',
-    producePool: [
-      { id: 401, name: 'Cà chua beef GlobalGAP quả to', weight: '600g', region: 'HTX An Phú (Đơn Dương)', category: 'Củ quả công nghệ cao', benefit: 'Thịt quả dày mọng, chuyên làm sốt và nướng', imageUrl: 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=300&auto=format&fit=crop&q=80' },
-      { id: 402, name: 'Ớt chuông Sweet ba màu', weight: '500g', region: 'HTX An Phú (Đơn Dương)', category: 'Củ quả công nghệ cao', benefit: 'Giàu Vitamin A & C, ăn sống giòn không hăng cay', imageUrl: 'https://images.unsplash.com/photo-1563565375-f3fdfdbefa83?w=300&auto=format&fit=crop&q=80' },
-      { id: 403, name: 'Cà chua bi sô-cô-la ngọt đậm', weight: '400g', region: 'HTX An Phú (Đơn Dương)', category: 'Củ quả công nghệ cao', benefit: 'Vị ngọt đậm đà, màu nâu sô-cô-la giàu dưỡng chất', imageUrl: 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=300&auto=format&fit=crop&q=80' },
-      { id: 404, name: 'Xà lách Romaine hữu cơ nhà màng', weight: '400g', region: 'HTX An Phú (Đơn Dương)', category: 'Rau ăn lá', benefit: 'Thân lá giòn mướt, tuyệt vời làm salad Caesar', imageUrl: 'https://images.unsplash.com/photo-1622206151226-18ca2c9ab4a1?w=300&auto=format&fit=crop&q=80' },
-      { id: 405, name: 'Cần tây hữu cơ giòn ngọt ép nước', weight: '600g', region: 'HTX An Phú (Đơn Dương)', category: 'Rau ăn lá', benefit: 'Thanh lọc cơ thể, hỗ trợ thanh nhiệt và sáng da', imageUrl: 'https://images.unsplash.com/photo-1576045057995-568f588f82fb?w=300&auto=format&fit=crop&q=80' },
-      { id: 406, name: 'Dưa leo Baby snack giòn tan', weight: '500g', region: 'HTX An Phú (Đơn Dương)', category: 'Củ quả', benefit: 'Vỏ mỏng không đắng, ăn trực tiếp giòn rụm', imageUrl: 'https://images.unsplash.com/photo-1604977042946-1eecc30f269e?w=300&auto=format&fit=crop&q=80' },
-      { id: 407, name: 'Củ dền đỏ bổ máu', weight: '600g', region: 'HTX An Phú (Đơn Dương)', category: 'Củ quả', benefit: 'Giàu Folate và Nitrat tự nhiên, tốt cho huyết áp', imageUrl: 'https://images.unsplash.com/photo-1598170845058-32b9d6a5c317?w=300&auto=format&fit=crop&q=80' },
-      { id: 408, name: 'Nấm ngọc châm trắng hữu cơ', weight: '300g', region: 'HTX An Phú (Đơn Dương)', category: 'Nấm sạch', benefit: 'Thân dài giòn thơm, nấu súp hoặc xào nấm tuyệt hảo', imageUrl: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=300&auto=format&fit=crop&q=80' }
-    ]
-  }
-];
-
 // Tải và truy xuất dữ liệu (getComboSlotCount)
 function getComboSlotCount(id: number): number {
-  if (id === 902 || id === 905) return 5; // Gia Đình Lớn: 5 món
-  if (id === 903 || id === 906 || id === 908 || id === 909) return 4; // Thuần Chay / Trái Cây / Lẩu: 4 món
-  return 3; // Gia Đình Nhỏ (901, 904) hoặc Ăn Dặm (907) / Salad (910): 3 món
+  if (id === 902 || id === 905) return 5;
+  if (id === 903 || id === 906 || id === 908 || id === 909) return 4;
+  return 3;
 }
 
 interface ComboDetail {
@@ -232,352 +59,49 @@ interface ComboDetail {
   harvestProcess: Array<{ time: string; step: string; desc: string }>;
   faqs: Array<{ q: string; a: string }>;
   customerReviews: Array<{ author: string; role: string; date: string; rating: number; comment: string }>;
+  cert?: string;
+  region?: string;
+  lotCode?: string;
+  category?: string;
 }
 
-const combosDatabase: Record<number, ComboDetail> = {
-  901: {
-    id: 901,
-    name: 'Combo Gia Đình Nhỏ (Tuần)',
-    subtitle: 'Nông sản sạch theo mùa tuyển chọn cho gia đình 2–3 người nấu ăn mỗi ngày',
-    desc: 'Giải pháp đi chợ thông minh dành cho gia đình trẻ. Giỏ combo cung cấp đầy đủ 4 nhóm chất cần thiết gồm rau ăn lá giàu diệp lục, củ quả hữu cơ giàu chất xơ hòa tan và trái cây chín cây giàu vitamin. Toàn bộ được thu hoạch sớm tại vườn lúc 4h sáng và giao ngay trong ngày.',
-    badge: 'Phổ biến nhất',
-    weekPrice: 189000,
-    monthPrice: 680000,
-    rating: 4.9,
-    reviewsCount: 142,
-    servingSize: '2 - 3 người (Khoảng 5 - 6 bữa ăn nấu tại nhà)',
-    gallery: [
-      'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=800&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1576045057995-568f588f82fb?w=800&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1597362925123-77861d3fbac7?w=800&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=800&auto=format&fit=crop&q=80'
-    ],
-    features: [
-      '4 loại rau ăn lá & củ quả theo mùa chuẩn VietGAP & Hữu cơ',
-      '2 loại trái cây đặc sản chín cây thu hoạch trong ngày',
-      'Giao tận bếp định kỳ vào Thứ 3 hoặc Thứ 6 hàng tuần',
-      'Miễn phí đổi loại rau củ không hợp khẩu vị trước 24 giờ',
-      'Freeship 100% trong bán kính 10km nội thành'
-    ],
-    items: [
-      {
-        name: 'Cải bó xôi hữu cơ (Spinach)',
-        weight: '350g',
-        region: 'Đà Lạt (Lâm Đồng)',
-        benefit: 'Giàu sắt, acid folic và chất chống oxy hóa tự nhiên',
-        imageUrl: 'https://images.unsplash.com/photo-1576045057995-568f588f82fb?w=300&auto=format&fit=crop&q=80'
-      },
-      {
-        name: 'Cà rốt baby giòn ngọt',
-        weight: '500g',
-        region: 'Mộc Châu (Sơn La)',
-        benefit: 'Hàm lượng Beta-carotene dồi dào, tốt cho thị lực và làn da',
-        imageUrl: 'https://images.unsplash.com/photo-1598170845058-32b9d6a5c317?w=300&auto=format&fit=crop&q=80'
-      },
-      {
-        name: 'Xà lách xoăn thủy canh Frisee',
-        weight: '300g',
-        region: 'Đà Lạt (Lâm Đồng)',
-        benefit: 'Tươi giòn mọng nước, lý tưởng cho món salad trộn thanh nhiệt',
-        imageUrl: 'https://images.unsplash.com/photo-1622206151226-18ca2c9ab4a1?w=300&auto=format&fit=crop&q=80'
-      },
-      {
-        name: 'Bí đỏ hồ lô hạt dẻ',
-        weight: '1 quả (~800g)',
-        region: 'Đắk Lắk (Tây Nguyên)',
-        benefit: 'Vị ngọt bùi béo tự nhiên, bổ não và tăng sức đề kháng',
-        imageUrl: 'https://images.unsplash.com/photo-1570586435880-8031c5107297?w=300&auto=format&fit=crop&q=80'
-      },
-      {
-        name: 'Cam sành Cao Phong chín mọng',
-        weight: '1.2 kg',
-        region: 'Hòa Bình',
-        benefit: 'Cung cấp 100% nhu cầu Vitamin C hàng ngày cho cả gia đình',
-        imageUrl: 'https://images.unsplash.com/photo-1582979512210-99b6a53386f9?w=300&auto=format&fit=crop&q=80'
-      },
-      {
-        name: 'Bơ sáp 034 dẻo béo',
-        weight: '1.0 kg',
-        region: 'Bảo Lộc (Lâm Đồng)',
-        benefit: 'Chứa chất béo đơn không bão hòa Omega-3 có lợi cho tim mạch',
-        imageUrl: 'https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?w=300&auto=format&fit=crop&q=80'
-      }
-    ],
-    harvestProcess: [
-      { time: '04:00 Sáng', step: 'Thu hoạch thủ công', desc: 'Xã viên thu hoạch nông sản lúc sương sớm để giữ trọn vẹn độ giòn ngọt và dưỡng chất tự nhiên.' },
-      { time: '06:30 Sáng', step: 'Kiểm định & Sơ chế', desc: 'Rửa sục ozone khử khuẩn, phân loại kích cỡ và đóng gói trong túi thở sinh học tự hủy.' },
-      { time: '08:00 Sáng', step: 'Vận chuyển xe lạnh', desc: 'Xếp giỏ nông sản vào thùng giữ nhiệt bảo ôn 12-15°C để rau củ không bị héo úa trên đường.' },
-      { time: '09:30 - 11:30', step: 'Giao tận cửa bếp', desc: 'Shipper chuyên trách trao tận tay khách hàng kèm biên bản truy xuất nguồn gốc từng món.' }
-    ],
-    faqs: [
-      { q: 'Nếu trong combo có món tôi không thích ăn thì sao?', a: 'Bạn chỉ cần nhắn tin hoặc báo qua Hotline 1900 8899 trước 24 giờ ngày giao, LÀNH sẽ đổi sang loại nông sản khác có giá trị tương đương hoàn toàn miễn phí.' },
-      { q: 'Gia đình tôi đi công tác hoặc du lịch có được tạm hoãn gói không?', a: 'Hoàn toàn được! Bạn có thể tạm dừng gói trong 1 - 4 tuần. Lượt giao chưa dùng sẽ được bảo lưu tự động sang các tuần kế tiếp mà không phát sinh bất kỳ khoản phí nào.' },
-      { q: 'Rau củ bảo quản trong tủ lạnh được bao lâu?', a: 'Do rau được hái tươi và giao ngay trong ngày (không qua kho tồn), rau ăn lá giữ tươi ngon từ 5-7 ngày, củ quả và trái cây để được từ 10-15 ngày trong ngăn mát tủ lạnh.' },
-      { q: 'Tôi có thể thanh toán từng tuần hay trả trước cả tháng?', a: 'Bạn có thể chọn thanh toán theo từng tuần khi nhận hàng (COD) hoặc đăng ký gói tháng qua chuyển khoản/MoMo để được giảm giá thêm 10% và miễn phí vận chuyển trọn vẹn.' }
-    ],
-    customerReviews: []
-  },
-  902: {
-    id: 902,
-    name: 'Combo Gia Đình Lớn (Tuần)',
-    subtitle: 'Khẩu phần thịnh soạn cho gia đình 4–6 thành viên với thực đơn rau củ quả phong phú',
-    desc: 'Combo thiết kế chuyên biệt cho gia đình nhiều thế hệ (ông bà, bố mẹ và con nhỏ). Giỏ combo dung lượng lớn gồm 7 loại rau xanh hữu cơ đa dạng, 3 loại trái cây đặc sản đạt chuẩn VietGAP/GlobalGAP và tặng kèm 1 vỉ trứng gà ta thảo mộc mỗi tuần.',
-    badge: 'Tiết kiệm 15%',
-    weekPrice: 329000,
-    monthPrice: 1180000,
-    rating: 5.0,
-    reviewsCount: 98,
-    servingSize: '4 - 6 người (Khoảng 10 - 14 bữa ăn đầy đủ rau xanh)',
-    gallery: [
-      'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=800&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=800&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1518843875459-f738682238a6?w=800&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1597362925123-77861d3fbac7?w=800&auto=format&fit=crop&q=80'
-    ],
-    features: [
-      '7 loại rau xanh và củ quả hữu cơ đa dạng sắc màu',
-      '3 loại trái cây thượng hạng đạt chuẩn VietGAP & GlobalGAP',
-      'Tặng kèm 1 vỉ trứng gà ta thả vườn ăn thảo mộc (10 quả)',
-      'Giao định kỳ đúng hẹn tận bếp theo khung giờ bạn chọn',
-      'Được ưu tiên chọn các loại đặc sản vụ mùa sản lượng hiếm'
-    ],
-    items: [
-      { name: 'Cải ngọt hữu cơ cọng giòn', weight: '600g', region: 'Đà Lạt', benefit: 'Thanh nhiệt giải độc, giàu chất xơ', imageUrl: 'https://images.unsplash.com/photo-1576045057995-568f588f82fb?w=300&auto=format&fit=crop&q=80' },
-      { name: 'Súp lơ xanh bông lớn (Broccoli)', weight: '1 búp (~600g)', region: 'Đà Lạt', benefit: 'Chứa Sulforaphane kháng viêm và hỗ trợ ngừa ung thư', imageUrl: 'https://images.unsplash.com/photo-1459411621453-7b03977f4bfc?w=300&auto=format&fit=crop&q=80' },
-      { name: 'Cà chua bi Cherry đỏ mọng', weight: '400g', region: 'Đà Lạt', benefit: 'Hàm lượng Lycopene cực cao, chống oxy hóa', imageUrl: 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=300&auto=format&fit=crop&q=80' },
-      { name: 'Bắp cải giòn ngọt Mộc Châu', weight: '1 bắp (~1.2kg)', region: 'Mộc Châu', benefit: 'Lá dày cuộn chặt, giữ vị ngọt tự nhiên khi luộc xào', imageUrl: 'https://images.unsplash.com/photo-1598170845058-32b9d6a5c317?w=300&auto=format&fit=crop&q=80' },
-      { name: 'Khoai lang mật nướng dẻo', weight: '1.5 kg', region: 'Đắk Lắk', benefit: 'Chỉ số đường huyết thấp, giàu khoáng chất', imageUrl: 'https://images.unsplash.com/photo-1570586435880-8031c5107297?w=300&auto=format&fit=crop&q=80' },
-      { name: 'Bưởi da xanh ruột hồng Bến Tre', weight: '1 quả (~1.5kg)', region: 'Bến Tre', benefit: 'Tép bưởi mọng tróc vỏ dễ dàng, ngọt đậm không the', imageUrl: 'https://images.unsplash.com/photo-1582979512210-99b6a53386f9?w=300&auto=format&fit=crop&q=80' },
-      { name: 'Dâu tây Mộc Châu giống Nhật', weight: '300g', region: 'Mộc Châu', benefit: 'Thơm ngào ngạt, vị chua ngọt hài hòa cho bé ăn vặt', imageUrl: 'https://images.unsplash.com/photo-1464965911861-746a04b4bca6?w=300&auto=format&fit=crop&q=80' },
-      { name: 'Trứng gà ta thảo mộc (Quà tặng)', weight: 'Vỉ 10 quả', region: 'Ba Vì (Hà Nội)', benefit: 'Lòng đỏ vàng sậm đậm đà, không kháng sinh', imageUrl: 'https://images.unsplash.com/photo-1587486913049-53fc88980cfc?w=300&auto=format&fit=crop&q=80' }
-    ],
-    harvestProcess: [
-      { time: '04:00 Sáng', step: 'Thu hoạch đồng loạt', desc: 'Chọn lọc tại 3 nhà màng liên kết VietGAP quy chuẩn.' },
-      { time: '06:00 Sáng', step: 'Khử khuẩn ozone', desc: 'Loại bỏ hoàn toàn bụi cát và tạp chất hữu cơ tự nhiên.' },
-      { time: '07:30 Sáng', step: 'Kiểm soát nhiệt độ', desc: 'Bảo quản mát liên tục trong suốt hành trình xe thùng lạnh.' },
-      { time: '09:00 - 11:30', step: 'Bàn giao đến nhà', desc: 'Giao kiện hàng lớn đóng thùng bảo ôn giữ lạnh sạch đẹp.' }
-    ],
-    faqs: [
-      { q: 'Gói lớn có tặng thêm gì không?', a: 'Mỗi tuần bạn được tặng 1 vỉ 10 trứng gà ta thả vườn ăn thảo mộc tươi mới.' },
-      { q: 'Có thể chia làm 2 lần giao trong 1 tuần được không?', a: 'Với gói lớn bạn có thể yêu cầu tách làm 2 lần giao (Thứ 3 và Thứ 6) với phụ phí ship ưu đãi chỉ 15.000₫/lượt phụ.' }
-    ],
-    customerReviews: []
-  },
-  903: {
-    id: 903,
-    name: 'Combo Thuần Chay Sạch (Tuần)',
-    subtitle: 'Cung cấp nguồn đạm thực vật tinh sạch, vitamin & khoáng chất cân bằng cho người ăn chay',
-    desc: 'Thiết kế khoa học cho người ăn chay trường, ăn chay bán phần hoặc theo đuổi chế độ thực dưỡng thanh lọc cơ thể. Giỏ hàng tập trung vào các loại nấm sạch nuôi trồng tự nhiên, đậu hũ non hữu cơ, ngũ cốc đặc sản và các loại rau lá giàu đạm thực vật.',
-    badge: 'Thuần chay 100%',
-    weekPrice: 249000,
-    monthPrice: 895000,
-    rating: 4.8,
-    reviewsCount: 76,
-    servingSize: '2 - 3 người ăn chay trường',
-    gallery: [
-      'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=800&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1518843875459-f738682238a6?w=800&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1576045057995-568f588f82fb?w=800&auto=format&fit=crop&q=80'
-    ],
-    features: [
-      '6 loại rau củ & nấm tươi hữu cơ giàu đạm thực vật',
-      '2 loại hạt dinh dưỡng / ngũ cốc đặc sản không chất bảo quản',
-      'Đạt chứng nhận hữu cơ không phân bón hóa học',
-      'Kèm cẩm nang thực đơn gợi ý món chay ngon mỗi ngày'
-    ],
-    items: [
-      { name: 'Nấm đùi gà tươi hữu cơ', weight: '250g', region: 'Đà Lạt', benefit: 'Giòn ngọt, giàu Protein và Polysaccharide tăng miễn dịch', imageUrl: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=300&auto=format&fit=crop&q=80' },
-      { name: 'Nấm bào ngư xám sạch', weight: '300g', region: 'Đồng Nai', benefit: 'Thịt nấm dày, bổ sung acid amin thiết yếu cho cơ thể', imageUrl: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=300&auto=format&fit=crop&q=80' },
-      { name: 'Đậu hũ non hữu cơ làm thủ công', weight: '2 hộp (~500g)', region: 'LÀNH Kitchen', benefit: 'Làm từ 100% hạt đậu nành không biến đổi gen (Non-GMO)', imageUrl: 'https://images.unsplash.com/photo-1598170845058-32b9d6a5c317?w=300&auto=format&fit=crop&q=80' },
-      { name: 'Cải xoăn Kale hữu cơ Đà Lạt', weight: '350g', region: 'Đà Lạt', benefit: 'Siêu thực phẩm xanh giàu Vitamin K, Canxi và Lutein', imageUrl: 'https://images.unsplash.com/photo-1576045057995-568f588f82fb?w=300&auto=format&fit=crop&q=80' },
-      { name: 'Hạt sen tươi Huế bóc vỏ bỏ tim', weight: '250g', region: 'Huế', benefit: 'Dưỡng tâm an thần, cải thiện chất lượng giấc ngủ', imageUrl: 'https://images.unsplash.com/photo-1570586435880-8031c5107297?w=300&auto=format&fit=crop&q=80' },
-      { name: 'Gạo lứt huyết rồng hữu cơ', weight: '1.0 kg', region: 'Sóc Trăng', benefit: 'Giàu chất xơ, vitamin nhóm B và khoáng chất tự nhiên', imageUrl: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=300&auto=format&fit=crop&q=80' }
-    ],
-    harvestProcess: [
-      { time: '04:30 Sáng', step: 'Hái nấm & Rau tươi', desc: 'Nấm được thu hái đúng lứa giữ độ giòn ngọt tối đa.' },
-      { time: '06:30 Sáng', step: 'Đóng hộp bảo quản', desc: 'Đậu hũ non và nấm được đóng khay chuyên dụng chống dập nát.' },
-      { time: '08:30 Sáng', step: 'Chuyển xe lạnh', desc: 'Giữ nhiệt độ ổn định để nấm tươi nguyên vẹn dưỡng chất.' }
-    ],
-    faqs: [
-      { q: 'Người ăn chay trường dùng gói này có bị thiếu chất không?', a: 'Không hề, thực đơn được đội ngũ chuyên gia dinh dưỡng cân đối tỷ lệ đạm thực vật từ nấm, hạt và vitamin từ rau củ để đảm bảo năng lượng tràn trề suốt tuần.' }
-    ],
-    customerReviews: []
-  },
-  907: {
-    id: 907,
-    name: 'Combo Ăn Dặm Hữu Cơ Bé Yêu',
-    subtitle: 'Nông sản công nghệ cao GlobalGAP chọn lọc độ tuổi ăn dặm cho bé',
-    desc: 'Thiết kế riêng cho các mẹ chăm bé bắt đầu ăn dặm hoặc ăn thô. Nông sản canh tác nhà màng đạt chuẩn GlobalGAP từ HTX An Phú, không dư lượng thuốc BVTV, giàu khoáng chất tự nhiên.',
-    badge: 'Chương trình HTX',
-    weekPrice: 195000,
-    monthPrice: 720000,
-    rating: 4.9,
-    reviewsCount: 64,
-    servingSize: 'Bé từ 6 - 24 tháng (Chế biến ăn dặm cả tuần)',
-    gallery: [
-      'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=800&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1563565375-f3fdfdbefa83?w=800&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1598170845058-32b9d6a5c317?w=800&auto=format&fit=crop&q=80'
-    ],
-    features: [
-      '100% nông sản canh tác nhà màng không phun thuốc hóa học',
-      'Củ quả ngọt tự nhiên, dễ nghiền mịn và hấp chín',
-      'Chứng nhận GlobalGAP kiểm nghiệm kim loại nặng',
-      'Giao tận nơi định kỳ vào buổi sáng sớm'
-    ],
-    items: [],
-    harvestProcess: [
-      { time: '05:00 Sáng', step: 'Thu hoạch nhà màng', desc: 'Thu hoạch quả củ đúng độ non ngọt tự nhiên cho bé.' },
-      { time: '07:00 Sáng', step: 'Sơ chế & Kiểm định vi sinh', desc: 'Khử khuẩn bằng nước ion kiềm, đóng khay đạt chuẩn.' },
-      { time: '09:00 Sáng', step: 'Giao tận cửa', desc: 'Vận chuyển giữ lạnh giao đến tay mẹ bỉm sữa.' }
-    ],
-    faqs: [
-      { q: 'Sản phẩm có an toàn tuyệt đối cho bé ăn dặm?', a: 'Toàn bộ nông sản được kiểm nghiệm định kỳ chỉ số nitrat và kim loại nặng đạt chuẩn an toàn cho trẻ sơ sinh và trẻ nhỏ.' }
-    ],
-    customerReviews: []
-  },
-  908: {
-    id: 908,
-    name: 'Combo Trái Cây Miệt Vườn Nam Bộ',
-    subtitle: 'Hương vị trái cây nhiệt đới chín cây thơm ngọt từ HTX Trái Cây Việt',
-    desc: 'Tuyển chọn những loại trái cây đặc sản nổi tiếng Nam Bộ như Xoài cát Hòa Lộc, Bưởi da xanh ruột hồng, Cam sành, Chôm chôm nhãn... Được hái đúng lứa chín cây tự nhiên, không ủ hóa chất ép chín.',
-    badge: 'Đặc sản chín cây',
-    weekPrice: 269000,
-    monthPrice: 980000,
-    rating: 5.0,
-    reviewsCount: 88,
-    servingSize: '3 - 5 người (Trái cây tươi tráng miệng cả tuần)',
-    gallery: [
-      'https://images.unsplash.com/photo-1553279768-865429fa0078?w=800&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1582979512210-99b6a53386f9?w=800&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1528825871115-3581a5387919?w=800&auto=format&fit=crop&q=80'
-    ],
-    features: [
-      'Trái cây hái trực tiếp từ vườn Bến Tre & Tiền Giang',
-      'Độ ngọt tự nhiên (Brix cao), không ngâm thuốc kích chín',
-      'Bảo hiểm tươi ngon dập nát 1 đổi 1 tận nơi'
-    ],
-    items: [],
-    harvestProcess: [
-      { time: '05:30 Sáng', step: 'Hái trái chín cây', desc: 'Chọn những trái đạt độ đường cao nhất trên cây.' },
-      { time: '08:00 Sáng', step: 'Bọc xốp chống dập', desc: 'Đóng thùng chuyên dụng có lỗ thở bảo quản tươi mới.' },
-      { time: '10:00 Sáng', step: 'Giao hàng', desc: 'Chuyển thẳng từ nhà vườn đến bàn ăn.' }
-    ],
-    faqs: [
-      { q: 'Trái cây có bị xanh sượng không?', a: 'Nhà vườn cam kết trái cây chín già tự nhiên, ngọt đậm thơm nức mũi.' }
-    ],
-    customerReviews: []
-  },
-  909: {
-    id: 909,
-    name: 'Combo Rau Đồng Nấu Lẩu Thực Dưỡng',
-    subtitle: 'Bộ sưu tập rau đồng ruộng phù sa dân dã thanh mát từ HTX Rau Sạch Miền Tây',
-    desc: 'Tập hợp các loại rau đồng quê ngọt thanh giải nhiệt: Bầu sao, rau mồng tơi, mướp hương, rau dền đỏ, đậu bắp non, bông bí. Rất thích hợp cho các bữa cơm gia đình đầm ấm hoặc lẩu cá, lẩu cua đồng.',
-    badge: 'Hương vị quê nhà',
-    weekPrice: 175000,
-    monthPrice: 640000,
-    rating: 4.8,
-    reviewsCount: 52,
-    servingSize: '3 - 4 người (Thực đơn cơm canh ngọt mát)',
-    gallery: [
-      'https://images.unsplash.com/photo-1598170845058-32b9d6a5c317?w=800&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1576045057995-568f588f82fb?w=800&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1570586435880-8031c5107297?w=800&auto=format&fit=crop&q=80'
-    ],
-    features: [
-      'Rau đồng phù sa mọc tự nhiên trên đất sông Tiền, sông Hậu',
-      'Hái sương sớm mỗi sáng, tươi non không xơ',
-      'Được nhặt sạch rễ sơ bộ trước khi đóng túi'
-    ],
-    items: [],
-    harvestProcess: [
-      { time: '04:00 Sáng', step: 'Hái rau đồng', desc: 'Bà con nông dân hái rau non trong sương sớm.' },
-      { time: '06:00 Sáng', step: 'Rửa nước giếng khoan', desc: 'Làm sạch bùn phù sa và đóng gói thoáng khí.' }
-    ],
-    faqs: [
-      { q: 'Rau để được bao lâu trong tủ lạnh?', a: 'Rau tươi tự nhiên nên giữ được 5-7 ngày trong ngăn mát túi zip.' }
-    ],
-    customerReviews: []
-  },
-  910: {
-    id: 910,
-    name: 'Combo Salad Eat-Clean Năng Lượng',
-    subtitle: 'Xà lách thủy canh, cải xoăn Kale và củ quả giòn ngọt giữ dáng đẹp da',
-    desc: 'Giải pháp hoàn hảo cho người tập luyện thể thao, theo chế độ Eat-Clean, Keto hoặc giảm cân lành mạnh. Cung cấp nguồn chất xơ, vitamin và khoáng chất dồi dào ít calo.',
-    badge: 'Eat-Clean Healthy',
-    weekPrice: 215000,
-    monthPrice: 790000,
-    rating: 4.9,
-    reviewsCount: 71,
-    servingSize: '1 - 2 người (Ăn kèm salad hoặc ép nước xanh cả tuần)',
-    gallery: [
-      'https://images.unsplash.com/photo-1622206151226-18ca2c9ab4a1?w=800&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1524179091875-bf99a9a6fa57?w=800&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1604977042946-1eecc30f269e?w=800&auto=format&fit=crop&q=80'
-    ],
-    features: [
-      'Xà lách Frisee, Romaine giòn mọng chuẩn nhà kính Đà Lạt',
-      'Cải Kale hữu cơ bổ dưỡng ép nước detox thanh lọc cơ thể',
-      'Cà chua cherry ngọt mọng nước ăn trực tiếp'
-    ],
-    items: [],
-    harvestProcess: [
-      { time: '04:30 Sáng', step: 'Cắt tỉa xà lách thủy canh', desc: 'Giữ nguyên gốc xốp giữ ẩm đến khi giao.' }
-    ],
-    faqs: [
-      { q: 'Rau có rửa ăn liền được không?', a: 'Rau trồng thủy canh nhà kính rất sạch, bạn chỉ cần tráng qua nước lọc là dùng được ngay.' }
-    ],
-    customerReviews: []
-  }
+const emptyCombo: ComboDetail = {
+  id: 0,
+  name: '',
+  subtitle: '',
+  desc: '',
+  badge: undefined,
+  weekPrice: 0,
+  monthPrice: 0,
+  rating: 0,
+  reviewsCount: 0,
+  servingSize: '',
+  gallery: [],
+  features: [],
+  items: [],
+  harvestProcess: [
+    { time: '04:00 Sáng', step: 'Thu hoạch sương sớm', desc: 'Bà con nông dân thu hoạch nông sản tươi mát đầu ngày từ nông trại đối tác.' },
+    { time: '06:30 Sáng', step: 'Kiểm định & Phân loại', desc: 'Làm sạch sơ bộ, kiểm tra tiêu chuẩn chất lượng và đóng gói bảo quản.' },
+    { time: '08:00 Sáng', step: 'Vận chuyển FreshLock', desc: 'Đóng thùng giữ nhiệt và chuyển lên xe bảo ôn chuyên dụng.' },
+    { time: '09:30 - 11:30', step: 'Giao tận nơi', desc: 'Shipper trao tận tay giỏ nông sản kèm thông tin truy xuất nguồn gốc.' }
+  ],
+  faqs: [
+    { q: 'Nếu trong combo có món tôi không thích ăn thì sao?', a: 'Quý khách có thể đổi sang loại nông sản khác có giá trị tương đương hoàn toàn miễn phí trước 24 giờ.' },
+    { q: 'Gia đình tôi đi công tác có thể tạm hoãn gói không?', a: 'Quý khách có thể tạm hoãn gói và các đợt giao chưa dùng sẽ được bảo lưu sang các tuần tiếp theo.' }
+  ],
+  customerReviews: []
 };
-
-// Fallback logic nếu combo là 904, 905, 906 (Combo Tháng tương ứng của 901, 902, 903)
-function getComboData(id: number): ComboDetail {
-  if (combosDatabase[id]) return combosDatabase[id];
-  if (id === 904) {
-    const base = combosDatabase[901];
-    return {
-      ...base,
-      id: 904,
-      name: 'Combo Gia Đình Nhỏ (Tháng)',
-      subtitle: 'Giao 4 đợt / tháng — Tiết kiệm hơn, thực đơn xoay vòng tươi mới mỗi tuần',
-      badge: 'Tiết kiệm 10%'
-    };
-  }
-  if (id === 905) {
-    const base = combosDatabase[902];
-    return {
-      ...base,
-      id: 905,
-      name: 'Combo Gia Đình Lớn (Tháng)',
-      subtitle: 'Giao 4 đợt / tháng trọn vẹn chăm sóc sức khỏe cả nhà suốt tháng',
-      badge: 'Tiết kiệm 18%'
-    };
-  }
-  if (id === 906) {
-    const base = combosDatabase[903];
-    return {
-      ...base,
-      id: 906,
-      name: 'Combo Thuần Chay Sạch (Tháng)',
-      subtitle: 'Giao 4 đợt / tháng dinh dưỡng cân bằng và thanh lọc cơ thể bền vững',
-      badge: 'Tiết kiệm 12%'
-    };
-  }
-  // Fallback mặc định về 901
-  return combosDatabase[901];
-}
 
 // Thực thi nghiệp vụ hàm ComboDetailPage
 export default function ComboDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const comboId = Number(params.id) || 901;
-  const combo = getComboData(comboId);
+  const comboId = Number(params.id) || 0;
+  const [combo, setCombo] = useState<ComboDetail>({ ...emptyCombo, id: comboId });
+  const [suppliers, setSuppliers] = useState<SupplierProfile[]>([]);
 
   // Chu kỳ gói: Tuần (1 lần/tuần), 2 Tuần (2 lần giao), Tháng (4 lần giao)
-  const [selectedFreq, setSelectedFreq] = useState<'week' | 'biweek' | 'month'>(comboId >= 904 ? 'month' : 'week');
+  const [selectedFreq, setSelectedFreq] = useState<'week' | 'biweek' | 'month'>('week');
   // Ngày giao ưu tiên: Đủ 7 ngày từ Thứ 2 tới Chủ Nhật
   const [deliveryDay, setDeliveryDay] = useState<string>('Thứ 3');
   // Khung giờ giao: Chỉ hoạt động từ 7h tới 17h
@@ -587,35 +111,26 @@ export default function ComboDetailPage() {
   // Active Tab: Bỏ tab items, mặc định hiển thị reviews
   const [activeTab, setActiveTab] = useState<'reviews' | 'process' | 'faqs'>('reviews');
   // Selected Image trong gallery
-  const [activeImage, setActiveImage] = useState<string>(combo.gallery[0]);
+  const [activeImage, setActiveImage] = useState<string>('');
 
   // Customizable Produce Picker state
   const maxSlots = getComboSlotCount(combo.id);
 
-  // Xác định Nhà cung cấp ban đầu
-  const getInitialSupplierId = (id: number): number => {
-    if (id === 908) return 3; // HTX Trái Cây Việt
-    if (id === 909) return 2; // HTX Rau Miền Tây
-    if (id === 907) return 4; // HTX An Phú
-    return 1; // HTX Đà Lạt
-  };
-
-  const [selectedSupplierId, setSelectedSupplierId] = useState<number>(() => getInitialSupplierId(combo.id));
-  const activeSupplier = SUPPLIERS_PROFILES.find(s => s.id === selectedSupplierId) || SUPPLIERS_PROFILES[0];
-  const comboSupplier = activeSupplier.name;
+  const [selectedSupplierId, setSelectedSupplierId] = useState<number>(0);
+  const activeSupplier = suppliers.find(s => s.id === selectedSupplierId) || (suppliers.length > 0 ? suppliers[0] : null);
+  const comboSupplier = activeSupplier ? activeSupplier.name : (combo.region || '');
 
   // State lưu danh sách món nông sản do khách hàng tự chọn từ pool của nhà cung cấp hiện tại
-  const [selectedProduce, setSelectedProduce] = useState<SelectableProduceItem[]>(() => {
-    const sup = SUPPLIERS_PROFILES.find(s => s.id === getInitialSupplierId(combo.id)) || SUPPLIERS_PROFILES[0];
-    return sup.producePool.slice(0, maxSlots);
-  });
+  const [selectedProduce, setSelectedProduce] = useState<SelectableProduceItem[]>([]);
 
   // Chuyển đổi Nhà Cung Cấp: Cập nhật pool nông sản tương ứng (100% cùng 1 NCC)
   const handleSelectSupplier = (supplierId: number) => {
     setSelectedSupplierId(supplierId);
-    const newSup = SUPPLIERS_PROFILES.find(s => s.id === supplierId) || SUPPLIERS_PROFILES[0];
-    setSelectedProduce(newSup.producePool.slice(0, maxSlots));
-    showNotification(`Đã chuyển sang ${newSup.name}. Danh mục nông sản đã được cập nhật!`);
+    const newSup = suppliers.find(s => s.id === supplierId);
+    if (newSup) {
+      setSelectedProduce(newSup.producePool.slice(0, maxSlots));
+      showNotification(`Đã chuyển sang ${newSup.name}. Danh mục nông sản đã được cập nhật!`);
+    }
   };
 
   // Điều khiển đóng/mở giao diện hoặc hộp thoại (toggleSelectProduce)
@@ -850,6 +365,81 @@ export default function ComboDetailPage() {
       try { setCart(JSON.parse(storedCart)); } catch (e) {}
     }
     fetchComboReviews();
+
+    // 1. Fetch chi tiết combo từ API
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/products/${comboId}`)
+      .then(res => (res.ok ? res.json() : null))
+      .then((data: any) => {
+        if (!data) return;
+        setCombo(prev => {
+          const gallery = (data.productImages && data.productImages.length > 0)
+            ? data.productImages.map((img: any) => img.imageUrl)
+            : prev.gallery;
+          if (gallery.length > 0) {
+            setActiveImage(gallery[0]);
+          }
+          return {
+            ...prev,
+            id: data.productId,
+            name: data.productName,
+            subtitle: data.description ? data.description.slice(0, 120) : prev.subtitle,
+            desc: data.description || prev.desc,
+            weekPrice: data.price,
+            monthPrice: data.originalPrice || Math.round(data.price * 3.6),
+            rating: data.averageRating || prev.rating,
+            reviewsCount: data.reviewsCount || prev.reviewsCount,
+            gallery: gallery,
+            cert: data.cert || data.status || '',
+            region: data.region || data.origin || data.farmName || '',
+            lotCode: data.lotCode || data.productBatches?.[0]?.batchCode || '',
+            category: data.categoryName || 'Combo'
+          };
+        });
+      })
+      .catch(() => {});
+
+    // 2. Fetch danh sách sản phẩm thật từ Database để làm kho nông sản tự chọn
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/products`)
+      .then(res => (res.ok ? res.json() : null))
+      .then((items: any[]) => {
+        if (!Array.isArray(items) || items.length === 0) return;
+        const freshProduce = items.filter(p => p.categoryId !== 5 && p.status !== 'Pending');
+        if (freshProduce.length === 0) return;
+
+        // Tạo dynamic suppliers từ danh sách products thật trong DB
+        const supMap = new Map<number, SupplierProfile>();
+        freshProduce.forEach(p => {
+          const sId = p.supplierId || 1;
+          const sName = p.supplier?.supplierName || p.farmName || `Hợp tác xã #${sId}`;
+          const sRegion = p.region || p.origin || p.farmName || p.supplier?.province || '';
+          if (!supMap.has(sId)) {
+            supMap.set(sId, {
+              id: sId,
+              name: sName,
+              shortName: sName.split('(')[0].trim(),
+              region: sRegion,
+              badge: p.categoryName || 'Nông sản sạch',
+              producePool: []
+            });
+          }
+          supMap.get(sId)!.producePool.push({
+            id: p.productId,
+            name: p.productName,
+            weight: p.unit ? `1 ${p.unit}` : '500g',
+            region: sRegion,
+            category: p.categoryName || 'Nông sản sạch',
+            benefit: p.description ? p.description.slice(0, 80) : '',
+            imageUrl: p.productImages?.[0]?.imageUrl || ''
+          });
+        });
+        const dynamicSups = Array.from(supMap.values());
+        if (dynamicSups.length > 0) {
+          setSuppliers(dynamicSups);
+          setSelectedSupplierId(prev => (prev > 0 ? prev : dynamicSups[0].id));
+          setSelectedProduce(prev => (prev.length > 0 ? prev : dynamicSups[0].producePool.slice(0, maxSlots)));
+        }
+      })
+      .catch(() => {});
   }, [comboId]);
 
   useEffect(() => {
@@ -892,24 +482,22 @@ export default function ComboDetailPage() {
       return;
     }
 
-    const finalComboId = selectedFreq === 'month' 
-      ? (combo.id <= 903 ? combo.id + 3 : combo.id) 
-      : (combo.id >= 904 ? combo.id - 3 : combo.id);
-
+    const finalComboId = combo.id;
+    const supShortName = activeSupplier?.shortName ? ` - ${activeSupplier.shortName}` : '';
     const selectedSummary = selectedProduce.map(p => p.name).join(', ');
 
     const comboCartItem = {
       id: finalComboId,
-      name: `${combo.name} (${freqLabel} - ${activeSupplier.shortName}) - Giao ${deliveryDay} (${deliverySlot})`,
+      name: `${combo.name} (${freqLabel}${supShortName}) - Giao ${deliveryDay} (${deliverySlot})`,
       price: currentPriceFormatted,
       unit: freqCartUnit,
-      category: 'Combo Tự Chọn',
-      cert: 'VietGAP & Hữu cơ',
-      region: comboSupplier,
+      category: combo.category || 'Combo Tự Chọn',
+      cert: combo.cert || '',
+      region: combo.region || comboSupplier || '',
       rating: combo.rating,
       reviews: combo.reviewsCount,
       icon: 'box',
-      lot: 'LOT#VN-COMBO-' + finalComboId,
+      lot: combo.lotCode || '',
       imageUrl: activeImage,
       selectedItems: selectedProduce,
       selectedSummary: selectedSummary
@@ -1615,7 +1203,7 @@ export default function ComboDetailPage() {
                 🏢 Chọn Nhà Cung Cấp cung ứng gói combo:
               </label>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '10px' }}>
-                {SUPPLIERS_PROFILES.map(sup => {
+                {suppliers.map(sup => {
                   const isCurSup = selectedSupplierId === sup.id;
                   return (
                     <button
@@ -1647,17 +1235,19 @@ export default function ComboDetailPage() {
             </div>
 
             {/* Thông tin nhà cung cấp hiện tại */}
-            <div style={{
-              fontSize: '12.5px',
-              color: 'var(--ink-soft)',
-              backgroundColor: 'var(--bg)',
-              padding: '8px 12px',
-              borderRadius: '6px',
-              marginBottom: '18px',
-              border: '1px solid var(--line)'
-            }}>
-              Đang xem danh mục của: <strong style={{ color: 'var(--green-900)' }}>{activeSupplier.name}</strong> • {activeSupplier.badge}
-            </div>
+            {activeSupplier && (
+              <div style={{
+                fontSize: '12.5px',
+                color: 'var(--ink-soft)',
+                backgroundColor: 'var(--bg)',
+                padding: '8px 12px',
+                borderRadius: '6px',
+                marginBottom: '18px',
+                border: '1px solid var(--line)'
+              }}>
+                Đang xem danh mục của: <strong style={{ color: 'var(--green-900)' }}>{activeSupplier.name}</strong> • {activeSupplier.badge}
+              </div>
+            )}
 
             {/* Produce Cards Grid: Thiết kế đơn giản, không màu mè */}
             <div style={{
@@ -1665,7 +1255,7 @@ export default function ComboDetailPage() {
               gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
               gap: '12px'
             }}>
-              {activeSupplier.producePool.map(item => {
+              {(activeSupplier?.producePool || []).map(item => {
                 const isSelected = selectedProduce.some(x => x.id === item.id);
                 return (
                   <div

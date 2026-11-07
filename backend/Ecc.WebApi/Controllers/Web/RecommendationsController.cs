@@ -232,7 +232,9 @@ public class RecommendationsController : ControllerBase
             var allCandidates = await _context.Products
                 .Include(p => p.Category)
                 .Include(p => p.ProductImages)
+                .Include(p => p.Supplier)
                 .Include(p => p.ProductBatches)
+                    .ThenInclude(b => b.Farm)
                 .Where(p => coOccurredProductIds.Contains(p.ProductId) 
                             && p.CategoryId != 5
                             && string.IsNullOrEmpty(p.ComboType)
@@ -380,7 +382,9 @@ public class RecommendationsController : ControllerBase
             var candidateProducts = await _context.Products
                 .Include(p => p.Category)
                 .Include(p => p.ProductImages)
+                .Include(p => p.Supplier)
                 .Include(p => p.ProductBatches)
+                    .ThenInclude(b => b.Farm)
                 .Where(p => p.CategoryId != 5
                             && string.IsNullOrEmpty(p.ComboType)
                             && p.ProductId < 900
@@ -485,7 +489,9 @@ public class RecommendationsController : ControllerBase
             var similar = await _context.Products
                 .Include(p => p.Category)
                 .Include(p => p.ProductImages)
+                .Include(p => p.Supplier)
                 .Include(p => p.ProductBatches)
+                    .ThenInclude(b => b.Farm)
                 .Where(p => p.ProductId != productId 
                             && p.CategoryId == baseProduct.CategoryId 
                             && p.CategoryId != 5
@@ -500,7 +506,9 @@ public class RecommendationsController : ControllerBase
                 var others = await _context.Products
                     .Include(p => p.Category)
                     .Include(p => p.ProductImages)
+                    .Include(p => p.Supplier)
                     .Include(p => p.ProductBatches)
+                        .ThenInclude(b => b.Farm)
                     .Where(p => p.ProductId != productId 
                                 && p.CategoryId != baseProduct.CategoryId
                                 && p.CategoryId != 5
@@ -593,15 +601,17 @@ public class RecommendationsController : ControllerBase
     {
         try
         {
-            string targetProv = string.IsNullOrWhiteSpace(province) ? "Lâm Đồng" : province.Trim();
+            string targetProv = province?.Trim() ?? "";
             var now = DateTime.UtcNow;
             int currentMonth = DateTime.Now.Month;
 
             // Tìm farm gần hoặc trùng province
-            var farmIds = await _context.Farms
-                .Where(f => f.Province != null && f.Province.Contains(targetProv))
-                .Select(f => f.FarmId)
-                .ToListAsync();
+            var farmIdsQuery = _context.Farms.AsQueryable();
+            if (!string.IsNullOrEmpty(targetProv))
+            {
+                farmIdsQuery = farmIdsQuery.Where(f => f.Province != null && f.Province.Contains(targetProv));
+            }
+            var farmIds = await farmIdsQuery.Select(f => f.FarmId).ToListAsync();
 
             var query = _context.Products
                 .Include(p => p.Category)
@@ -844,6 +854,10 @@ public class RecommendationsController : ControllerBase
         public bool IsFresh { get; set; }
         public bool IsOutOfStock { get; set; }
         public decimal AvailableStock { get; set; }
+        public string Origin { get; set; } = null!;
+        public string Region { get; set; } = null!;
+        public string Cert { get; set; } = null!;
+        public string LotCode { get; set; } = null!;
     }
 
     private static RecommendationItemDto MapToRecommendationResult(Product p, string recType, double score, string reason)
@@ -872,6 +886,11 @@ public class RecommendationsController : ControllerBase
         decimal availableStock = validBatches.Sum(b => b.InitialQuantity);
         bool isOutOfStock = p.ProductBatches.Any() && availableStock <= 0;
 
+        var farm = latestBatch?.Farm;
+        var origin = farm?.Province ?? p.Supplier?.Province ?? "";
+        var cert = p.Status ?? "";
+        var lotCode = latestBatch?.BatchCode ?? "";
+
         return new RecommendationItemDto
         {
             ProductId = p.ProductId,
@@ -879,9 +898,9 @@ public class RecommendationsController : ControllerBase
             Price = p.Price,
             FormattedPrice = p.Price.ToString("N0") + "₫",
             Unit = p.Unit,
-            CategoryName = p.Category?.CategoryName ?? "Nông sản sạch",
+            CategoryName = p.Category?.CategoryName ?? "",
             ImageUrl = primaryImage,
-            AverageRating = p.AverageRating ?? 5.0,
+            AverageRating = p.AverageRating ?? 0.0,
             ReviewsCount = p.ReviewsCount ?? 0,
             RecommendationType = recType,
             Score = score,
@@ -890,7 +909,11 @@ public class RecommendationsController : ControllerBase
             ShelfLifeInfo = shelfLifeText,
             IsFresh = true,
             IsOutOfStock = isOutOfStock,
-            AvailableStock = availableStock
+            AvailableStock = availableStock,
+            Origin = origin,
+            Region = origin,
+            Cert = cert,
+            LotCode = lotCode
         };
     }
 }

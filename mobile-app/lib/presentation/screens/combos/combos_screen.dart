@@ -32,13 +32,83 @@ class _CombosScreenState extends State<CombosScreen> {
   String _selectedType =
       'combotuan'; // 'combotuan' | 'combothang' | 'combokhac'
   String _selectedSupplier = 'all'; // 'all' | '1' | '2' | '3' | '4'
-  final List<ComboPlan> _combos = ComboPlan.getSampleCombos();
+  List<ComboPlan> _combos = ComboPlan.getSampleCombos();
   Set<int> _favoriteComboIds = {};
 
   @override
   void initState() {
     super.initState();
     _loadFavorites();
+    _fetchCombosFromApi();
+  }
+
+  Future<void> _fetchCombosFromApi() async {
+    try {
+      final res = await ApiService.getProducts(categoryId: 5);
+      if (res.isNotEmpty) {
+        final List<ComboPlan> fetched = [];
+        for (final raw in res) {
+          final item = raw is Map ? raw : {};
+          final int pId = (item['productId'] ?? item['id'] ?? 0) as int;
+          if (pId == 0) continue;
+          final String name = (item['productName'] ?? item['name'] ?? '').toString();
+          final num rawPriceNum = (item['price'] ?? 0) as num;
+          final double price = rawPriceNum.toDouble();
+          final bool isMonth = name.contains('Gói Tháng') || name.contains('Tháng');
+          final String type = isMonth ? 'combothang' : 'combotuan';
+          final String desc = (item['description'] ?? '').toString();
+
+          List<String> samples = [];
+          if (desc.isNotEmpty) {
+            final parts = desc.split(RegExp(r'[.,;\n]'))
+                .map((s) => s.trim())
+                .where((s) => s.length > 3 && !s.contains('Phù hợp') && !s.contains('Đáp ứng') && !s.contains('Dinh dưỡng') && !s.contains('Gói trọn') && !s.contains('Tự động'))
+                .toList();
+            if (parts.length >= 2) {
+              samples = parts;
+            }
+          }
+          if (samples.isEmpty) {
+            samples = isMonth
+                ? ['Đợt 1: Giỏ rau củ tươi mới theo tuần', 'Đợt 2: Giỏ rau gia vị & nấm hữu cơ', 'Đợt 3: Giỏ rau củ xào luộc ngọt lành', 'Đợt 4: Giỏ trái cây đặc sản chín cây']
+                : ['Rau ăn lá VietGAP hái sớm', 'Củ quả hữu cơ giòn ngọt', 'Nấm thực dưỡng bồi bổ sức khỏe', 'Trái cây chín cây giàu vitamin'];
+          }
+
+          final String img = (item['productImages'] is List && (item['productImages'] as List).isNotEmpty)
+              ? (item['productImages'][0]['imageUrl'] ?? '').toString()
+              : (item['imageUrl'] ?? 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600&auto=format&fit=crop&q=80').toString();
+
+          final int supId = (item['supplierId'] ?? 1) as int;
+          final String supName = (item['farmName'] ?? item['origin'] ?? 'Hợp tác xã Nông Sản Đà Lạt').toString();
+
+          fetched.add(ComboPlan(
+            id: pId,
+            name: name,
+            desc: desc.isNotEmpty ? desc : 'Combo dinh dưỡng nông sản sạch chuẩn VietGAP.',
+            price: '${price.toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}₫',
+            rawPrice: price,
+            badge: isMonth ? 'Gói tháng ưu đãi' : (pId == 901 ? 'Bán chạy nhất' : (pId == 902 ? 'Đặc sản tiệc gia đình' : 'Cân bằng dinh dưỡng')),
+            supplierId: supId,
+            supplierName: supName,
+            imageUrl: img.isNotEmpty ? img : 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600&auto=format&fit=crop&q=80',
+            type: type,
+            maxSelectableItems: pId == 902 || pId == 905 ? 7 : (pId == 903 || pId == 906 ? 5 : 6),
+            features: [
+              '100% nông sản sạch VietGAP & Hữu cơ',
+              isMonth ? '4 lần giao tận nhà trong tháng (mỗi tuần 1 giỏ)' : 'Thu hái sương sớm giao trong ngày',
+              'Bảo quản FreshLock giữ tươi 100%',
+              'Đổi trả miễn phí nếu không tươi ngon',
+            ],
+            sampleItems: samples,
+          ));
+        }
+        if (fetched.isNotEmpty && mounted) {
+          setState(() {
+            _combos = fetched;
+          });
+        }
+      }
+    } catch (_) {}
   }
 
   // Thực thi nghiệp vụ hàm _loadFavorites

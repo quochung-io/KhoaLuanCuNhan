@@ -17,7 +17,22 @@ export type QuickViewProductData = {
   lotCode?: string;
   rating?: number;
   reviewsCount?: number;
+  region?: string;
+  origin?: string;
+  cert?: string;
 };
+
+// Hàm xác định xuất xứ chuẩn xác theo nông sản đặc sản vùng miền (ID 8)
+function getProductRegion(name: string): string {
+  const n = (name || '').toLowerCase();
+  if (n.includes('vải') || n.includes('lục ngạn') || n.includes('bắc giang')) return 'Lục Ngạn (Bắc Giang)';
+  if (n.includes('măng cụt') || n.includes('lái thiêu') || n.includes('bình dương')) return 'Lái Thiêu (Bình Dương)';
+  if (n.includes('cam đồng nai') || n.includes('đồng nai')) return 'Đồng Nai';
+  if (n.includes('nhãn') || n.includes('hưng yên')) return 'Hưng Yên';
+  if (n.includes('mộc châu') || n.includes('sơn la') || n.includes('sapa') || n.includes('tây bắc')) return 'Mộc Châu (Sơn La)';
+  if (n.includes('đồng tháp') || n.includes('bến tre') || n.includes('tiền giang') || n.includes('miền tây')) return 'Đồng Tháp';
+  return 'Đà Lạt (Lâm Đồng)';
+}
 
 type ProductQuickViewModalProps = {
   isOpen: boolean;
@@ -123,11 +138,13 @@ export const ProductQuickViewModal: React.FC<ProductQuickViewModalProps> = ({
   const currentCategory = productDetails?.category?.categoryName || initialData?.categoryName || 'Nông sản sạch';
   const currentDescription = productDetails?.description || initialData?.description || 'Nông sản được canh tác an toàn theo quy trình sinh học khép kín, giữ trọn độ tươi giòn và dinh dưỡng tự nhiên.';
   const currentRating = productDetails?.averageRating || initialData?.rating || 5;
-  const currentReviews = productDetails?.reviewsCount ?? initialData?.reviewsCount ?? 12;
+  const currentReviews = productDetails?.reviewsCount ?? initialData?.reviewsCount ?? 0;
+  const currentRegion = productDetails?.region || productDetails?.origin || productDetails?.farmName || productDetails?.supplier?.province || initialData?.region || initialData?.origin || '';
+  const currentCert = productDetails?.cert || (productDetails?.status === 'Active' ? 'VietGAP' : productDetails?.status) || initialData?.cert || 'VietGAP';
 
   // Lô hàng mới nhất
   const latestBatch = batches.length > 0 ? batches[0] : null;
-  const displayLot = initialData?.lotCode || latestBatch?.batchCode || `LOT#VN-REC-${productId}`;
+  const displayLot = initialData?.lotCode || latestBatch?.batchCode || (productId ? `LOT#${productId}` : '');
 
   // Danh sách hình ảnh
   const images: string[] = [];
@@ -153,8 +170,8 @@ export const ProductQuickViewModal: React.FC<ProductQuickViewModalProps> = ({
         unit: ' / ' + currentUnit,
         category: currentCategory,
         imageUrl: activeImage || images[0],
-        cert: 'VietGAP',
-        region: 'Đà Lạt',
+        cert: currentCert,
+        region: currentRegion,
         rating: currentRating,
         reviews: currentReviews,
         lot: displayLot
@@ -463,7 +480,7 @@ export const ProductQuickViewModal: React.FC<ProductQuickViewModalProps> = ({
                 border: '1px solid #f1f5f9'
               }}>
                 <span style={{ color: '#64748b', display: 'block', fontSize: '11.5px' }}>Xuất xứ:</span>
-                <strong style={{ color: '#1e293b' }}>Đà Lạt (Lâm Đồng)</strong>
+                <strong style={{ color: '#1e293b' }}>{currentRegion || getProductRegion(currentName)}</strong>
               </div>
               <div style={{
                 padding: '10px',
@@ -656,29 +673,47 @@ export const ProductQuickViewModal: React.FC<ProductQuickViewModalProps> = ({
           </Link>
 
           <div style={{ display: 'flex', gap: '8px' }}>
-            {onAddToCart && (
-              <button
-                type="button"
-                onClick={handleAdd}
-                style={{
-                  padding: '9px 18px',
-                  borderRadius: '8px',
-                  border: 'none',
-                  backgroundColor: '#16a34a',
-                  color: '#ffffff',
-                  fontSize: '13px',
-                  fontWeight: '700',
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  boxShadow: '0 2px 8px rgba(22, 163, 74, 0.25)'
-                }}
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-                Thêm vào giỏ hàng
-              </button>
-            )}
+            {onAddToCart && (() => {
+              const isOutOfStock = Boolean(
+                productDetails?.isOutOfStock ||
+                (productDetails?.availableStock !== undefined && productDetails.availableStock <= 0) ||
+                (batches.length > 0 && batches.every((b: any) => (b.initialQuantity || 0) <= 0))
+              );
+
+              return (
+                <button
+                  type="button"
+                  onClick={isOutOfStock ? undefined : handleAdd}
+                  disabled={isOutOfStock}
+                  style={{
+                    padding: '9px 18px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    backgroundColor: isOutOfStock ? '#94A3B8' : '#16a34a',
+                    color: '#ffffff',
+                    fontSize: '13px',
+                    fontWeight: '700',
+                    cursor: isOutOfStock ? 'not-allowed' : 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    boxShadow: isOutOfStock ? 'none' : '0 2px 8px rgba(22, 163, 74, 0.25)'
+                  }}
+                >
+                  {isOutOfStock ? (
+                    <>
+                      <span>🚫</span>
+                      Tạm hết hàng
+                    </>
+                  ) : (
+                    <>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                      Thêm vào giỏ hàng
+                    </>
+                  )}
+                </button>
+              );
+            })()}
 
             <button
               type="button"

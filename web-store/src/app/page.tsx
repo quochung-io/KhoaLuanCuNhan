@@ -74,7 +74,7 @@ const blogsData = [
     tag: 'Kiến Thức Hữu Cơ',
     date: '05/09/2026',
     author: 'KTV. Kiểm Định',
-    image: 'https://images.unsplash.com/photo-1592417817098-8f3d6910985c?w=600&auto=format&fit=crop&q=80'
+    image: 'https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=600&auto=format&fit=crop&q=80'
   }
 ];
 
@@ -303,7 +303,7 @@ export default function LanhLandingPage() {
     fetch(url)
       .then(res => res.json())
       .then(data => {
-        if (Array.isArray(data) && data.length > 0) {
+        if (Array.isArray(data)) {
           setReviewsList(data);
         }
       })
@@ -533,12 +533,12 @@ export default function LanhLandingPage() {
       rawPrice: item.price,
       unit: item.unit ? ` / ${item.unit}` : ' / kg',
       category: item.categoryName || 'Nông sản',
-      cert: 'VietGAP',
-      region: 'Đà Lạt',
-      rating: item.averageRating,
-      reviews: item.reviewsCount,
+      cert: item.cert || 'VietGAP',
+      region: item.origin || item.region || item.farmName || '',
+      rating: item.averageRating || 5,
+      reviews: item.reviewsCount || 0,
       icon: 'leaf',
-      lot: 'LOT#VN-REC-' + item.productId,
+      lot: item.lotCode || (item.productId ? `LOT#${item.productId}` : ''),
       imageUrl: item.imageUrl
     };
     addToCart(p, 1);
@@ -596,13 +596,13 @@ export default function LanhLandingPage() {
           price: data.price ? data.price.toLocaleString('vi-VN') + '₫' : item.formattedPrice || '0₫',
           rawPrice: data.price || item.price || 0,
           unit: data.unit ? ` / ${data.unit}` : (item.unit ? ` / ${item.unit}` : ' / kg'),
-          cert: 'VietGAP',
-          region: 'Đà Lạt',
+          cert: data.cert || data.status || item.cert || 'VietGAP',
+          region: data.origin || data.region || data.farmName || item.origin || item.region || '',
           rating: data.averageRating || item.averageRating || 5,
-          reviews: data.reviewsCount || item.reviewsCount || 10,
+          reviews: data.reviewsCount || item.reviewsCount || 0,
           icon: 'leaf',
-          lot: `LOT#VN-DL-${String(data.productId).padStart(4, '0')}`,
-          imageUrl: data.productImages?.[0]?.imageUrl || item.imageUrl || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600'
+          lot: data.lotCode || item.lotCode || (data.productId ? `LOT#${data.productId}` : ''),
+          imageUrl: data.productImages?.[0]?.imageUrl || item.imageUrl || ''
         };
         setQuickViewProduct(newP);
         setQuickViewQty(1);
@@ -618,13 +618,13 @@ export default function LanhLandingPage() {
       price: item.formattedPrice || (typeof item.price === 'number' ? item.price.toLocaleString('vi-VN') + '₫' : '0₫'),
       rawPrice: typeof item.price === 'number' ? item.price : 0,
       unit: item.unit ? ` / ${item.unit}` : ' / kg',
-      cert: 'VietGAP',
-      region: 'Đà Lạt',
+      cert: item.cert || 'VietGAP',
+      region: item.origin || item.region || item.farmName || '',
       rating: item.averageRating || 5,
-      reviews: item.reviewsCount || 10,
+      reviews: item.reviewsCount || 0,
       icon: 'leaf',
-      lot: 'LOT#VN-REC-' + item.productId,
-      imageUrl: item.imageUrl || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600'
+      lot: item.lotCode || (item.productId ? `LOT#${item.productId}` : ''),
+      imageUrl: item.imageUrl || ''
     };
     setQuickViewProduct(fallbackP);
     setQuickViewQty(1);
@@ -673,12 +673,12 @@ export default function LanhLandingPage() {
         rawPrice: discountedPrice,
         unit: item.unit ? ` / ${item.unit}` : ' / kg',
         category: item.categoryName || 'Nông sản',
-        cert: 'VietGAP',
-        region: 'Đà Lạt',
-        rating: item.averageRating,
-        reviews: item.reviewsCount,
+        cert: item.cert || 'VietGAP',
+        region: item.origin || item.region || item.farmName || '',
+        rating: item.averageRating || 5,
+        reviews: item.reviewsCount || 0,
         icon: 'leaf',
-        lot: 'LOT#VN-REC-' + item.productId,
+        lot: item.lotCode || (item.productId ? `LOT#${item.productId}` : ''),
         imageUrl: item.imageUrl
       };
       addToCart(p, 1);
@@ -730,16 +730,9 @@ export default function LanhLandingPage() {
               imageUrl = primary ? primary.imageUrl : item.productImages[0].imageUrl;
             }
 
-            let region = 'Đà Lạt';
-            if (nameLower.includes('mộc châu') || nameLower.includes('bắc hà') || nameLower.includes('tây bắc') || nameLower.includes('sapa') || nameLower.includes('hàm yên') || nameLower.includes('chi lăng')) {
-              region = 'Mộc Châu';
-            } else if (nameLower.includes('đồng tháp') || nameLower.includes('miền tây') || nameLower.includes('bến tre') || nameLower.includes('tiền giang') || nameLower.includes('long an') || nameLower.includes('vũng tàu') || nameLower.includes('hưng yên') || nameLower.includes('ninh thuận')) {
-              region = 'Đồng Tháp';
-            }
-
-            const regCode = region === 'Mộc Châu' ? 'MC' : region === 'Đồng Tháp' ? 'DT' : 'DL';
-            const cert = (item.status === 'Active' || !item.status) ? 'VietGAP' : item.status;
-            const catName = item.category?.categoryName || 'Rau củ';
+            const region = item.origin || item.region || item.farmName || item.supplier?.province || item.supplier?.supplierName || '';
+            const cert = item.cert || (item.status === 'Active' || !item.status ? 'VietGAP' : item.status);
+            const catName = item.category?.categoryName || 'Nông sản';
 
             return {
               id: Number(item.productId),
@@ -753,7 +746,7 @@ export default function LanhLandingPage() {
               rating: Number(item.averageRating != null ? item.averageRating : 0),
               reviews: Number(item.reviewsCount != null ? item.reviewsCount : 0),
               icon: icon,
-              lot: 'LOT#VN-' + regCode + '-' + (1000 + Number(item.productId)),
+              lot: item.lotCode || (item.productId ? `LOT#${item.productId}` : ''),
               imageUrl: imageUrl || undefined,
               isOutOfStock: Boolean(item.isOutOfStock),
               availableStock: Number(item.availableStock) || 0,
@@ -1624,6 +1617,19 @@ export default function LanhLandingPage() {
                             }}>
                               ⚡ GIẢM {p.discountPercent}%
                             </span>
+                            {p.isOutOfStock && (
+                              <span style={{
+                                backgroundColor: '#DC2626',
+                                color: '#FFFFFF',
+                                fontSize: '11px',
+                                fontWeight: 800,
+                                padding: '2px 7px',
+                                borderRadius: '6px',
+                                boxShadow: '0 2px 6px rgba(220, 38, 38, 0.4)'
+                              }}>
+                                Hết hàng
+                              </span>
+                            )}
                           </div>
                           {p.imageUrl ? (
                             <img
@@ -1679,31 +1685,40 @@ export default function LanhLandingPage() {
 
                             <button
                               type="button"
+                              disabled={p.isOutOfStock}
                               onClick={(e) => {
                                 e.stopPropagation();
+                                if (p.isOutOfStock) {
+                                  alert(`Sản phẩm "${p.name}" hiện đang tạm hết hàng.`);
+                                  return;
+                                }
                                 addToCart(p, 1);
                               }}
                               style={{
                                 width: '100%',
                                 padding: '9px 12px',
-                                backgroundColor: 'var(--green-700)',
+                                backgroundColor: p.isOutOfStock ? '#94A3B8' : 'var(--green-700)',
                                 color: '#ffffff',
                                 border: 'none',
                                 borderRadius: '8px',
                                 fontWeight: 700,
                                 fontSize: '13px',
-                                cursor: 'pointer',
+                                cursor: p.isOutOfStock ? 'not-allowed' : 'pointer',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 gap: '6px',
                                 transition: 'background-color 0.2s ease',
-                                boxShadow: '0 2px 6px rgba(22, 101, 52, 0.2)'
+                                boxShadow: p.isOutOfStock ? 'none' : '0 2px 6px rgba(22, 101, 52, 0.2)'
                               }}
-                              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#15803D'}
-                              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--green-700)'}
+                              onMouseEnter={(e) => {
+                                if (!p.isOutOfStock) e.currentTarget.style.backgroundColor = '#15803D';
+                              }}
+                              onMouseLeave={(e) => {
+                                if (!p.isOutOfStock) e.currentTarget.style.backgroundColor = 'var(--green-700)';
+                              }}
                             >
-                              <span>🛒</span> Thêm vào giỏ
+                              <span>{p.isOutOfStock ? '🚫' : '🛒'}</span> {p.isOutOfStock ? 'Tạm hết hàng' : 'Thêm vào giỏ'}
                             </button>
                           </div>
                         </div>
@@ -2101,12 +2116,15 @@ export default function LanhLandingPage() {
                         transition: 'transform 0.2s, box-shadow 0.2s'
                       }}
                     >
-                      {/* Ảnh bìa */}
+                      {/* Ảnh bìa (ID 13: Thêm fallback tự động khi link ảnh blog lỗi) */}
                       <div style={{ height: '200px', overflow: 'hidden', position: 'relative' }}>
                         <img
-                          src={item.image}
+                          src={item.image || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600'}
                           alt={item.title}
                           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600';
+                          }}
                         />
                         <span style={{
                           position: 'absolute',

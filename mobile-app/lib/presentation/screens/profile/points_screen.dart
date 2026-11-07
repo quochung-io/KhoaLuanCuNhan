@@ -251,28 +251,40 @@ class _PointsScreenState extends State<PointsScreen> {
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: Row(
-                      children: [
-                        _buildTierBenefitCard(
-                          '🌱 Hạng Mới',
-                          'Chi tiêu: 0đ',
-                          'Tích 1% điểm cho mọi đơn hàng nông sản VietGAP.',
-                        ),
-                        _buildTierBenefitCard(
-                          '🥈 Hạng Bạc',
-                          'Chi tiêu: 2.000.000đ',
-                          'Tích 1.5% điểm, tặng 1 mã Freeship mỗi tháng.',
-                        ),
-                        _buildTierBenefitCard(
-                          '🥇 Hạng Vàng',
-                          'Chi tiêu: 5.000.000đ',
-                          'Tích 2% điểm, 3 mã Freeship/tháng & quà sinh nhật.',
-                        ),
-                        _buildTierBenefitCard(
-                          '💎 Kim Cương',
-                          'Chi tiêu: 10.000.000đ',
-                          'Tích 3% điểm, miễn phí giao trọn đời, tài trợ cây giống.',
-                        ),
-                      ],
+                      children: _tiers.isNotEmpty
+                          ? _tiers.map<Widget>((t) {
+                              final name = (t['tierName'] ?? t['name'] ?? 'Hạng').toString();
+                              final minSpend = (t['minSpent'] as num?)?.toInt() ?? 0;
+                              final desc = (t['description'] ?? 'Tích lũy điểm thưởng khi mua hàng.').toString();
+                              final icon = _getTierIcon(name);
+                              return _buildTierBenefitCard(
+                                '$icon $name',
+                                'Chi tiêu: ${minSpend.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}đ',
+                                desc,
+                              );
+                            }).toList()
+                          : [
+                              _buildTierBenefitCard(
+                                '🌱 Hạng Mới',
+                                'Chi tiêu: 0đ',
+                                'Tích 1% điểm cho mọi đơn hàng nông sản VietGAP.',
+                              ),
+                              _buildTierBenefitCard(
+                                '🥈 Hạng Bạc',
+                                'Chi tiêu: 2.000.000đ',
+                                'Tích 1.5% điểm, tặng 1 mã Freeship mỗi tháng.',
+                              ),
+                              _buildTierBenefitCard(
+                                '🥇 Hạng Vàng',
+                                'Chi tiêu: 5.000.000đ',
+                                'Tích 2% điểm, 3 mã Freeship/tháng & quà sinh nhật.',
+                              ),
+                              _buildTierBenefitCard(
+                                '💎 Kim Cương',
+                                'Chi tiêu: 10.000.000đ',
+                                'Tích 3% điểm, miễn phí giao trọn đời, tài trợ cây giống.',
+                              ),
+                            ],
                     ),
                   ),
 

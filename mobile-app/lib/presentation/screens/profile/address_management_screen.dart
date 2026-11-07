@@ -77,16 +77,29 @@ class _AddressManagementScreenState extends State<AddressManagementScreen> {
     }
   }
 
-  // Giả lập set default (Vì API backend có thể chưa hỗ trợ set isDefault, ta tạm mock UI)
-  void _setAsDefault(int index) {
+  // Cập nhật địa chỉ mặc định trong CSDL thông qua API
+  Future<void> _setAsDefault(int index) async {
+    final addr = _addresses[index];
+    final addrId = addr['addressId'] ?? addr['id'];
+
     setState(() {
       for (var i = 0; i < _addresses.length; i++) {
         _addresses[i]['isDefault'] = (i == index);
       }
     });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Đã đặt làm địa chỉ mặc định')),
-    );
+
+    if (addrId != null) {
+      final success = await ApiService.setDefaultAddress(addrId is int ? addrId : int.tryParse(addrId.toString()) ?? 0);
+      if (!success) {
+        _fetchAddresses();
+      }
+    }
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Đã đặt làm địa chỉ mặc định')),
+      );
+    }
   }
 
   @override

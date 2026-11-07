@@ -38,16 +38,7 @@ type Product = {
   originalPrice?: number;
 };
 
-const initialProducts: Product[] = [
-  {id:1, name:'Cải bó xôi hữu cơ', category:'Rau củ', price:'28.000₫', rawPrice: 28000, unit:'/ 300g', cert:'VietGAP', region:'Đà Lạt', rating:4.8, reviews:212, icon:'leaf', lot:'LOT#VN-DL-0842', imageUrl: 'https://images.unsplash.com/photo-1576045057995-568f588f82fb?w=600&auto=format&fit=crop&q=80'},
-  {id:2, name:'Cà rốt baby Đà Lạt', category:'Rau củ', price:'32.000₫', rawPrice: 32000, unit:'/ 500g', cert:'GlobalGAP', region:'Đà Lạt', rating:4.9, reviews:184, icon:'carrot', lot:'LOT#VN-DL-0917', imageUrl: 'https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?w=600&auto=format&fit=crop&q=80'},
-  {id:3, name:'Cam Cao Phong', category:'Trái cây', price:'45.000₫', rawPrice: 45000, unit:'/ kg', cert:'VietGAP', region:'Mộc Châu', rating:4.7, reviews:301, icon:'citrus', lot:'LOT#VN-MC-1140', imageUrl: 'https://images.unsplash.com/photo-1611080626919-7cf5a9dbab5b?w=600&auto=format&fit=crop&q=80'},
-  {id:4, name:'Trứng gà ta thả vườn', category:'Rau củ', price:'52.000₫', rawPrice: 52000, unit:'/ hộp 10', cert:'USDA', region:'Đồng Tháp', rating:5.0, reviews:96, icon:'egg', lot:'LOT#VN-DT-0663', imageUrl: 'https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?w=600&auto=format&fit=crop&q=80'},
-  {id:5, name:'Mật ong rừng nguyên chất', category:'Hạt', price:'135.000₫', rawPrice: 135000, unit:'/ 500ml', cert:'USDA', region:'Mộc Châu', rating:4.9, reviews:158, icon:'jar', lot:'LOT#VN-MC-0255', imageUrl: 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=600&auto=format&fit=crop&q=80'},
-  {id:6, name:'Dâu tây Mộc Châu', category:'Trái cây', price:'68.000₫', rawPrice: 68000, unit:'/ hộp 250g', cert:'GlobalGAP', region:'Mộc Châu', rating:4.8, reviews:243, icon:'berry', lot:'LOT#VN-MC-0389', imageUrl: 'https://images.unsplash.com/photo-1518635017498-87f514b751ba?w=600&auto=format&fit=crop&q=80'},
-  {id:7, name:'Xà lách xoăn thủy canh', category:'Rau củ', price:'22.000₫', rawPrice: 22000, unit:'/ 250g', cert:'VietGAP', region:'Đà Lạt', rating:4.6, reviews:120, icon:'leaf', lot:'LOT#VN-DL-0721', imageUrl: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600&auto=format&fit=crop&q=80'},
-  {id:8, name:'Bơ 034 Đắk Lắk', category:'Trái cây', price:'58.000₫', rawPrice: 58000, unit:'/ kg', cert:'VietGAP', region:'Đồng Tháp', rating:4.8, reviews:167, icon:'citrus', lot:'LOT#VN-DT-0410', imageUrl: 'https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?w=600&auto=format&fit=crop&q=80'},
-];
+const initialProducts: Product[] = [];
 
 type CartItem = {
   product: Product;
@@ -250,12 +241,12 @@ function AllProductsInner() {
       rawPrice: item.price,
       unit: item.unit ? ` / ${item.unit}` : ' / kg',
       category: item.categoryName || 'Nông sản',
-      cert: 'VietGAP',
-      region: 'Đà Lạt',
+      cert: item.cert || item.status || '',
+      region: item.origin || item.region || (item.farmName ? item.farmName : ''),
       rating: item.averageRating,
       reviews: item.reviewsCount,
       icon: 'leaf',
-      lot: 'LOT#VN-REC-' + item.productId,
+      lot: item.lotCode || '',
       imageUrl: item.imageUrl
     };
     addToCart(p, 1);
@@ -313,13 +304,13 @@ function AllProductsInner() {
           price: data.price ? data.price.toLocaleString('vi-VN') + '₫' : item.formattedPrice || '0₫',
           rawPrice: data.price || item.price || 0,
           unit: data.unit ? ` / ${data.unit}` : (item.unit ? ` / ${item.unit}` : ' / kg'),
-          cert: 'VietGAP',
-          region: 'Đà Lạt',
+          cert: data.cert || data.status || item.cert || '',
+          region: data.origin || data.region || item.origin || item.region || (data.farmName || ''),
           rating: data.averageRating || item.averageRating || 5,
-          reviews: data.reviewsCount || item.reviewsCount || 10,
+          reviews: data.reviewsCount || item.reviewsCount || 0,
           icon: 'leaf',
-          lot: `LOT#VN-DL-${String(data.productId).padStart(4, '0')}`,
-          imageUrl: data.productImages?.[0]?.imageUrl || item.imageUrl || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600'
+          lot: data.lotCode || item.lotCode || '',
+          imageUrl: data.productImages?.[0]?.imageUrl || item.imageUrl || ''
         };
         setQuickViewProduct(newP);
         setQuickViewQty(1);
@@ -335,13 +326,13 @@ function AllProductsInner() {
       price: item.formattedPrice || (typeof item.price === 'number' ? item.price.toLocaleString('vi-VN') + '₫' : '0₫'),
       rawPrice: typeof item.price === 'number' ? item.price : 0,
       unit: item.unit ? ` / ${item.unit}` : ' / kg',
-      cert: 'VietGAP',
-      region: 'Đà Lạt',
+      cert: item.cert || item.status || '',
+      region: item.origin || item.region || (item.farmName || ''),
       rating: item.averageRating || 5,
-      reviews: item.reviewsCount || 10,
+      reviews: item.reviewsCount || 0,
       icon: 'leaf',
-      lot: 'LOT#VN-REC-' + item.productId,
-      imageUrl: item.imageUrl || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600'
+      lot: item.lotCode || '',
+      imageUrl: item.imageUrl || ''
     };
     setQuickViewProduct(fallbackP);
     setQuickViewQty(1);
@@ -390,12 +381,12 @@ function AllProductsInner() {
         rawPrice: discountedPrice,
         unit: item.unit ? ` / ${item.unit}` : ' / kg',
         category: item.categoryName || 'Nông sản',
-        cert: 'VietGAP',
-        region: 'Đà Lạt',
+        cert: item.cert || item.status || '',
+        region: item.origin || item.region || (item.farmName || ''),
         rating: item.averageRating,
         reviews: item.reviewsCount,
         icon: 'leaf',
-        lot: 'LOT#VN-REC-' + item.productId,
+        lot: item.lotCode || '',
         imageUrl: item.imageUrl
       };
       addToCart(p, 1);
@@ -425,6 +416,20 @@ function AllProductsInner() {
 
   // Gọi API lấy danh sách sản phẩm
   const fetchProducts = (searchVal = searchQuery, minP = minPrice, maxP = maxPrice) => {
+    // Validate bộ lọc giá (ID 11: Chặn số âm và báo lỗi khi Min > Max)
+    if (minP !== '' && Number(minP) < 0) {
+      alert('Khoảng giá không hợp lệ: Giá tối thiểu không được là số âm!');
+      return;
+    }
+    if (maxP !== '' && Number(maxP) < 0) {
+      alert('Khoảng giá không hợp lệ: Giá tối đa không được là số âm!');
+      return;
+    }
+    if (minP !== '' && maxP !== '' && Number(minP) > Number(maxP)) {
+      alert(`Khoảng giá không hợp lệ: Giá tối thiểu (${Number(minP).toLocaleString('vi-VN')}₫) không được lớn hơn giá tối đa (${Number(maxP).toLocaleString('vi-VN')}₫)!`);
+      return;
+    }
+
     setLoading(true);
     let url = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/products`;
     const params: string[] = [];
@@ -453,16 +458,9 @@ function AllProductsInner() {
               imageUrl = primary ? primary.imageUrl : item.productImages[0].imageUrl;
             }
 
-            let region = 'Đà Lạt';
-            if (nameLower.includes('mộc châu') || nameLower.includes('bắc hà') || nameLower.includes('tây bắc') || nameLower.includes('sapa') || nameLower.includes('hàm yên') || nameLower.includes('chi lăng')) {
-              region = 'Mộc Châu';
-            } else if (nameLower.includes('đồng tháp') || nameLower.includes('miền tây') || nameLower.includes('bến tre') || nameLower.includes('tiền giang') || nameLower.includes('long an') || nameLower.includes('vũng tàu') || nameLower.includes('hưng yên') || nameLower.includes('ninh thuận')) {
-              region = 'Đồng Tháp';
-            }
-
-            const regCode = region === 'Mộc Châu' ? 'MC' : region === 'Đồng Tháp' ? 'DT' : 'DL';
-            const cert = (item.status === 'Active' || !item.status) ? 'VietGAP' : item.status;
-            const catName = item.category?.categoryName || 'Rau củ';
+            const region = item.origin || item.region || item.farmName || item.supplier?.province || item.supplier?.supplierName || '';
+            const cert = item.cert || item.status || '';
+            const catName = item.category?.categoryName || 'Nông sản';
             const rawPrice = Number(item.price) || 0;
 
             return {
@@ -477,7 +475,7 @@ function AllProductsInner() {
               rating: item.averageRating != null ? Number(item.averageRating) : 0,
               reviews: item.reviewsCount != null ? Number(item.reviewsCount) : 0,
               icon: icon,
-              lot: 'LOT#VN-' + regCode + '-' + (1000 + Number(item.productId)),
+              lot: item.lotCode || (item.productId ? `LOT#${item.productId}` : ''),
               imageUrl: imageUrl || undefined,
               isOutOfStock: Boolean(item.isOutOfStock),
               availableStock: Number(item.availableStock) || 0,
@@ -608,6 +606,8 @@ function AllProductsInner() {
     return matchCat && matchCert && matchRegion && matchRating;
   });
 
+  const availableRegions = ['all', ...Array.from(new Set(products.map(p => p.region).filter(Boolean)))];
+
   const sortedProducts = [...filteredProducts].sort((a, b) => {
     if (sortOrder === 'price-asc') return a.rawPrice - b.rawPrice;
     if (sortOrder === 'price-desc') return b.rawPrice - a.rawPrice;
@@ -661,6 +661,7 @@ function AllProductsInner() {
             initialValue={searchQuery}
             onSearchSubmit={(val) => {
               setSearchQuery(val);
+              fetchProducts(val);
               if (val) {
                 router.push(`/products?search=${encodeURIComponent(val)}`);
               } else {
@@ -923,10 +924,10 @@ function AllProductsInner() {
 
             {/* Hàng 2: Vùng miền, Chứng nhận & Khoảng giá */}
             <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '14px', paddingTop: '14px', borderTop: '1px dashed var(--line)' }}>
-              {/* Vùng miền */}
+              {/* Vùng miền (ID 8: Bổ sung đầy đủ danh mục các vùng miền đặc sản) */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
                 <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--ink)' }}>Vùng miền:</span>
-                {['all', 'Đà Lạt', 'Mộc Châu', 'Đồng Tháp'].map(r => (
+                {availableRegions.map(r => (
                   <button
                     key={r}
                     className={`chip ${filterRegion === r ? 'active' : ''}`}
@@ -955,22 +956,24 @@ function AllProductsInner() {
 
               <div style={{ width: '1px', height: '24px', backgroundColor: 'var(--line)' }}></div>
 
-              {/* Khoảng giá */}
+              {/* Khoảng giá (ID 11: Chặn số âm và thêm min=0) */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
                 <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--ink)' }}>Khoảng giá:</span>
                 <input 
                   type="number" 
+                  min={0}
                   placeholder="Tối thiểu" 
                   value={minPrice}
-                  onChange={(e) => setMinPrice(e.target.value === '' ? '' : Number(e.target.value))}
+                  onChange={(e) => setMinPrice(e.target.value === '' ? '' : Math.max(0, Number(e.target.value)))}
                   style={{ padding: '5px 10px', borderRadius: '8px', border: '1px solid var(--line)', width: '100px', fontSize: '12.5px', outline: 'none' }}
                 />
                 <span>-</span>
                 <input 
                   type="number" 
+                  min={0}
                   placeholder="Tối đa" 
                   value={maxPrice}
-                  onChange={(e) => setMaxPrice(e.target.value === '' ? '' : Number(e.target.value))}
+                  onChange={(e) => setMaxPrice(e.target.value === '' ? '' : Math.max(0, Number(e.target.value)))}
                   style={{ padding: '5px 10px', borderRadius: '8px', border: '1px solid var(--line)', width: '100px', fontSize: '12.5px', outline: 'none' }}
                 />
                 <button 
@@ -1047,6 +1050,7 @@ function AllProductsInner() {
               <button 
                 onClick={() => {
                   setSearchQuery('');
+                  fetchProducts('');
                   router.push('/products');
                 }}
                 style={{
@@ -1746,19 +1750,21 @@ function AllProductsInner() {
                               alt={item.productName}
                               style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                             />
-                            <span style={{
-                              position: 'absolute',
-                              top: '4px',
-                              left: '4px',
-                              backgroundColor: 'rgba(22, 163, 74, 0.9)',
-                              color: '#FFFFFF',
-                              fontSize: '9px',
-                              fontWeight: 700,
-                              padding: '1px 5px',
-                              borderRadius: '4px'
-                            }}>
-                              {item.categoryName || 'VietGAP'}
-                            </span>
+                            {(item.categoryName || item.cert) && (
+                              <span style={{
+                                position: 'absolute',
+                                top: '4px',
+                                left: '4px',
+                                backgroundColor: 'rgba(22, 163, 74, 0.9)',
+                                color: '#FFFFFF',
+                                fontSize: '9px',
+                                fontWeight: 700,
+                                padding: '1px 5px',
+                                borderRadius: '4px'
+                              }}>
+                                {item.categoryName || item.cert}
+                              </span>
+                            )}
                             {isItemOutOfStock && (
                               <div style={{
                                 position: 'absolute',

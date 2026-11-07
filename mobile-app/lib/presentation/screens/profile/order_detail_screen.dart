@@ -595,9 +595,12 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                               final int orderId = rawId is num
                                   ? rawId.toInt()
                                   : int.tryParse(rawId.toString()) ?? 0;
+                              final rawCustId = _currentOrder['customerId'] ?? widget.userId;
+                              final int? custId = rawCustId is num ? rawCustId.toInt() : int.tryParse(rawCustId?.toString() ?? '');
                               final success = await ApiService.cancelOrder(
                                 orderId,
                                 reason: finalReason,
+                                customerId: custId,
                               );
                               setState(() => _isLoading = false);
 
@@ -645,6 +648,462 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                           ),
                         ),
                       ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // Thực thi nghiệp vụ Khiếu nại, Đổi trả & Hoàn tiền nông sản tươi sống (Smart Claim)
+  void _showSmartClaimSheet() {
+    final rawItems = _currentOrder['orderItems'] ?? _currentOrder['items'] ?? [];
+    final List<Map<String, dynamic>> items = [];
+    if (rawItems is List) {
+      for (final it in rawItems) {
+        if (it is Map) items.add(Map<String, dynamic>.from(it));
+      }
+    }
+
+    if (items.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Không tìm thấy thông tin sản phẩm trong đơn hàng để khiếu nại.')),
+      );
+      return;
+    }
+
+    int selectedProductId = (items[0]['productId'] ?? items[0]['id'] ?? 0) as int;
+    String reason = 'DAMAGED_IN_TRANSIT';
+    String compensationMethod = 'WALLET_REFUND';
+    final notesController = TextEditingController();
+    final customUrlController = TextEditingController();
+    List<String> evidenceUrls = [
+      'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600',
+      'https://images.unsplash.com/photo-1518843875459-f738682238a6?w=600',
+    ];
+    bool isSubmitting = false;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetCtx) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            final isValidEvidence = evidenceUrls.length >= 2 ||
+                evidenceUrls.any((u) => u.toLowerCase().contains('.mp4') || u.toLowerCase().contains('video'));
+
+            final selectedProductItem = items.firstWhere(
+              (it) => (it['productId'] ?? it['id']) == selectedProductId,
+              orElse: () => items[0],
+            );
+            final prodName = selectedProductItem['productName'] ?? selectedProductItem['name'] ?? 'Nông sản';
+
+            return Container(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+                left: 16,
+                right: 16,
+                top: 16,
+              ),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade300,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFF3E0),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(Icons.assignment_return, color: Color(0xFFE65100), size: 22),
+                        ),
+                        const SizedBox(width: 10),
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Yêu cầu Khiếu nại & Đổi trả',
+                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                              ),
+                              Text(
+                                'Chính sách bảo vệ quyền lợi LÀNH Farm (Hoàn tiền 100%)',
+                                style: TextStyle(fontSize: 11.5, color: Colors.grey),
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close, size: 20),
+                          onPressed: () => Navigator.pop(sheetCtx),
+                        ),
+                      ],
+                    ),
+                    const Divider(height: 20),
+
+                    // 1. Chọn món nông sản cần khiếu nại
+                    const Text('1. Chọn nông sản gặp sự cố:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                    const SizedBox(height: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey.shade300),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<int>(
+                          value: selectedProductId,
+                          isExpanded: true,
+                          items: items.map((it) {
+                            final pId = (it['productId'] ?? it['id'] ?? 0) as int;
+                            final name = it['productName'] ?? it['name'] ?? 'Món #$pId';
+                            final qty = it['quantity'] ?? it['qty'] ?? 1;
+                            return DropdownMenuItem<int>(
+                              value: pId,
+                              child: Text('$name (SL: $qty)', style: const TextStyle(fontSize: 13.5)),
+                            );
+                          }).toList(),
+                          onChanged: (val) {
+                            if (val != null) setSheetState(() => selectedProductId = val);
+                          },
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+
+                    // 2. Lý do khiếu nại
+                    const Text('2. Lý do khiếu nại / đổi trả:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                    const SizedBox(height: 6),
+                    Column(
+                      children: [
+                        {
+                          'key': 'DAMAGED_IN_TRANSIT',
+                          'label': 'Dập nát, hư hại khi vận chuyển giao hàng',
+                        },
+                        {
+                          'key': 'ROTTEN_INTERNAL',
+                          'label': 'Phát hiện sâu bệnh, thối hỏng bên trong ruột',
+                        },
+                        {
+                          'key': 'WRONG_OR_MISSING_WEIGHT',
+                          'label': 'Giao sai loại nông sản hoặc thiếu trọng lượng',
+                        },
+                        {
+                          'key': 'QUALITY_NOT_GOOD',
+                          'label': 'Nông sản héo úa, không đạt chuẩn tươi sạch',
+                        },
+                        {
+                          'key': 'EXPIRED',
+                          'label': 'Nông sản quá cận hạn hoặc đã hết hạn sử dụng',
+                        },
+                      ].map((r) {
+                        final isSel = reason == r['key'];
+                        return InkWell(
+                          onTap: () => setSheetState(() => reason = r['key']!),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 4),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  isSel ? Icons.radio_button_checked : Icons.radio_button_off,
+                                  color: isSel ? const Color(0xFF2E7D32) : Colors.grey,
+                                  size: 18,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    r['label']!,
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: isSel ? const Color(0xFF2E7D32) : Colors.black87,
+                                      fontWeight: isSel ? FontWeight.w600 : FontWeight.normal,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 14),
+
+                    // 3. Phương thức hoàn tiền / đổi trả
+                    const Text('3. Phương thức bồi hoàn mong muốn:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: InkWell(
+                            onTap: () => setSheetState(() => compensationMethod = 'WALLET_REFUND'),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+                              decoration: BoxDecoration(
+                                color: compensationMethod == 'WALLET_REFUND' ? const Color(0xFFE8F5E9) : Colors.grey.shade100,
+                                border: Border.all(
+                                  color: compensationMethod == 'WALLET_REFUND' ? const Color(0xFF2E7D32) : Colors.grey.shade300,
+                                  width: compensationMethod == 'WALLET_REFUND' ? 1.5 : 1,
+                                ),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Column(
+                                children: [
+                                  Icon(Icons.account_balance_wallet,
+                                      color: compensationMethod == 'WALLET_REFUND' ? const Color(0xFF2E7D32) : Colors.grey),
+                                  const SizedBox(height: 4),
+                                  const Text('Hoàn tiền vào ví/TK',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: InkWell(
+                            onTap: () => setSheetState(() => compensationMethod = 'REPLACEMENT_NEXT_ORDER'),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+                              decoration: BoxDecoration(
+                                color: compensationMethod == 'REPLACEMENT_NEXT_ORDER' ? const Color(0xFFE8F5E9) : Colors.grey.shade100,
+                                border: Border.all(
+                                  color: compensationMethod == 'REPLACEMENT_NEXT_ORDER' ? const Color(0xFF2E7D32) : Colors.grey.shade300,
+                                  width: compensationMethod == 'REPLACEMENT_NEXT_ORDER' ? 1.5 : 1,
+                                ),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Column(
+                                children: [
+                                  Icon(Icons.inventory_2_outlined,
+                                      color: compensationMethod == 'REPLACEMENT_NEXT_ORDER' ? const Color(0xFF2E7D32) : Colors.grey),
+                                  const SizedBox(height: 4),
+                                  const Text('Đổi bù đơn kế tiếp',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+
+                    // 4. Minh chứng hình ảnh / video
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('4. Minh chứng (Tối thiểu 2 ảnh hoặc 1 video):',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                        Text('${evidenceUrls.length} tệp', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    SizedBox(
+                      height: 64,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: evidenceUrls.length + 1,
+                        separatorBuilder: (_, __) => const SizedBox(width: 8),
+                        itemBuilder: (ctx, i) {
+                          if (i == evidenceUrls.length) {
+                            return InkWell(
+                              onTap: () {
+                                showDialog(
+                                  context: context,
+                                  builder: (dCtx) => AlertDialog(
+                                    title: const Text('Thêm link ảnh / video bằng chứng', style: TextStyle(fontSize: 15)),
+                                    content: TextField(
+                                      controller: customUrlController,
+                                      decoration: const InputDecoration(
+                                        hintText: 'https://...',
+                                        border: OutlineInputBorder(),
+                                      ),
+                                    ),
+                                    actions: [
+                                      TextButton(onPressed: () => Navigator.pop(dCtx), child: const Text('Hủy')),
+                                      ElevatedButton(
+                                        onPressed: () {
+                                          if (customUrlController.text.trim().isNotEmpty) {
+                                            setSheetState(() {
+                                              evidenceUrls.add(customUrlController.text.trim());
+                                              customUrlController.clear();
+                                            });
+                                          }
+                                          Navigator.pop(dCtx);
+                                        },
+                                        style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF2E7D32)),
+                                        child: const Text('Thêm', style: TextStyle(color: Colors.white)),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                              child: Container(
+                                width: 64,
+                                height: 64,
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade100,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: Colors.grey.shade300, style: BorderStyle.solid),
+                                ),
+                                child: const Icon(Icons.add_photo_alternate, color: Color(0xFF2E7D32)),
+                              ),
+                            );
+                          }
+
+                          return Stack(
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Image.network(
+                                  ApiService.fixImageUrl(evidenceUrls[i]),
+                                  width: 64,
+                                  height: 64,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => Container(
+                                    width: 64,
+                                    height: 64,
+                                    color: Colors.grey.shade200,
+                                    child: const Icon(Icons.image, size: 24, color: Colors.grey),
+                                  ),
+                                ),
+                              ),
+                              Positioned(
+                                top: 2,
+                                right: 2,
+                                child: GestureDetector(
+                                  onTap: () => setSheetState(() => evidenceUrls.removeAt(i)),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(2),
+                                    decoration: const BoxDecoration(
+                                      color: Colors.black54,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(Icons.close, size: 12, color: Colors.white),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+
+                    // 5. Ghi chú mô tả thêm
+                    const Text('5. Ghi chú chi tiết:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                    const SizedBox(height: 6),
+                    TextField(
+                      controller: notesController,
+                      maxLines: 2,
+                      decoration: InputDecoration(
+                        hintText: 'Mô tả cụ thể tình trạng nông sản khi nhận...',
+                        hintStyle: TextStyle(fontSize: 12.5, color: Colors.grey.shade500),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Nút gửi khiếu nại
+                    SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: ElevatedButton(
+                        onPressed: isSubmitting
+                            ? null
+                            : () async {
+                                if (!isValidEvidence) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Vui lòng cung cấp tối thiểu 2 hình ảnh hoặc 1 video rõ nét!'),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                  return;
+                                }
+
+                                setSheetState(() => isSubmitting = true);
+                                final rawOrderId = _currentOrder['orderId'] ?? _currentOrder['id'];
+                                final int oId = rawOrderId is num ? rawOrderId.toInt() : int.tryParse(rawOrderId.toString()) ?? 0;
+                                final rawCustId = _currentOrder['customerId'] ?? widget.userId ?? 1;
+                                final int cId = rawCustId is num ? rawCustId.toInt() : int.tryParse(rawCustId.toString()) ?? 1;
+
+                                final res = await ApiService.createReturnTicket(
+                                  orderId: oId,
+                                  productId: selectedProductId,
+                                  customerId: cId,
+                                  reason: reason,
+                                  compensationMethod: compensationMethod,
+                                  evidenceUrls: evidenceUrls,
+                                  notes: notesController.text.trim(),
+                                );
+
+                                setSheetState(() => isSubmitting = false);
+                                if (!mounted) return;
+
+                                if (res['success'] == true) {
+                                  Navigator.pop(sheetCtx);
+                                  setState(() {
+                                    _currentOrder['orderStatus'] = 'Returned';
+                                  });
+                                  widget.onOrderUpdated?.call();
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Đã gửi yêu cầu khiếu nại cho món "$prodName". LÀNH Farm sẽ xử lý và hoàn tiền trong 24h!'),
+                                      backgroundColor: const Color(0xFF2E7D32),
+                                      duration: const Duration(seconds: 4),
+                                    ),
+                                  );
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(res['message'] ?? 'Không thể gửi khiếu nại lúc này'),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                }
+                              },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFE65100),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        child: isSubmitting
+                            ? const SizedBox(
+                                width: 22,
+                                height: 22,
+                                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                              )
+                            : const Text(
+                                'XÁC NHẬN GỬI YÊU CẦU ĐỔI TRẢ',
+                                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                              ),
+                      ),
                     ),
                   ],
                 ),
@@ -1370,6 +1829,70 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                           ),
                         ),
                       ],
+                    ),
+                    const SizedBox(height: 10),
+                    // Nút gửi khiếu nại Smart Claim tương tự Web Store
+                    SizedBox(
+                      width: double.infinity,
+                      height: 44,
+                      child: OutlinedButton.icon(
+                        onPressed: _showSmartClaimSheet,
+                        icon: const Icon(Icons.assignment_return_outlined, color: Color(0xFFE65100), size: 18),
+                        label: const Text(
+                          'KHIẾU NẠI & ĐỔI TRẢ NÔNG SẢN (HOÀN TIỀN 100%)',
+                          style: TextStyle(
+                            color: Color(0xFFE65100),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Color(0xFFFFB74D), width: 1.2),
+                          backgroundColor: const Color(0xFFFFF8E1),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ] else if (oStatus == 'returned') ...[
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFF3E0),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: const Color(0xFFFFB74D)),
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(Icons.info_outline, color: Color(0xFFE65100), size: 20),
+                          SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Đơn hàng đang trong quy trình Đổi trả / Hoàn tiền. Bộ phận CSKH LÀNH Farm đang xử lý bồi hoàn cho bạn.',
+                              style: TextStyle(color: Color(0xFFE65100), fontSize: 12, fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 46,
+                      child: ElevatedButton.icon(
+                        onPressed: _handleReorder,
+                        icon: const Icon(Icons.refresh, color: Colors.white),
+                        label: const Text(
+                          'ĐẶT LẠI ĐƠN HÀNG MỚI',
+                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF2E7D32),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                      ),
                     ),
                   ] else if (oStatus == 'cancelled') ...[
                     SizedBox(

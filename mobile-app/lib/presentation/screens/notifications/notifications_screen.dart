@@ -217,7 +217,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
           // Notifications List
           Expanded(
-            child: _filteredNotifications.isEmpty
+            child: _isLoading
+                ? const Center(
+                    child: CircularProgressIndicator(color: Color(0xFF2E7D32)),
+                  )
+                : _filteredNotifications.isEmpty
                 ? Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,

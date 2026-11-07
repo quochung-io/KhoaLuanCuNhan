@@ -501,13 +501,13 @@ class _ComboCustomizeScreenState extends State<ComboCustomizeScreen> {
       price: widget.combo.rawPrice.toInt(),
       unit: widget.combo.type == 'combotuan' ? 'tuần' : 'tháng',
       category: 'Combo',
-      cert: 'VietGAP & Hữu cơ',
-      region: supplier['region'],
-      rating: 5.0,
-      reviews: 64,
+      cert: widget.combo.badge ?? 'VietGAP',
+      region: supplier['region'] ?? widget.combo.supplierName,
+      rating: _avgRating,
+      reviews: _totalReviewCount,
       icon: Icons.card_giftcard,
       color: const Color(0xFF2E7D32),
-      lot: 'CMB-${widget.combo.id}',
+      lot: 'LOT#${widget.combo.id}',
       description:
           'Lịch giao: $_selectedDeliveryDay ($_selectedDeliveryTime)\nHTX: ${supplier['name']}\nNông sản đã chọn: ${selectedProduceNames.join(', ')}',
       imageUrl: widget.combo.imageUrl,
@@ -1103,19 +1103,19 @@ class _ComboCustomizeScreenState extends State<ComboCustomizeScreen> {
                               onPressed: () {
                                 if (!_checkLoginRequired('viết đánh giá'))
                                   return;
-                                final dummyProduct = Product(
+                                final comboAsProduct = Product(
                                   id: widget.combo.id,
                                   name: widget.combo.name,
                                   category: 'Combo nông sản',
                                   price: widget.combo.rawPrice.toInt(),
                                   unit: 'Gói',
-                                  cert: 'VietGAP',
+                                  cert: widget.combo.badge ?? 'VietGAP',
                                   region: widget.combo.supplierName,
                                   rating: _avgRating,
                                   reviews: _totalReviewCount,
                                   icon: Icons.inventory_2_outlined,
                                   color: const Color(0xFF2E7D32),
-                                  lot: 'CB-${widget.combo.id}',
+                                  lot: 'LOT#${widget.combo.id}',
                                   description: widget.combo.desc,
                                   imageUrl: widget.combo.imageUrl,
                                   originFarm: widget.combo.supplierName,
@@ -1124,7 +1124,7 @@ class _ComboCustomizeScreenState extends State<ComboCustomizeScreen> {
                                   context,
                                   MaterialPageRoute(
                                     builder: (_) => ReviewScreen(
-                                      product: dummyProduct,
+                                      product: comboAsProduct,
                                       currentUserId: _currentUserId!,
                                       currentUserName: _currentUserName,
                                     ),

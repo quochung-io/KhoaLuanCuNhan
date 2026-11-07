@@ -248,8 +248,9 @@ class ApiService {
     }
   }
 
-  static Future<List<dynamic>> getProducts() async {
-    final url = Uri.parse('${AppConstants.baseUrl}/api/products');
+  static Future<List<dynamic>> getProducts({int? categoryId}) async {
+    final query = categoryId != null ? '?categoryId=$categoryId' : '';
+    final url = Uri.parse('${AppConstants.baseUrl}/api/products$query');
     try {
       final response = await http.get(url);
       if (response.statusCode == 200) {
@@ -431,7 +432,24 @@ class ApiService {
     }
   }
 
-  static Future<bool> cancelOrder(dynamic orderId, {String? reason}) async {
+  static Future<bool> cancelOrder(dynamic orderId, {String? reason, int? customerId}) async {
+    // 1. Thử gọi API hủy chuyên biệt chuẩn bảo mật và hoàn trả tồn kho (POST /api/orders/{id}/cancel)
+    try {
+      final custParam = customerId != null && customerId > 0 ? '?customerId=$customerId' : '';
+      final cancelUrl = Uri.parse('${AppConstants.baseUrl}/api/orders/$orderId/cancel$custParam');
+      final res = await http.post(
+        cancelUrl,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'reason': reason ?? 'Khách hàng hủy đơn trên Mobile App',
+        }),
+      );
+      if (res.statusCode == 200 || res.statusCode == 204) {
+        return true;
+      }
+    } catch (_) {}
+
+    // 2. Fallback sang cập nhật trạng thái nếu cần
     final url = Uri.parse('${AppConstants.baseUrl}/api/orders/$orderId/status');
     try {
       final response = await http.put(
@@ -446,6 +464,61 @@ class ApiService {
     } catch (_) {
       return false;
     }
+  }
+
+  // Gửi yêu cầu Khiếu nại, Đổi trả & Hoàn tiền nông sản (Smart Claim)
+  static Future<Map<String, dynamic>> createReturnTicket({
+    required int orderId,
+    required int productId,
+    required int customerId,
+    required String reason,
+    required String compensationMethod,
+    required List<String> evidenceUrls,
+    String? notes,
+  }) async {
+    final url = Uri.parse('${AppConstants.baseUrl}/api/return-tickets');
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'orderId': orderId,
+          'productId': productId,
+          'customerId': customerId,
+          'reason': reason,
+          'compensationMethod': compensationMethod,
+          'evidenceUrls': evidenceUrls,
+          'notes': notes ?? '',
+        }),
+      );
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = jsonDecode(response.body);
+        return {'success': true, 'data': data};
+      } else {
+        String msg = 'Không thể gửi yêu cầu khiếu nại';
+        try {
+          final err = jsonDecode(response.body);
+          if (err['message'] != null) msg = err['message'].toString();
+        } catch (_) {}
+        return {'success': false, 'message': msg};
+      }
+    } catch (e) {
+      return {'success': false, 'message': 'Lỗi kết nối: $e'};
+    }
+  }
+
+  // Lấy danh sách phiếu khiếu nại đổi trả theo mã đơn hàng
+  static Future<List<dynamic>> getOrderReturnTickets(dynamic orderId) async {
+    final url = Uri.parse('${AppConstants.baseUrl}/api/return-tickets?orderId=$orderId');
+    try {
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data is List) return data;
+        if (data is Map && data['items'] is List) return data['items'];
+      }
+    } catch (_) {}
+    return [];
   }
 
   static Future<bool> confirmOrderPayment(int orderId) async {
@@ -721,6 +794,16 @@ class ApiService {
       );
     } catch (e) {
       rethrow;
+    }
+  }
+
+  static Future<bool> setDefaultAddress(int addressId) async {
+    final url = Uri.parse('${AppConstants.baseUrl}/api/addresses/$addressId/default');
+    try {
+      final response = await http.put(url);
+      return response.statusCode == 200 || response.statusCode == 204;
+    } catch (_) {
+      return false;
     }
   }
 

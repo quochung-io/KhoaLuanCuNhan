@@ -38,37 +38,19 @@ export default function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  
+
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
   const [isSendingOtp, setIsSendingOtp] = useState(false);
 
-  // Tab chọn loại tài khoản: Khách hàng cá nhân vs Hợp tác xã
-  const [accountType, setAccountType] = useState<'customer' | 'cooperative'>('customer');
-
-  // Các trường hồ sơ Hợp Tác Xã chuyên sâu
-  const [coopName, setCoopName] = useState('');
-  const [representative, setRepresentative] = useState('');
-  const [taxCode, setTaxCode] = useState('');
-  const [coopProvince, setCoopProvince] = useState('Lâm Đồng');
-  const [coopDistrict, setCoopDistrict] = useState('Đà Lạt');
-  const [coopAddress, setCoopAddress] = useState('');
-  const [coopArea, setCoopArea] = useState('5.5');
-  const [coopCropType, setCoopCropType] = useState('Rau ăn lá & củ quả ôn đới');
-  const [coopStandard, setCoopStandard] = useState('VietGAP');
-  const [coopCertNumber, setCoopCertNumber] = useState('');
-  const [coopLoading, setCoopLoading] = useState(false);
-  const [coopSuccessMsg, setCoopSuccessMsg] = useState('');
-  const [coopErrorMsg, setCoopErrorMsg] = useState('');
-  
   // Header, theme, cart, search đồng bộ 100%
   const [theme, setTheme] = useState('light');
   const [lang, setLang] = useState<'vi' | 'en'>('vi');
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  
+
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [cartBounce, setCartBounce] = useState(false);
@@ -83,7 +65,7 @@ export default function RegisterPage() {
   const [otpCode, setOtpCode] = useState('');
   const [timer, setTimer] = useState(0);
   const [otpModalMsg, setOtpModalMsg] = useState<{ type: 'error' | 'success'; text: string } | null>(null);
-  
+
   const router = useRouter();
 
   useEffect(() => {
@@ -98,14 +80,14 @@ export default function RegisterPage() {
     if (storedUser) {
       try {
         setCurrentUser(JSON.parse(storedUser));
-      } catch {}
+      } catch { }
     }
 
     const storedCart = localStorage.getItem('cart');
     if (storedCart) {
       try {
         setCart(JSON.parse(storedCart));
-      } catch {}
+      } catch { }
     }
   }, []);
 
@@ -195,81 +177,6 @@ export default function RegisterPage() {
   const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
   const phoneRegex = /^(03|05|07|08|09)\d{8}$/;
   const nameRegex = /^[a-zA-ZÀ-ỹ\s]+$/;
-
-  // Xử lý gửi hồ sơ đăng ký Hợp Tác Xã
-  const handleCooperativeRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setCoopErrorMsg('');
-    setCoopSuccessMsg('');
-
-    if (!coopName.trim() || !representative.trim() || !email.trim() || !phone.trim() || !password || !confirmPassword) {
-      setCoopErrorMsg('Vui lòng điền đầy đủ các thông tin bắt buộc (*).');
-      return;
-    }
-
-    if (!emailRegex.test(email.trim())) {
-      setCoopErrorMsg('Định dạng email của Hợp tác xã không hợp lệ.');
-      return;
-    }
-
-    if (!phoneRegex.test(phone.trim())) {
-      setCoopErrorMsg('Số điện thoại liên hệ phải có đúng 10 chữ số hợp lệ.');
-      return;
-    }
-
-    if (password.length < 8) {
-      setCoopErrorMsg('Mật khẩu quản trị phải có tối thiểu 8 ký tự.');
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      setCoopErrorMsg('Xác nhận mật khẩu không trùng khớp!');
-      return;
-    }
-
-    setCoopLoading(true);
-    try {
-      const payload = {
-        fullName: representative.trim(),
-        storeName: coopName.trim(),
-        farmName: coopName.trim(),
-        email: email.trim().toLowerCase(),
-        phone: phone.trim(),
-        password: password,
-        businessLicense: taxCode.trim() || 'Đang cập nhật',
-        province: coopProvince,
-        district: coopDistrict,
-        address: coopAddress.trim() || `Thôn 1, ${coopDistrict}, ${coopProvince}`,
-        area: parseFloat(coopArea) || 1.0,
-        cropType: coopCropType,
-        productionStandard: coopStandard,
-        certNumber: coopCertNumber.trim() || 'VG-VN-DL-2026'
-      };
-
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/users/supplier-register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-
-      const data = await res.json().catch(() => ({}));
-
-      if (!res.ok) {
-        throw new Error(data.message || 'Đăng ký Hợp tác xã thất bại. Vui lòng kiểm tra lại thông tin.');
-      }
-
-      setCoopSuccessMsg(data.message || `Đăng ký hồ sơ Hợp tác xã "${coopName}" thành công! Hồ sơ đã được chuyển đến Ban Quản Trị LÀNH Farm để thẩm định và kích hoạt.`);
-      
-      // Tự động chuyển trang sau 3 giây
-      setTimeout(() => {
-        router.push('/login?type=supplier');
-      }, 3500);
-    } catch (err: any) {
-      setCoopErrorMsg(err.message || 'Có lỗi xảy ra khi gửi hồ sơ đăng ký.');
-    } finally {
-      setCoopLoading(false);
-    }
-  };
 
   // Hàm xử lý sự kiện tương tác người dùng (handleOpenOtpModal)
   const handleOpenOtpModal = async (e: React.FormEvent) => {
@@ -445,7 +352,7 @@ export default function RegisterPage() {
               <span className="topbar-link">Hotline: <strong>1900 8899</strong> (7:00 - 21:00)</span>
             </div>
             <div className="topbar-right">
-              
+
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <button className="icon-btn" onClick={toggleTheme} style={{ width: '24px', height: '24px' }} title="Sáng / Tối">
                   {theme === "light" ? "Tối" : "Sáng"}
@@ -463,9 +370,9 @@ export default function RegisterPage() {
         <div className="wrap nav-row">
           <Link href="/" className="logo">
             <svg className="mark" viewBox="0 0 40 40" fill="none">
-              <circle cx="20" cy="20" r="20" fill="var(--green-700)"/>
-              <path d="M20 30C20 30 12 26 12 18C12 13 16 10 20 10C24 10 28 13 28 18C28 26 20 30 20 30Z" fill="var(--green-500)"/>
-              <path d="M20 30V16" stroke="var(--green-900)" strokeWidth="1.4" strokeLinecap="round"/>
+              <circle cx="20" cy="20" r="20" fill="var(--green-700)" />
+              <path d="M20 30C20 30 12 26 12 18C12 13 16 10 20 10C24 10 28 13 28 18C28 26 20 30 20 30Z" fill="var(--green-500)" />
+              <path d="M20 30V16" stroke="var(--green-900)" strokeWidth="1.4" strokeLinecap="round" />
             </svg>
             <div>
               <span style={{ letterSpacing: '1px' }}>LÀNH</span>
@@ -478,8 +385,8 @@ export default function RegisterPage() {
           <div className="header-actions">
             {/* Tài khoản */}
             <div style={{ position: 'relative' }} ref={dropdownRef}>
-              <button 
-                className="header-action-item" 
+              <button
+                className="header-action-item"
                 onClick={() => setShowUserDropdown(!showUserDropdown)}
                 title="Tài khoản cá nhân"
                 style={{ background: 'none', border: 'none', cursor: 'pointer' }}
@@ -497,7 +404,7 @@ export default function RegisterPage() {
                   </span>
                 </div>
               </button>
-              
+
               {showUserDropdown && (
                 <div style={{
                   position: 'absolute',
@@ -518,7 +425,7 @@ export default function RegisterPage() {
                         <div style={{ fontWeight: '700', color: 'var(--ink)', fontSize: '13.5px' }}>{currentUser.fullName}</div>
                         <div style={{ marginTop: '2px' }}>{currentUser.email}</div>
                       </div>
-                      <Link 
+                      <Link
                         href="/profile"
                         style={{
                           display: 'block',
@@ -532,7 +439,7 @@ export default function RegisterPage() {
                       >
                         Hồ sơ &amp; Sổ địa chỉ
                       </Link>
-                      <Link 
+                      <Link
                         href="/orders"
                         style={{
                           display: 'block',
@@ -546,7 +453,7 @@ export default function RegisterPage() {
                       >
                         Lịch sử đơn hàng
                       </Link>
-                      <button 
+                      <button
                         onClick={handleCustomerLogout}
                         style={{
                           width: '100%',
@@ -565,7 +472,7 @@ export default function RegisterPage() {
                     </>
                   ) : (
                     <>
-                      <Link 
+                      <Link
                         href="/login"
                         style={{
                           display: 'block',
@@ -578,7 +485,7 @@ export default function RegisterPage() {
                       >
                         Đăng nhập
                       </Link>
-                      <Link 
+                      <Link
                         href="/register"
                         style={{
                           display: 'block',
@@ -598,13 +505,13 @@ export default function RegisterPage() {
             </div>
 
             {/* Giỏ Hàng */}
-            <div 
+            <div
               className={`header-cart-btn ${cartBounce ? 'bounce' : ''}`}
               onClick={() => setIsDrawerOpen(true)}
               title="Xem giỏ hàng"
             >
               <div className="header-action-icon" style={{ display: 'flex', alignItems: 'center' }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" /><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" /></svg>
                 <span className="badge">{totalItemsCount}</span>
               </div>
               <div className="header-action-text">
@@ -644,13 +551,13 @@ export default function RegisterPage() {
       </div>
 
       {/* ── NỘI DUNG CHÍNH: SPLIT-SCREEN FARM SHOWCASE ĐỒNG BỘ 100% VỚI LOGIN ── */}
-      <main id="main" style={{ 
-        minHeight: 'calc(100vh - 420px)', 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'center', 
-        padding: '48px 20px', 
-        background: 'linear-gradient(180deg, var(--bg) 0%, rgba(227, 241, 227, 0.45) 100%)' 
+      <main id="main" style={{
+        minHeight: 'calc(100vh - 420px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '48px 20px',
+        background: 'linear-gradient(180deg, var(--bg) 0%, rgba(227, 241, 227, 0.45) 100%)'
       }}>
         <div style={{
           backgroundColor: 'var(--surface)',
@@ -714,7 +621,7 @@ export default function RegisterPage() {
                 margin: '0 0 28px 0',
                 maxWidth: '420px'
               }}>
-                Đăng ký tài khoản để trải nghiệm mua sắm nông sản hữu cơ đạt chuẩn VietGAP, 
+                Đăng ký tài khoản để trải nghiệm mua sắm nông sản hữu cơ đạt chuẩn VietGAP,
                 tích lũy điểm thưởng không giới hạn và nhận ưu đãi theo mùa.
               </p>
 
@@ -816,9 +723,9 @@ export default function RegisterPage() {
             <div style={{ marginBottom: '20px' }}>
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
                 <svg width="24" height="24" viewBox="0 0 40 40" fill="none">
-                  <circle cx="20" cy="20" r="20" fill="var(--green-700)"/>
-                  <path d="M20 30C20 30 12 26 12 18C12 13 16 10 20 10C24 10 28 13 28 18C28 26 20 30 20 30Z" fill="var(--green-500)"/>
-                  <path d="M20 30V16" stroke="var(--green-900)" strokeWidth="1.4" strokeLinecap="round"/>
+                  <circle cx="20" cy="20" r="20" fill="var(--green-700)" />
+                  <path d="M20 30C20 30 12 26 12 18C12 13 16 10 20 10C24 10 28 13 28 18C28 26 20 30 20 30Z" fill="var(--green-500)" />
+                  <path d="M20 30V16" stroke="var(--green-900)" strokeWidth="1.4" strokeLinecap="round" />
                 </svg>
                 <span style={{ fontFamily: 'var(--font-display)', fontWeight: '700', fontSize: '16px', color: 'var(--green-900)', letterSpacing: '0.5px' }}>
                   LÀNH FARM
@@ -838,85 +745,7 @@ export default function RegisterPage() {
                 Trở thành thành viên của LÀNH Farm để nhận nhiều quyền lợi mua sắm.
               </p>
             </div>
-            {/* TAB CHỌN LOẠI TÀI KHOẢN (KHÁCH HÀNG VS HỢP TÁC XÃ) */}
-            <div style={{
-              display: 'flex',
-              backgroundColor: 'var(--bg)',
-              padding: '4px',
-              borderRadius: '12px',
-              border: '1.5px solid var(--line)',
-              marginBottom: '20px',
-              gap: '6px'
-            }}>
-              <button
-                type="button"
-                onClick={() => setAccountType('customer')}
-                style={{
-                  flex: 1,
-                  padding: '10px 14px',
-                  borderRadius: '9px',
-                  border: 'none',
-                  backgroundColor: accountType === 'customer' ? 'var(--surface)' : 'transparent',
-                  color: accountType === 'customer' ? 'var(--green-700)' : 'var(--ink-soft)',
-                  fontWeight: accountType === 'customer' ? 800 : 600,
-                  fontSize: '13.5px',
-                  boxShadow: accountType === 'customer' ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '6px'
-                }}
-              >
-                <span>🛒</span>
-                <span>Khách hàng cá nhân</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setAccountType('cooperative')}
-                style={{
-                  flex: 1,
-                  padding: '10px 14px',
-                  borderRadius: '9px',
-                  border: 'none',
-                  backgroundColor: accountType === 'cooperative' ? 'var(--surface)' : 'transparent',
-                  color: accountType === 'cooperative' ? 'var(--green-700)' : 'var(--ink-soft)',
-                  fontWeight: accountType === 'cooperative' ? 800 : 600,
-                  fontSize: '13.5px',
-                  boxShadow: accountType === 'cooperative' ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '6px'
-                }}
-              >
-                <span>🌾</span>
-                <span>Hợp tác xã / Nhà vườn</span>
-              </button>
-            </div>
-
-
-                        {/* Box thông báo cơ chế 1 Email dùng chung 2 Vai trò */}
-            <div style={{
-              backgroundColor: '#F0FDF4',
-              border: '1px solid #BBF7D0',
-              borderRadius: '12px',
-              padding: '12px 16px',
-              marginBottom: '20px',
-              display: 'flex',
-              alignItems: 'flex-start',
-              gap: '10px'
-            }}>
-              <span style={{ fontSize: '18px', marginTop: '1px' }}>💡</span>
-              <div style={{ fontSize: '12.5px', color: '#166534', lineHeight: 1.5 }}>
-                <strong>Tài khoản hợp nhất:</strong> Bạn hoàn toàn có thể dùng chung <strong>1 địa chỉ Email</strong> cho cả 2 vai trò (Khách hàng mua nông sản &amp; Hợp tác xã bán hàng). Khi đăng ký thêm vai trò, hệ thống sẽ tự động liên kết vào tài khoản hiện có của bạn mà không lo trùng lặp.
-              </div>
-            </div>
-
-{/* Thông báo lỗi nếu có */}
+            {/* Thông báo lỗi nếu có */}
             {error && (
               <div style={{
                 backgroundColor: '#fef2f2',
@@ -954,64 +783,12 @@ export default function RegisterPage() {
               </div>
             )}
 
-            {/* Form */}
-            
-            {accountType === 'customer' ? (
-              <form onSubmit={handleOpenOtpModal}>
-              {/* Họ và tên */}
-              <div style={{ marginBottom: '14px' }}>
-                <label style={{ display: 'block', marginBottom: '5px', fontSize: '13px', fontWeight: '600', color: 'var(--ink)' }}>
-                  Họ và tên *
-                </label>
-                <div style={{ position: 'relative' }}>
-                  <div style={{
-                    position: 'absolute',
-                    left: '12px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    color: 'var(--ink-soft)',
-                    display: 'flex',
-                    alignItems: 'center'
-                  }}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                      <circle cx="12" cy="7" r="4"></circle>
-                    </svg>
-                  </div>
-                  <input
-                    type="text"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    placeholder="Ví dụ: Nguyễn Văn A"
-                    style={{
-                      width: '100%',
-                      padding: '10px 14px 10px 38px',
-                      borderRadius: '10px',
-                      border: '1.5px solid var(--line)',
-                      backgroundColor: 'var(--surface)',
-                      color: 'var(--ink)',
-                      fontSize: '13.5px',
-                      outline: 'none',
-                      transition: 'border-color 0.2s, box-shadow 0.2s',
-                      boxSizing: 'border-box'
-                    }}
-                    onFocus={(e) => {
-                      e.target.style.borderColor = 'var(--green-700)';
-                      e.target.style.boxShadow = '0 0 0 3px rgba(46, 125, 50, 0.15)';
-                    }}
-                    onBlur={(e) => {
-                      e.target.style.borderColor = 'var(--line)';
-                      e.target.style.boxShadow = 'none';
-                    }}
-                  />
-                </div>
-              </div>
-
-              {/* Email & Số điện thoại (2 cột trên desktop) */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '14px' }}>
-                <div>
+            {/* Form Đăng ký Khách hàng */}
+            <form onSubmit={handleOpenOtpModal}>
+                {/* Họ và tên */}
+                <div style={{ marginBottom: '14px' }}>
                   <label style={{ display: 'block', marginBottom: '5px', fontSize: '13px', fontWeight: '600', color: 'var(--ink)' }}>
-                    Email *
+                    Họ và tên *
                   </label>
                   <div style={{ position: 'relative' }}>
                     <div style={{
@@ -1023,19 +800,19 @@ export default function RegisterPage() {
                       display: 'flex',
                       alignItems: 'center'
                     }}>
-                      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                        <polyline points="22,6 12,13 2,6"/>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
                       </svg>
                     </div>
                     <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="name@gmail.com"
+                      type="text"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      placeholder="Ví dụ: Nguyễn Văn A"
                       style={{
                         width: '100%',
-                        padding: '10px 12px 10px 36px',
+                        padding: '10px 14px 10px 38px',
                         borderRadius: '10px',
                         border: '1.5px solid var(--line)',
                         backgroundColor: 'var(--surface)',
@@ -1057,9 +834,108 @@ export default function RegisterPage() {
                   </div>
                 </div>
 
-                <div>
+                {/* Email & Số điện thoại (2 cột trên desktop) */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '14px' }}>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '5px', fontSize: '13px', fontWeight: '600', color: 'var(--ink)' }}>
+                      Email *
+                    </label>
+                    <div style={{ position: 'relative' }}>
+                      <div style={{
+                        position: 'absolute',
+                        left: '12px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        color: 'var(--ink-soft)',
+                        display: 'flex',
+                        alignItems: 'center'
+                      }}>
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                          <polyline points="22,6 12,13 2,6" />
+                        </svg>
+                      </div>
+                      <input
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="name@gmail.com"
+                        style={{
+                          width: '100%',
+                          padding: '10px 12px 10px 36px',
+                          borderRadius: '10px',
+                          border: '1.5px solid var(--line)',
+                          backgroundColor: 'var(--surface)',
+                          color: 'var(--ink)',
+                          fontSize: '13.5px',
+                          outline: 'none',
+                          transition: 'border-color 0.2s, box-shadow 0.2s',
+                          boxSizing: 'border-box'
+                        }}
+                        onFocus={(e) => {
+                          e.target.style.borderColor = 'var(--green-700)';
+                          e.target.style.boxShadow = '0 0 0 3px rgba(46, 125, 50, 0.15)';
+                        }}
+                        onBlur={(e) => {
+                          e.target.style.borderColor = 'var(--line)';
+                          e.target.style.boxShadow = 'none';
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '5px', fontSize: '13px', fontWeight: '600', color: 'var(--ink)' }}>
+                      Số điện thoại *
+                    </label>
+                    <div style={{ position: 'relative' }}>
+                      <div style={{
+                        position: 'absolute',
+                        left: '12px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        color: 'var(--ink-soft)',
+                        display: 'flex',
+                        alignItems: 'center'
+                      }}>
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                        </svg>
+                      </div>
+                      <input
+                        type="tel"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        placeholder="0912345678"
+                        style={{
+                          width: '100%',
+                          padding: '10px 12px 10px 36px',
+                          borderRadius: '10px',
+                          border: '1.5px solid var(--line)',
+                          backgroundColor: 'var(--surface)',
+                          color: 'var(--ink)',
+                          fontSize: '13.5px',
+                          outline: 'none',
+                          transition: 'border-color 0.2s, box-shadow 0.2s',
+                          boxSizing: 'border-box'
+                        }}
+                        onFocus={(e) => {
+                          e.target.style.borderColor = 'var(--green-700)';
+                          e.target.style.boxShadow = '0 0 0 3px rgba(46, 125, 50, 0.15)';
+                        }}
+                        onBlur={(e) => {
+                          e.target.style.borderColor = 'var(--line)';
+                          e.target.style.boxShadow = 'none';
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Mật khẩu */}
+                <div style={{ marginBottom: '14px' }}>
                   <label style={{ display: 'block', marginBottom: '5px', fontSize: '13px', fontWeight: '600', color: 'var(--ink)' }}>
-                    Số điện thoại *
+                    Mật khẩu *
                   </label>
                   <div style={{ position: 'relative' }}>
                     <div style={{
@@ -1072,432 +948,184 @@ export default function RegisterPage() {
                       alignItems: 'center'
                     }}>
                       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                       </svg>
                     </div>
                     <input
-                      type="tel"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      placeholder="0912345678"
-                      style={{
-                        width: '100%',
-                        padding: '10px 12px 10px 36px',
-                        borderRadius: '10px',
-                        border: '1.5px solid var(--line)',
-                        backgroundColor: 'var(--surface)',
-                        color: 'var(--ink)',
-                        fontSize: '13.5px',
-                        outline: 'none',
-                        transition: 'border-color 0.2s, box-shadow 0.2s',
-                        boxSizing: 'border-box'
-                      }}
-                      onFocus={(e) => {
-                        e.target.style.borderColor = 'var(--green-700)';
-                        e.target.style.boxShadow = '0 0 0 3px rgba(46, 125, 50, 0.15)';
-                      }}
-                      onBlur={(e) => {
-                        e.target.style.borderColor = 'var(--line)';
-                        e.target.style.boxShadow = 'none';
-                      }}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Mật khẩu */}
-              <div style={{ marginBottom: '14px' }}>
-                <label style={{ display: 'block', marginBottom: '5px', fontSize: '13px', fontWeight: '600', color: 'var(--ink)' }}>
-                  Mật khẩu *
-                </label>
-                <div style={{ position: 'relative' }}>
-                  <div style={{
-                    position: 'absolute',
-                    left: '12px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    color: 'var(--ink-soft)',
-                    display: 'flex',
-                    alignItems: 'center'
-                  }}>
-                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                      <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                    </svg>
-                  </div>
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Tối thiểu 6 ký tự gồm chữ và số"
-                    style={{
-                      width: '100%',
-                      padding: '10px 38px 10px 38px',
-                      borderRadius: '10px',
-                      border: '1.5px solid var(--line)',
-                      backgroundColor: 'var(--surface)',
-                      color: 'var(--ink)',
-                      fontSize: '13.5px',
-                      outline: 'none',
-                      transition: 'border-color 0.2s, box-shadow 0.2s',
-                      boxSizing: 'border-box'
-                    }}
-                    onFocus={(e) => {
-                      e.target.style.borderColor = 'var(--green-700)';
-                      e.target.style.boxShadow = '0 0 0 3px rgba(46, 125, 50, 0.15)';
-                    }}
-                    onBlur={(e) => {
-                      e.target.style.borderColor = 'var(--line)';
-                      e.target.style.boxShadow = 'none';
-                    }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    style={{ 
-                      position: 'absolute', 
-                      right: '12px', 
-                      top: '50%', 
-                      transform: 'translateY(-50%)', 
-                      color: 'var(--ink-soft)', 
-                      background: 'none', 
-                      border: 'none', 
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      padding: '4px'
-                    }}
-                    aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-                  >
-                    {showPassword ? (
-                      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-                    ) : (
-                      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              {/* Nhập lại mật khẩu */}
-              <div style={{ marginBottom: '22px' }}>
-                <label style={{ display: 'block', marginBottom: '5px', fontSize: '13px', fontWeight: '600', color: 'var(--ink)' }}>
-                  Nhập lại mật khẩu *
-                </label>
-                <div style={{ position: 'relative' }}>
-                  <div style={{
-                    position: 'absolute',
-                    left: '12px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    color: 'var(--ink-soft)',
-                    display: 'flex',
-                    alignItems: 'center'
-                  }}>
-                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                      <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                    </svg>
-                  </div>
-                  <input
-                    type={showConfirmPassword ? "text" : "password"}
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Nhập lại mật khẩu để xác nhận"
-                    style={{
-                      width: '100%',
-                      padding: '10px 38px 10px 38px',
-                      borderRadius: '10px',
-                      border: '1.5px solid var(--line)',
-                      backgroundColor: 'var(--surface)',
-                      color: 'var(--ink)',
-                      fontSize: '13.5px',
-                      outline: 'none',
-                      transition: 'border-color 0.2s, box-shadow 0.2s',
-                      boxSizing: 'border-box'
-                    }}
-                    onFocus={(e) => {
-                      e.target.style.borderColor = 'var(--green-700)';
-                      e.target.style.boxShadow = '0 0 0 3px rgba(46, 125, 50, 0.15)';
-                    }}
-                    onBlur={(e) => {
-                      e.target.style.borderColor = 'var(--line)';
-                      e.target.style.boxShadow = 'none';
-                    }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    style={{ 
-                      position: 'absolute', 
-                      right: '12px', 
-                      top: '50%', 
-                      transform: 'translateY(-50%)', 
-                      color: 'var(--ink-soft)', 
-                      background: 'none', 
-                      border: 'none', 
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      padding: '4px'
-                    }}
-                    aria-label={showConfirmPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-                  >
-                    {showConfirmPassword ? (
-                      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-                    ) : (
-                      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              {/* Nút Đăng ký chính (Chỉ là "Đăng ký") */}
-              <button
-                type="submit"
-                disabled={loading}
-                style={{
-                  width: '100%',
-                  padding: '13px',
-                  backgroundColor: 'var(--green-700)',
-                  color: '#ffffff',
-                  border: 'none',
-                  borderRadius: '10px',
-                  fontSize: '15px',
-                  fontWeight: '700',
-                  cursor: loading ? 'not-allowed' : 'pointer',
-                  opacity: loading ? 0.75 : 1,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                  boxShadow: '0 6px 18px rgba(46, 125, 50, 0.28)',
-                  transition: 'all 0.2s ease'
-                }}
-                onMouseEnter={(e) => {
-                  if (!loading) {
-                    (e.target as HTMLElement).style.backgroundColor = 'var(--green-900)';
-                    (e.target as HTMLElement).style.transform = 'translateY(-1px)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!loading) {
-                    (e.target as HTMLElement).style.backgroundColor = 'var(--green-700)';
-                    (e.target as HTMLElement).style.transform = 'translateY(0)';
-                  }
-                }}
-              >
-                {loading ? (
-                  <>
-                    <svg className="animate-spin" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <circle cx="12" cy="12" r="10" strokeOpacity="0.25"/>
-                      <path d="M12 2a10 10 0 0 1 10 10" strokeLinecap="round"/>
-                    </svg>
-                    <span>Đang kiểm tra...</span>
-                  </>
-                ) : (
-                  <span>Đăng ký</span>
-                )}
-              </button>
-            </form>
-            ) : (
-              /* FORM ĐĂNG KÝ DÀNH RIÊNG CHO HỢP TÁC XÃ / ĐỐI TÁC NÔNG SẢN */
-              <form onSubmit={handleCooperativeRegister}>
-                {coopErrorMsg && (
-                  <div style={{ backgroundColor: '#fef2f2', border: '1px solid #fecaca', color: '#991b1b', padding: '11px 14px', borderRadius: '10px', marginBottom: '16px', fontSize: '13px' }}>
-                    ⚠️ {coopErrorMsg}
-                  </div>
-                )}
-                {coopSuccessMsg && (
-                  <div style={{ backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', color: '#166534', padding: '11px 14px', borderRadius: '10px', marginBottom: '16px', fontSize: '13px' }}>
-                    ✓ {coopSuccessMsg}
-                  </div>
-                )}
-
-                {/* Tên HTX & Người đại diện */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginBottom: '12px' }}>
-                  <div>
-                    <label style={{ display: 'block', marginBottom: '4px', fontSize: '12.5px', fontWeight: 600, color: 'var(--ink)' }}>
-                      Tên Hợp tác xã / Trang trại *
-                    </label>
-                    <input
-                      type="text"
-                      value={coopName}
-                      onChange={(e) => setCoopName(e.target.value)}
-                      placeholder="Ví dụ: HTX Rau Sạch Đà Lạt"
-                      required
-                      style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1.5px solid var(--line)', fontSize: '13px', outline: 'none' }}
-                    />
-                  </div>
-                  <div>
-                    <label style={{ display: 'block', marginBottom: '4px', fontSize: '12.5px', fontWeight: 600, color: 'var(--ink)' }}>
-                      Đại diện pháp luật *
-                    </label>
-                    <input
-                      type="text"
-                      value={representative}
-                      onChange={(e) => setRepresentative(e.target.value)}
-                      placeholder="Họ và tên Chủ nhiệm HTX"
-                      required
-                      style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1.5px solid var(--line)', fontSize: '13px', outline: 'none' }}
-                    />
-                  </div>
-                </div>
-
-                {/* Mã số thuế & Diện tích */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginBottom: '12px' }}>
-                  <div>
-                    <label style={{ display: 'block', marginBottom: '4px', fontSize: '12.5px', fontWeight: 600, color: 'var(--ink)' }}>
-                      Mã số thuế / GPKD *
-                    </label>
-                    <input
-                      type="text"
-                      value={taxCode}
-                      onChange={(e) => setTaxCode(e.target.value)}
-                      placeholder="VD: 5801234567"
-                      required
-                      style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1.5px solid var(--line)', fontSize: '13px', outline: 'none' }}
-                    />
-                  </div>
-                  <div>
-                    <label style={{ display: 'block', marginBottom: '4px', fontSize: '12.5px', fontWeight: 600, color: 'var(--ink)' }}>
-                      Quy mô diện tích (Hecta)
-                    </label>
-                    <input
-                      type="number"
-                      step="0.1"
-                      value={coopArea}
-                      onChange={(e) => setCoopArea(e.target.value)}
-                      placeholder="VD: 5.5"
-                      style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1.5px solid var(--line)', fontSize: '13px', outline: 'none' }}
-                    />
-                  </div>
-                </div>
-
-                {/* Tỉnh / TP & Địa chỉ vùng canh tác */}
-                <div style={{ marginBottom: '12px' }}>
-                  <label style={{ display: 'block', marginBottom: '4px', fontSize: '12.5px', fontWeight: 600, color: 'var(--ink)' }}>
-                    Địa chỉ vùng canh tác nông sản *
-                  </label>
-                  <input
-                    type="text"
-                    value={coopAddress}
-                    onChange={(e) => setCoopAddress(e.target.value)}
-                    placeholder="Thôn, Xã, Huyện, Tỉnh..."
-                    required
-                    style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1.5px solid var(--line)', fontSize: '13px', outline: 'none' }}
-                  />
-                </div>
-
-                {/* Tiêu chuẩn chứng nhận & Số chứng nhận */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginBottom: '12px' }}>
-                  <div>
-                    <label style={{ display: 'block', marginBottom: '4px', fontSize: '12.5px', fontWeight: 600, color: 'var(--ink)' }}>
-                      Tiêu chuẩn canh tác
-                    </label>
-                    <select
-                      value={coopStandard}
-                      onChange={(e) => setCoopStandard(e.target.value)}
-                      style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1.5px solid var(--line)', fontSize: '13px', outline: 'none', backgroundColor: '#fff' }}
-                    >
-                      <option value="VietGAP">Chuẩn VietGAP Nông sản</option>
-                      <option value="GlobalGAP">Chuẩn GlobalGAP Xuất khẩu</option>
-                      <option value="Hữu cơ (Organic)">Canh tác Hữu cơ (Organic)</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label style={{ display: 'block', marginBottom: '4px', fontSize: '12.5px', fontWeight: 600, color: 'var(--ink)' }}>
-                      Mã số chứng nhận VietGAP
-                    </label>
-                    <input
-                      type="text"
-                      value={coopCertNumber}
-                      onChange={(e) => setCoopCertNumber(e.target.value)}
-                      placeholder="VD: VG-2026-DL-889"
-                      style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1.5px solid var(--line)', fontSize: '13px', outline: 'none' }}
-                    />
-                  </div>
-                </div>
-
-                {/* Email & Số điện thoại liên hệ */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginBottom: '12px' }}>
-                  <div>
-                    <label style={{ display: 'block', marginBottom: '4px', fontSize: '12.5px', fontWeight: 600, color: 'var(--ink)' }}>
-                      Email liên hệ HTX *
-                    </label>
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="htx@nongsan.vn"
-                      required
-                      style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1.5px solid var(--line)', fontSize: '13px', outline: 'none' }}
-                    />
-                  </div>
-                  <div>
-                    <label style={{ display: 'block', marginBottom: '4px', fontSize: '12.5px', fontWeight: 600, color: 'var(--ink)' }}>
-                      Số điện thoại HTX *
-                    </label>
-                    <input
-                      type="tel"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      placeholder="0912345678"
-                      required
-                      style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1.5px solid var(--line)', fontSize: '13px', outline: 'none' }}
-                    />
-                  </div>
-                </div>
-
-                {/* Mật khẩu & Xác nhận */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginBottom: '18px' }}>
-                  <div>
-                    <label style={{ display: 'block', marginBottom: '4px', fontSize: '12.5px', fontWeight: 600, color: 'var(--ink)' }}>
-                      Mật khẩu quản trị *
-                    </label>
-                    <input
-                      type="password"
+                      type={showPassword ? "text" : "password"}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Tối thiểu 8 ký tự"
-                      required
-                      style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1.5px solid var(--line)', fontSize: '13px', outline: 'none' }}
+                      placeholder="Tối thiểu 6 ký tự gồm chữ và số"
+                      style={{
+                        width: '100%',
+                        padding: '10px 38px 10px 38px',
+                        borderRadius: '10px',
+                        border: '1.5px solid var(--line)',
+                        backgroundColor: 'var(--surface)',
+                        color: 'var(--ink)',
+                        fontSize: '13.5px',
+                        outline: 'none',
+                        transition: 'border-color 0.2s, box-shadow 0.2s',
+                        boxSizing: 'border-box'
+                      }}
+                      onFocus={(e) => {
+                        e.target.style.borderColor = 'var(--green-700)';
+                        e.target.style.boxShadow = '0 0 0 3px rgba(46, 125, 50, 0.15)';
+                      }}
+                      onBlur={(e) => {
+                        e.target.style.borderColor = 'var(--line)';
+                        e.target.style.boxShadow = 'none';
+                      }}
                     />
-                  </div>
-                  <div>
-                    <label style={{ display: 'block', marginBottom: '4px', fontSize: '12.5px', fontWeight: 600, color: 'var(--ink)' }}>
-                      Xác nhận mật khẩu *
-                    </label>
-                    <input
-                      type="password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      placeholder="Nhập lại mật khẩu"
-                      required
-                      style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1.5px solid var(--line)', fontSize: '13px', outline: 'none' }}
-                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      style={{
+                        position: 'absolute',
+                        right: '12px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        color: 'var(--ink-soft)',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        padding: '4px'
+                      }}
+                      aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                    >
+                      {showPassword ? (
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" /><line x1="1" y1="1" x2="23" y2="23" /></svg>
+                      ) : (
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
+                      )}
+                    </button>
                   </div>
                 </div>
 
+                {/* Nhập lại mật khẩu */}
+                <div style={{ marginBottom: '22px' }}>
+                  <label style={{ display: 'block', marginBottom: '5px', fontSize: '13px', fontWeight: '600', color: 'var(--ink)' }}>
+                    Nhập lại mật khẩu *
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <div style={{
+                      position: 'absolute',
+                      left: '12px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      color: 'var(--ink-soft)',
+                      display: 'flex',
+                      alignItems: 'center'
+                    }}>
+                      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                      </svg>
+                    </div>
+                    <input
+                      type={showConfirmPassword ? "text" : "password"}
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="Nhập lại mật khẩu để xác nhận"
+                      style={{
+                        width: '100%',
+                        padding: '10px 38px 10px 38px',
+                        borderRadius: '10px',
+                        border: '1.5px solid var(--line)',
+                        backgroundColor: 'var(--surface)',
+                        color: 'var(--ink)',
+                        fontSize: '13.5px',
+                        outline: 'none',
+                        transition: 'border-color 0.2s, box-shadow 0.2s',
+                        boxSizing: 'border-box'
+                      }}
+                      onFocus={(e) => {
+                        e.target.style.borderColor = 'var(--green-700)';
+                        e.target.style.boxShadow = '0 0 0 3px rgba(46, 125, 50, 0.15)';
+                      }}
+                      onBlur={(e) => {
+                        e.target.style.borderColor = 'var(--line)';
+                        e.target.style.boxShadow = 'none';
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      style={{
+                        position: 'absolute',
+                        right: '12px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        color: 'var(--ink-soft)',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        padding: '4px'
+                      }}
+                      aria-label={showConfirmPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                    >
+                      {showConfirmPassword ? (
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" /><line x1="1" y1="1" x2="23" y2="23" /></svg>
+                      ) : (
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Nút Đăng ký chính (Chỉ là "Đăng ký") */}
                 <button
                   type="submit"
-                  disabled={coopLoading}
+                  disabled={loading}
                   style={{
                     width: '100%',
-                    padding: '12px',
-                    borderRadius: '10px',
+                    padding: '13px',
                     backgroundColor: 'var(--green-700)',
                     color: '#ffffff',
-                    fontWeight: 700,
-                    fontSize: '14.5px',
                     border: 'none',
-                    cursor: coopLoading ? 'not-allowed' : 'pointer',
-                    boxShadow: '0 4px 14px rgba(22, 101, 52, 0.3)'
+                    borderRadius: '10px',
+                    fontSize: '15px',
+                    fontWeight: '700',
+                    cursor: loading ? 'not-allowed' : 'pointer',
+                    opacity: loading ? 0.75 : 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    boxShadow: '0 6px 18px rgba(46, 125, 50, 0.28)',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!loading) {
+                      (e.target as HTMLElement).style.backgroundColor = 'var(--green-900)';
+                      (e.target as HTMLElement).style.transform = 'translateY(-1px)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!loading) {
+                      (e.target as HTMLElement).style.backgroundColor = 'var(--green-700)';
+                      (e.target as HTMLElement).style.transform = 'translateY(0)';
+                    }
                   }}
                 >
-                  {coopLoading ? 'Đang gửi hồ sơ xét duyệt...' : '🌾 Nộp Hồ Sơ Đăng Ký Hợp Tác Xã'}
+                  {loading ? (
+                    <>
+                      <svg className="animate-spin" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
+                        <path d="M12 2a10 10 0 0 1 10 10" strokeLinecap="round" />
+                      </svg>
+                      <span>Đang kiểm tra...</span>
+                    </>
+                  ) : (
+                    <span>Đăng ký</span>
+                  )}
                 </button>
               </form>
-            )}
 
             {/* Phân cách */}
             <div style={{
@@ -1541,6 +1169,37 @@ export default function RegisterPage() {
               </Link>
             </div>
 
+            {/* Hướng dẫn chuyển đến Web Portal dành riêng cho Hợp tác xã */}
+            <div style={{
+              marginTop: '12px',
+              padding: '12px 14px',
+              borderRadius: '12px',
+              backgroundColor: 'rgba(22, 163, 74, 0.05)',
+              border: '1px dashed #16a34a',
+              textAlign: 'center'
+            }}>
+              <span style={{ fontSize: '13px', color: 'var(--ink-soft)', display: 'block', marginBottom: '4px' }}>
+                🌾 Quý đối tác là <strong>Hợp tác xã / Cơ sở sản xuất nông sản</strong>?
+              </span>
+              <a
+                href={typeof window !== 'undefined' && window.location.hostname.includes('vercel.app')
+                  ? 'https://web-portal-rho-tawny.vercel.app/register'
+                  : 'http://localhost:5173/register'}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  color: '#15803d',
+                  fontWeight: '700',
+                  fontSize: '13.5px',
+                  textDecoration: 'none'
+                }}
+              >
+                <span>Đăng ký hồ sơ HTX tại Cổng Quản Trị & Đối Tác</span>
+                <span>→</span>
+              </a>
+            </div>
+
             {/* Cam kết bảo mật ở đáy form */}
             <div style={{
               marginTop: '18px',
@@ -1553,8 +1212,8 @@ export default function RegisterPage() {
               gap: '6px'
             }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
               </svg>
               <span>Thông tin được bảo mật 100% theo tiêu chuẩn chứng chỉ SSL</span>
             </div>
@@ -1691,8 +1350,8 @@ export default function RegisterPage() {
                 {isSendingOtp
                   ? 'Đang gửi mã...'
                   : timer > 0
-                  ? `Gửi lại mã sau ${timer}s`
-                  : `Gửi mã xác thực đến ${otpMethod === 'EMAIL' ? email : phone}`}
+                    ? `Gửi lại mã sau ${timer}s`
+                    : `Gửi mã xác thực đến ${otpMethod === 'EMAIL' ? email : phone}`}
               </button>
             </div>
 
@@ -1810,7 +1469,7 @@ export default function RegisterPage() {
             <div className="drawer-head" style={{ padding: '20px', borderBottom: '1px solid var(--line)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h3 style={{ margin: 0, fontSize: '18px', color: 'var(--ink)' }}>Giỏ hàng của bạn</h3>
               <button className="icon-btn" onClick={() => setIsDrawerOpen(false)} aria-label="Đóng giỏ hàng" style={{ cursor: 'pointer', border: 'none', background: 'none' }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M6 6l12 12M18 6L6 18"/></svg>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M6 6l12 12M18 6L6 18" /></svg>
               </button>
             </div>
             <div className="drawer-body" style={{ padding: '20px', overflowY: 'auto', flex: 1 }}>
@@ -1821,10 +1480,10 @@ export default function RegisterPage() {
                   {cart.map(item => (
                     <div key={item.product.id} className="drawer-item" style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                       <div className="thumb" style={{ width: '50px', height: '50px', borderRadius: '6px', overflow: 'hidden', border: '1px solid var(--line)' }}>
-                        <img 
-                          src={item.product.imageUrl || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=120&h=120&q=80'} 
-                          alt={item.product.name} 
-                          style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                        <img
+                          src={item.product.imageUrl || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=120&h=120&q=80'}
+                          alt={item.product.name}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                         />
                       </div>
                       <div className="info" style={{ flex: 1 }}>
@@ -1837,7 +1496,7 @@ export default function RegisterPage() {
                         </div>
                       </div>
                       <button className="remove-btn" onClick={() => removeFromCart(item.product.id)} aria-label="Xóa" style={{ cursor: 'pointer', border: 'none', background: 'none', color: '#dc2626' }}>
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6"/></svg>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6" /></svg>
                       </button>
                     </div>
                   ))}
@@ -1849,8 +1508,8 @@ export default function RegisterPage() {
                 <span>Tạm tính</span>
                 <span>{toVND(totalCart)}</span>
               </div>
-              <button 
-                className="btn btn-accent" 
+              <button
+                className="btn btn-accent"
                 onClick={() => {
                   setIsDrawerOpen(false);
                   router.push('/checkout');

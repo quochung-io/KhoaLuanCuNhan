@@ -22,4 +22,6 @@ public class ProductBatch
 
     [JsonIgnore]
     public Product? Product { get; set; }
+
+    public Farm? Farm { get; set; }
 }

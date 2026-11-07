@@ -43,96 +43,17 @@ export interface ComboPlan {
   features: string[];
   sampleItems: string[];
   imageUrl: string;
+  rating?: number;
+  reviewsCount?: number;
+  cert?: string;
+  region?: string;
+  lotCode?: string;
+  category?: string;
 }
 
-const subPlans: Record<string, ComboPlan[]> = {
-  combotuan: [
-    {
-      id: 901,
-      name: 'Gói Dinh Dưỡng Tuần Xanh',
-      desc: 'Gói dinh dưỡng rau củ quả hữu cơ trọn vẹn 7 ngày cho gia đình 2–3 người. Đáp ứng hoàn hảo nhu cầu vitamin và khoáng chất tự nhiên.',
-      price: '189.000₫',
-      rawPrice: 189000,
-      originalPrice: '234.000₫',
-      savingText: 'Tiết kiệm 45.000₫ (19%)',
-      badge: 'Bán chạy nhất tuần',
-      supplierId: 1,
-      supplierName: 'Hợp tác xã Nông Sản Đà Lạt',
-      imageUrl: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600&auto=format&fit=crop&q=80',
-      healthBenefits: 'Cung cấp 100% nhu cầu Vitamin A, C, E và chất xơ hòa tan tự nhiên; hỗ trợ tăng cường hệ miễn dịch, kích thích tiêu hóa và thanh lọc cơ thể suốt 7 ngày.',
-      features: [
-        '4 loại rau ăn lá & củ quả VietGAP tươi hái sớm trong ngày',
-        '2 loại trái cây chín cây giàu chất chống oxy hóa tự nhiên',
-        'Tiết kiệm 45.000₫ so với mua lẻ từng món tại chợ / siêu thị',
-        'Miễn phí đóng gói bảo quản lạnh FreshLock giữ tươi 100%'
-      ],
-      sampleItems: [
-        'Cải bó xôi VietGAP (500g)',
-        'Cà rốt baby hữu cơ Đà Lạt (500g)',
-        'Xà lách mỡ giòn ngọt (300g)',
-        'Cà chua bi Cherry mọng nước (350g)',
-        'Cam Cao Phong chín cây (1kg)',
-        'Bơ sáp 034 Tây Nguyên dẻo béo (1kg)'
-      ]
-    },
-    {
-      id: 902,
-      name: 'Combo Lẩu Nông Sản Đà Lạt',
-      desc: 'Bữa tiệc lẩu rau củ nấm thanh mát trọn vị cao nguyên cho gia đình 4–5 người. Tươi giòn, thanh ngọt tự nhiên, không mì chính hay chất phụ gia.',
-      price: '249.000₫',
-      rawPrice: 249000,
-      originalPrice: '314.000₫',
-      savingText: 'Tiết kiệm 65.000₫ (21%)',
-      badge: 'Đặc sản tiệc gia đình',
-      supplierId: 1,
-      supplierName: 'Hợp tác xã Nông Sản Đà Lạt',
-      imageUrl: 'https://images.unsplash.com/photo-1547592180-85f173990554?w=600&auto=format&fit=crop&q=80',
-      healthBenefits: 'Nguồn đạm thực vật thực dưỡng cao cấp từ các loại nấm sạch quý, ít calo, giàu Beta-Glucan bồi bổ sức khỏe và tăng cường sức đề kháng cho cả gia đình.',
-      features: [
-        'Nấm sạch thực dưỡng: Nấm đùi gà baby & Nấm hoàng kim hữu cơ',
-        'Rau nhúng lẩu giòn ngọt: Cải thảo non, bắp ngọt Mỹ, tần ô, bông cải',
-        'Tặng kèm 1 gói nước cốt lẩu hầm rau củ quả tự nhiên 1L độc quyền',
-        'Tiết kiệm 65.000₫ so với mua nguyên liệu rời ngoài thị trường'
-      ],
-      sampleItems: [
-        'Nấm đùi gà baby tươi (250g)',
-        'Nấm hoàng kim hữu cơ (200g)',
-        'Cải thảo Đà Lạt giòn ngọt (800g)',
-        'Bắp ngọt giống Mỹ (2 trái)',
-        'Tần ô non nhúng lẩu (300g)',
-        'Bông cải xanh Đà Lạt (400g)',
-        'Nước cốt hầm rau củ quả 1L (1 gói)'
-      ]
-    }
-  ],
-  combothang: [
-    {
-      id: 904,
-      name: 'Gói Dinh Dưỡng Tuần Xanh (Định Kỳ Tháng)',
-      desc: 'Giao đều đặn 4 đợt vào mỗi sáng Thứ 2 hàng tuần (mỗi tuần 1 giỏ tươi mới). Tiết kiệm tối đa thời gian đi chợ cho gia đình bận rộn.',
-      price: '720.000₫',
-      rawPrice: 720000,
-      originalPrice: '936.000₫',
-      savingText: 'Tiết kiệm 216.000₫ (23%)',
-      badge: 'Gói tháng ưu đãi',
-      supplierId: 1,
-      supplierName: 'Hợp tác xã Nông Sản Đà Lạt',
-      imageUrl: 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=600&auto=format&fit=crop&q=80',
-      healthBenefits: 'Duy trì chế độ dinh dưỡng Eat-Clean bền vững suốt 30 ngày, cải thiện hệ vi sinh đường ruột và làn da.',
-      features: [
-        '4 lần giao tận nhà trong tháng (mỗi tuần 1 giỏ đầy đặn 5-6kg)',
-        'Linh hoạt tùy chọn đổi món theo sở thích từng tuần',
-        'Tặng thêm 1 voucher Freeship 30k mỗi đợt giao',
-        'Tiết kiệm hơn 200.000₫ so với mua lẻ từng tuần'
-      ],
-      sampleItems: [
-        'Đợt 1: Giỏ rau củ quả thanh nhiệt (4.5kg)',
-        'Đợt 2: Giỏ rau gia vị & nấm hữu cơ (4kg)',
-        'Đợt 3: Giỏ rau củ xào luộc ngọt lành (4.8kg)',
-        'Đợt 4: Giỏ trái cây & rau salad cao cấp (4.5kg)'
-      ]
-    }
-  ],
+const emptyPlans: Record<string, ComboPlan[]> = {
+  combotuan: [],
+  combothang: [],
   combokhac: []
 };
 
@@ -158,43 +79,142 @@ export default function CombosPage() {
   const router = useRouter();
   const [subFreq, setSubFreq] = useState<'combotuan' | 'combothang' | 'combokhac'>('combotuan');
   const [supplierFilter, setSupplierFilter] = useState<string>('all');
+  const [dynamicSuppliers, setDynamicSuppliers] = useState<Array<{ key: string; label: string }>>([
+    { key: 'all', label: 'Tất Cả Đối Tác HTX' }
+  ]);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [cartBounce, setCartBounce] = useState(false);
 
   // Dynamic Combos từ Database
-  const [dynamicPlans, setDynamicPlans] = useState<Record<string, ComboPlan[]>>(subPlans);
+  const [dynamicPlans, setDynamicPlans] = useState<Record<string, ComboPlan[]>>(emptyPlans);
 
   useEffect(() => {
+    // 1. Tải danh sách tất cả các đối tác HTX từ Database
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/users/suppliers`)
+      .then(res => res.ok ? res.json() : [])
+      .then((sups: any[]) => {
+        if (Array.isArray(sups) && sups.length > 0) {
+          setDynamicSuppliers([
+            { key: 'all', label: 'Tất Cả Đối Tác HTX' },
+            ...sups.map((s: any) => ({
+              key: String(s.supplierId),
+              label: s.fullName || s.storeName || `HTX #${s.supplierId}`
+            }))
+          ]);
+        }
+      })
+      .catch(() => {});
+
+    // 2. Tải danh sách Gói Combo từ Database
     fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/products?categoryId=5`)
       .then(res => res.json())
       .then((products: any[]) => {
         if (!Array.isArray(products)) return;
         
-        const programCombos = products.filter(p => p.comboType === 'program' && (p.status === 'Active' || p.status === 'Approved'));
-        const mappedProgramPlans = programCombos.map(p => ({
-          id: p.productId,
-          name: p.productName,
-          desc: p.description?.replace(/\[Tự chọn \d+ loại nông sản\]\s*/, '') || 'Gói combo nông sản ưu đãi chất lượng cao.',
-          price: p.price.toLocaleString('vi-VN') + '₫',
-          rawPrice: p.price,
-          badge: p.discountPercent ? `Ưu đãi -${p.discountPercent}%` : 'Đặc biệt',
-          supplierId: p.supplierId || 1,
-          supplierName: p.supplierId === 2 ? 'Hợp tác xã Rau Sạch Miền Tây' : (p.supplierId === 3 ? 'Hợp tác xã Trái Cây Việt' : (p.supplierId === 4 ? 'HTX Nông Nghiệp An Phú' : 'Hợp tác xã Nông Sản Đà Lạt')),
-          imageUrl: p.productImages?.[0]?.imageUrl || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600&auto=format&fit=crop&q=80',
-          features: [
-            'Nông sản đạt chuẩn VietGAP & Hữu cơ',
-            'Tự chọn các món tươi ngon cùng nhà cung cấp',
-            'Sơ chế và đóng gói khép kín tại trang trại',
-            'Giao xe lạnh tận bàn ăn theo khung giờ hẹn'
-          ],
-          sampleItems: ['Nông sản sạch theo chương trình ưu đãi']
-        }));
+        const validProducts = products.filter(p => p.status !== 'Pending');
 
-        setDynamicPlans(prev => ({
-          ...prev,
-          combokhac: mappedProgramPlans
-        }));
+        // Bổ sung các HTX từ sản phẩm nếu chưa có trong danh sách
+        setDynamicSuppliers(prev => {
+          const existingKeys = new Set(prev.map(item => item.key));
+          const additions: Array<{ key: string; label: string }> = [];
+          validProducts.forEach(p => {
+            if (p.supplierId) {
+              const key = String(p.supplierId);
+              if (!existingKeys.has(key)) {
+                existingKeys.add(key);
+                additions.push({
+                  key,
+                  label: p.supplier?.supplierName || p.farmName || `HTX #${key}`
+                });
+              }
+            }
+          });
+          return additions.length > 0 ? [...prev, ...additions] : prev;
+        });
+
+        const mapToPlan = (p: any): ComboPlan => {
+          const isMonth = (p.productName && p.productName.includes('Gói Tháng')) || p.comboType === 'month';
+          const saving = p.originalPrice && p.originalPrice > p.price ? p.originalPrice - p.price : 0;
+          const savingPercent = p.originalPrice && p.originalPrice > p.price 
+            ? Math.round((saving / p.originalPrice) * 100) 
+            : (p.discountPercent || 0);
+          const savingText = saving > 0 
+            ? `Tiết kiệm ${saving.toLocaleString('vi-VN')}₫ (${savingPercent}%)` 
+            : (savingPercent > 0 ? `Tiết kiệm ${savingPercent}%` : '');
+
+          let sampleItems: string[] = [];
+          if (p.description) {
+            const cleaned = p.description.replace(/\[Tự chọn \d+ loại nông sản\]\s*/, '');
+            const parts = cleaned.split(/[.,;\n]/)
+              .map((s: string) => s.trim())
+              .filter((s: string) => s.length > 3 && !s.includes('Phù hợp') && !s.includes('Đáp ứng') && !s.includes('Dinh dưỡng') && !s.includes('Gói trọn') && !s.includes('Tự động'));
+            if (parts.length >= 2) {
+              sampleItems = parts;
+            }
+          }
+
+          const supName = p.supplier?.supplierName || p.farmName || (p.supplierId ? `HTX #${p.supplierId}` : '');
+          const cert = p.cert || p.status || '';
+          const region = p.region || p.origin || p.farmName || p.supplier?.province || supName || '';
+          const lotCode = p.lotCode || p.productBatches?.[0]?.batchCode || '';
+          const rating = typeof p.averageRating === 'number' ? p.averageRating : 0;
+          const reviewsCount = typeof p.reviewsCount === 'number' ? p.reviewsCount : 0;
+          const category = p.categoryName || 'Combo';
+
+          // Trích xuất tính năng từ mô tả nếu có gạch đầu dòng
+          let extractedFeatures: string[] = [];
+          if (p.description) {
+            const lines = p.description.split('\n')
+              .map((l: string) => l.trim())
+              .filter((l: string) => l.startsWith('-') || l.startsWith('*') || l.startsWith('•'))
+              .map((l: string) => l.replace(/^[-*•]\s*/, ''));
+            if (lines.length > 0) {
+              extractedFeatures = lines;
+            }
+          }
+
+          return {
+            id: p.productId,
+            name: p.productName,
+            desc: p.description?.replace(/\[Tự chọn \d+ loại nông sản\]\s*/, '') || '',
+            price: p.price.toLocaleString('vi-VN') + '₫',
+            rawPrice: p.price,
+            originalPrice: p.originalPrice ? (p.originalPrice.toLocaleString('vi-VN') + '₫') : undefined,
+            savingText: savingText || undefined,
+            badge: p.badge || (p.discountPercent ? `Ưu đãi -${p.discountPercent}%` : (isMonth ? 'Gói tháng định kỳ' : undefined)),
+            supplierId: p.supplierId || 0,
+            supplierName: supName,
+            imageUrl: p.productImages?.[0]?.imageUrl || '',
+            healthBenefits: p.healthBenefits || undefined,
+            features: extractedFeatures,
+            sampleItems: sampleItems,
+            rating,
+            reviewsCount,
+            cert,
+            region,
+            lotCode,
+            category
+          };
+        };
+
+        const combotuanList = validProducts
+          .filter(p => p.comboType !== 'program' && !p.productName.includes('Gói Tháng') && p.comboType !== 'month')
+          .map(mapToPlan);
+
+        const combothangList = validProducts
+          .filter(p => p.comboType === 'month' || p.productName.includes('Gói Tháng'))
+          .map(mapToPlan);
+
+        const combokhacList = validProducts
+          .filter(p => p.comboType === 'program')
+          .map(mapToPlan);
+
+        setDynamicPlans({
+          combotuan: combotuanList,
+          combothang: combothangList,
+          combokhac: combokhacList
+        });
       })
       .catch(() => {});
   }, []);
@@ -223,13 +243,13 @@ export default function CombosPage() {
       name: plan.name,
       price: plan.price,
       unit: subFreq === 'combotuan' ? '/ Tuần' : (subFreq === 'combothang' ? '/ Tháng' : '/ Gói'),
-      category: 'Combo',
-      cert: 'VietGAP & Hữu cơ',
-      region: 'Đà Lạt & Mộc Châu',
-      rating: 5.0,
-      reviews: 95,
+      category: plan.category || 'Combo',
+      cert: plan.cert || '',
+      region: plan.region || plan.supplierName || '',
+      rating: plan.rating || 0,
+      reviews: plan.reviewsCount || 0,
       icon: 'box',
-      lot: 'LOT#VN-COMBO-' + plan.id,
+      lot: plan.lotCode || '',
       imageUrl: plan.imageUrl
     };
 
@@ -449,13 +469,7 @@ export default function CombosPage() {
             <span style={{ fontSize: '13.5px', fontWeight: '700', color: 'var(--ink, #1E293B)', display: 'flex', alignItems: 'center', gap: '6px' }}>
               <span>🏢</span> Đối tác HTX Phụ Trách:
             </span>
-            {[
-              { key: 'all', label: 'Tất Cả Đối Tác HTX' },
-              { key: '1', label: 'HTX Nông Sản Đà Lạt' },
-              { key: '2', label: 'HTX Rau Sạch Miền Tây' },
-              { key: '3', label: 'HTX Trái Cây Việt' },
-              { key: '4', label: 'HTX Nông Nghiệp An Phú' }
-            ].map(s => (
+            {dynamicSuppliers.map(s => (
               <button
                 key={s.key}
                 type="button"
@@ -478,319 +492,359 @@ export default function CombosPage() {
             ))}
           </div>
 
-          {/* ── LƯỚI THẺ COMBO ĐƯỢC THIẾT KẾ LẠI CAO CẤP ── */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))',
-            gap: '32px',
-            marginBottom: '56px'
-          }}>
-            {(() => {
-              const currentList = (dynamicPlans[subFreq] || []).filter(plan => {
+          {/* ── LƯỚI THẺ COMBO ĐỒNG BỘ FORM (ĐỨNG 1 MÌNH HAY ĐỨNG NHIỀU ĐỀU TƯƠNG ĐỒNG) ── */}
+          {(() => {
+            // Lọc bỏ triệt để các combo không có hình ảnh hoặc hình ảnh rỗng
+            const currentList = (dynamicPlans[subFreq] || [])
+              .filter(plan => plan.imageUrl && plan.imageUrl.trim() !== '')
+              .filter(plan => {
                 if (supplierFilter === 'all') return true;
                 return String(plan.supplierId) === supplierFilter;
               });
 
-              if (currentList.length === 0) {
-                return (
-                  <div style={{
-                    gridColumn: '1 / -1',
-                    textAlign: 'center',
-                    padding: '72px 20px',
-                    backgroundColor: 'var(--surface, #FFFFFF)',
-                    borderRadius: '24px',
-                    border: '1.5px dashed var(--line, #E2E8F0)'
-                  }}>
-                    <div style={{ fontSize: '52px', marginBottom: '14px' }}>🌱</div>
-                    <h3 style={{ fontSize: '20px', fontWeight: '800', color: 'var(--ink, #1E293B)', margin: '0 0 8px' }}>
-                      Hiện chưa có gói combo nào trong danh mục này
-                    </h3>
-                    <p style={{ fontSize: '14.5px', color: 'var(--ink-soft, #64748B)', maxWidth: '480px', margin: '0 auto', lineHeight: '1.6' }}>
-                      Các gói combo ưu đãi mới đang được hợp tác xã chuẩn bị thu hoạch. Quý khách vui lòng chọn các gói Combo Tuần hoặc Combo Tháng đang sẵn sàng phục vụ!
-                    </p>
-                  </div>
-                );
-              }
+            if (currentList.length === 0) {
+              return (
+                <div style={{
+                  textAlign: 'center',
+                  padding: '72px 20px',
+                  backgroundColor: 'var(--surface, #FFFFFF)',
+                  borderRadius: '24px',
+                  border: '1.5px dashed var(--line, #E2E8F0)',
+                  marginBottom: '56px'
+                }}>
+                  <div style={{ fontSize: '52px', marginBottom: '14px' }}>🌱</div>
+                  <h3 style={{ fontSize: '20px', fontWeight: '800', color: 'var(--ink, #1E293B)', margin: '0 0 8px' }}>
+                    Hiện chưa có gói combo nào trong danh mục này
+                  </h3>
+                  <p style={{ fontSize: '14.5px', color: 'var(--ink-soft, #64748B)', maxWidth: '480px', margin: '0 auto', lineHeight: '1.6' }}>
+                    Các gói combo ưu đãi mới đang được đối tác hợp tác xã chuẩn bị thu hoạch. Quý khách vui lòng chọn các gói Combo Tuần hoặc Combo Tháng đang sẵn sàng phục vụ!
+                  </p>
+                </div>
+              );
+            }
 
-              return currentList.map((plan) => (
-                <div
-                  key={plan.id}
-                  style={{
-                    backgroundColor: 'var(--surface, #FFFFFF)',
-                    borderRadius: '24px',
-                    border: plan.badge ? '2px solid #86EFAC' : '1.5px solid #E2E8F0',
-                    boxShadow: '0 10px 30px rgba(0,0,0,0.06)',
-                    overflow: 'hidden',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    position: 'relative',
-                    transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
-                  }}
-                >
-                  {/* Badge nổi góc trên */}
-                  {plan.badge && (
-                    <div style={{
-                      position: 'absolute',
-                      top: '16px',
-                      right: '16px',
-                      backgroundColor: '#F59E0B',
-                      color: '#FFFFFF',
-                      padding: '5px 14px',
-                      borderRadius: '999px',
-                      fontSize: '12px',
-                      fontWeight: 800,
-                      zIndex: 3,
-                      boxShadow: '0 4px 12px rgba(245, 158, 11, 0.4)',
+            return (
+              <div style={{
+                display: 'grid',
+                // Khi đứng 1 mình: Khóa kích thước chuẩn 360px-420px và căn giữa, không bị dãn bẹt
+                // Khi đứng nhiều combo: Tự động chia đều các cột
+                gridTemplateColumns: currentList.length === 1 
+                  ? 'minmax(340px, 420px)' 
+                  : 'repeat(auto-fill, minmax(350px, 1fr))',
+                justifyContent: currentList.length === 1 ? 'center' : 'start',
+                gap: '32px',
+                marginBottom: '56px'
+              }}>
+                {currentList.map((plan) => (
+                  <div
+                    key={plan.id}
+                    style={{
+                      backgroundColor: 'var(--surface, #FFFFFF)',
+                      borderRadius: '24px',
+                      border: plan.badge ? '2px solid #86EFAC' : '1.5px solid #E2E8F0',
+                      boxShadow: '0 10px 30px rgba(0,0,0,0.06)',
+                      overflow: 'hidden',
                       display: 'flex',
-                      alignItems: 'center',
-                      gap: '5px',
-                      letterSpacing: '0.3px'
-                    }}>
-                      <span>⭐</span> {plan.badge}
-                    </div>
-                  )}
-
-                  {/* 1. KHU VỰC ẢNH & THƯƠNG HIỆU */}
-                  <Link href={`/combos/${plan.id}`} style={{ height: '220px', overflow: 'hidden', position: 'relative', display: 'block', textDecoration: 'none' }}>
-                    <img
-                      src={plan.imageUrl}
-                      alt={plan.name}
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover',
-                        transition: 'transform 0.5s ease'
-                      }}
-                      onMouseOver={(e) => (e.currentTarget.style.transform = 'scale(1.06)')}
-                      onMouseOut={(e) => (e.currentTarget.style.transform = 'scale(1)')}
-                    />
-
-                    {/* Gradient phủ dưới đáy ảnh */}
-                    <div style={{
-                      position: 'absolute',
-                      bottom: 0,
-                      left: 0,
-                      right: 0,
-                      height: '80px',
-                      background: 'linear-gradient(to top, rgba(0,0,0,0.65), transparent)',
-                      pointerEvents: 'none'
-                    }} />
-
-                    {/* Pill Nhà Cung Cấp nổi trên ảnh */}
-                    <div style={{
-                      position: 'absolute',
-                      bottom: '12px',
-                      left: '16px',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      backgroundColor: 'rgba(255, 255, 255, 0.92)',
-                      backdropFilter: 'blur(8px)',
-                      color: '#166534',
-                      fontSize: '12px',
-                      fontWeight: 700,
-                      padding: '4px 12px',
-                      borderRadius: '999px',
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
-                    }}>
-                      <span>🏢</span>
-                      <span>{plan.supplierName}</span>
-                    </div>
-                  </Link>
-
-                  {/* 2. KHU VỰC NỘI DUNG CHI TIẾT */}
-                  <div style={{ padding: '26px', flex: 1, display: 'flex', flexDirection: 'column' }}>
-                    {/* Tên Gói Combo */}
-                    <Link href={`/combos/${plan.id}`} style={{ textDecoration: 'none' }}>
-                      <h3 style={{
-                        margin: '0 0 8px',
-                        fontSize: '21px',
-                        fontWeight: 900,
-                        color: 'var(--ink, #0F172A)',
-                        lineHeight: 1.3
-                      }}>
-                        {plan.name}
-                      </h3>
-                    </Link>
-
-                    {/* Mô tả ngắn */}
-                    <p style={{
-                      fontSize: '14px',
-                      color: 'var(--ink-soft, #64748B)',
-                      margin: '0 0 18px',
-                      lineHeight: 1.55,
-                      minHeight: '44px'
-                    }}>
-                      {plan.desc}
-                    </p>
-
-                    {/* KHỐI GIÁ & TIẾT KIỆM */}
-                    <div style={{
-                      backgroundColor: '#F8FAFC',
-                      padding: '14px 18px',
-                      borderRadius: '16px',
-                      marginBottom: '20px',
-                      border: '1px solid #E2E8F0'
-                    }}>
-                      <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', flexWrap: 'wrap' }}>
-                        <span style={{ fontSize: '30px', fontWeight: 900, color: '#15803D', letterSpacing: '-0.5px' }}>
-                          {plan.price}
-                        </span>
-                        {plan.originalPrice && (
-                          <span style={{ fontSize: '15px', color: '#94A3B8', textDecoration: 'line-through' }}>
-                            {plan.originalPrice}
-                          </span>
-                        )}
-                        <span style={{ fontSize: '13px', color: '#64748B', fontWeight: 600 }}>
-                          {subFreq === 'combotuan' ? '/ tuần' : (subFreq === 'combothang' ? '/ tháng' : '/ gói')}
-                        </span>
-                      </div>
-
-                      {plan.savingText && (
-                        <div style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '5px',
-                          backgroundColor: '#FEF3C7',
-                          color: '#B45309',
-                          padding: '3px 10px',
-                          borderRadius: '8px',
-                          fontSize: '12px',
-                          fontWeight: 800,
-                          marginTop: '6px'
-                        }}>
-                          <span>💰</span> {plan.savingText}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* 3. THÀNH PHẦN NÔNG SẢN TIÊU BIỂU (DẠNG CHIP/PILL SINH ĐỘNG) */}
-                    <div style={{ marginBottom: '20px' }}>
+                      flexDirection: 'column',
+                      position: 'relative',
+                      height: '100%',
+                      width: '100%',
+                      maxWidth: currentList.length === 1 ? '420px' : 'none',
+                      transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
+                    }}
+                  >
+                    {/* Badge nổi góc trên */}
+                    {plan.badge && (
                       <div style={{
+                        position: 'absolute',
+                        top: '16px',
+                        right: '16px',
+                        backgroundColor: '#F59E0B',
+                        color: '#FFFFFF',
+                        padding: '5px 14px',
+                        borderRadius: '999px',
                         fontSize: '12px',
                         fontWeight: 800,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.8px',
-                        color: '#166534',
-                        marginBottom: '10px',
+                        zIndex: 3,
+                        boxShadow: '0 4px 12px rgba(245, 158, 11, 0.4)',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '6px'
+                        gap: '5px',
+                        letterSpacing: '0.3px'
                       }}>
-                        <span>🥗</span> Thành phần nông sản tiêu biểu:
-                      </div>
-
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                        {plan.sampleItems.map((item, idx) => (
-                          <span
-                            key={idx}
-                            style={{
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '6px',
-                              backgroundColor: '#F0FDF4',
-                              border: '1px solid #DCFCE7',
-                              color: '#15803D',
-                              fontSize: '12px',
-                              fontWeight: 600,
-                              padding: '5px 11px',
-                              borderRadius: '8px'
-                            }}
-                          >
-                            <span>{getProduceEmoji(item)}</span>
-                            <span>{item}</span>
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* 4. KHỐI LỢI ÍCH SỨC KHỎE */}
-                    {plan.healthBenefits && (
-                      <div style={{
-                        background: 'linear-gradient(135deg, #F0FDF4 0%, #ECFDF5 100%)',
-                        border: '1px solid #BBF7D0',
-                        borderRadius: '14px',
-                        padding: '12px 14px',
-                        marginBottom: '20px',
-                        fontSize: '12.5px',
-                        color: '#166534',
-                        lineHeight: 1.5
-                      }}>
-                        <div style={{ fontWeight: 800, marginBottom: '3px', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                          <span>🩺</span> Lợi ích dinh dưỡng:
-                        </div>
-                        <div>{plan.healthBenefits}</div>
+                        <span>⭐</span> {plan.badge}
                       </div>
                     )}
 
-                    {/* 5. QUYỀN LỢI ĐI KÈM */}
-                    <div style={{ marginBottom: '24px', flex: 1 }}>
-                      <div style={{ fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#64748B', marginBottom: '8px' }}>
-                        Quyền lợi dịch vụ:
-                      </div>
-                      <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '7px' }}>
-                        {plan.features.slice(0, 3).map((feat, idx) => (
-                          <li key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', fontSize: '13px', color: '#334155' }}>
-                            <span style={{ color: '#16A34A', fontWeight: 'bold' }}>✓</span>
-                            <span>{feat}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-
-                    {/* 6. CÁC NÚT TÁC VỤ */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                      <Link
-                        href={`/combos/${plan.id}`}
+                    {/* 1. KHU VỰC ẢNH & THƯƠNG HIỆU */}
+                    <Link href={`/combos/${plan.id}`} style={{ height: '220px', overflow: 'hidden', position: 'relative', display: 'block', textDecoration: 'none' }}>
+                      <img
+                        src={plan.imageUrl}
+                        alt={plan.name}
                         style={{
                           width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                          transition: 'transform 0.5s ease'
+                        }}
+                        onMouseOver={(e) => (e.currentTarget.style.transform = 'scale(1.06)')}
+                        onMouseOut={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+                      />
+
+                      {/* Gradient phủ dưới đáy ảnh */}
+                      <div style={{
+                        position: 'absolute',
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        height: '80px',
+                        background: 'linear-gradient(to top, rgba(0,0,0,0.65), transparent)',
+                        pointerEvents: 'none'
+                      }} />
+
+                      {/* Pill Nhà Cung Cấp nổi trên ảnh */}
+                      {plan.supplierName && (
+                        <div style={{
+                          position: 'absolute',
+                          bottom: '12px',
+                          left: '16px',
                           display: 'inline-flex',
                           alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '8px',
-                          padding: '13px 20px',
-                          borderRadius: '12px',
-                          background: 'linear-gradient(135deg, #166534 0%, #15803D 100%)',
-                          color: '#FFFFFF',
-                          fontWeight: 800,
-                          fontSize: '14px',
-                          textDecoration: 'none',
-                          boxShadow: '0 4px 14px rgba(22, 101, 52, 0.25)',
-                          transition: 'all 0.2s ease',
-                          textAlign: 'center'
-                        }}
-                      >
-                        <span>Xem Chi Tiết &amp; Chọn Nông Sản &rarr;</span>
+                          gap: '6px',
+                          backgroundColor: 'rgba(255, 255, 255, 0.94)',
+                          backdropFilter: 'blur(8px)',
+                          color: '#166534',
+                          fontSize: '12px',
+                          fontWeight: 700,
+                          padding: '4px 12px',
+                          borderRadius: '999px',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                          maxWidth: '85%',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
+                        }}>
+                          <span>🏢</span>
+                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{plan.supplierName}</span>
+                        </div>
+                      )}
+                    </Link>
+
+                    {/* 2. KHU VỰC NỘI DUNG CHI TIẾT ĐỒNG BỘ */}
+                    <div style={{ padding: '24px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+                      {/* Tên Gói Combo (Đồng bộ chiều cao tiêu đề) */}
+                      <Link href={`/combos/${plan.id}`} style={{ textDecoration: 'none' }}>
+                        <h3 style={{
+                          margin: '0 0 10px',
+                          fontSize: '19px',
+                          fontWeight: 900,
+                          color: 'var(--ink, #0F172A)',
+                          lineHeight: 1.35,
+                          minHeight: '52px',
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden'
+                        }}>
+                          {plan.name}
+                        </h3>
                       </Link>
 
-                      <button
-                        type="button"
-                        onClick={() => handleAddComboToCart(plan)}
-                        style={{
-                          width: '100%',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '8px',
-                          padding: '11px 18px',
-                          borderRadius: '12px',
-                          border: '1.5px solid #BBF7D0',
-                          backgroundColor: '#F0FDF4',
-                          color: '#15803D',
-                          fontWeight: 700,
-                          fontSize: '13px',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s ease'
-                        }}
-                      >
-                        <span>🛒 Đặt nhanh vào giỏ hàng</span>
-                      </button>
+                      {/* Mô tả ngắn (Đồng bộ chiều cao mô tả) */}
+                      <p style={{
+                        fontSize: '13.5px',
+                        color: 'var(--ink-soft, #64748B)',
+                        margin: '0 0 16px',
+                        lineHeight: 1.5,
+                        minHeight: '42px',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden'
+                      }}>
+                        {plan.desc || 'Gói combo nông sản sạch tuyển chọn đạt chuẩn chất lượng an toàn.'}
+                      </p>
+
+                      {/* KHỐI GIÁ & TIẾT KIỆM */}
+                      <div style={{
+                        backgroundColor: '#F8FAFC',
+                        padding: '12px 16px',
+                        borderRadius: '14px',
+                        marginBottom: '18px',
+                        border: '1px solid #E2E8F0',
+                        minHeight: '74px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'center'
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: '28px', fontWeight: 900, color: '#15803D', letterSpacing: '-0.5px' }}>
+                            {plan.price}
+                          </span>
+                          {plan.originalPrice && (
+                            <span style={{ fontSize: '14.5px', color: '#94A3B8', textDecoration: 'line-through' }}>
+                              {plan.originalPrice}
+                            </span>
+                          )}
+                          <span style={{ fontSize: '13px', color: '#64748B', fontWeight: 600 }}>
+                            {subFreq === 'combotuan' ? '/ tuần' : (subFreq === 'combothang' ? '/ tháng' : '/ gói')}
+                          </span>
+                        </div>
+
+                        {plan.savingText && (
+                          <div style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '5px',
+                            backgroundColor: '#FEF3C7',
+                            color: '#B45309',
+                            padding: '2px 8px',
+                            borderRadius: '6px',
+                            fontSize: '11.5px',
+                            fontWeight: 800,
+                            marginTop: '6px',
+                            alignSelf: 'flex-start'
+                          }}>
+                            <span>💰</span> {plan.savingText}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* 3. THÀNH PHẦN NÔNG SẢN TIÊU BIỂU */}
+                      {plan.sampleItems && plan.sampleItems.length > 0 && (
+                        <div style={{ marginBottom: '18px' }}>
+                          <div style={{
+                            fontSize: '11.5px',
+                            fontWeight: 800,
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.8px',
+                            color: '#166534',
+                            marginBottom: '8px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px'
+                          }}>
+                            <span>🥗</span> Thành phần nông sản tiêu biểu:
+                          </div>
+
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                            {plan.sampleItems.slice(0, 4).map((item, idx) => (
+                              <span
+                                key={idx}
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '5px',
+                                  backgroundColor: '#F0FDF4',
+                                  border: '1px solid #DCFCE7',
+                                  color: '#15803D',
+                                  fontSize: '11.5px',
+                                  fontWeight: 600,
+                                  padding: '4px 9px',
+                                  borderRadius: '6px'
+                                }}
+                              >
+                                <span>{getProduceEmoji(item)}</span>
+                                <span>{item}</span>
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 4. KHỐI TRUNG GIAN TỰ GIÃN (FLEX 1) */}
+                      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                        {/* Lợi ích sức khỏe nếu có */}
+                        {plan.healthBenefits && (
+                          <div style={{
+                            background: 'linear-gradient(135deg, #F0FDF4 0%, #ECFDF5 100%)',
+                            border: '1px solid #BBF7D0',
+                            borderRadius: '12px',
+                            padding: '10px 12px',
+                            marginBottom: '16px',
+                            fontSize: '12px',
+                            color: '#166534',
+                            lineHeight: 1.45
+                          }}>
+                            <div style={{ fontWeight: 800, marginBottom: '2px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                              <span>🩺</span> Lợi ích dinh dưỡng:
+                            </div>
+                            <div>{plan.healthBenefits}</div>
+                          </div>
+                        )}
+
+                        {/* Quyền lợi dịch vụ nếu có */}
+                        {plan.features && plan.features.length > 0 && (
+                          <div style={{ marginBottom: '16px' }}>
+                            <div style={{ fontSize: '11.5px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#64748B', marginBottom: '8px' }}>
+                              Quyền lợi dịch vụ:
+                            </div>
+                            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                              {plan.features.slice(0, 3).map((feat, idx) => (
+                                <li key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', fontSize: '12.5px', color: '#334155' }}>
+                                  <span style={{ color: '#16A34A', fontWeight: 'bold' }}>✓</span>
+                                  <span>{feat}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* 5. CÁC NÚT TÁC VỤ (GHIM ĐÁY CHÂN THẺ TƯƠNG ĐỒNG) */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: 'auto', paddingTop: '16px' }}>
+                        <Link
+                          href={`/combos/${plan.id}`}
+                          style={{
+                            width: '100%',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '8px',
+                            padding: '12px 18px',
+                            borderRadius: '12px',
+                            background: 'linear-gradient(135deg, #166534 0%, #15803D 100%)',
+                            color: '#FFFFFF',
+                            fontWeight: 800,
+                            fontSize: '13.5px',
+                            textDecoration: 'none',
+                            boxShadow: '0 4px 14px rgba(22, 101, 52, 0.25)',
+                            transition: 'all 0.2s ease',
+                            textAlign: 'center'
+                          }}
+                        >
+                          <span>Xem Chi Tiết &amp; Chọn Nông Sản &rarr;</span>
+                        </Link>
+
+                        <button
+                          type="button"
+                          onClick={() => handleAddComboToCart(plan)}
+                          style={{
+                            width: '100%',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '8px',
+                            padding: '10px 16px',
+                            borderRadius: '12px',
+                            border: '1.5px solid #BBF7D0',
+                            backgroundColor: '#F0FDF4',
+                            color: '#15803D',
+                            fontWeight: 700,
+                            fontSize: '13px',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease'
+                          }}
+                        >
+                          <span>🛒 Đặt nhanh vào giỏ hàng</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ));
-            })()}
-          </div>
+                ))}
+              </div>
+            );
+          })()}
 
           {/* ── PHẦN CAM KẾT & CÂU HỎI THƯỜNG GẶP ── */}
           <div style={{

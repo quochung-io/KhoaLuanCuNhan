@@ -63,6 +63,11 @@ export const Header: React.FC<HeaderProps> = ({
   const [localTotalCart, setLocalTotalCart] = useState<number>(0);
   const [localTheme, setLocalTheme] = useState<string>('light');
   const [localLang, setLocalLang] = useState<'vi' | 'en'>('vi');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [pathname]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -106,6 +111,10 @@ export const Header: React.FC<HeaderProps> = ({
 
   // Hàm xử lý sự kiện tương tác người dùng (handleSetLang)
   const handleSetLang = (l: 'vi' | 'en') => {
+    if (l === 'en') {
+      alert('Phiên bản tiếng Anh (English) đang được hoàn thiện. Hệ thống LÀNH Farm hiện phục vụ tốt nhất bằng Tiếng Việt!');
+      return;
+    }
     if (setLang) {
       setLang(l);
     } else {
@@ -170,17 +179,32 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* ── TẦNG 2: MAIN HEADER ── */}
       <div className="wrap nav-row">
-        <Link href="/" className="logo">
-          <svg className="mark" viewBox="0 0 40 40" fill="none">
-            <circle cx="20" cy="20" r="20" fill="var(--green-700)" />
-            <path d="M20 30C20 30 12 26 12 18C12 13 16 10 20 10C24 10 28 13 28 18C28 26 20 30 20 30Z" fill="var(--green-500)" />
-            <path d="M20 30V16" stroke="var(--green-900)" strokeWidth="1.4" strokeLinecap="round" />
-          </svg>
-          <div>
-            <span style={{ letterSpacing: '1px' }}>LÀNH</span>
-            <div style={{ fontSize: '10.5px', fontWeight: '500', color: 'var(--green-700)', marginTop: '-4px' }}>NÔNG SẢN TƯƠI SẠCH</div>
-          </div>
-        </Link>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <button
+            type="button"
+            className="mobile-hamburger-btn"
+            onClick={() => setIsMobileMenuOpen(true)}
+            aria-label="Mở menu điều hướng"
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+              <line x1="3" y1="12" x2="21" y2="12" />
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <line x1="3" y1="18" x2="21" y2="18" />
+            </svg>
+          </button>
+
+          <Link href="/" className="logo">
+            <svg className="mark" viewBox="0 0 40 40" fill="none">
+              <circle cx="20" cy="20" r="20" fill="var(--green-700)" />
+              <path d="M20 30C20 30 12 26 12 18C12 13 16 10 20 10C24 10 28 13 28 18C28 26 20 30 20 30Z" fill="var(--green-500)" />
+              <path d="M20 30V16" stroke="var(--green-900)" strokeWidth="1.4" strokeLinecap="round" />
+            </svg>
+            <div>
+              <span style={{ letterSpacing: '1px' }}>LÀNH</span>
+              <div className="logo-subtext" style={{ fontSize: '10.5px', fontWeight: '500', color: 'var(--green-700)', marginTop: '-4px' }}>NÔNG SẢN TƯƠI SẠCH</div>
+            </div>
+          </Link>
+        </div>
 
         {/* Thanh tìm kiếm trung tâm */}
         <SearchBar />
@@ -383,10 +407,19 @@ export const Header: React.FC<HeaderProps> = ({
             )}
           </div>
 
-          {/* Nút Giỏ Hàng nổi bật */}
+          {/* Nút Giỏ Hàng nổi bật (ID 16: Thêm đầy đủ role và aria-label cho công nghệ trợ năng) */}
           <div
             className={`header-cart-btn ${cartBounce ? 'bounce' : ''}`}
             onClick={handleCartClick}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                handleCartClick();
+              }
+            }}
+            role="button"
+            tabIndex={0}
+            aria-label={`Xem giỏ hàng, hiện có ${activeCartCount} sản phẩm, tổng tiền ${formatVND(activeTotalCart)}`}
             title="Xem giỏ hàng"
           >
             <div className="header-action-icon" style={{ display: 'flex', alignItems: 'center' }}>
@@ -407,7 +440,7 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
 
-      {/* ── TẦNG 3: SUB-NAVBAR 4 MỤC CHÍNH ── */}
+      {/* ── TẦNG 3: SUB-NAVBAR 4 MỤC CHÍNH (DESKTOP) ── */}
       <div className="header-subnav">
         <div className="wrap subnav-row">
           <div className="subnav-links">
@@ -442,6 +475,155 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
       </div>
+
+      {/* ── MOBILE DRAWER NAVIGATION MENU (ID 3: Menu Hamburger cho điện thoại) ── */}
+      {isMobileMenuOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(15, 23, 42, 0.6)',
+            backdropFilter: 'blur(3px)',
+            zIndex: 10000,
+            display: 'flex',
+            animation: 'fadeIn 0.2s ease-out'
+          }}
+          onClick={() => setIsMobileMenuOpen(false)}
+        >
+          <div
+            style={{
+              width: '80%',
+              maxWidth: '310px',
+              height: '100%',
+              backgroundColor: 'var(--surface)',
+              boxShadow: '4px 0 20px rgba(0,0,0,0.15)',
+              display: 'flex',
+              flexDirection: 'column',
+              padding: '20px 16px',
+              animation: 'slideInLeft 0.25s ease-out',
+              overflowY: 'auto'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header Drawer */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', paddingBottom: '12px', borderBottom: '1px solid var(--line)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <svg width="28" height="28" viewBox="0 0 40 40" fill="none">
+                  <circle cx="20" cy="20" r="20" fill="var(--green-700)" />
+                  <path d="M20 30C20 30 12 26 12 18C12 13 16 10 20 10C24 10 28 13 28 18C28 26 20 30 20 30Z" fill="var(--green-500)" />
+                  <path d="M20 30V16" stroke="var(--green-900)" strokeWidth="1.4" strokeLinecap="round" />
+                </svg>
+                <span style={{ fontWeight: 800, fontSize: '18px', color: 'var(--green-900)', letterSpacing: '0.5px' }}>LÀNH FARM</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsMobileMenuOpen(false)}
+                aria-label="Đóng menu"
+                style={{ border: 'none', background: '#F1F5F9', width: '32px', height: '32px', borderRadius: '50%', cursor: 'pointer', fontSize: '16px', color: '#64748B' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Thông tin tài khoản ngắn gọn */}
+            <div style={{ padding: '10px 12px', backgroundColor: 'var(--bg)', borderRadius: '10px', marginBottom: '16px', border: '1px solid var(--line)' }}>
+              {activeUser ? (
+                <div>
+                  <div style={{ fontSize: '11px', color: 'var(--ink-soft)' }}>Xin chào,</div>
+                  <div style={{ fontWeight: 700, fontSize: '13.5px', color: 'var(--ink)' }}>{activeUser.fullName || activeUser.email}</div>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <Link
+                    href="/login"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    style={{ flex: 1, textAlign: 'center', padding: '7px 0', borderRadius: '6px', backgroundColor: 'var(--green-700)', color: '#fff', fontSize: '12.5px', fontWeight: 700, textDecoration: 'none' }}
+                  >
+                    Đăng nhập
+                  </Link>
+                  <Link
+                    href="/register"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    style={{ flex: 1, textAlign: 'center', padding: '7px 0', borderRadius: '6px', border: '1px solid var(--green-700)', color: 'var(--green-700)', fontSize: '12.5px', fontWeight: 700, textDecoration: 'none' }}
+                  >
+                    Đăng ký
+                  </Link>
+                </div>
+              )}
+            </div>
+
+            {/* Danh mục điều hướng */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
+              {[
+                { href: '/', label: 'Trang chủ', icon: '🏠' },
+                { href: '/products', label: 'Tất cả nông sản', icon: '🥦' },
+                { href: '/combos', label: 'Combo định kỳ', icon: '📦' },
+                { href: '/traceability', label: 'Truy xuất nguồn gốc', icon: '🔍' },
+                { href: '/orders', label: 'Lịch sử đơn hàng', icon: '📋' },
+                { href: '/profile', label: 'Hồ sơ & Sổ địa chỉ', icon: '👤' },
+              ].map((m) => {
+                const isActive = pathname === m.href;
+                return (
+                  <Link
+                    key={m.href}
+                    href={m.href}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      padding: '11px 14px',
+                      borderRadius: '8px',
+                      textDecoration: 'none',
+                      color: isActive ? 'var(--green-700)' : 'var(--ink)',
+                      fontWeight: isActive ? 700 : 500,
+                      backgroundColor: isActive ? 'var(--green-100)' : 'transparent',
+                      fontSize: '14px'
+                    }}
+                  >
+                    <span>{m.icon}</span>
+                    <span>{m.label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+
+            {/* Nút đăng xuất nếu đã đăng nhập */}
+            {activeUser && (
+              <div style={{ marginTop: 'auto', paddingTop: '16px', borderTop: '1px solid var(--line)' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    handleLogout();
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '10px 14px',
+                    borderRadius: '8px',
+                    border: '1px solid #FCA5A5',
+                    backgroundColor: '#FEF2F2',
+                    color: '#DC2626',
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px'
+                  }}
+                >
+                  <span>🚪</span>
+                  <span>Đăng xuất tài khoản</span>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </header>
   );
 };

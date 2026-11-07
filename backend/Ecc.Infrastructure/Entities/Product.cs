@@ -34,6 +34,7 @@ public class Product
     public int? MaxSlots { get; set; } // Số lượng món tự chọn (3, 4, 5)
 
     public Category? Category { get; set; }
+    public Supplier? Supplier { get; set; }
     
     public ICollection<ProductImage> ProductImages { get; set; } = new List<ProductImage>();
     
@@ -55,4 +56,10 @@ public class Product
     public bool? IsOutOfStock { get; set; }
     [NotMapped]
     public decimal? AvailableStock { get; set; }
+    [NotMapped]
+    public string? Origin { get; set; }
+    [NotMapped]
+    public string? Region { get; set; }
+    [NotMapped]
+    public string? FarmName { get; set; }
 }

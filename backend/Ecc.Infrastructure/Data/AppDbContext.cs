@@ -119,11 +119,19 @@ public class AppDbContext : DbContext
             e.Ignore(p => p.ReviewsCount);
             e.Ignore(p => p.IsOutOfStock);
             e.Ignore(p => p.AvailableStock);
+            e.Ignore(p => p.Origin);
+            e.Ignore(p => p.Region);
+            e.Ignore(p => p.FarmName);
 
             e.HasOne(p => p.Category)
              .WithMany(c => c.Products)
              .HasForeignKey(p => p.CategoryId)
              .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasOne(p => p.Supplier)
+             .WithMany()
+             .HasForeignKey(p => p.SupplierId)
+             .OnDelete(DeleteBehavior.NoAction);
         });
 
         // ── ProductImage ──────────────────────────────
@@ -164,6 +172,11 @@ public class AppDbContext : DbContext
              .WithMany(p => p.ProductBatches)
              .HasForeignKey(b => b.ProductId)
              .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasOne(b => b.Farm)
+             .WithMany()
+             .HasForeignKey(b => b.FarmId)
+             .OnDelete(DeleteBehavior.NoAction);
         });
 
         // ── Order ─────────────────────────────────────
