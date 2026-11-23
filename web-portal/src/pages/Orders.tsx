@@ -147,8 +147,9 @@ export const Orders: React.FC = () => {
   });
 
   // Tải và đồng bộ danh sách đơn hàng thời gian thực từ cả Cloud & Localhost
-  const fetchOrders = async (silent = false) => {
-    if (!silent) setLoading(true);
+  const fetchOrders = async (silent: any = false) => {
+    const isSilent = silent === true;
+    if (!isSilent) setLoading(true);
     try {
       const stored = localStorage.getItem('user');
       const u = stored ? JSON.parse(stored) : currentUser;
@@ -204,9 +205,9 @@ export const Orders: React.FC = () => {
       );
       setOrders(merged);
     } catch (error) {
-      if (!silent) message.error('Không thể tải danh sách đơn hàng.');
+      if (!isSilent) message.error('Không thể tải danh sách đơn hàng.');
     } finally {
-      if (!silent) setLoading(false);
+      if (!isSilent) setLoading(false);
     }
   };
 
