@@ -60,6 +60,7 @@ class _OrdersManagementScreenState extends State<OrdersManagementScreen>
     setState(() => _isLoading = true);
     try {
       final orders = await ApiService.getCustomerOrders(widget.userId);
+      orders.sort((a, b) => ((b['orderId'] ?? 0) as num).compareTo((a['orderId'] ?? 0) as num));
       if (mounted) {
         setState(() {
           _allOrders = orders;

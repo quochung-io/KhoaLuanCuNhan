@@ -39,7 +39,7 @@ public class OrdersController : ControllerBase
             .Include(o => o.Address)
             .Include(o => o.OrderItems)
                 .ThenInclude(i => i.Product)
-            .OrderByDescending(o => o.CreatedAt)
+            .OrderByDescending(o => o.OrderId).ThenByDescending(o => o.CreatedAt)
             .ToListAsync();
     }
 
@@ -75,7 +75,7 @@ public class OrdersController : ControllerBase
                 .ThenInclude(i => i.Product)
                     .ThenInclude(p => p.ProductImages)
             .Where(o => o.CustomerId == customerId)
-            .OrderByDescending(o => o.CreatedAt)
+            .OrderByDescending(o => o.OrderId).ThenByDescending(o => o.CreatedAt)
             .ToListAsync();
     }
 
@@ -92,7 +92,7 @@ public class OrdersController : ControllerBase
                     .ThenInclude(oi => oi.Product)
                         .ThenInclude(p => p.ProductImages)
                 .Where(o => o.OrderItems.Any(oi => oi.Product.SupplierId == supplierId))
-                .OrderByDescending(o => o.CreatedAt)
+                .OrderByDescending(o => o.OrderId).ThenByDescending(o => o.CreatedAt)
                 .ToListAsync();
 
             var result = orders.Select(o =>

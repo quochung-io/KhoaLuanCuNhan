@@ -159,7 +159,8 @@ export const Orders: React.FC = () => {
       } else {
         res = await orderService.getAll();
       }
-      setOrders(res.data || []);
+      const raw = Array.isArray(res.data) ? res.data : [];
+      setOrders([...raw].sort((a: any, b: any) => (b.orderId || 0) - (a.orderId || 0)));
     } catch (error) {
       message.error('Không thể tải danh sách đơn hàng.');
     } finally {

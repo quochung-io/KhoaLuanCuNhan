@@ -706,7 +706,10 @@ export default function CustomerOrdersPage() {
         throw new Error('Không thể tải lịch sử đơn hàng.');
       }
       const data = await res.json();
-      setOrders(data || []);
+      const sorted = Array.isArray(data)
+        ? [...data].sort((a: Order, b: Order) => (b.orderId || 0) - (a.orderId || 0) || new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
+        : [];
+      setOrders(sorted);
     } catch (err: any) {
       setError(err.message || 'Lỗi kết nối API.');
     } finally {
@@ -830,7 +833,9 @@ export default function CustomerOrdersPage() {
   };
 
   // Lọc đơn hàng theo Tab và Query tìm kiếm
-  const filteredOrders = orders.filter(order => {
+  const filteredOrders = [...orders]
+    .sort((a, b) => (b.orderId || 0) - (a.orderId || 0) || new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
+    .filter(order => {
     const unified = getOrderUnifiedStatus(order);
     const hasClaimInOrder = userClaims.some(c => c.orderId === order.orderId || c.orderCode === order.orderCode);
     const matchesTab = orderFilterStatus === 'all'
@@ -902,7 +907,8 @@ export default function CustomerOrdersPage() {
           .then(res => res.ok ? res.json() : null)
           .then(data => {
             if (Array.isArray(data)) {
-              setOrders(data);
+              const sorted = [...data].sort((a: Order, b: Order) => (b.orderId || 0) - (a.orderId || 0) || new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+              setOrders(sorted);
               setSelectedOrderDetails(prev => {
                 if (!prev) return null;
                 const updated = data.find((o: Order) => o.orderId === prev.orderId);
