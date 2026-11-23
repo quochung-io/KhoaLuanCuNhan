@@ -8,6 +8,7 @@ import { Table, Button, Space, Modal, Form, Select, Tag, message, Card, Tooltip,
 import { EditOutlined, EyeOutlined, SearchOutlined, ReloadOutlined, ShoppingOutlined, CloseCircleOutlined, CarOutlined, PrinterOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { orderService } from '../services/api';
+import signalRService from '../services/signalrService';
 import { OrderTimelineSteps } from '../components/shared/OrderTimelineSteps';
 import { OrderDeliverySlipModal } from '../components/shared/OrderDeliverySlipModal';
 
@@ -145,31 +146,92 @@ export const Orders: React.FC = () => {
     return true;
   });
 
-  // Tải và truy xuất dữ liệu (fetchOrders)
-  const fetchOrders = async () => {
-    setLoading(true);
+  // Tải và đồng bộ danh sách đơn hàng thời gian thực từ cả Cloud & Localhost
+  const fetchOrders = async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const stored = localStorage.getItem('user');
       const u = stored ? JSON.parse(stored) : currentUser;
       const isSup = (u?.role || '').toUpperCase() === 'SUPPLIER' || u?.roleId === 2;
+      const supId = u?.supplierId || u?.userId;
 
       let res;
-      if (isSup && (u?.supplierId || u?.userId)) {
-        res = await orderService.getBySupplier(u.supplierId || u.userId);
+      if (isSup && supId) {
+        res = await orderService.getBySupplier(supId);
       } else {
         res = await orderService.getAll();
       }
-      const raw = Array.isArray(res.data) ? res.data : [];
-      setOrders([...raw].sort((a: any, b: any) => (b.orderId || 0) - (a.orderId || 0)));
+      const primaryList: any[] = Array.isArray(res.data) ? res.data : [];
+
+      // Đồng bộ gộp thêm đơn hàng từ môi trường song song (Cloud Render <-> Localhost 5023)
+      const peerPath = isSup && supId ? `/api/orders/supplier/${supId}` : '/api/orders';
+      const cloudPromise = fetch(`https://ecc-backend-api.onrender.com${peerPath}`).then(r => r.ok ? r.json() : []).catch(() => []);
+      const localPromise = fetch(`http://localhost:5023${peerPath}`).then(r => r.ok ? r.json() : []).catch(() => []);
+      const [cloudList, localList] = await Promise.all([cloudPromise, localPromise]);
+
+      const mergedMap = new Map<string, any>();
+      const addList = (list: any[]) => {
+        if (!Array.isArray(list)) return;
+        for (const item of list) {
+          if (!item) continue;
+          const key = item.orderCode || `ID-${item.orderId}`;
+          const normalized = {
+            ...item,
+            orderItems: item.orderItems || item.items || []
+          };
+          if (!mergedMap.has(key)) {
+            mergedMap.set(key, normalized);
+          } else {
+            // Ưu tiên bản ghi có trạng thái mới hơn
+            const existing = mergedMap.get(key);
+            const tNew = new Date(normalized.updatedAt || normalized.createdAt || 0).getTime();
+            const tOld = new Date(existing.updatedAt || existing.createdAt || 0).getTime();
+            if (tNew >= tOld) {
+              mergedMap.set(key, normalized);
+            }
+          }
+        }
+      };
+
+      addList(primaryList);
+      addList(cloudList);
+      addList(localList);
+
+      const merged = Array.from(mergedMap.values()).sort(
+        (a: any, b: any) =>
+          new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime() ||
+          (b.orderId || 0) - (a.orderId || 0)
+      );
+      setOrders(merged);
     } catch (error) {
-      message.error('Không thể tải danh sách đơn hàng.');
+      if (!silent) message.error('Không thể tải danh sách đơn hàng.');
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchOrders();
+    fetchOrders(false);
+
+    // Tự động đồng bộ đơn hàng mới mỗi 5 giây
+    const interval = setInterval(() => {
+      fetchOrders(true);
+    }, 5000);
+
+    // Tự động làm mới ngay khi người dùng chuyển tab trình duyệt sang Web Admin
+    const handleFocus = () => fetchOrders(true);
+    window.addEventListener('focus', handleFocus);
+
+    // Lắng nghe sự kiện SignalR thời gian thực khi có đơn mới hoặc đổi trạng thái
+    const unsubCreated = signalRService.onOrderCreated(() => fetchOrders(true));
+    const unsubStatus = signalRService.onOrderStatusChanged(() => fetchOrders(true));
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', handleFocus);
+      unsubCreated();
+      unsubStatus();
+    };
   }, []);
 
   const getNextAllowedStatuses = (current?: string) => {
@@ -242,7 +304,29 @@ export const Orders: React.FC = () => {
 
   const executeUpdateStatus = async (orderId: number, status: string) => {
     try {
-      const res = await orderService.updateStatus(orderId, { orderStatus: status });
+      const targetOrd = orders.find(o => o.orderId === orderId);
+      const res = await orderService.updateStatus(orderId, { orderStatus: status }).catch(async () => {
+        // Fallback nếu đơn nằm ở môi trường song song
+        const r = await fetch(`http://localhost:5023/api/orders/${orderId}/status`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ orderStatus: status })
+        });
+        return { data: await r.json() };
+      });
+      // Đồng bộ trạng thái sang môi trường song song theo orderCode hoặc orderId
+      for (const base of ['https://ecc-backend-api.onrender.com', 'http://localhost:5023']) {
+        fetch(`${base}/api/orders`).then(r => r.ok ? r.json() : []).then((list: any[]) => {
+          const match = Array.isArray(list) ? list.find(x => (targetOrd?.orderCode && x.orderCode === targetOrd.orderCode) || x.orderId === orderId) : null;
+          if (match) {
+            fetch(`${base}/api/orders/${match.orderId}/status`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ orderStatus: status })
+            }).catch(() => {});
+          }
+        }).catch(() => {});
+      }
       message.success(res.data?.message || 'Cập nhật trạng thái đơn hàng thành công.');
       setIsEditModalOpen(false);
       fetchOrders();
@@ -337,7 +421,7 @@ export const Orders: React.FC = () => {
       dataIndex: 'orderId', 
       key: 'orderId', 
       width: 140,
-      sorter: (a: Order, b: Order) => a.orderId - b.orderId,
+      sorter: (a: Order, b: Order) => (new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime()) || (a.orderId - b.orderId),
       defaultSortOrder: 'descend' as const,
       render: (id: number, record: Order) => <Tag color="geekblue" style={{ fontWeight: 600 }}>{record.orderCode || `#${id}`}</Tag>
     },

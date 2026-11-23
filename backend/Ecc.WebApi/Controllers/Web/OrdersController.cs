@@ -126,6 +126,15 @@ public class OrdersController : ControllerBase
                     supplierItemCount = supplierItems.Sum(oi => oi.Quantity),
                     createdAt = o.CreatedAt,
                     updatedAt = o.UpdatedAt,
+                    orderItems = supplierItems.Select(oi => new
+                    {
+                        orderItemId = oi.OrderItemId,
+                        productId = oi.ProductId,
+                        quantity = oi.Quantity,
+                        unitPrice = oi.UnitPrice,
+                        totalAmount = oi.TotalAmount,
+                        product = new { productName = oi.Product?.ProductName }
+                    }).ToList(),
                     items = supplierItems.Select(oi => new
                     {
                         orderItemId = oi.OrderItemId,
@@ -994,7 +1003,7 @@ public class OrdersController : ControllerBase
         {
             CustomerId = dto.CustomerId,
             AddressId = finalAddressId,
-            OrderCode = "DH-" + DateTime.Now.ToString("yyyyMMdd") + "-" + new Random().Next(1000, 9999),
+            OrderCode = !string.IsNullOrWhiteSpace(dto.OrderCode) ? dto.OrderCode.Trim() : "DH-" + DateTime.Now.ToString("yyyyMMdd") + "-" + new Random().Next(1000, 9999),
             Subtotal = calculatedSubtotal,
             DiscountAmount = discountAmount,
             ShippingFee = shippingFee,
@@ -1579,6 +1588,7 @@ public class OrdersController : ControllerBase
 // DTO dùng để tạo Đơn hàng kèm địa chỉ giao hàng thật
 public class OrderCreateDto
 {
+    public string? OrderCode { get; set; }
     public long CustomerId { get; set; }
     public decimal Subtotal { get; set; }
     public decimal? DiscountAmount { get; set; }

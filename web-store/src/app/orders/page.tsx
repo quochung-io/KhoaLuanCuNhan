@@ -698,17 +698,38 @@ export default function CustomerOrdersPage() {
   const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
 
   // Tải và truy xuất dữ liệu (loadOrders)
+  const fetchMergedCustomerOrders = async (userId: number): Promise<Order[]> => {
+    const primaryBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023';
+    const peerBase = primaryBase.includes('localhost') ? 'https://ecc-backend-api.onrender.com' : 'http://localhost:5023';
+    const [pList, sList] = await Promise.all([
+      fetch(`${primaryBase}/api/orders/customer/${userId}`).then(r => r.ok ? r.json() : []).catch(() => []),
+      fetch(`${peerBase}/api/orders/customer/${userId}`).then(r => r.ok ? r.json() : []).catch(() => [])
+    ]);
+    const map = new Map<string, Order>();
+    for (const list of [pList, sList]) {
+      if (!Array.isArray(list)) continue;
+      for (const item of list) {
+        if (!item) continue;
+        const key = item.orderCode || `ID-${item.orderId}`;
+        if (!map.has(key)) {
+          map.set(key, item);
+        } else {
+          const old = map.get(key)!;
+          const tNew = new Date(item.updatedAt || item.createdAt || 0).getTime();
+          const tOld = new Date(old.updatedAt || old.createdAt || 0).getTime();
+          if (tNew >= tOld) map.set(key, item);
+        }
+      }
+    }
+    return Array.from(map.values()).sort(
+      (a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime() || (b.orderId || 0) - (a.orderId || 0)
+    );
+  };
+
   const loadOrders = async (userId: number) => {
     setLoading(true);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/orders/customer/${userId}`);
-      if (!res.ok) {
-        throw new Error('Không thể tải lịch sử đơn hàng.');
-      }
-      const data = await res.json();
-      const sorted = Array.isArray(data)
-        ? [...data].sort((a: Order, b: Order) => (b.orderId || 0) - (a.orderId || 0) || new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
-        : [];
+      const sorted = await fetchMergedCustomerOrders(userId);
       setOrders(sorted);
     } catch (err: any) {
       setError(err.message || 'Lỗi kết nối API.');
@@ -902,19 +923,15 @@ export default function CustomerOrdersPage() {
     // Tự động đồng bộ trạng thái đơn hàng & khiếu nại thời gian thực từ Admin (10s/lần)
     const syncInterval = setInterval(() => {
       if (parsedUser?.userId) {
-        // 1. Đồng bộ đơn hàng
-        fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5023'}/api/orders/customer/${parsedUser.userId}`)
-          .then(res => res.ok ? res.json() : null)
-          .then(data => {
-            if (Array.isArray(data)) {
-              const sorted = [...data].sort((a: Order, b: Order) => (b.orderId || 0) - (a.orderId || 0) || new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
-              setOrders(sorted);
-              setSelectedOrderDetails(prev => {
-                if (!prev) return null;
-                const updated = data.find((o: Order) => o.orderId === prev.orderId);
-                return updated || prev;
-              });
-            }
+        // 1. Đồng bộ đơn hàng từ cả Cloud & Localhost
+        fetchMergedCustomerOrders(parsedUser.userId)
+          .then(sorted => {
+            setOrders(sorted);
+            setSelectedOrderDetails(prev => {
+              if (!prev) return null;
+              const updated = sorted.find((o: Order) => (o.orderCode && o.orderCode === prev.orderCode) || o.orderId === prev.orderId);
+              return updated || prev;
+            });
           })
           .catch(() => { });
 
